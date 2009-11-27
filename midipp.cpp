@@ -32,6 +32,11 @@
 
 #include <err.h>
 
+static void MidiEventHandleKeyPress(MppMainWindow *mw, int in_key, int vel);
+static void MidiEventHandleKeyRelease(MppMainWindow *mw, int in_key);
+static void MidiEventHandleStop(MppMainWindow *mw);
+
+
 static void
 MppParse(struct MppSoftc *sc, const QString &ps)
 {
@@ -286,6 +291,7 @@ done:
 	}
 
 	sc->ScLinesMax = line;
+	sc->ScCurrPos = 0;
 }
 
 MppMainWindow :: MppMainWindow(QWidget *parent)
@@ -349,26 +355,34 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_volume->setMinimum(0);
 	spn_volume->setValue(80);
 
+	lbl_key = new QLabel(tr("Key"));
+	spn_key = new QSpinBox();
+	spn_key->setMaximum(127);
+	spn_key->setMinimum(0);
+	spn_key->setValue(C4);
+
 	tab_edit_gl->addWidget(lbl_volume, 0, 0, 1, 3);
 	tab_edit_gl->addWidget(spn_volume, 0, 3, 1, 1);
-	tab_edit_gl->addWidget(but_pg_up, 1, 0, 1, 4);
-	tab_edit_gl->addWidget(but_up, 2, 0, 1, 4);
-	tab_edit_gl->addWidget(but_down, 3, 0, 1, 4);
-	tab_edit_gl->addWidget(but_pg_down, 4, 0, 1, 4);
-	tab_edit_gl->addWidget(but_compile, 5, 0, 1, 4);
-	tab_edit_gl->addWidget(but_record, 6, 0, 1, 4);
-	tab_edit_gl->addWidget(but_play, 7, 0, 1, 4);
-	tab_edit_gl->addWidget(but_undo, 8, 0, 1, 4);
+	tab_edit_gl->addWidget(lbl_key, 1, 0, 1, 3);
+	tab_edit_gl->addWidget(spn_key, 1, 3, 1, 1);
+	tab_edit_gl->addWidget(but_pg_up, 2, 0, 1, 4);
+	tab_edit_gl->addWidget(but_up, 3, 0, 1, 4);
+	tab_edit_gl->addWidget(but_down, 4, 0, 1, 4);
+	tab_edit_gl->addWidget(but_pg_down, 5, 0, 1, 4);
+	tab_edit_gl->addWidget(but_compile, 6, 0, 1, 4);
+	tab_edit_gl->addWidget(but_record, 7, 0, 1, 4);
+	tab_edit_gl->addWidget(but_play, 8, 0, 1, 4);
+	tab_edit_gl->addWidget(but_undo, 9, 0, 1, 4);
 
 	connect(but_quit, SIGNAL(pressed()), this, SLOT(handle_quit()));
-	connect(spn_volume, SIGNAL(valueChanged(int)), this, SLOT(handle_volume(int)));
 	connect(but_pg_up, SIGNAL(pressed()), this, SLOT(handle_pg_up()));
 	connect(but_up, SIGNAL(pressed()), this, SLOT(handle_up()));
 	connect(but_down, SIGNAL(pressed()), this, SLOT(handle_down()));
 	connect(but_pg_down, SIGNAL(pressed()), this, SLOT(handle_pg_down()));
 	connect(but_compile, SIGNAL(pressed()), this, SLOT(handle_compile()));
 	connect(but_record, SIGNAL(pressed()), this, SLOT(handle_record()));
-	connect(but_play, SIGNAL(pressed()), this, SLOT(handle_play()));
+	connect(but_play, SIGNAL(pressed()), this, SLOT(handle_play_press()));
+	connect(but_play, SIGNAL(released()), this, SLOT(handle_play_release()));
 	connect(but_undo, SIGNAL(pressed()), this, SLOT(handle_undo()));
 
 	MidiInit();
@@ -384,11 +398,6 @@ void
 MppMainWindow :: handle_quit()
 {
 	exit(0);
-}
-
-void 
-MppMainWindow :: handle_volume(int i)
-{
 }
 
 void
@@ -415,6 +424,7 @@ void
 MppMainWindow :: handle_compile()
 {
 	pthread_mutex_lock(&mtx);
+	MidiEventHandleStop(this);
 	MppParse(&main_sc, main_edit->toPlainText());
 	pthread_mutex_unlock(&mtx);
 }
@@ -425,8 +435,24 @@ MppMainWindow :: handle_record()
 }
 
 void
-MppMainWindow :: handle_play()
+MppMainWindow :: handle_play_press()
 {
+	int vel = spn_volume->value();
+	int key = spn_key->value();
+
+	pthread_mutex_lock(&mtx);
+	MidiEventHandleKeyPress(this, key, vel);
+	pthread_mutex_unlock(&mtx);
+}
+
+void
+MppMainWindow :: handle_play_release()
+{
+	int key = spn_key->value();
+
+	pthread_mutex_lock(&mtx);
+	MidiEventHandleKeyRelease(this, key);
+	pthread_mutex_unlock(&mtx);
 }
 
 void
@@ -435,16 +461,96 @@ MppMainWindow :: handle_undo()
 }
 
 static void
+MidiEventHandleStop(MppMainWindow *mw)
+{
+	struct mid_data *d = &mw->mid_data;
+	uint8_t x;
+
+	mid_set_position(d, umidi20_get_curr_position() + 1);
+
+	for (x = 0; x != 128; x++) {
+		if (mw->main_sc.ScPressed[x] != 0) {
+			mw->main_sc.ScPressed[x] = 0;
+			mid_key_press(d, x, 0, 0);
+		}
+	}
+}
+
+static uint8_t
+MidiEventHandleJump(MppMainWindow *mw, int pos)
+{
+	if ((pos < 0) || (pos > 3) || (mw->main_sc.ScJumpTable[pos] == 0))
+		return (0);
+
+	mw->main_sc.ScCurrPos = mw->main_sc.ScJumpTable[pos] - 1;
+
+	MidiEventHandleStop(mw);
+
+	return (1);
+}
+
+static void
+MidiEventHandleKeyPress(MppMainWindow *mw, int in_key, int vel)
+{
+	struct mid_data *d = &mw->mid_data;
+	struct MppNote *pn;
+	uint16_t pos;
+	uint8_t x;
+	uint8_t out_key;
+
+	mid_set_position(d, umidi20_get_curr_position() + 1);
+
+	pos = mw->main_sc.ScJumpNext[mw->main_sc.ScCurrPos];
+	if (pos != 0)
+		mw->main_sc.ScCurrPos = pos - 1;
+
+	pn = &mw->main_sc.ScNotes[mw->main_sc.ScCurrPos][0];
+
+	for (x = 0; x != MPP_MAX_NOTES; x++) {
+
+		if (pn->dur != 0) {
+			out_key = pn->key + (in_key - C4);
+			out_key &= 127;
+
+			mid_set_channel(d, pn->channel);
+
+			mid_key_press(d, out_key, vel, 0);
+
+			mw->main_sc.ScPressed[out_key] = pn->dur;
+		}
+		pn++;
+	}
+
+	mw->main_sc.ScCurrPos++;
+
+	if (mw->main_sc.ScCurrPos >= mw->main_sc.ScLinesMax)
+		mw->main_sc.ScCurrPos = 0;
+}
+
+static void
+MidiEventHandleKeyRelease(MppMainWindow *mw, int in_key)
+{
+	struct mid_data *d = &mw->mid_data;
+	uint8_t x;
+
+	mid_set_position(d, umidi20_get_curr_position() + 1);
+
+	for (x = 0; x != 128; x++) {
+		if (mw->main_sc.ScPressed[x] == 1) {
+			mid_key_press(d, x, 0, 0);
+		}
+
+		if (mw->main_sc.ScPressed[x] != 0)
+			mw->main_sc.ScPressed[x] --;
+	}
+}
+
+static void
 MidiEventCallback(uint8_t device_no, void *arg, struct umidi20_event *event)
 {
 	MppMainWindow *mw = (MppMainWindow *)arg;
 	struct mid_data *d = &mw->mid_data;
-	struct MppNote *pn;
-	uint8_t x;
-	uint8_t key;
 	int pos;
-
-	mid_set_position(d, event->position + 1);
 
 #if 0
 	memset(notes+index, 0, sizeof(notes[0]));
@@ -453,61 +559,23 @@ MidiEventCallback(uint8_t device_no, void *arg, struct umidi20_event *event)
 #endif
 
 	if (umidi20_event_get_control_address(event) == 0x40) {
+
+		mid_set_position(d, umidi20_get_curr_position() + 1);
 		mid_pedal(d, umidi20_event_get_control_value(event));
 
 	} else if (umidi20_event_is_key_start(event)) {
 
 		pos = umidi20_event_get_key(event) - C3;
 
-		if ((pos >= 0) && (pos < 4) && (mw->main_sc.ScJumpTable[pos] != 0)) {
-			mw->main_sc.ScCurrPos = mw->main_sc.ScJumpTable[pos] - 1;
-
-			for (x = 0; x != 128; x++) {
-				if (mw->main_sc.ScPressed[x] != 0) {
-					mw->main_sc.ScPressed[x] = 0;
-					mid_key_press(d, x, 0, 0);
-				}
-			}
-
-		} else {
-
-			pos = mw->main_sc.ScJumpNext[mw->main_sc.ScCurrPos];
-			if (pos != 0)
-				mw->main_sc.ScCurrPos = pos - 1;
-
-			pn = &mw->main_sc.ScNotes[mw->main_sc.ScCurrPos][0];
-
-			for (x = 0; x != MPP_MAX_NOTES; x++) {
-
-				if (pn->dur != 0) {
-					key = pn->key + 12 +
-					  umidi20_event_get_key(event) - C4;
-
-					key &= 127;
-
-					mid_set_channel(d, pn->channel);
-					mid_key_press(d, key,
-					      umidi20_event_get_velocity(event), 0);
-					mw->main_sc.ScPressed[key] = pn->dur;
-				}
-				pn++;
-			}
-
-			mw->main_sc.ScCurrPos++;
-
-			if (mw->main_sc.ScCurrPos >= mw->main_sc.ScLinesMax)
-				mw->main_sc.ScCurrPos = 0;
+		if (MidiEventHandleJump(mw, pos) == 0) {
+			MidiEventHandleKeyPress(mw,
+				umidi20_event_get_key(event),
+				umidi20_event_get_velocity(event));
 		}
+
 	} else if (umidi20_event_is_key_end(event)) {
-
-		for (x = 0; x != 128; x++) {
-			if (mw->main_sc.ScPressed[x] == 1) {
-				mid_key_press(d, x, 0, 0);
-			}
-
-			if (mw->main_sc.ScPressed[x] != 0)
-				mw->main_sc.ScPressed[x] --;
-		}
+		MidiEventHandleKeyRelease(mw,
+			umidi20_event_get_key(event));
 	}
 }
 

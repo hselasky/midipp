@@ -105,6 +105,9 @@ class MppMainWindow : public QWidget
 	QLabel	*lbl_volume;
 	QSpinBox *spn_volume;
 
+	QLabel	*lbl_key;
+	QSpinBox *spn_key;
+
 	QString *CurrFilename;
 
 	/* MIDI stuff */
@@ -116,14 +119,14 @@ class MppMainWindow : public QWidget
 
  public slots:
 	void handle_quit();
-	void handle_volume(int);
 	void handle_pg_up();
 	void handle_up();
 	void handle_down();
 	void handle_pg_down();
 	void handle_compile();
 	void handle_record();
-	void handle_play();
+	void handle_play_press();
+	void handle_play_release();
 	void handle_undo();
 };
 
