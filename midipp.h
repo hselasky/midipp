@@ -35,6 +35,7 @@
 #include <QSpinBox>
 #include <QTextCursor>
 #include <QTimer>
+#include <QKeyEvent>
 
 #include <umidi20.h>
 
@@ -113,8 +114,10 @@ class MppMainWindow : public QWidget
 	QLabel	*lbl_cmd_key;
 	QSpinBox *spn_cmd_key;
 
-	QPushButton *but_up;
-	QPushButton *but_down;
+	QPushButton *but_jump_0;
+	QPushButton *but_jump_1;
+	QPushButton *but_jump_2;
+	QPushButton *but_jump_3;
 	QPushButton *but_pass_thru;
 	QPushButton *but_compile;
 	QPushButton *but_record;
@@ -133,14 +136,20 @@ class MppMainWindow : public QWidget
 	void handle_quit();
 	void handle_play_key_changed(int);
 	void handle_cmd_key_changed(int);
-	void handle_up();
-	void handle_down();
+	void handle_jump_0();
+	void handle_jump_1();
+	void handle_jump_2();
+	void handle_jump_3();
 	void handle_pass_thru();
 	void handle_compile();
 	void handle_record();
 	void handle_play_press();
 	void handle_play_release();
 	void handle_watchdog();
+
+ protected:
+	void keyPressEvent(QKeyEvent *event);
+	void keyReleaseEvent(QKeyEvent *event);
 };
 
 #endif	/* _MIDIPP_H_ */

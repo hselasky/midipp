@@ -35,7 +35,7 @@
 static void MidiEventHandleKeyPress(MppMainWindow *mw, int in_key, int vel);
 static void MidiEventHandleKeyRelease(MppMainWindow *mw, int in_key);
 static void MidiEventHandleStop(MppMainWindow *mw);
-
+static uint8_t MidiEventHandleJump(MppMainWindow *mw, int);
 
 static void
 MppParse(struct MppSoftc *sc, const QString &ps)
@@ -355,8 +355,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* Edit Tab */
 
-	but_up = new QPushButton(tr("Up"));
-	but_down = new QPushButton(tr("Down"));
+	but_jump_0 = new QPushButton(tr("Jump 0"));
+	but_jump_1 = new QPushButton(tr("Jump 1"));
+	but_jump_2 = new QPushButton(tr("Jump 2"));
+	but_jump_3 = new QPushButton(tr("Jump 3"));
 	but_pass_thru = new QPushButton(QString());
 	but_compile = new QPushButton(tr("Compile"));
 	but_record = new QPushButton(QString());
@@ -388,16 +390,19 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_edit_gl->addWidget(spn_play_key, 1, 3, 1, 1);
 	tab_edit_gl->addWidget(lbl_cmd_key, 2, 0, 1, 3);
 	tab_edit_gl->addWidget(spn_cmd_key, 2, 3, 1, 1);
-	tab_edit_gl->addWidget(but_up, 3, 0, 1, 4);
-	tab_edit_gl->addWidget(but_down, 4, 0, 1, 4);
-	tab_edit_gl->addWidget(but_pass_thru, 5, 0, 1, 4);
-	tab_edit_gl->addWidget(but_compile, 6, 0, 1, 4);
-	tab_edit_gl->addWidget(but_record, 7, 0, 1, 4);
-	tab_edit_gl->addWidget(but_play, 8, 0, 3, 4);
+	tab_edit_gl->addWidget(but_jump_0, 3, 0, 1, 4);
+	tab_edit_gl->addWidget(but_jump_1, 4, 0, 1, 4);
+	tab_edit_gl->addWidget(but_jump_2, 5, 0, 1, 4);
+	tab_edit_gl->addWidget(but_jump_3, 6, 0, 1, 4);
+	tab_edit_gl->addWidget(but_pass_thru, 7, 0, 1, 4);
+	tab_edit_gl->addWidget(but_compile, 8, 0, 1, 4);
+	tab_edit_gl->addWidget(but_record, 9, 0, 1, 4);
+	tab_edit_gl->addWidget(but_play, 10, 0, 3, 4);
 
-	connect(but_quit, SIGNAL(pressed()), this, SLOT(handle_quit()));
-	connect(but_up, SIGNAL(pressed()), this, SLOT(handle_up()));
-	connect(but_down, SIGNAL(pressed()), this, SLOT(handle_down()));
+	connect(but_jump_0, SIGNAL(pressed()), this, SLOT(handle_jump_0()));
+	connect(but_jump_1, SIGNAL(pressed()), this, SLOT(handle_jump_1()));
+	connect(but_jump_2, SIGNAL(pressed()), this, SLOT(handle_jump_2()));
+	connect(but_jump_3, SIGNAL(pressed()), this, SLOT(handle_jump_3()));
 	connect(but_pass_thru, SIGNAL(pressed()), this, SLOT(handle_pass_thru()));
 	connect(but_compile, SIGNAL(pressed()), this, SLOT(handle_compile()));
 	connect(but_record, SIGNAL(pressed()), this, SLOT(handle_record()));
@@ -420,13 +425,35 @@ MppMainWindow :: handle_quit()
 }
 
 void
-MppMainWindow :: handle_up()
+MppMainWindow :: handle_jump_0()
 {
+	pthread_mutex_lock(&mtx);
+	MidiEventHandleJump(this, 0);
+	pthread_mutex_unlock(&mtx);
 }
 
 void
-MppMainWindow :: handle_down()
+MppMainWindow :: handle_jump_1()
 {
+	pthread_mutex_lock(&mtx);
+	MidiEventHandleJump(this, 1);
+	pthread_mutex_unlock(&mtx);
+}
+
+void
+MppMainWindow :: handle_jump_2()
+{
+	pthread_mutex_lock(&mtx);
+	MidiEventHandleJump(this, 2);
+	pthread_mutex_unlock(&mtx);
+}
+
+void
+MppMainWindow :: handle_jump_3()
+{
+	pthread_mutex_lock(&mtx);
+	MidiEventHandleJump(this, 3);
+	pthread_mutex_unlock(&mtx);
 }
 
 void
@@ -744,6 +771,34 @@ MppMainWindow :: MidiUnInit(void)
 	umidi20_song_free(song);
 
 	pthread_mutex_unlock(&mtx);
+}
+
+void
+MppMainWindow :: keyPressEvent(QKeyEvent *event)
+{
+#if 0
+	if (event->isAutoRepeat())
+		return;
+
+	if (event->key() == Qt::Key_PageUp || 
+	    event->key() == Qt::Key_PageDown) {
+		handle_play_press();
+	}
+#endif
+}
+
+void
+MppMainWindow :: keyReleaseEvent(QKeyEvent *event)
+{
+#if 0
+	if (event->isAutoRepeat())
+		return;
+
+	if (event->key() == Qt::Key_PageUp || 
+	    event->key() == Qt::Key_PageDown) {
+		handle_play_release();
+	}
+#endif
 }
 
 int
