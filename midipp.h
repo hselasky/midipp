@@ -33,12 +33,15 @@
 #include <QTabWidget>
 #include <QLabel>
 #include <QSpinBox>
+#include <QTextCursor>
+#include <QTimer>
 
 #include <umidi20.h>
 
 #define	MPP_MAX_LINES	1024
 #define	MPP_MAX_NOTES	16
 #define	MPP_MAX_LABELS	32
+#define	MPP_MAX_QUEUE	32
 
 struct MppNote {
 	uint8_t key;
@@ -53,6 +56,12 @@ struct MppSoftc {
 	uint16_t ScLinesMax;
 	uint16_t ScCurrPos;
 	uint8_t ScPressed[128];
+	uint8_t ScInputEvents[MPP_MAX_QUEUE];
+	uint8_t ScNumInputEvents;
+	uint8_t ScCmdKey;
+
+	uint8_t is_record_off;
+	uint8_t is_pass_thru_off;
 };
 
 class MppMainWindow : public QWidget
@@ -70,6 +79,8 @@ class MppMainWindow : public QWidget
 
 	QGridLayout *main_gl;
 	QTabWidget *main_tw;
+
+	QTimer *watchdog;
 
 	/* editor */
 
@@ -93,20 +104,21 @@ class MppMainWindow : public QWidget
 	QWidget *tab_edit_wg;
 	QGridLayout *tab_edit_gl;
 
-	QPushButton *but_pg_up;
-	QPushButton *but_up;
-	QPushButton *but_down;
-	QPushButton *but_pg_down;
-	QPushButton *but_compile;
-	QPushButton *but_record;
-	QPushButton *but_play;
-	QPushButton *but_undo;
-
 	QLabel	*lbl_volume;
 	QSpinBox *spn_volume;
 
-	QLabel	*lbl_key;
-	QSpinBox *spn_key;
+	QLabel	*lbl_play_key;
+	QSpinBox *spn_play_key;
+
+	QLabel	*lbl_cmd_key;
+	QSpinBox *spn_cmd_key;
+
+	QPushButton *but_up;
+	QPushButton *but_down;
+	QPushButton *but_pass_thru;
+	QPushButton *but_compile;
+	QPushButton *but_record;
+	QPushButton *but_play;
 
 	QString *CurrFilename;
 
@@ -119,15 +131,16 @@ class MppMainWindow : public QWidget
 
  public slots:
 	void handle_quit();
-	void handle_pg_up();
+	void handle_play_key_changed(int);
+	void handle_cmd_key_changed(int);
 	void handle_up();
 	void handle_down();
-	void handle_pg_down();
+	void handle_pass_thru();
 	void handle_compile();
 	void handle_record();
 	void handle_play_press();
 	void handle_play_release();
-	void handle_undo();
+	void handle_watchdog();
 };
 
 #endif	/* _MIDIPP_H_ */

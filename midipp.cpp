@@ -297,8 +297,24 @@ done:
 MppMainWindow :: MppMainWindow(QWidget *parent)
   : QWidget(parent)
 {
+	/* set memory default */
+
+	memset(&main_sc, 0, sizeof(main_sc));
+
+	memset(&mid_data, 0, sizeof(mid_data));
+
+	umidi20_mutex_init(&mtx);
+
+	/* Setup GUI */
+
 	main_gl = new QGridLayout(this);
 	main_tw = new QTabWidget();
+
+	/* Watchdog */
+
+	watchdog = new QTimer(this);
+	connect(watchdog, SIGNAL(timeout()), this, SLOT(handle_watchdog()));
+	watchdog->start(250);
 
 	/* Editor */
 
@@ -318,7 +334,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	main_tw->addTab(tab_file_wg, tr("File"));
 	main_tw->addTab(tab_edit_wg, tr("Edit"));
-
 
 	/* File Tab */
 
@@ -340,14 +355,12 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* Edit Tab */
 
-	but_pg_up = new QPushButton(tr("Page Up"));
 	but_up = new QPushButton(tr("Up"));
 	but_down = new QPushButton(tr("Down"));
-	but_pg_down = new QPushButton(tr("Page Down"));
+	but_pass_thru = new QPushButton(QString());
 	but_compile = new QPushButton(tr("Compile"));
-	but_record = new QPushButton(tr("Record"));
-	but_play = new QPushButton(tr("Play"));
-	but_undo = new QPushButton(tr("Undo"));
+	but_record = new QPushButton(QString());
+	but_play = new QPushButton(tr(" \nPlay\n "));
 
 	lbl_volume = new QLabel(tr("Volume"));
 	spn_volume = new QSpinBox();
@@ -355,35 +368,41 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_volume->setMinimum(0);
 	spn_volume->setValue(80);
 
-	lbl_key = new QLabel(tr("Key"));
-	spn_key = new QSpinBox();
-	spn_key->setMaximum(127);
-	spn_key->setMinimum(0);
-	spn_key->setValue(C4);
+	lbl_play_key = new QLabel(QString());
+	spn_play_key = new QSpinBox();
+	connect(spn_play_key, SIGNAL(valueChanged(int)), this, SLOT(handle_play_key_changed(int)));
+	spn_play_key->setMaximum(127);
+	spn_play_key->setMinimum(0);
+	spn_play_key->setValue(C4);
+
+	lbl_cmd_key = new QLabel(QString());
+	spn_cmd_key = new QSpinBox();
+	connect(spn_cmd_key, SIGNAL(valueChanged(int)), this, SLOT(handle_cmd_key_changed(int)));
+	spn_cmd_key->setMaximum(127);
+	spn_cmd_key->setMinimum(0);
+	spn_cmd_key->setValue(C3);
 
 	tab_edit_gl->addWidget(lbl_volume, 0, 0, 1, 3);
 	tab_edit_gl->addWidget(spn_volume, 0, 3, 1, 1);
-	tab_edit_gl->addWidget(lbl_key, 1, 0, 1, 3);
-	tab_edit_gl->addWidget(spn_key, 1, 3, 1, 1);
-	tab_edit_gl->addWidget(but_pg_up, 2, 0, 1, 4);
+	tab_edit_gl->addWidget(lbl_play_key, 1, 0, 1, 3);
+	tab_edit_gl->addWidget(spn_play_key, 1, 3, 1, 1);
+	tab_edit_gl->addWidget(lbl_cmd_key, 2, 0, 1, 3);
+	tab_edit_gl->addWidget(spn_cmd_key, 2, 3, 1, 1);
 	tab_edit_gl->addWidget(but_up, 3, 0, 1, 4);
 	tab_edit_gl->addWidget(but_down, 4, 0, 1, 4);
-	tab_edit_gl->addWidget(but_pg_down, 5, 0, 1, 4);
+	tab_edit_gl->addWidget(but_pass_thru, 5, 0, 1, 4);
 	tab_edit_gl->addWidget(but_compile, 6, 0, 1, 4);
 	tab_edit_gl->addWidget(but_record, 7, 0, 1, 4);
-	tab_edit_gl->addWidget(but_play, 8, 0, 1, 4);
-	tab_edit_gl->addWidget(but_undo, 9, 0, 1, 4);
+	tab_edit_gl->addWidget(but_play, 8, 0, 3, 4);
 
 	connect(but_quit, SIGNAL(pressed()), this, SLOT(handle_quit()));
-	connect(but_pg_up, SIGNAL(pressed()), this, SLOT(handle_pg_up()));
 	connect(but_up, SIGNAL(pressed()), this, SLOT(handle_up()));
 	connect(but_down, SIGNAL(pressed()), this, SLOT(handle_down()));
-	connect(but_pg_down, SIGNAL(pressed()), this, SLOT(handle_pg_down()));
+	connect(but_pass_thru, SIGNAL(pressed()), this, SLOT(handle_pass_thru()));
 	connect(but_compile, SIGNAL(pressed()), this, SLOT(handle_compile()));
 	connect(but_record, SIGNAL(pressed()), this, SLOT(handle_record()));
 	connect(but_play, SIGNAL(pressed()), this, SLOT(handle_play_press()));
 	connect(but_play, SIGNAL(released()), this, SLOT(handle_play_release()));
-	connect(but_undo, SIGNAL(pressed()), this, SLOT(handle_undo()));
 
 	MidiInit();
 
@@ -401,11 +420,6 @@ MppMainWindow :: handle_quit()
 }
 
 void
-MppMainWindow :: handle_pg_up()
-{
-}
-
-void
 MppMainWindow :: handle_up()
 {
 }
@@ -416,8 +430,36 @@ MppMainWindow :: handle_down()
 }
 
 void
-MppMainWindow :: handle_pg_down()
+MppMainWindow :: handle_play_key_changed(int key)
 {
+	key &= 0x7F;
+
+	lbl_play_key->setText(tr("Play Key ") + QString(mid_key_str[key]));
+}
+
+void
+MppMainWindow :: handle_cmd_key_changed(int key)
+{
+	key &= 0x7F;
+
+	pthread_mutex_lock(&mtx);
+	main_sc.ScCmdKey = key;
+	pthread_mutex_unlock(&mtx);
+
+	lbl_cmd_key->setText(tr("Cmd Key ") + QString(mid_key_str[key]));
+}
+
+void
+MppMainWindow :: handle_pass_thru()
+{
+	pthread_mutex_lock(&mtx);
+	main_sc.is_pass_thru_off = !main_sc.is_pass_thru_off;
+	pthread_mutex_unlock(&mtx);
+
+	if (main_sc.is_pass_thru_off == 0)
+		but_pass_thru->setText(tr("Disable Pass Thru"));
+	else
+		but_pass_thru->setText(tr("Enable Pass Thru"));
 }
 
 void
@@ -432,13 +474,21 @@ MppMainWindow :: handle_compile()
 void
 MppMainWindow :: handle_record()
 {
+	pthread_mutex_lock(&mtx);
+	main_sc.is_record_off = !main_sc.is_record_off;
+	pthread_mutex_unlock(&mtx);
+
+	if (main_sc.is_record_off == 0)
+		but_record->setText(tr("Disable Record"));
+	else
+		but_record->setText(tr("Enable Record"));
 }
 
 void
 MppMainWindow :: handle_play_press()
 {
 	int vel = spn_volume->value();
-	int key = spn_key->value();
+	int key = spn_play_key->value();
 
 	pthread_mutex_lock(&mtx);
 	MidiEventHandleKeyPress(this, key, vel);
@@ -448,7 +498,7 @@ MppMainWindow :: handle_play_press()
 void
 MppMainWindow :: handle_play_release()
 {
-	int key = spn_key->value();
+	int key = spn_play_key->value();
 
 	pthread_mutex_lock(&mtx);
 	MidiEventHandleKeyRelease(this, key);
@@ -456,8 +506,27 @@ MppMainWindow :: handle_play_release()
 }
 
 void
-MppMainWindow :: handle_undo()
+MppMainWindow :: handle_watchdog()
 {
+	QTextCursor cursor(main_edit->textCursor());
+	uint8_t events_copy[MPP_MAX_QUEUE];
+	uint8_t num_events;
+	uint8_t x;
+
+	pthread_mutex_lock(&mtx);
+	num_events = main_sc.ScNumInputEvents;
+	main_sc.ScNumInputEvents = 0;
+	memcpy(events_copy, main_sc.ScInputEvents, num_events);
+	pthread_mutex_unlock(&mtx);
+
+	for (x = 0; x != num_events; x++) {
+
+		cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::MoveAnchor, 1);
+		cursor.beginEditBlock();
+		cursor.insertText(QString(" "));
+		cursor.insertText(QString(mid_key_str[events_copy[x] & 0x7F]));
+		cursor.endEditBlock();
+	}
 }
 
 static void
@@ -551,12 +620,7 @@ MidiEventCallback(uint8_t device_no, void *arg, struct umidi20_event *event)
 	MppMainWindow *mw = (MppMainWindow *)arg;
 	struct mid_data *d = &mw->mid_data;
 	int pos;
-
-#if 0
-	memset(notes+index, 0, sizeof(notes[0]));
-	notes[index].keys[0] = umidi20_event_get_key(event);
-	notes[index].duration[0] = 1;
-#endif
+	int vel;
 
 	if (umidi20_event_get_control_address(event) == 0x40) {
 
@@ -565,17 +629,44 @@ MidiEventCallback(uint8_t device_no, void *arg, struct umidi20_event *event)
 
 	} else if (umidi20_event_is_key_start(event)) {
 
-		pos = umidi20_event_get_key(event) - C3;
+		pos = umidi20_event_get_key(event) & 0x7F;
+		vel = umidi20_event_get_velocity(event);
 
-		if (MidiEventHandleJump(mw, pos) == 0) {
-			MidiEventHandleKeyPress(mw,
-				umidi20_event_get_key(event),
-				umidi20_event_get_velocity(event));
+		if (mw->main_sc.is_record_off == 0) {
+			if (mw->main_sc.ScNumInputEvents < MPP_MAX_QUEUE) {
+				mw->main_sc.ScInputEvents[mw->main_sc.ScNumInputEvents] = pos;
+				mw->main_sc.ScNumInputEvents++;
+			}
 		}
 
+		if (mw->main_sc.is_pass_thru_off != 0) {
+			if (MidiEventHandleJump(mw, pos - mw->main_sc.ScCmdKey) == 0) {
+				MidiEventHandleKeyPress(mw, pos, vel);
+			}
+		} else {
+			mid_set_position(d, umidi20_get_curr_position() + 1);
+
+			mid_set_channel(d, 0);
+
+			mid_key_press(d, pos, vel, 0);
+
+			mw->main_sc.ScPressed[pos] = 1;
+		}
 	} else if (umidi20_event_is_key_end(event)) {
-		MidiEventHandleKeyRelease(mw,
-			umidi20_event_get_key(event));
+
+		pos = umidi20_event_get_key(event) & 0x7F;
+
+		if (mw->main_sc.is_pass_thru_off != 0) {
+			MidiEventHandleKeyRelease(mw, pos);
+		} else {
+			mid_set_position(d, umidi20_get_curr_position() + 1);
+
+			mid_set_channel(d, 0);
+
+			mid_key_press(d, pos, 0, 0);
+
+			mw->main_sc.ScPressed[pos] = 0;
+		}
 	}
 }
 
@@ -584,11 +675,8 @@ MppMainWindow :: MidiInit(void)
 {
 	struct umidi20_config cfg;
 
-	memset(&main_sc, 0, sizeof(main_sc));
-
-	memset(&mid_data, 0, sizeof(mid_data));
-
-	umidi20_mutex_init(&mtx);
+	handle_record();
+	handle_pass_thru();
 
 	umidi20_init();
 
