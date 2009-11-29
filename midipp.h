@@ -55,7 +55,7 @@ struct MppNote {
 struct MppSoftc {
 	struct MppNote ScNotes[MPP_MAX_LINES][MPP_MAX_NOTES];
 
-	uint32_t ScTrackInvMask;
+	uint32_t ScTrackMask;
 	uint32_t ScPosition;
 
 	uint16_t ScJumpNext[MPP_MAX_LINES];

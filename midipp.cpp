@@ -648,8 +648,8 @@ MppMainWindow :: handle_track_N(int index)
 	uint32_t val;
 
 	pthread_mutex_lock(&mtx);
-	main_sc.ScTrackInvMask ^= mask;
-	val = main_sc.ScTrackInvMask & mask;
+	main_sc.ScTrackMask ^= mask;
+	val = main_sc.ScTrackMask & mask;
 	pthread_mutex_unlock(&mtx);
 
 	if (val)
@@ -1133,6 +1133,10 @@ MppMainWindow :: handle_key_press(int in_key, int vel)
 			out_key = pn->key + (in_key - C4);
 			out_key &= 127;
 
+			/* check if channel is masked */
+			if (main_sc.ScTrackMask & (1UL << pn->channel))
+				continue;
+
 			mid_set_channel(d, pn->channel);
 
 			if (check_playback()) {
@@ -1257,10 +1261,13 @@ MppMainWindow :: MidiInit(void)
 {
 	struct umidi20_config cfg;
 
+	main_sc.ScTrackMask ^= 0x0F;
+
 	handle_track_N(0);
 	handle_track_N(1);
 	handle_track_N(2);
 	handle_track_N(3);
+
 	handle_midi_record();
 	handle_midi_play();
 	handle_note_record();
