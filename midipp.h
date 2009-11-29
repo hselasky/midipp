@@ -56,6 +56,7 @@ struct MppSoftc {
 	struct MppNote ScNotes[MPP_MAX_LINES][MPP_MAX_NOTES];
 
 	uint32_t ScTrackInvMask;
+	uint32_t ScPosition;
 
 	uint16_t ScJumpNext[MPP_MAX_LINES];
 	uint16_t ScJumpTable[MPP_MAX_LABELS];
@@ -69,7 +70,9 @@ struct MppSoftc {
 
 	uint8_t is_note_record_off;
 	uint8_t is_midi_record_off;
+	uint8_t is_midi_play_off;
 	uint8_t is_midi_pass_thru_off;
+	uint8_t is_midi_triggered;
 };
 
 class MppMainWindow : public QWidget
@@ -82,6 +85,13 @@ class MppMainWindow : public QWidget
 
 	void MidiInit(void);
 	void MidiUnInit(void);
+	void handle_key_press(int in_key, int vel);
+	void handle_key_release(int in_key);
+	void handle_stop(void);
+
+	uint8_t handle_jump(int pos);
+	uint8_t check_record(void);
+	uint8_t check_playback(void);
 
 	struct MppSoftc main_sc;
 
@@ -138,6 +148,7 @@ class MppMainWindow : public QWidget
 
 	QLabel	*lbl_note_record;
 	QLabel	*lbl_midi_record;
+	QLabel	*lbl_midi_play;
 	QLabel	*lbl_midi_pass_thru;
 
 	QPushButton *but_jump[4];
@@ -182,6 +193,7 @@ class MppMainWindow : public QWidget
 	void handle_compile();
 	void handle_note_record();
 	void handle_midi_record();
+	void handle_midi_play();
 	void handle_play_press();
 	void handle_play_release();
 	void handle_watchdog();
@@ -193,6 +205,8 @@ class MppMainWindow : public QWidget
 	void handle_midi_file_open();
 	void handle_midi_file_save();
 	void handle_midi_file_save_as();
+	void handle_rewind();
+	void handle_play_trigger();
 
  protected:
 	void keyPressEvent(QKeyEvent *event);

@@ -32,10 +32,45 @@
 
 #include <err.h>
 
-static void MidiEventHandleKeyPress(MppMainWindow *mw, int in_key, int vel);
-static void MidiEventHandleKeyRelease(MppMainWindow *mw, int in_key);
-static void MidiEventHandleStop(MppMainWindow *mw);
-static uint8_t MidiEventHandleJump(MppMainWindow *mw, int);
+static char *
+MppQStringToAscii(QString s)
+{
+        QChar *ch;
+	char *ptr;
+	int len;
+	int c;
+
+	ch = s.data();
+	if (ch == NULL)
+		return (NULL);
+
+	len = 1;
+
+	while (1) {
+		c = ch->toAscii();
+		if (c == 0)
+			break;
+		len++;
+		ch++;
+	}
+
+	ptr = (char *)malloc(len);
+	if (ptr == NULL)
+		return (NULL);
+
+	ch = s.data();
+	len = 0;
+
+	while (1) {
+		c = ch->toAscii();
+		ptr[len] = c;
+		if (c == 0)
+			break;
+		len++;
+		ch++;
+	}
+	return (ptr);
+}
 
 /* XXX TODO: Error handling */
 
@@ -338,6 +373,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	memset(&mid_data, 0, sizeof(mid_data));
 
+	CurrNoteFileName = NULL;
+	CurrMidiFileName = NULL;
+	song = NULL;
+	track = NULL;
+
 	umidi20_mutex_init(&mtx);
 
 	/* Setup GUI */
@@ -354,7 +394,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	/* Editor */
 
 	main_edit = new QTextEdit();
-	main_edit->setText(tr("/* Copyright (c) 2009 Hans Petter Selasky. All rights reserved. */"));
+	main_edit->setText(tr("/* Copyright (c) 2009 Hans Petter Selasky. All rights reserved. */\n\nC3\n"));
 
 	main_gl->addWidget(main_edit,0,0,1,2);
 
@@ -416,6 +456,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_note_record = new QLabel(QString());
 	lbl_midi_record = new QLabel(QString());
 	lbl_midi_pass_thru = new QLabel(QString());
+	lbl_midi_play = new QLabel(QString());
 
 	but_jump[0] = new QPushButton(tr("J0"));
 	but_jump[1] = new QPushButton(tr("J1"));
@@ -436,13 +477,14 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_compile = new QPushButton(tr("Compile"));
 	but_note_record = new QPushButton(tr("Notes"));
 	but_midi_record = new QPushButton(tr("MIDI"));
-	but_midi_play = new QPushButton(tr("Start"));
+
+	but_midi_play = new QPushButton(tr("MIDI"));
 	but_midi_trigger = new QPushButton(tr("Trigger"));
 	but_midi_rewind = new QPushButton(tr("Rewind"));
 
 	but_play = new QPushButton(tr(" \nPlay\n "));
 
-	lbl_volume = new QLabel(tr("Volume"));
+	lbl_volume = new QLabel(tr("Volume (0-127)"));
 	spn_volume = new QSpinBox();
 	spn_volume->setMaximum(127);
 	spn_volume->setMinimum(0);
@@ -474,7 +516,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	n = 0;
 
 	tab_play_gl->addWidget(lbl_playback, n++, 0, 1, 4);
-	tab_play_gl->addWidget(but_midi_play, n++, 0, 1, 4);
+
+	tab_play_gl->addWidget(lbl_midi_play, n, 3, 1, 1);
+	tab_play_gl->addWidget(but_midi_play, n++, 0, 1, 3);
 	tab_play_gl->addWidget(but_midi_trigger, n++, 0, 1, 4);
 	tab_play_gl->addWidget(but_midi_rewind, n++, 0, 1, 4);
 
@@ -532,6 +576,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_compile, SIGNAL(pressed()), this, SLOT(handle_compile()));
 	connect(but_note_record, SIGNAL(pressed()), this, SLOT(handle_note_record()));
 	connect(but_midi_record, SIGNAL(pressed()), this, SLOT(handle_midi_record()));
+	connect(but_midi_play, SIGNAL(pressed()), this, SLOT(handle_midi_play()));
 	connect(but_play, SIGNAL(pressed()), this, SLOT(handle_play_press()));
 	connect(but_play, SIGNAL(released()), this, SLOT(handle_play_release()));
 	connect(but_quit, SIGNAL(pressed()), this, SLOT(handle_quit()));
@@ -545,6 +590,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_midi_file_open, SIGNAL(pressed()), this, SLOT(handle_midi_file_open()));
 	connect(but_midi_file_save, SIGNAL(pressed()), this, SLOT(handle_midi_file_save()));
 	connect(but_midi_file_save_as, SIGNAL(pressed()), this, SLOT(handle_midi_file_save_as()));
+
+	connect(but_midi_trigger, SIGNAL(pressed()), this, SLOT(handle_play_trigger()));
+	connect(but_midi_rewind, SIGNAL(pressed()), this, SLOT(handle_rewind()));
 
 	MidiInit();
 
@@ -565,7 +613,7 @@ void
 MppMainWindow :: handle_jump_N(int index)
 {
 	pthread_mutex_lock(&mtx);
-	MidiEventHandleJump(this, index);
+	handle_jump(index);
 	pthread_mutex_unlock(&mtx);
 }
 
@@ -671,7 +719,7 @@ void
 MppMainWindow :: handle_compile()
 {
 	pthread_mutex_lock(&mtx);
-	MidiEventHandleStop(this);
+	handle_stop();
 	MppParse(&main_sc, main_edit->toPlainText());
 	pthread_mutex_unlock(&mtx);
 }
@@ -690,10 +738,27 @@ MppMainWindow :: handle_note_record()
 }
 
 void
+MppMainWindow :: handle_midi_play()
+{
+	pthread_mutex_lock(&mtx);
+	main_sc.is_midi_play_off = !main_sc.is_midi_play_off;
+	main_sc.is_midi_triggered = 0;
+	pthread_mutex_unlock(&mtx);
+
+	if (main_sc.is_midi_play_off == 0)
+		lbl_midi_play->setText(tr("ON"));
+	else {
+		handle_rewind();
+		lbl_midi_play->setText(tr("OFF"));
+	}
+}
+
+void
 MppMainWindow :: handle_midi_record()
 {
 	pthread_mutex_lock(&mtx);
 	main_sc.is_midi_record_off = !main_sc.is_midi_record_off;
+	main_sc.is_midi_triggered = 0;
 	pthread_mutex_unlock(&mtx);
 
 	if (main_sc.is_midi_record_off == 0)
@@ -702,6 +767,7 @@ MppMainWindow :: handle_midi_record()
 		lbl_midi_record->setText(tr("OFF"));
 }
 
+
 void
 MppMainWindow :: handle_play_press()
 {
@@ -709,7 +775,7 @@ MppMainWindow :: handle_play_press()
 	int key = spn_play_key->value();
 
 	pthread_mutex_lock(&mtx);
-	MidiEventHandleKeyPress(this, key, vel);
+	handle_key_press(key, vel);
 	pthread_mutex_unlock(&mtx);
 }
 
@@ -719,7 +785,7 @@ MppMainWindow :: handle_play_release()
 	int key = spn_play_key->value();
 
 	pthread_mutex_lock(&mtx);
-	MidiEventHandleKeyRelease(this, key);
+	handle_key_release(key);
 	pthread_mutex_unlock(&mtx);
 }
 
@@ -820,68 +886,246 @@ MppMainWindow :: handle_note_file_save_as()
 void
 MppMainWindow :: handle_midi_file_new()
 {
+	if (CurrMidiFileName != NULL) {
+		delete (CurrMidiFileName);
+		CurrMidiFileName = NULL;
+	}
+
+	handle_rewind();
+
+	if (track != NULL) {
+		pthread_mutex_lock(&mtx);
+		umidi20_event_queue_drain(&(track->queue));
+		pthread_mutex_unlock(&mtx);
+	}
 }
 
 void
 MppMainWindow :: handle_midi_file_open()
 {
+	QFileDialog *diag = 
+	  new QFileDialog(this, tr("Select Midi File"), 
+		QString(), QString("MIDI file (*.mid)"));
+	struct umidi20_song *song_copy;
+	struct umidi20_track *track_copy;
+	struct umidi20_event *event;
+	struct umidi20_event *event_copy;
+	const char *filename;
+
+	diag->setAcceptMode(QFileDialog::AcceptOpen);
+	diag->setFileMode(QFileDialog::ExistingFile);
+
+	handle_midi_file_new();
+
+	if (diag->exec()) {
+		CurrMidiFileName = new QString(diag->selectedFiles()[0]);
+
+		filename = MppQStringToAscii(*CurrMidiFileName);
+
+		if (filename != NULL) {
+			song_copy = umidi20_load_file(&mtx, filename);
+			free((void *)filename);
+			if (song_copy != NULL) {
+				goto load_file;
+			}
+		}
+	}
+
+	goto done;
+
+load_file:
+
+	printf("format %d\n", song_copy->midi_file_format);
+	printf("resolution %d\n", song_copy->midi_resolution);
+	printf("division_type %d\n", song_copy->midi_division_type);
+
+	UMIDI20_QUEUE_FOREACH(track_copy, &(song_copy->queue)) {
+
+	    printf("track %p\n", track_copy);
+
+	    UMIDI20_QUEUE_FOREACH(event, &(track_copy->queue)) {
+
+	        if (umidi20_event_is_voice(event) ||
+		    umidi20_event_is_sysex(event)) {
+
+		    event_copy = umidi20_event_copy(event, 0);
+
+		    if (event_copy != NULL) {
+		        umidi20_event_queue_insert
+			  (&(track->queue), event_copy, 
+			   UMIDI20_CACHE_INPUT);
+		    }
+		}
+	    }
+	}
+
+	umidi20_song_free(song_copy);
+
+done:
+	delete diag;
+	return;
 }
 
 void
 MppMainWindow :: handle_midi_file_save()
 {
+	const char *filename;
+
+	if (CurrMidiFileName != NULL) {
+
+		filename = MppQStringToAscii(*CurrMidiFileName);
+
+		if (filename != NULL) {
+			pthread_mutex_lock(&mtx);
+			umidi20_save_file(song, filename);
+			pthread_mutex_unlock(&mtx);
+			free((void *)filename);
+		}
+	} else {
+		handle_midi_file_save_as();
+	}
 }
 
 void
 MppMainWindow :: handle_midi_file_save_as()
 {
-}
+	QFileDialog *diag = 
+	  new QFileDialog(this, tr("Select MIDI File"), 
+		QString(), QString("MIDI file (*.mid)"));
 
-static void
-MidiEventHandleStop(MppMainWindow *mw)
-{
-	struct mid_data *d = &mw->mid_data;
-	uint8_t x;
+	diag->setAcceptMode(QFileDialog::AcceptSave);
+	diag->setFileMode(QFileDialog::AnyFile);
 
-	mid_set_position(d, umidi20_get_curr_position() + 1);
+	if (diag->exec()) {
+		if (CurrMidiFileName != NULL)
+			delete (CurrMidiFileName);
 
-	for (x = 0; x != 128; x++) {
-		if (mw->main_sc.ScPressed[x] != 0) {
-			mw->main_sc.ScPressed[x] = 0;
-			mid_key_press(d, x, 0, 0);
-		}
+		CurrMidiFileName = new QString(diag->selectedFiles()[0]);
+
+		if (CurrMidiFileName != NULL)
+			handle_midi_file_save();
 	}
+
+	delete diag;
 }
 
-static uint8_t
-MidiEventHandleJump(MppMainWindow *mw, int pos)
+void
+MppMainWindow :: handle_rewind()
 {
-	if ((pos < 0) || (pos > 3) || (mw->main_sc.ScJumpTable[pos] == 0))
-		return (0);
+	pthread_mutex_lock(&mtx);
 
-	mw->main_sc.ScCurrPos = mw->main_sc.ScJumpTable[pos] - 1;
+	main_sc.is_midi_triggered = 0;
 
-	MidiEventHandleStop(mw);
+	if (song != NULL) {
+		umidi20_song_stop(song, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
+		umidi20_song_start(song, 0x40000000, 0x80000000, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
+		main_sc.ScPosition = umidi20_get_curr_position();
+	}
+
+	pthread_mutex_unlock(&mtx);
+}
+
+void
+MppMainWindow :: handle_play_trigger()
+{
+	pthread_mutex_lock(&mtx);
+
+	if (main_sc.is_midi_triggered == 0) {
+		if (main_sc.is_midi_play_off == 0) {
+			umidi20_song_stop(song, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
+			umidi20_song_start(song, 0, 0x80000000, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
+			main_sc.ScPosition = umidi20_get_curr_position();
+
+		} else {
+			umidi20_song_stop(song, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
+			umidi20_song_start(song, 0x40000000, 0x80000000, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
+			main_sc.ScPosition = umidi20_get_curr_position();
+
+		}
+		main_sc.is_midi_triggered = 1;
+	}
+
+	pthread_mutex_unlock(&mtx);
+}
+
+uint8_t
+MppMainWindow :: check_playback(void)
+{
+	struct mid_data *d = &mid_data;
+
+	handle_play_trigger();
+
+	mid_set_position(d, umidi20_get_curr_position() - main_sc.ScPosition + 1);
+	mid_set_device_no(d, 0);
 
 	return (1);
 }
 
-static void
-MidiEventHandleKeyPress(MppMainWindow *mw, int in_key, int vel)
+uint8_t
+MppMainWindow :: check_record(void)
 {
-	struct mid_data *d = &mw->mid_data;
+	struct mid_data *d = &mid_data;
+
+	if (main_sc.is_midi_record_off)
+		return (0);
+
+	handle_play_trigger();
+
+	mid_set_position(d, umidi20_get_curr_position() - main_sc.ScPosition + 1);
+	mid_set_device_no(d, 0xFF);
+
+	return (1);
+}
+
+void
+MppMainWindow :: handle_stop(void)
+{
+	struct mid_data *d = &mid_data;
+	uint8_t x;
+
+	for (x = 0; x != 128; x++) {
+		if (main_sc.ScPressed[x] != 0) {
+			main_sc.ScPressed[x] = 0;
+
+			if (check_playback()) {
+				mid_key_press(d, x, 0, 0);
+			}
+
+			if (check_record()) {
+				mid_key_press(d, x, 0, 0);
+			}
+
+		}
+	}
+}
+
+uint8_t
+MppMainWindow :: handle_jump(int pos)
+{
+	if ((pos < 0) || (pos > 3) || (main_sc.ScJumpTable[pos] == 0))
+		return (0);
+
+	main_sc.ScCurrPos = main_sc.ScJumpTable[pos] - 1;
+
+	handle_stop();
+
+	return (1);
+}
+
+void
+MppMainWindow :: handle_key_press(int in_key, int vel)
+{
+	struct mid_data *d = &mid_data;
 	struct MppNote *pn;
 	uint16_t pos;
 	uint8_t x;
 	uint8_t out_key;
 
-	mid_set_position(d, umidi20_get_curr_position() + 1);
-
-	pos = mw->main_sc.ScJumpNext[mw->main_sc.ScCurrPos];
+	pos = main_sc.ScJumpNext[main_sc.ScCurrPos];
 	if (pos != 0)
-		mw->main_sc.ScCurrPos = pos - 1;
+		main_sc.ScCurrPos = pos - 1;
 
-	pn = &mw->main_sc.ScNotes[mw->main_sc.ScCurrPos][0];
+	pn = &main_sc.ScNotes[main_sc.ScCurrPos][0];
 
 	for (x = 0; x != MPP_MAX_NOTES; x++) {
 
@@ -891,89 +1135,119 @@ MidiEventHandleKeyPress(MppMainWindow *mw, int in_key, int vel)
 
 			mid_set_channel(d, pn->channel);
 
-			mid_key_press(d, out_key, vel, 0);
+			if (check_playback()) {
+				mid_key_press(d, out_key, vel, 0);
+			}
 
-			mw->main_sc.ScPressed[out_key] = pn->dur;
+			if (check_record()) {
+				mid_key_press(d, out_key, vel, 0);
+			}
+
+			main_sc.ScPressed[out_key] = pn->dur;
 		}
 		pn++;
 	}
 
-	mw->main_sc.ScCurrPos++;
+	main_sc.ScCurrPos++;
 
-	if (mw->main_sc.ScCurrPos >= mw->main_sc.ScLinesMax)
-		mw->main_sc.ScCurrPos = 0;
+	if (main_sc.ScCurrPos >= main_sc.ScLinesMax)
+		main_sc.ScCurrPos = 0;
 }
 
-static void
-MidiEventHandleKeyRelease(MppMainWindow *mw, int in_key)
+void
+MppMainWindow :: handle_key_release(int in_key)
 {
-	struct mid_data *d = &mw->mid_data;
+	struct mid_data *d = &mid_data;
 	uint8_t x;
 
-	mid_set_position(d, umidi20_get_curr_position() + 1);
-
 	for (x = 0; x != 128; x++) {
-		if (mw->main_sc.ScPressed[x] == 1) {
-			mid_key_press(d, x, 0, 0);
+		if (main_sc.ScPressed[x] == 1) {
+			if (check_playback()) {
+				mid_key_press(d, x, 0, 0);
+			}
+			if (check_record()) {
+				mid_key_press(d, x, 0, 0);
+			}
 		}
 
-		if (mw->main_sc.ScPressed[x] != 0)
-			mw->main_sc.ScPressed[x] --;
+		if (main_sc.ScPressed[x] != 0)
+			main_sc.ScPressed[x] --;
 	}
 }
 
 static void
-MidiEventCallback(uint8_t device_no, void *arg, struct umidi20_event *event)
+MidiEventCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uint8_t *drop)
 {
 	MppMainWindow *mw = (MppMainWindow *)arg;
 	struct mid_data *d = &mw->mid_data;
-	int pos;
+	int key;
 	int vel;
+
+	*drop = 1;
 
 	if (umidi20_event_get_control_address(event) == 0x40) {
 
-		mid_set_position(d, umidi20_get_curr_position() + 1);
-		mid_pedal(d, umidi20_event_get_control_value(event));
+		mid_set_channel(d, 0);
+
+		if (mw->check_playback()) {
+			mid_pedal(d, umidi20_event_get_control_value(event));
+		}
+
+		if (mw->check_record()) {
+			mid_pedal(d, umidi20_event_get_control_value(event));
+		}
 
 	} else if (umidi20_event_is_key_start(event)) {
 
-		pos = umidi20_event_get_key(event) & 0x7F;
+		key = umidi20_event_get_key(event) & 0x7F;
 		vel = umidi20_event_get_velocity(event);
 
 		if (mw->main_sc.is_note_record_off == 0) {
 			if (mw->main_sc.ScNumInputEvents < MPP_MAX_QUEUE) {
-				mw->main_sc.ScInputEvents[mw->main_sc.ScNumInputEvents] = pos;
+				mw->main_sc.ScInputEvents[mw->main_sc.ScNumInputEvents] = key;
 				mw->main_sc.ScNumInputEvents++;
 			}
 		}
 
 		if (mw->main_sc.is_midi_pass_thru_off != 0) {
-			if (MidiEventHandleJump(mw, pos - mw->main_sc.ScCmdKey) == 0) {
-				MidiEventHandleKeyPress(mw, pos, vel);
+			if (mw->handle_jump(key - mw->main_sc.ScCmdKey) == 0) {
+				mw->handle_key_press(key, vel);
 			}
 		} else {
-			mid_set_position(d, umidi20_get_curr_position() + 1);
 
 			mid_set_channel(d, 0);
 
-			mid_key_press(d, pos, vel, 0);
+			if (mw->check_playback()) {
+				mid_key_press(d, key, vel, 0);
+			}
 
-			mw->main_sc.ScPressed[pos] = 1;
+			if (mw->check_record()) {
+				mid_key_press(d, key, vel, 0);
+			}
+
+			mw->main_sc.ScPressed[key] = 1;
 		}
 	} else if (umidi20_event_is_key_end(event)) {
 
-		pos = umidi20_event_get_key(event) & 0x7F;
+		key = umidi20_event_get_key(event) & 0x7F;
 
 		if (mw->main_sc.is_midi_pass_thru_off != 0) {
-			MidiEventHandleKeyRelease(mw, pos);
+
+			mw->handle_key_release(key);
+
 		} else {
-			mid_set_position(d, umidi20_get_curr_position() + 1);
 
 			mid_set_channel(d, 0);
 
-			mid_key_press(d, pos, 0, 0);
+			if (mw->check_playback()) {
+				mid_key_press(d, key, 0, 0);
+			}
 
-			mw->main_sc.ScPressed[pos] = 0;
+			if (mw->check_record()) {
+				mid_key_press(d, key, 0, 0);
+			}
+
+			mw->main_sc.ScPressed[key] = 0;
 		}
 	}
 }
@@ -988,6 +1262,7 @@ MppMainWindow :: MidiInit(void)
 	handle_track_N(2);
 	handle_track_N(3);
 	handle_midi_record();
+	handle_midi_play();
 	handle_note_record();
 	handle_pass_thru();
 
@@ -1023,24 +1298,20 @@ MppMainWindow :: MidiInit(void)
 
 	track = umidi20_track_alloc();
 
-	if (song == NULL) {
+	if (song == NULL || track == NULL) {
 		pthread_mutex_unlock(&mtx);
-		err(1, "Could not allocate new song\n");
+		err(1, "Could not allocate new song or track\n");
 	}
 	umidi20_song_track_add(song, NULL, track, 0);
 
 	umidi20_song_set_record_track(song, track);
 
-	/* get the line up! */
+	/* get the MIDI up! */
 
 	mid_init(&mid_data, track);
 
-	mid_delay_all(&mid_data, 1);
-
-	mid_set_device_no(&mid_data, 0);
-
-	umidi20_song_start(song, 0, 0x80000000,
-		UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
+	umidi20_song_start(song, 0x40000000, 0x80000000, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
+	main_sc.ScPosition = umidi20_get_curr_position();
 
 	pthread_mutex_unlock(&mtx);
 }
@@ -1048,13 +1319,15 @@ MppMainWindow :: MidiInit(void)
 void
 MppMainWindow :: MidiUnInit(void)
 {
+	handle_rewind();
+
 	pthread_mutex_lock(&mtx);
 
-	umidi20_song_stop(song, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
-
-	mid_dump(&mid_data);
-
 	umidi20_song_free(song);
+
+	song = NULL;
+
+	umidi20_song_stop(song, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
 
 	pthread_mutex_unlock(&mtx);
 }
