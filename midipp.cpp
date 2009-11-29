@@ -389,7 +389,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	watchdog = new QTimer(this);
 	connect(watchdog, SIGNAL(timeout()), this, SLOT(handle_watchdog()));
-	watchdog->start(250);
 
 	/* Editor */
 
@@ -597,6 +596,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	MidiInit();
 
 	setWindowTitle(tr("MIDI Piano Player"));
+
+	watchdog->start(250);
 }
 
 MppMainWindow :: ~MppMainWindow()
@@ -923,8 +924,12 @@ MppMainWindow :: handle_midi_file_open()
 		filename = MppQStringToAscii(*CurrMidiFileName);
 
 		if (filename != NULL) {
+			pthread_mutex_lock(&mtx);
 			song_copy = umidi20_load_file(&mtx, filename);
+			pthread_mutex_unlock(&mtx);
+
 			free((void *)filename);
+
 			if (song_copy != NULL) {
 				goto load_file;
 			}
@@ -938,6 +943,8 @@ load_file:
 	printf("format %d\n", song_copy->midi_file_format);
 	printf("resolution %d\n", song_copy->midi_resolution);
 	printf("division_type %d\n", song_copy->midi_division_type);
+
+	pthread_mutex_lock(&mtx);
 
 	UMIDI20_QUEUE_FOREACH(track_copy, &(song_copy->queue)) {
 
@@ -961,9 +968,10 @@ load_file:
 
 	umidi20_song_free(song_copy);
 
+	pthread_mutex_unlock(&mtx);
+
 done:
 	delete diag;
-	return;
 }
 
 void
@@ -1158,6 +1166,7 @@ MppMainWindow :: handle_key_press(int in_key, int vel)
 		main_sc.ScCurrPos = 0;
 }
 
+/* must be called locked */
 void
 MppMainWindow :: handle_key_release(int in_key)
 {
