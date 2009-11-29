@@ -297,6 +297,8 @@ done:
 MppMainWindow :: MppMainWindow(QWidget *parent)
   : QWidget(parent)
 {
+	int n;
+
 	/* set memory default */
 
 	memset(&main_sc, 0, sizeof(main_sc));
@@ -320,48 +322,90 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	main_edit = new QTextEdit();
 
-	main_gl->addWidget(main_edit,0,0,1,3);
+	main_gl->addWidget(main_edit,0,0,1,2);
 
 	/* Tabs */
 
-	main_gl->addWidget(main_tw,0,3,1,1);
+	main_gl->addWidget(main_tw,0,2,1,1);
 
 	tab_file_wg = new QWidget();
-	tab_edit_wg = new QWidget();
+	tab_play_wg = new QWidget();
 
 	tab_file_gl = new QGridLayout(tab_file_wg);
-	tab_edit_gl = new QGridLayout(tab_edit_wg);
+	tab_play_gl = new QGridLayout(tab_play_wg);
 
 	main_tw->addTab(tab_file_wg, tr("File"));
-	main_tw->addTab(tab_edit_wg, tr("Edit"));
+	main_tw->addTab(tab_play_wg, tr("Play"));
 
-	/* File Tab */
+	/* Note File Tab */
 
-	but_new_file = new QPushButton(tr("New File"));
-	but_open_file = new QPushButton(tr("Open File"));
-	but_save_file = new QPushButton(tr("Save File"));
-	but_save_file_as = new QPushButton(tr("Save File As"));
-	but_print_file = new QPushButton(tr("Print"));
+	lbl_note_file = new QLabel(tr("- Note file -"));
+	lbl_note_file->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+	lbl_midi_file = new QLabel(tr("- MIDI file -"));
+	lbl_midi_file->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+	but_note_file_new = new QPushButton(tr("New"));
+	but_note_file_open = new QPushButton(tr("Open"));
+	but_note_file_save = new QPushButton(tr("Save"));
+	but_note_file_save_as = new QPushButton(tr("Save As"));
+	but_note_file_print = new QPushButton(tr("Print"));
 	but_configure = new QPushButton(tr("Configure"));
 	but_quit = new QPushButton(tr("Quit"));
 
-	tab_file_gl->addWidget(but_new_file, 0, 0, 1, 4);
-	tab_file_gl->addWidget(but_open_file, 1, 0, 1, 4);
-	tab_file_gl->addWidget(but_save_file, 2, 0, 1, 4);
-	tab_file_gl->addWidget(but_save_file_as, 3, 0, 1, 4);
-	tab_file_gl->addWidget(but_print_file, 4, 0, 1, 4);
-	tab_file_gl->addWidget(but_configure, 5, 0, 1, 4);
-	tab_file_gl->addWidget(but_quit, 6, 0, 1, 4);
+	but_midi_file_new = new QPushButton(tr("New"));
+	but_midi_file_open = new QPushButton(tr("Open"));
+	but_midi_file_save = new QPushButton(tr("Save"));
+	but_midi_file_save_as = new QPushButton(tr("Save As"));
 
-	/* Edit Tab */
+	n = 0;
 
-	but_jump_0 = new QPushButton(tr("Jump 0"));
-	but_jump_1 = new QPushButton(tr("Jump 1"));
-	but_jump_2 = new QPushButton(tr("Jump 2"));
-	but_jump_3 = new QPushButton(tr("Jump 3"));
-	but_pass_thru = new QPushButton(QString());
+	tab_file_gl->addWidget(lbl_note_file, n++, 0, 1, 4);
+	tab_file_gl->addWidget(but_note_file_new, n++, 0, 1, 4);
+	tab_file_gl->addWidget(but_note_file_open, n++, 0, 1, 4);
+	tab_file_gl->addWidget(but_note_file_save, n++, 0, 1, 4);
+	tab_file_gl->addWidget(but_note_file_save_as, n++, 0, 1, 4);
+	tab_file_gl->addWidget(but_note_file_print, n++, 0, 1, 4);
+	tab_file_gl->addWidget(but_configure, n++, 0, 1, 8);
+	tab_file_gl->addWidget(but_quit, n++, 0, 1, 8);
+
+	n = 0;
+
+	tab_file_gl->addWidget(lbl_midi_file, n++, 4, 1, 4);
+	tab_file_gl->addWidget(but_midi_file_new, n++, 4, 1, 4);
+	tab_file_gl->addWidget(but_midi_file_open, n++, 4, 1, 4);
+	tab_file_gl->addWidget(but_midi_file_save, n++, 4, 1, 4);
+	tab_file_gl->addWidget(but_midi_file_save_as, n++, 4, 1, 4);
+
+	/* Play Tab */
+
+	lbl_note_record = new QLabel(QString());
+	lbl_midi_record = new QLabel(QString());
+	lbl_midi_pass_thru = new QLabel(QString());
+
+	but_jump[0] = new QPushButton(tr("J0"));
+	but_jump[1] = new QPushButton(tr("J1"));
+	but_jump[2] = new QPushButton(tr("J2"));
+	but_jump[3] = new QPushButton(tr("J3"));
+
+	but_track[0] = new QPushButton(tr("T0"));
+	but_track[1] = new QPushButton(tr("T1"));
+	but_track[2] = new QPushButton(tr("T2"));
+	but_track[3] = new QPushButton(tr("T3"));
+
+	lbl_track[0] = new QLabel(QString());
+	lbl_track[1] = new QLabel(QString());
+	lbl_track[2] = new QLabel(QString());
+	lbl_track[3] = new QLabel(QString());
+
+	but_midi_pass_thru = new QPushButton(tr("Pass Thru"));
 	but_compile = new QPushButton(tr("Compile"));
-	but_record = new QPushButton(QString());
+	but_note_record = new QPushButton(tr("Notes"));
+	but_midi_record = new QPushButton(tr("MIDI"));
+	but_midi_play = new QPushButton(tr("Start"));
+	but_midi_trigger = new QPushButton(tr("Trigger"));
+	but_midi_rewind = new QPushButton(tr("Rewind"));
+
 	but_play = new QPushButton(tr(" \nPlay\n "));
 
 	lbl_volume = new QLabel(tr("Volume"));
@@ -384,30 +428,79 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_cmd_key->setMinimum(0);
 	spn_cmd_key->setValue(C3);
 
-	tab_edit_gl->addWidget(lbl_volume, 0, 0, 1, 3);
-	tab_edit_gl->addWidget(spn_volume, 0, 3, 1, 1);
-	tab_edit_gl->addWidget(lbl_play_key, 1, 0, 1, 3);
-	tab_edit_gl->addWidget(spn_play_key, 1, 3, 1, 1);
-	tab_edit_gl->addWidget(lbl_cmd_key, 2, 0, 1, 3);
-	tab_edit_gl->addWidget(spn_cmd_key, 2, 3, 1, 1);
-	tab_edit_gl->addWidget(but_jump_0, 3, 0, 1, 4);
-	tab_edit_gl->addWidget(but_jump_1, 4, 0, 1, 4);
-	tab_edit_gl->addWidget(but_jump_2, 5, 0, 1, 4);
-	tab_edit_gl->addWidget(but_jump_3, 6, 0, 1, 4);
-	tab_edit_gl->addWidget(but_pass_thru, 7, 0, 1, 4);
-	tab_edit_gl->addWidget(but_compile, 8, 0, 1, 4);
-	tab_edit_gl->addWidget(but_record, 9, 0, 1, 4);
-	tab_edit_gl->addWidget(but_play, 10, 0, 3, 4);
+	lbl_synth = new QLabel(tr("- Synth -"));
+	lbl_synth->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
-	connect(but_jump_0, SIGNAL(pressed()), this, SLOT(handle_jump_0()));
-	connect(but_jump_1, SIGNAL(pressed()), this, SLOT(handle_jump_1()));
-	connect(but_jump_2, SIGNAL(pressed()), this, SLOT(handle_jump_2()));
-	connect(but_jump_3, SIGNAL(pressed()), this, SLOT(handle_jump_3()));
-	connect(but_pass_thru, SIGNAL(pressed()), this, SLOT(handle_pass_thru()));
+	lbl_playback = new QLabel(tr("- Playback -"));
+	lbl_playback->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+	lbl_recording = new QLabel(tr("- Recording -"));
+	lbl_recording->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+	n = 0;
+
+	tab_play_gl->addWidget(lbl_playback, n++, 0, 1, 4);
+	tab_play_gl->addWidget(but_midi_play, n++, 0, 1, 4);
+	tab_play_gl->addWidget(but_midi_trigger, n++, 0, 1, 4);
+	tab_play_gl->addWidget(but_midi_rewind, n++, 0, 1, 4);
+
+	tab_play_gl->addWidget(lbl_recording, n++, 0, 1, 4);
+	tab_play_gl->addWidget(lbl_midi_pass_thru, n, 3, 1, 1);
+	tab_play_gl->addWidget(but_midi_pass_thru, n++, 0, 1, 3);
+
+	tab_play_gl->addWidget(lbl_note_record, n, 3, 1, 1);
+	tab_play_gl->addWidget(but_note_record, n++, 0, 1, 3);
+
+	tab_play_gl->addWidget(lbl_midi_record, n, 3, 1, 1);
+	tab_play_gl->addWidget(but_midi_record, n++, 0, 1, 3);
+
+	n = 0;
+
+	tab_play_gl->addWidget(lbl_synth, n++, 4, 1, 4);
+	tab_play_gl->addWidget(lbl_volume, n, 4, 1, 3);
+	tab_play_gl->addWidget(spn_volume, n++, 7, 1, 1);
+	tab_play_gl->addWidget(lbl_play_key, n, 4, 1, 3);
+	tab_play_gl->addWidget(spn_play_key, n++, 7, 1, 1);
+	tab_play_gl->addWidget(lbl_cmd_key, n, 4, 1, 3);
+	tab_play_gl->addWidget(spn_cmd_key, n++, 7, 1, 1);
+
+	tab_play_gl->addWidget(lbl_track[0], n, 7, 1, 1);
+	tab_play_gl->addWidget(but_track[0], n, 6, 1, 1);
+	tab_play_gl->addWidget(but_jump[0], n++, 4, 1, 2);
+
+	tab_play_gl->addWidget(lbl_track[1], n, 7, 1, 1);
+	tab_play_gl->addWidget(but_track[1], n, 6, 1, 1);
+	tab_play_gl->addWidget(but_jump[1], n++, 4, 1, 2);
+
+	tab_play_gl->addWidget(lbl_track[2], n, 7, 1, 1);
+	tab_play_gl->addWidget(but_track[2], n, 6, 1, 1);
+	tab_play_gl->addWidget(but_jump[2], n++, 4, 1, 2);
+
+	tab_play_gl->addWidget(lbl_track[3], n, 7, 1, 1);
+	tab_play_gl->addWidget(but_track[3], n, 6, 1, 1);
+	tab_play_gl->addWidget(but_jump[3], n++, 4, 1, 2);
+
+	tab_play_gl->addWidget(but_compile, n++, 4, 1, 4);
+	tab_play_gl->addWidget(but_play, n, 4, 3, 4);
+	n += 3;
+
+	connect(but_jump[0], SIGNAL(pressed()), this, SLOT(handle_jump_0()));
+	connect(but_jump[1], SIGNAL(pressed()), this, SLOT(handle_jump_1()));
+	connect(but_jump[2], SIGNAL(pressed()), this, SLOT(handle_jump_2()));
+	connect(but_jump[3], SIGNAL(pressed()), this, SLOT(handle_jump_3()));
+
+	connect(but_track[0], SIGNAL(pressed()), this, SLOT(handle_track_0()));
+	connect(but_track[1], SIGNAL(pressed()), this, SLOT(handle_track_1()));
+	connect(but_track[2], SIGNAL(pressed()), this, SLOT(handle_track_2()));
+	connect(but_track[3], SIGNAL(pressed()), this, SLOT(handle_track_3()));
+
+	connect(but_midi_pass_thru, SIGNAL(pressed()), this, SLOT(handle_pass_thru()));
 	connect(but_compile, SIGNAL(pressed()), this, SLOT(handle_compile()));
-	connect(but_record, SIGNAL(pressed()), this, SLOT(handle_record()));
+	connect(but_note_record, SIGNAL(pressed()), this, SLOT(handle_note_record()));
+	connect(but_midi_record, SIGNAL(pressed()), this, SLOT(handle_midi_record()));
 	connect(but_play, SIGNAL(pressed()), this, SLOT(handle_play_press()));
 	connect(but_play, SIGNAL(released()), this, SLOT(handle_play_release()));
+	connect(but_quit, SIGNAL(pressed()), this, SLOT(handle_quit()));
 
 	MidiInit();
 
@@ -425,35 +518,76 @@ MppMainWindow :: handle_quit()
 }
 
 void
-MppMainWindow :: handle_jump_0()
+MppMainWindow :: handle_jump_N(int index)
 {
 	pthread_mutex_lock(&mtx);
-	MidiEventHandleJump(this, 0);
+	MidiEventHandleJump(this, index);
 	pthread_mutex_unlock(&mtx);
+}
+
+void
+MppMainWindow :: handle_jump_0()
+{
+	handle_jump_N(0);
 }
 
 void
 MppMainWindow :: handle_jump_1()
 {
-	pthread_mutex_lock(&mtx);
-	MidiEventHandleJump(this, 1);
-	pthread_mutex_unlock(&mtx);
+	handle_jump_N(1);
 }
 
 void
 MppMainWindow :: handle_jump_2()
 {
-	pthread_mutex_lock(&mtx);
-	MidiEventHandleJump(this, 2);
-	pthread_mutex_unlock(&mtx);
+	handle_jump_N(2);
 }
 
 void
 MppMainWindow :: handle_jump_3()
 {
+	handle_jump_N(3);
+}
+
+void
+MppMainWindow :: handle_track_N(int index)
+{
+	uint32_t mask = (1UL << index);
+	uint32_t val;
+
 	pthread_mutex_lock(&mtx);
-	MidiEventHandleJump(this, 3);
+	main_sc.ScTrackInvMask ^= mask;
+	val = main_sc.ScTrackInvMask & mask;
 	pthread_mutex_unlock(&mtx);
+
+	if (val)
+		lbl_track[index]->setText(tr("OFF"));
+	else
+		lbl_track[index]->setText(tr("ON"));
+}
+
+void
+MppMainWindow :: handle_track_0()
+{
+	handle_track_N(0);
+}
+
+void
+MppMainWindow :: handle_track_1()
+{
+	handle_track_N(1);
+}
+
+void
+MppMainWindow :: handle_track_2()
+{
+	handle_track_N(2);
+}
+
+void
+MppMainWindow :: handle_track_3()
+{
+	handle_track_N(3);
 }
 
 void
@@ -480,13 +614,13 @@ void
 MppMainWindow :: handle_pass_thru()
 {
 	pthread_mutex_lock(&mtx);
-	main_sc.is_pass_thru_off = !main_sc.is_pass_thru_off;
+	main_sc.is_midi_pass_thru_off = !main_sc.is_midi_pass_thru_off;
 	pthread_mutex_unlock(&mtx);
 
-	if (main_sc.is_pass_thru_off == 0)
-		but_pass_thru->setText(tr("Disable Pass Thru"));
+	if (main_sc.is_midi_pass_thru_off == 0)
+		lbl_midi_pass_thru->setText(tr("ON"));
 	else
-		but_pass_thru->setText(tr("Enable Pass Thru"));
+		lbl_midi_pass_thru->setText(tr("OFF"));
 }
 
 void
@@ -499,16 +633,29 @@ MppMainWindow :: handle_compile()
 }
 
 void
-MppMainWindow :: handle_record()
+MppMainWindow :: handle_note_record()
 {
 	pthread_mutex_lock(&mtx);
-	main_sc.is_record_off = !main_sc.is_record_off;
+	main_sc.is_note_record_off = !main_sc.is_note_record_off;
 	pthread_mutex_unlock(&mtx);
 
-	if (main_sc.is_record_off == 0)
-		but_record->setText(tr("Disable Record"));
+	if (main_sc.is_note_record_off == 0)
+		lbl_note_record->setText(tr("ON"));
 	else
-		but_record->setText(tr("Enable Record"));
+		lbl_note_record->setText(tr("OFF"));
+}
+
+void
+MppMainWindow :: handle_midi_record()
+{
+	pthread_mutex_lock(&mtx);
+	main_sc.is_midi_record_off = !main_sc.is_midi_record_off;
+	pthread_mutex_unlock(&mtx);
+
+	if (main_sc.is_midi_record_off == 0)
+		lbl_midi_record->setText(tr("ON"));
+	else
+		lbl_midi_record->setText(tr("OFF"));
 }
 
 void
@@ -659,14 +806,14 @@ MidiEventCallback(uint8_t device_no, void *arg, struct umidi20_event *event)
 		pos = umidi20_event_get_key(event) & 0x7F;
 		vel = umidi20_event_get_velocity(event);
 
-		if (mw->main_sc.is_record_off == 0) {
+		if (mw->main_sc.is_note_record_off == 0) {
 			if (mw->main_sc.ScNumInputEvents < MPP_MAX_QUEUE) {
 				mw->main_sc.ScInputEvents[mw->main_sc.ScNumInputEvents] = pos;
 				mw->main_sc.ScNumInputEvents++;
 			}
 		}
 
-		if (mw->main_sc.is_pass_thru_off != 0) {
+		if (mw->main_sc.is_midi_pass_thru_off != 0) {
 			if (MidiEventHandleJump(mw, pos - mw->main_sc.ScCmdKey) == 0) {
 				MidiEventHandleKeyPress(mw, pos, vel);
 			}
@@ -683,7 +830,7 @@ MidiEventCallback(uint8_t device_no, void *arg, struct umidi20_event *event)
 
 		pos = umidi20_event_get_key(event) & 0x7F;
 
-		if (mw->main_sc.is_pass_thru_off != 0) {
+		if (mw->main_sc.is_midi_pass_thru_off != 0) {
 			MidiEventHandleKeyRelease(mw, pos);
 		} else {
 			mid_set_position(d, umidi20_get_curr_position() + 1);
@@ -702,7 +849,12 @@ MppMainWindow :: MidiInit(void)
 {
 	struct umidi20_config cfg;
 
-	handle_record();
+	handle_track_N(0);
+	handle_track_N(1);
+	handle_track_N(2);
+	handle_track_N(3);
+	handle_midi_record();
+	handle_note_record();
 	handle_pass_thru();
 
 	umidi20_init();

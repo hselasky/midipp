@@ -52,17 +52,22 @@ struct MppNote {
 
 struct MppSoftc {
 	struct MppNote ScNotes[MPP_MAX_LINES][MPP_MAX_NOTES];
+
+	uint32_t ScTrackInvMask;
+
 	uint16_t ScJumpNext[MPP_MAX_LINES];
 	uint16_t ScJumpTable[MPP_MAX_LABELS];
 	uint16_t ScLinesMax;
 	uint16_t ScCurrPos;
+
 	uint8_t ScPressed[128];
 	uint8_t ScInputEvents[MPP_MAX_QUEUE];
 	uint8_t ScNumInputEvents;
 	uint8_t ScCmdKey;
 
-	uint8_t is_record_off;
-	uint8_t is_pass_thru_off;
+	uint8_t is_note_record_off;
+	uint8_t is_midi_record_off;
+	uint8_t is_midi_pass_thru_off;
 };
 
 class MppMainWindow : public QWidget
@@ -87,23 +92,38 @@ class MppMainWindow : public QWidget
 
 	QTextEdit *main_edit;
 
-	/* tab <file> */
+	/* tab <File> */
 
 	QWidget *tab_file_wg;
 	QGridLayout *tab_file_gl;
+	QLabel *lbl_note_file;
+	QLabel *lbl_midi_file;
 
-	QPushButton *but_new_file;
-	QPushButton *but_open_file;
-	QPushButton *but_save_file;
-	QPushButton *but_save_file_as;
-	QPushButton *but_print_file;
+	/* tab <Note File> */
+
+	QPushButton *but_note_file_new;
+	QPushButton *but_note_file_open;
+	QPushButton *but_note_file_save;
+	QPushButton *but_note_file_save_as;
+	QPushButton *but_note_file_print;
 	QPushButton *but_configure;
 	QPushButton *but_quit;
 
-	/* tab <edit> */
+	/* tab <MIDI File> */
 
-	QWidget *tab_edit_wg;
-	QGridLayout *tab_edit_gl;
+	QPushButton *but_midi_file_new;
+	QPushButton *but_midi_file_open;
+	QPushButton *but_midi_file_save;
+	QPushButton *but_midi_file_save_as;
+
+	/* tab <Play> */
+
+	QLabel *lbl_synth;
+	QLabel *lbl_playback;
+	QLabel *lbl_recording;
+
+	QWidget *tab_play_wg;
+	QGridLayout *tab_play_gl;
 
 	QLabel	*lbl_volume;
 	QSpinBox *spn_volume;
@@ -114,16 +134,26 @@ class MppMainWindow : public QWidget
 	QLabel	*lbl_cmd_key;
 	QSpinBox *spn_cmd_key;
 
-	QPushButton *but_jump_0;
-	QPushButton *but_jump_1;
-	QPushButton *but_jump_2;
-	QPushButton *but_jump_3;
-	QPushButton *but_pass_thru;
-	QPushButton *but_compile;
-	QPushButton *but_record;
-	QPushButton *but_play;
+	QLabel	*lbl_note_record;
+	QLabel	*lbl_midi_record;
+	QLabel	*lbl_midi_pass_thru;
 
-	QString *CurrFilename;
+	QPushButton *but_jump[4];
+	QPushButton *but_track[4];
+
+	QLabel *lbl_track[4];
+
+	QPushButton *but_midi_pass_thru;
+	QPushButton *but_compile;
+	QPushButton *but_note_record;
+	QPushButton *but_play;
+	QPushButton *but_midi_record;
+	QPushButton *but_midi_play;
+	QPushButton *but_midi_trigger;
+	QPushButton *but_midi_rewind;
+
+	QString *CurrNoteFileName;
+	QString *CurrMidiFileName;
 
 	/* MIDI stuff */
 	struct mid_data mid_data;
@@ -140,9 +170,16 @@ class MppMainWindow : public QWidget
 	void handle_jump_1();
 	void handle_jump_2();
 	void handle_jump_3();
+	void handle_jump_N(int index);
+	void handle_track_0();
+	void handle_track_1();
+	void handle_track_2();
+	void handle_track_3();
+	void handle_track_N(int index);
 	void handle_pass_thru();
 	void handle_compile();
-	void handle_record();
+	void handle_note_record();
+	void handle_midi_record();
 	void handle_play_press();
 	void handle_play_release();
 	void handle_watchdog();
