@@ -37,6 +37,39 @@ static void MidiEventHandleKeyRelease(MppMainWindow *mw, int in_key);
 static void MidiEventHandleStop(MppMainWindow *mw);
 static uint8_t MidiEventHandleJump(MppMainWindow *mw, int);
 
+/* XXX TODO: Error handling */
+
+static QString
+MppReadFile(QString fname)
+{
+	QFile file(fname);
+	QString retval;
+
+	if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+		return (NULL);
+
+	retval = file.readAll();
+
+	file.close();
+
+	return (retval);
+}
+
+static void
+MppWriteFile(QString fname, QString text)
+{
+	QFile file(fname);
+
+	if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
+		return;
+
+	file.write(text.toAscii());
+
+	file.close();
+
+	return;
+}
+
 static void
 MppParse(struct MppSoftc *sc, const QString &ps)
 {
@@ -321,6 +354,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	/* Editor */
 
 	main_edit = new QTextEdit();
+	main_edit->setText(tr("/* Copyright (c) 2009 Hans Petter Selasky. All rights reserved. */"));
 
 	main_gl->addWidget(main_edit,0,0,1,2);
 
@@ -501,6 +535,16 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_play, SIGNAL(pressed()), this, SLOT(handle_play_press()));
 	connect(but_play, SIGNAL(released()), this, SLOT(handle_play_release()));
 	connect(but_quit, SIGNAL(pressed()), this, SLOT(handle_quit()));
+
+	connect(but_note_file_new, SIGNAL(pressed()), this, SLOT(handle_note_file_new()));
+	connect(but_note_file_open, SIGNAL(pressed()), this, SLOT(handle_note_file_open()));
+	connect(but_note_file_save, SIGNAL(pressed()), this, SLOT(handle_note_file_save()));
+	connect(but_note_file_save_as, SIGNAL(pressed()), this, SLOT(handle_note_file_save_as()));
+
+	connect(but_midi_file_new, SIGNAL(pressed()), this, SLOT(handle_midi_file_new()));
+	connect(but_midi_file_open, SIGNAL(pressed()), this, SLOT(handle_midi_file_open()));
+	connect(but_midi_file_save, SIGNAL(pressed()), this, SLOT(handle_midi_file_save()));
+	connect(but_midi_file_save_as, SIGNAL(pressed()), this, SLOT(handle_midi_file_save_as()));
 
 	MidiInit();
 
@@ -701,6 +745,96 @@ MppMainWindow :: handle_watchdog()
 		cursor.insertText(QString(mid_key_str[events_copy[x] & 0x7F]));
 		cursor.endEditBlock();
 	}
+}
+
+
+void
+MppMainWindow :: handle_note_file_new()
+{
+	main_edit->setText(QString());
+	handle_compile();
+	if (CurrNoteFileName != NULL) {
+		delete (CurrNoteFileName);
+		CurrNoteFileName = NULL;
+	}
+}
+
+void
+MppMainWindow :: handle_note_file_open()
+{
+	QFileDialog *diag = 
+	  new QFileDialog(this, tr("Select Note File"), 
+		QString(), QString("Note file (*.txt)"));
+	QString notes;
+
+	diag->setAcceptMode(QFileDialog::AcceptOpen);
+	diag->setFileMode(QFileDialog::ExistingFile);
+
+	handle_note_file_new();
+
+	if (diag->exec()) {
+		CurrNoteFileName = new QString(diag->selectedFiles()[0]);
+		notes = MppReadFile(*CurrNoteFileName);
+		if (notes != NULL) {
+			main_edit->setText(notes);
+			handle_compile();
+		}
+	}
+
+	delete diag;
+}
+
+void
+MppMainWindow :: handle_note_file_save()
+{
+	if (CurrNoteFileName != NULL) {
+		MppWriteFile(*CurrNoteFileName, main_edit->toPlainText());
+	} else {
+		handle_note_file_save_as();
+	}
+}
+
+void
+MppMainWindow :: handle_note_file_save_as()
+{
+	QFileDialog *diag = 
+	  new QFileDialog(this, tr("Select Note File"), 
+		QString(), QString("Note file (*.txt)"));
+
+	diag->setAcceptMode(QFileDialog::AcceptSave);
+	diag->setFileMode(QFileDialog::AnyFile);
+
+	if (diag->exec()) {
+		if (CurrNoteFileName != NULL)
+			delete (CurrNoteFileName);
+
+		CurrNoteFileName = new QString(diag->selectedFiles()[0]);
+
+		if (CurrNoteFileName != NULL)
+			handle_note_file_save();
+	}
+
+	delete diag;
+}
+
+void
+MppMainWindow :: handle_midi_file_new()
+{
+}
+
+void
+MppMainWindow :: handle_midi_file_open()
+{
+}
+
+void
+MppMainWindow :: handle_midi_file_save()
+{
+}
+
+void
+MppMainWindow :: handle_midi_file_save_as()
+{
 }
 
 static void

@@ -36,6 +36,8 @@
 #include <QTextCursor>
 #include <QTimer>
 #include <QKeyEvent>
+#include <QFile>
+#include <QFileDialog>
 
 #include <umidi20.h>
 
@@ -183,6 +185,14 @@ class MppMainWindow : public QWidget
 	void handle_play_press();
 	void handle_play_release();
 	void handle_watchdog();
+	void handle_note_file_new();
+	void handle_note_file_open();
+	void handle_note_file_save();
+	void handle_note_file_save_as();
+	void handle_midi_file_new();
+	void handle_midi_file_open();
+	void handle_midi_file_save();
+	void handle_midi_file_save_as();
 
  protected:
 	void keyPressEvent(QKeyEvent *event);
