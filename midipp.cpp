@@ -1171,10 +1171,14 @@ MppMainWindow :: handle_synth_program()
 	int bank = spn_bank->value();
 	int prog = spn_prog->value();
 	uint8_t y;
+	uint8_t is_midi_triggered;
 
 	pthread_mutex_lock(&mtx);
 
 	main_sc.ScChannel = chan;
+
+	is_midi_triggered = main_sc.is_midi_triggered;
+	main_sc.is_midi_triggered = 1;
 
 	for (y = 0; y != MPP_MAX_DEVS; y++) {
 		if (check_synth(y)) {
@@ -1185,6 +1189,8 @@ MppMainWindow :: handle_synth_program()
 	if (check_record()) {
 		mid_set_bank_program(d, chan, bank, prog);
 	}
+
+	main_sc.is_midi_triggered = is_midi_triggered;
 
 	pthread_mutex_unlock(&mtx);
 }
