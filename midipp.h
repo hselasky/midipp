@@ -38,6 +38,9 @@
 #include <QKeyEvent>
 #include <QFile>
 #include <QFileDialog>
+#include <QCheckBox>
+#include <QLineEdit>
+#include <QSpacerItem>
 
 #include <umidi20.h>
 
@@ -45,6 +48,7 @@
 #define	MPP_MAX_NOTES	16
 #define	MPP_MAX_LABELS	32
 #define	MPP_MAX_QUEUE	32
+#define	MPP_MAX_DEVS	3
 
 struct MppNote {
 	uint8_t key;
@@ -57,6 +61,16 @@ struct MppSoftc {
 
 	uint32_t ScTrackMask;
 	uint32_t ScPosition;
+	uint32_t ScDeviceBits;
+#define	MPP_DEV0_PLAY	0x0001UL
+#define	MPP_DEV0_RECORD	0x0002UL
+#define	MPP_DEV0_SYNTH	0x0004UL
+#define	MPP_DEV1_PLAY	0x0008UL
+#define	MPP_DEV1_RECORD	0x0010UL
+#define	MPP_DEV1_SYNTH	0x0020UL
+#define	MPP_DEV2_PLAY	0x0040UL
+#define	MPP_DEV2_RECORD	0x0080UL
+#define	MPP_DEV2_SYNTH	0x0100UL
 
 	uint16_t ScJumpNext[MPP_MAX_LINES];
 	uint16_t ScJumpTable[MPP_MAX_LABELS];
@@ -66,13 +80,17 @@ struct MppSoftc {
 	uint8_t ScPressed[128];
 	uint8_t ScInputEvents[MPP_MAX_QUEUE];
 	uint8_t ScNumInputEvents;
+	uint8_t ScPlayDevice;
 	uint8_t ScCmdKey;
+	uint8_t ScChannel;
 
 	uint8_t is_note_record_off;
 	uint8_t is_midi_record_off;
 	uint8_t is_midi_play_off;
 	uint8_t is_midi_pass_thru_off;
 	uint8_t is_midi_triggered;
+
+	char *ScDeviceName[MPP_MAX_DEVS];
 };
 
 class MppMainWindow : public QWidget
@@ -88,10 +106,11 @@ class MppMainWindow : public QWidget
 	void handle_key_press(int in_key, int vel);
 	void handle_key_release(int in_key);
 	void handle_stop(void);
+	void update_play_device_no();
 
 	uint8_t handle_jump(int pos);
 	uint8_t check_record(void);
-	uint8_t check_playback(void);
+	uint8_t check_synth(uint8_t device_no);
 
 	struct MppSoftc main_sc;
 
@@ -118,7 +137,6 @@ class MppMainWindow : public QWidget
 	QPushButton *but_note_file_save;
 	QPushButton *but_note_file_save_as;
 	QPushButton *but_note_file_print;
-	QPushButton *but_configure;
 	QPushButton *but_quit;
 
 	/* tab <MIDI File> */
@@ -129,6 +147,16 @@ class MppMainWindow : public QWidget
 	QPushButton *but_midi_file_save_as;
 
 	/* tab <Play> */
+
+	QLabel *lbl_prog_title;
+	QLabel *lbl_channel;
+	QLabel *lbl_bank;
+	QLabel *lbl_prog;
+
+	QSpinBox *spn_channel;
+	QSpinBox *spn_bank;
+	QSpinBox *spn_prog;
+	QPushButton *but_synth_program;
 
 	QLabel *lbl_synth;
 	QLabel *lbl_playback;
@@ -164,6 +192,23 @@ class MppMainWindow : public QWidget
 	QPushButton *but_midi_play;
 	QPushButton *but_midi_trigger;
 	QPushButton *but_midi_rewind;
+
+	/* configuration */
+
+	QGridLayout *tab_config_gl;
+	QWidget *tab_config_wg;
+
+	QLabel *lbl_config_title;
+	QLabel *lbl_config_play;
+	QLabel *lbl_config_rec;
+	QLabel *lbl_config_synth;
+	QLabel *lbl_config_dev[MPP_MAX_DEVS];
+
+	QLineEdit *led_config_dev[MPP_MAX_DEVS];
+	QCheckBox *cbx_config_dev[3 * MPP_MAX_DEVS];
+
+	QPushButton *but_config_apply;
+	QPushButton *but_config_load;
 
 	QString *CurrNoteFileName;
 	QString *CurrMidiFileName;
@@ -207,6 +252,10 @@ class MppMainWindow : public QWidget
 	void handle_midi_file_save_as();
 	void handle_rewind();
 	void handle_play_trigger();
+	void handle_config_apply();
+	void handle_config_load();
+	void handle_config_reload();
+	void handle_synth_program();
 
  protected:
 	void keyPressEvent(QKeyEvent *event);

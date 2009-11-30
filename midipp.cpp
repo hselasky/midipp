@@ -366,6 +366,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
   : QWidget(parent)
 {
 	int n;
+	int x;
 
 	/* set memory default */
 
@@ -403,12 +404,15 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_file_wg = new QWidget();
 	tab_play_wg = new QWidget();
+	tab_config_wg = new QWidget();
 
 	tab_file_gl = new QGridLayout(tab_file_wg);
 	tab_play_gl = new QGridLayout(tab_play_wg);
+	tab_config_gl = new QGridLayout(tab_config_wg);
 
 	main_tw->addTab(tab_file_wg, tr("File"));
 	main_tw->addTab(tab_play_wg, tr("Play"));
+	main_tw->addTab(tab_config_wg, tr("Config"));
 
 	/* Note File Tab */
 
@@ -423,7 +427,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_note_file_save = new QPushButton(tr("Save"));
 	but_note_file_save_as = new QPushButton(tr("Save As"));
 	but_note_file_print = new QPushButton(tr("Print"));
-	but_configure = new QPushButton(tr("Configure"));
 	but_quit = new QPushButton(tr("Quit"));
 
 	but_midi_file_new = new QPushButton(tr("New"));
@@ -439,7 +442,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_file_gl->addWidget(but_note_file_save, n++, 0, 1, 4);
 	tab_file_gl->addWidget(but_note_file_save_as, n++, 0, 1, 4);
 	tab_file_gl->addWidget(but_note_file_print, n++, 0, 1, 4);
-	tab_file_gl->addWidget(but_configure, n++, 0, 1, 8);
+	tab_file_gl->setRowStretch(n++, 4);
 	tab_file_gl->addWidget(but_quit, n++, 0, 1, 8);
 
 	n = 0;
@@ -451,6 +454,30 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_file_gl->addWidget(but_midi_file_save_as, n++, 4, 1, 4);
 
 	/* Play Tab */
+
+	lbl_prog_title = new QLabel(tr("- Synth Prog -"));
+	lbl_prog_title->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+	lbl_channel = new QLabel(tr("Chan:"));
+	lbl_bank = new QLabel(tr("Bank:"));
+	lbl_prog = new QLabel(tr("Prog:"));
+
+	spn_channel = new QSpinBox();
+	spn_channel->setMaximum(15);
+	spn_channel->setMinimum(0);
+	spn_channel->setValue(0);
+
+	spn_bank = new QSpinBox();
+	spn_bank->setMaximum(127);
+	spn_bank->setMinimum(0);
+	spn_bank->setValue(0);
+
+	spn_prog = new QSpinBox();
+	spn_prog->setMaximum(127);
+	spn_prog->setMinimum(0);
+	spn_prog->setValue(0);
+
+	but_synth_program = new QPushButton(tr("Program"));
 
 	lbl_note_record = new QLabel(QString());
 	lbl_midi_record = new QLabel(QString());
@@ -503,7 +530,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_cmd_key->setMinimum(0);
 	spn_cmd_key->setValue(C3);
 
-	lbl_synth = new QLabel(tr("- Synth -"));
+	lbl_synth = new QLabel(tr("- Synth Play -"));
 	lbl_synth->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
 	lbl_playback = new QLabel(tr("- Playback -"));
@@ -513,6 +540,15 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_recording->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
 	n = 0;
+
+	tab_play_gl->addWidget(lbl_prog_title, n++, 0, 1, 4);
+	tab_play_gl->addWidget(lbl_channel, n, 0, 1, 2);
+	tab_play_gl->addWidget(spn_channel, n++, 2, 1, 2);
+	tab_play_gl->addWidget(lbl_bank, n, 0, 1, 2);
+	tab_play_gl->addWidget(spn_bank, n++, 2, 1, 2);
+	tab_play_gl->addWidget(lbl_prog, n, 0, 1, 2);
+	tab_play_gl->addWidget(spn_prog, n++, 2, 1, 2);
+	tab_play_gl->addWidget(but_synth_program, n++, 0, 1, 4);
 
 	tab_play_gl->addWidget(lbl_playback, n++, 0, 1, 4);
 
@@ -558,8 +594,60 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_play_gl->addWidget(but_jump[3], n++, 4, 1, 2);
 
 	tab_play_gl->addWidget(but_compile, n++, 4, 1, 4);
-	tab_play_gl->addWidget(but_play, n, 4, 3, 4);
-	n += 3;
+	tab_play_gl->setRowStretch(n++, 4);
+	tab_play_gl->addWidget(but_play, n++, 4, 3, 4);
+
+	/* Configuration */
+
+	lbl_config_title = new QLabel(tr("- Device configuration -"));
+	lbl_config_title->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+	lbl_config_play = new QLabel(tr("Play"));
+	lbl_config_play->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+	lbl_config_rec = new QLabel(tr("Rec."));
+	lbl_config_rec->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+	lbl_config_synth = new QLabel(tr("Synth"));
+	lbl_config_synth->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+	but_config_apply = new QPushButton(tr("Apply"));
+	but_config_load = new QPushButton(tr("Revert"));
+
+	x = 0;
+
+	tab_config_gl->addWidget(lbl_config_title, x, 0, 1, 5);
+	tab_config_gl->addWidget(lbl_config_play, x, 5, 1, 1);
+	tab_config_gl->addWidget(lbl_config_rec, x, 6, 1, 1);
+	tab_config_gl->addWidget(lbl_config_synth, x, 7, 1, 1);
+
+	x++;
+
+	for (n = 0; n != MPP_MAX_DEVS; n++) {
+		char buf[16];
+
+		led_config_dev[n] = new QLineEdit(QString());
+		cbx_config_dev[(3*n)+0] = new QCheckBox();
+		cbx_config_dev[(3*n)+1] = new QCheckBox();
+		cbx_config_dev[(3*n)+2] = new QCheckBox();
+
+
+		snprintf(buf, sizeof(buf), "Dev%d:", n);
+
+		lbl_config_dev[n] = new QLabel(tr(buf));
+
+		tab_config_gl->addWidget(lbl_config_dev[n], x, 0, 1, 1, Qt::AlignHCenter|Qt::AlignLeft);
+		tab_config_gl->addWidget(led_config_dev[n], x, 1, 1, 4, Qt::AlignHCenter|Qt::AlignLeft);
+		tab_config_gl->addWidget(cbx_config_dev[(3*n)+0], x, 5, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		tab_config_gl->addWidget(cbx_config_dev[(3*n)+1], x, 6, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		tab_config_gl->addWidget(cbx_config_dev[(3*n)+2], x, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+
+		x++;
+	}
+
+	tab_config_gl->setRowStretch(x, 4);
+
+	x++;
+
+	tab_config_gl->addWidget(but_config_apply, x, 4, 1, 4);
+	tab_config_gl->addWidget(but_config_load, x, 0, 1, 4);
 
 	connect(but_jump[0], SIGNAL(pressed()), this, SLOT(handle_jump_0()));
 	connect(but_jump[1], SIGNAL(pressed()), this, SLOT(handle_jump_1()));
@@ -592,10 +680,13 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	connect(but_midi_trigger, SIGNAL(pressed()), this, SLOT(handle_play_trigger()));
 	connect(but_midi_rewind, SIGNAL(pressed()), this, SLOT(handle_rewind()));
+	connect(but_config_apply, SIGNAL(pressed()), this, SLOT(handle_config_apply()));
+	connect(but_config_load, SIGNAL(pressed()), this, SLOT(handle_config_load()));
+	connect(but_synth_program, SIGNAL(pressed()), this, SLOT(handle_synth_program()));
 
 	MidiInit();
 
-	setWindowTitle(tr("MIDI Piano Player"));
+	setWindowTitle(tr("MIDI Player Plus v1.0"));
 
 	watchdog->start(250);
 }
@@ -744,6 +835,7 @@ MppMainWindow :: handle_midi_play()
 	pthread_mutex_lock(&mtx);
 	main_sc.is_midi_play_off = !main_sc.is_midi_play_off;
 	main_sc.is_midi_triggered = 0;
+	update_play_device_no();
 	pthread_mutex_unlock(&mtx);
 
 	if (main_sc.is_midi_play_off == 0)
@@ -760,6 +852,7 @@ MppMainWindow :: handle_midi_record()
 	pthread_mutex_lock(&mtx);
 	main_sc.is_midi_record_off = !main_sc.is_midi_record_off;
 	main_sc.is_midi_triggered = 0;
+	update_play_device_no();
 	pthread_mutex_unlock(&mtx);
 
 	if (main_sc.is_midi_record_off == 0)
@@ -902,6 +995,20 @@ MppMainWindow :: handle_midi_file_new()
 }
 
 void
+MppMainWindow :: update_play_device_no()
+{
+	uint8_t device_no = main_sc.ScPlayDevice;
+	struct umidi20_event *event;
+
+	if (track == NULL)
+		return;
+
+	UMIDI20_QUEUE_FOREACH(event, &(track->queue)) {
+		event->device_no = device_no;
+	}
+}
+
+void
 MppMainWindow :: handle_midi_file_open()
 {
 	QFileDialog *diag = 
@@ -958,9 +1065,8 @@ load_file:
 		    event_copy = umidi20_event_copy(event, 0);
 
 		    if (event_copy != NULL) {
-		        umidi20_event_queue_insert
-			  (&(track->queue), event_copy, 
-			   UMIDI20_CACHE_INPUT);
+			umidi20_event_queue_insert(&(track->queue),
+			    event_copy, UMIDI20_CACHE_INPUT);
 		    }
 		}
 	    }
@@ -1023,6 +1129,7 @@ MppMainWindow :: handle_rewind()
 	pthread_mutex_lock(&mtx);
 
 	main_sc.is_midi_triggered = 0;
+	update_play_device_no();
 
 	if (song != NULL) {
 		umidi20_song_stop(song, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
@@ -1041,7 +1148,7 @@ MppMainWindow :: handle_play_trigger()
 	if (main_sc.is_midi_triggered == 0) {
 		if (main_sc.is_midi_play_off == 0) {
 			umidi20_song_stop(song, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
-			umidi20_song_start(song, 0, 0x80000000, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
+			umidi20_song_start(song, 0, 0x40000000, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
 			main_sc.ScPosition = umidi20_get_curr_position();
 
 		} else {
@@ -1056,21 +1163,152 @@ MppMainWindow :: handle_play_trigger()
 	pthread_mutex_unlock(&mtx);
 }
 
-uint8_t
-MppMainWindow :: check_playback(void)
+void
+MppMainWindow :: handle_synth_program()
 {
 	struct mid_data *d = &mid_data;
+	int chan = spn_channel->value();
+	int bank = spn_bank->value();
+	int prog = spn_prog->value();
+	uint8_t y;
 
-	handle_play_trigger();
+	pthread_mutex_lock(&mtx);
 
-	mid_set_position(d, umidi20_get_curr_position() - main_sc.ScPosition + 1);
-	mid_set_device_no(d, 0);
+	main_sc.ScChannel = chan;
 
-	return (1);
+	for (y = 0; y != MPP_MAX_DEVS; y++) {
+		if (check_synth(y)) {
+			mid_set_bank_program(d, chan, bank, prog);
+		}
+	}
+
+	if (check_record()) {
+		mid_set_bank_program(d, chan, bank, prog);
+	}
+
+	pthread_mutex_unlock(&mtx);
+}
+
+void
+MppMainWindow :: handle_config_reload()
+{
+	struct umidi20_config cfg;
+	int n;
+
+	/* setup the I/O devices */
+
+	umidi20_config_export(&cfg);
+
+	main_sc.ScPlayDevice = 0;
+
+	for (n = 0; n != MPP_MAX_DEVS; n++) {
+
+		if ((main_sc.ScDeviceBits & (MPP_DEV0_RECORD << (3 * n))) && 
+		    (main_sc.ScDeviceName[n] != NULL) && 
+		    (main_sc.ScDeviceName[n][0] != 0))  {
+			strlcpy(cfg.cfg_dev[n].rec_fname, main_sc.ScDeviceName[n],
+			    sizeof(cfg.cfg_dev[n].rec_fname));
+			cfg.cfg_dev[n].rec_enabled_cfg = 1;
+		} else {
+			cfg.cfg_dev[n].rec_enabled_cfg = 0;
+		}
+
+		if ((main_sc.ScDeviceBits & ((MPP_DEV0_SYNTH | MPP_DEV0_PLAY) << (3 * n))) && 
+		    (main_sc.ScDeviceName[n] != NULL) && 
+		    (main_sc.ScDeviceName[n][0] != 0))  {
+			strlcpy(cfg.cfg_dev[n].play_fname, main_sc.ScDeviceName[n],
+			    sizeof(cfg.cfg_dev[n].play_fname));
+			cfg.cfg_dev[n].play_enabled_cfg = 1;
+		} else {
+			cfg.cfg_dev[n].play_enabled_cfg = 0;
+		}
+
+		if (main_sc.ScDeviceBits & (MPP_DEV0_PLAY << (3 * n))) {
+			main_sc.ScPlayDevice = n;
+		}
+	}
+
+	umidi20_config_import(&cfg);
+
+	main_sc.ScDeviceBits &= ~(MPP_DEV0_PLAY|MPP_DEV1_PLAY|MPP_DEV2_PLAY);
+	main_sc.ScDeviceBits |= MPP_DEV0_PLAY << (3 * main_sc.ScPlayDevice);
+
+	handle_compile();
+
+	handle_config_load();
+}
+
+void
+MppMainWindow :: handle_config_load()
+{
+	int n;
+
+	for (n = 0; n != MPP_MAX_DEVS; n++) {
+
+		if (main_sc.ScDeviceName[n] != NULL)
+			led_config_dev[n]->setText(QString(main_sc.ScDeviceName[n]));
+		else
+			led_config_dev[n]->setText(QString());
+
+		cbx_config_dev[(3*n)+0]->setChecked(
+		    (main_sc.ScDeviceBits & (1UL << ((3*n)+0))) ? 1 : 0);
+
+		cbx_config_dev[(3*n)+1]->setChecked(
+		    (main_sc.ScDeviceBits & (1UL << ((3*n)+1))) ? 1 : 0);
+
+		cbx_config_dev[(3*n)+2]->setChecked(
+		    (main_sc.ScDeviceBits & (1UL << ((3*n)+2))) ? 1 : 0);
+	}
+}
+
+void
+MppMainWindow :: handle_config_apply()
+{
+	int n;
+
+	main_sc.ScDeviceBits = 0;
+
+	for (n = 0; n != MPP_MAX_DEVS; n++) {
+
+		if (main_sc.ScDeviceName[n] != NULL)
+			free(main_sc.ScDeviceName[n]);
+
+		main_sc.ScDeviceName[n] = MppQStringToAscii(led_config_dev[n]->text());
+
+		if (cbx_config_dev[(3*n)+0]->isChecked())
+			main_sc.ScDeviceBits |= 1UL << ((3*n)+0);
+		if (cbx_config_dev[(3*n)+1]->isChecked())
+			main_sc.ScDeviceBits |= 1UL << ((3*n)+1);
+		if (cbx_config_dev[(3*n)+2]->isChecked())
+			main_sc.ScDeviceBits |= 1UL << ((3*n)+2);
+	}
+
+	handle_config_reload();
 }
 
 uint8_t
-MppMainWindow :: check_record(void)
+MppMainWindow :: check_synth(uint8_t device_no)
+{
+	struct mid_data *d = &mid_data;
+
+	if (device_no >= MPP_MAX_DEVS)
+		return (0);
+
+	if (main_sc.ScDeviceBits & (MPP_DEV0_SYNTH << (3 * device_no))) {
+
+		handle_play_trigger();
+
+		mid_set_channel(d, main_sc.ScChannel);
+		mid_set_position(d, umidi20_get_curr_position() - main_sc.ScPosition + 1);
+		mid_set_device_no(d, device_no);
+
+		return (1);
+	}
+	return (0);
+}
+
+uint8_t
+MppMainWindow :: check_record()
 {
 	struct mid_data *d = &mid_data;
 
@@ -1079,6 +1317,7 @@ MppMainWindow :: check_record(void)
 
 	handle_play_trigger();
 
+	mid_set_channel(d, main_sc.ScChannel);
 	mid_set_position(d, umidi20_get_curr_position() - main_sc.ScPosition + 1);
 	mid_set_device_no(d, 0xFF);
 
@@ -1090,19 +1329,21 @@ MppMainWindow :: handle_stop(void)
 {
 	struct mid_data *d = &mid_data;
 	uint8_t x;
+	uint8_t y;
 
 	for (x = 0; x != 128; x++) {
 		if (main_sc.ScPressed[x] != 0) {
 			main_sc.ScPressed[x] = 0;
 
-			if (check_playback()) {
-				mid_key_press(d, x, 0, 0);
+			for (y = 0; y != MPP_MAX_DEVS; y++) {
+				if (check_synth(y)) {
+					mid_key_press(d, x, 0, 0);
+				}
 			}
 
 			if (check_record()) {
 				mid_key_press(d, x, 0, 0);
 			}
-
 		}
 	}
 }
@@ -1127,6 +1368,7 @@ MppMainWindow :: handle_key_press(int in_key, int vel)
 	struct MppNote *pn;
 	uint16_t pos;
 	uint8_t x;
+	uint8_t y;
 	uint8_t out_key;
 
 	pos = main_sc.ScJumpNext[main_sc.ScCurrPos];
@@ -1145,10 +1387,10 @@ MppMainWindow :: handle_key_press(int in_key, int vel)
 			if (main_sc.ScTrackMask & (1UL << pn->channel))
 				continue;
 
-			mid_set_channel(d, pn->channel);
-
-			if (check_playback()) {
-				mid_key_press(d, out_key, vel, 0);
+			for (y = 0; y != MPP_MAX_DEVS; y++) {
+				if (check_synth(y)) {
+					mid_key_press(d, out_key, vel, 0);
+				}
 			}
 
 			if (check_record()) {
@@ -1172,12 +1414,17 @@ MppMainWindow :: handle_key_release(int in_key)
 {
 	struct mid_data *d = &mid_data;
 	uint8_t x;
+	uint8_t y;
 
 	for (x = 0; x != 128; x++) {
 		if (main_sc.ScPressed[x] == 1) {
-			if (check_playback()) {
-				mid_key_press(d, x, 0, 0);
+
+			for (y = 0; y != MPP_MAX_DEVS; y++) {
+				if (check_synth(y)) {
+					mid_key_press(d, x, 0, 0);
+				}
 			}
+
 			if (check_record()) {
 				mid_key_press(d, x, 0, 0);
 			}
@@ -1193,6 +1440,7 @@ MidiEventCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uin
 {
 	MppMainWindow *mw = (MppMainWindow *)arg;
 	struct mid_data *d = &mw->mid_data;
+	uint8_t y;
 	int key;
 	int vel;
 
@@ -1200,10 +1448,10 @@ MidiEventCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uin
 
 	if (umidi20_event_get_control_address(event) == 0x40) {
 
-		mid_set_channel(d, 0);
-
-		if (mw->check_playback()) {
-			mid_pedal(d, umidi20_event_get_control_value(event));
+		for (y = 0; y != MPP_MAX_DEVS; y++) {
+			if (mw->check_synth(y)) {
+				mid_pedal(d, umidi20_event_get_control_value(event));
+			}
 		}
 
 		if (mw->check_record()) {
@@ -1228,10 +1476,10 @@ MidiEventCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uin
 			}
 		} else {
 
-			mid_set_channel(d, 0);
-
-			if (mw->check_playback()) {
-				mid_key_press(d, key, vel, 0);
+			for (y = 0; y != MPP_MAX_DEVS; y++) {
+				if (mw->check_synth(y)) {
+					mid_key_press(d, key, vel, 0);
+				}
 			}
 
 			if (mw->check_record()) {
@@ -1250,10 +1498,10 @@ MidiEventCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uin
 
 		} else {
 
-			mid_set_channel(d, 0);
-
-			if (mw->check_playback()) {
-				mid_key_press(d, key, 0, 0);
+			for (y = 0; y != MPP_MAX_DEVS; y++) {
+				if (mw->check_synth(y)) {
+					mid_key_press(d, key, 0, 0);
+				}
 			}
 
 			if (mw->check_record()) {
@@ -1268,9 +1516,13 @@ MidiEventCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uin
 void
 MppMainWindow :: MidiInit(void)
 {
-	struct umidi20_config cfg;
+	int n;
 
 	main_sc.ScTrackMask ^= 0x0F;
+	main_sc.ScDeviceBits = MPP_DEV0_SYNTH | MPP_DEV0_PLAY | MPP_DEV1_RECORD | MPP_DEV2_RECORD;
+	main_sc.ScDeviceName[0] = strdup("/midi");
+	main_sc.ScDeviceName[1] = strdup("/dev/umidi0.0");
+	main_sc.ScDeviceName[2] = strdup("/dev/umidi1.0");
 
 	handle_track_N(0);
 	handle_track_N(1);
@@ -1284,28 +1536,10 @@ MppMainWindow :: MidiInit(void)
 
 	umidi20_init();
 
-	/* setup the I/O devices */
+	handle_config_reload();
 
-	umidi20_config_export(&cfg);
-
-	strlcpy(cfg.cfg_dev[0].rec_fname, "/dev/umidi0.0",
-	    sizeof(cfg.cfg_dev[0].rec_fname));
-
-	strlcpy(cfg.cfg_dev[1].rec_fname, "/dev/umidi1.0",
-	    sizeof(cfg.cfg_dev[1].rec_fname));
-
-	cfg.cfg_dev[0].rec_enabled_cfg = 1;
-	cfg.cfg_dev[1].rec_enabled_cfg = 1;
-
-	strlcpy(cfg.cfg_dev[0].play_fname, "/midi",
-	    sizeof(cfg.cfg_dev[0].play_fname));
-
-	cfg.cfg_dev[0].play_enabled_cfg = 1;
-
-	umidi20_config_import(&cfg);
-
-	umidi20_set_record_event_callback(0, &MidiEventCallback, this);
-	umidi20_set_record_event_callback(1, &MidiEventCallback, this);
+	for (n = 0; n != UMIDI20_N_DEVICES; n++)
+		umidi20_set_record_event_callback(n, &MidiEventCallback, this);
 
 	pthread_mutex_lock(&mtx);
 
@@ -1335,6 +1569,8 @@ MppMainWindow :: MidiInit(void)
 void
 MppMainWindow :: MidiUnInit(void)
 {
+	int n;
+
 	handle_rewind();
 
 	pthread_mutex_lock(&mtx);
@@ -1346,6 +1582,13 @@ MppMainWindow :: MidiUnInit(void)
 	umidi20_song_stop(song, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
 
 	pthread_mutex_unlock(&mtx);
+
+	for (n = 0; n != MPP_MAX_DEVS; n++) {
+		if (main_sc.ScDeviceName[n] != NULL) {
+			free (main_sc.ScDeviceName[n]);
+			main_sc.ScDeviceName[n] = NULL;
+		}
+	}
 }
 
 void
