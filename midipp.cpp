@@ -404,22 +404,25 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_file_wg = new QWidget();
 	tab_play_wg = new QWidget();
+	tab_edit_wg = new QWidget();
 	tab_config_wg = new QWidget();
 
 	tab_file_gl = new QGridLayout(tab_file_wg);
 	tab_play_gl = new QGridLayout(tab_play_wg);
+	tab_edit_gl = new QGridLayout(tab_edit_wg);
 	tab_config_gl = new QGridLayout(tab_config_wg);
 
 	main_tw->addTab(tab_file_wg, tr("File"));
 	main_tw->addTab(tab_play_wg, tr("Play"));
+	main_tw->addTab(tab_edit_wg, tr("Edit"));
 	main_tw->addTab(tab_config_wg, tr("Config"));
 
-	/* Note File Tab */
+	/* <File> Tab */
 
-	lbl_note_file = new QLabel(tr("- Note file -"));
+	lbl_note_file = new QLabel(tr("- Note File -"));
 	lbl_note_file->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
-	lbl_midi_file = new QLabel(tr("- MIDI file -"));
+	lbl_midi_file = new QLabel(tr("- MIDI File -"));
 	lbl_midi_file->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
 	but_note_file_new = new QPushButton(tr("New"));
@@ -453,7 +456,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_file_gl->addWidget(but_midi_file_save, n++, 4, 1, 4);
 	tab_file_gl->addWidget(but_midi_file_save_as, n++, 4, 1, 4);
 
-	/* Play Tab */
+	/* <Play> Tab */
 
 	lbl_prog_title = new QLabel(tr("- Synth Prog -"));
 	lbl_prog_title->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
@@ -510,7 +513,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	but_play = new QPushButton(tr(" \nPlay\n "));
 
-	lbl_volume = new QLabel(tr("Volume (0-127)"));
+	lbl_volume = new QLabel(tr("Volume (0..127)"));
 	spn_volume = new QSpinBox();
 	spn_volume->setMaximum(127);
 	spn_volume->setMinimum(0);
@@ -597,7 +600,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_play_gl->setRowStretch(n++, 4);
 	tab_play_gl->addWidget(but_play, n++, 4, 3, 4);
 
-	/* Configuration */
+	/* <Configuration> Tab */
 
 	lbl_config_title = new QLabel(tr("- Device configuration -"));
 	lbl_config_title->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
@@ -648,6 +651,72 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_config_gl->addWidget(but_config_apply, x, 4, 1, 4);
 	tab_config_gl->addWidget(but_config_load, x, 0, 1, 4);
+
+	/* <Edit> Tab */
+
+	lbl_edit_title = new QLabel(tr("- MIDI File Edit -"));
+	lbl_edit_title->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+	lbl_edit_channel = new QLabel(tr("Selected Channel (0..15):"));
+	lbl_edit_transpose = new QLabel(tr("Transpose Steps (-128..127):"));
+	lbl_edit_volume = new QLabel(tr("Average Volume (1..127):"));
+
+	spn_edit_channel = new QSpinBox();
+	spn_edit_channel->setMaximum(15);
+	spn_edit_channel->setMinimum(0);
+	spn_edit_channel->setValue(0);
+
+	spn_edit_transpose = new QSpinBox();
+	spn_edit_transpose->setMaximum(127);
+	spn_edit_transpose->setMinimum(-128);
+	spn_edit_transpose->setValue(0);
+
+	spn_edit_volume = new QSpinBox();
+	spn_edit_volume->setMaximum(127);
+	spn_edit_volume->setMinimum(1);
+	spn_edit_volume->setValue(80);
+
+	but_edit_apply_transpose = new QPushButton(tr("Apply Channel Key Transpose"));
+	but_edit_change_volume = new QPushButton(tr("Change Channel Event Volume"));
+	but_edit_remove_pedal = new QPushButton(tr("Remove Channel Pedal Events"));
+	but_edit_remove_keys = new QPushButton(tr("Remove Channel Key Events"));
+	but_edit_remove_all = new QPushButton(tr("Remove All Channel Events"));
+
+	n = 0;
+
+	tab_edit_gl->addWidget(lbl_edit_title, n, 0, 1, 8);
+
+	n++;
+
+	tab_edit_gl->addWidget(lbl_edit_channel, n, 0, 1, 7);
+	tab_edit_gl->addWidget(spn_edit_channel, n, 7, 1, 1);
+
+	n++;
+
+	tab_edit_gl->addWidget(lbl_edit_transpose, n, 0, 1, 7);
+	tab_edit_gl->addWidget(spn_edit_transpose, n, 7, 1, 1);
+
+	n++;
+
+	tab_edit_gl->addWidget(lbl_edit_volume, n, 0, 1, 7);
+	tab_edit_gl->addWidget(spn_edit_volume, n, 7, 1, 1);
+
+	n++;
+
+	tab_edit_gl->addWidget(but_edit_apply_transpose, n, 0, 1, 8);
+	n++;
+	tab_edit_gl->addWidget(but_edit_change_volume, n, 0, 1, 8);
+	n++;
+	tab_edit_gl->addWidget(but_edit_remove_pedal, n, 0, 1, 8);
+	n++;
+	tab_edit_gl->addWidget(but_edit_remove_keys, n, 0, 1, 8);
+	n++;
+	tab_edit_gl->addWidget(but_edit_remove_all, n, 0, 1, 8);
+	n++;
+
+	tab_edit_gl->setRowStretch(n, 4);
+
+	/* Connect all */
 
 	connect(but_jump[0], SIGNAL(pressed()), this, SLOT(handle_jump_0()));
 	connect(but_jump[1], SIGNAL(pressed()), this, SLOT(handle_jump_1()));
@@ -924,7 +993,7 @@ MppMainWindow :: handle_note_file_open()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(this, tr("Select Note File"), 
-		QString(), QString("Note file (*.txt)"));
+		QString(), QString("Note File (*.txt)"));
 	QString notes;
 
 	diag->setAcceptMode(QFileDialog::AcceptOpen);
@@ -959,7 +1028,7 @@ MppMainWindow :: handle_note_file_save_as()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(this, tr("Select Note File"), 
-		QString(), QString("Note file (*.txt)"));
+		QString(), QString("Note File (*.txt)"));
 
 	diag->setAcceptMode(QFileDialog::AcceptSave);
 	diag->setFileMode(QFileDialog::AnyFile);
@@ -1012,8 +1081,8 @@ void
 MppMainWindow :: handle_midi_file_open()
 {
 	QFileDialog *diag = 
-	  new QFileDialog(this, tr("Select Midi File"), 
-		QString(), QString("MIDI file (*.mid)"));
+	  new QFileDialog(this, tr("Select MIDI File"), 
+		QString(), QString("MIDI File (*.mid)"));
 	struct umidi20_song *song_copy;
 	struct umidi20_track *track_copy;
 	struct umidi20_event *event;
@@ -1105,7 +1174,7 @@ MppMainWindow :: handle_midi_file_save_as()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(this, tr("Select MIDI File"), 
-		QString(), QString("MIDI file (*.mid)"));
+		QString(), QString("MIDI File (*.mid)"));
 
 	diag->setAcceptMode(QFileDialog::AcceptSave);
 	diag->setFileMode(QFileDialog::AnyFile);
@@ -1132,8 +1201,10 @@ MppMainWindow :: handle_rewind()
 	update_play_device_no();
 
 	if (song != NULL) {
-		umidi20_song_stop(song, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
-		umidi20_song_start(song, 0x40000000, 0x80000000, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
+		umidi20_song_stop(song,
+		    UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
+		umidi20_song_start(song, 0x40000000, 0x80000000,
+		    UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
 		main_sc.ScPosition = umidi20_get_curr_position();
 	}
 
@@ -1147,13 +1218,17 @@ MppMainWindow :: handle_play_trigger()
 
 	if (main_sc.is_midi_triggered == 0) {
 		if (main_sc.is_midi_play_off == 0) {
-			umidi20_song_stop(song, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
-			umidi20_song_start(song, 0, 0x40000000, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
+			umidi20_song_stop(song,
+			    UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
+			umidi20_song_start(song, 0, 0x40000000,
+			    UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
 			main_sc.ScPosition = umidi20_get_curr_position();
 
 		} else {
-			umidi20_song_stop(song, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
-			umidi20_song_start(song, 0x40000000, 0x80000000, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
+			umidi20_song_stop(song,
+			    UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
+			umidi20_song_start(song, 0x40000000, 0x80000000,
+			    UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
 			main_sc.ScPosition = umidi20_get_curr_position();
 
 		}
@@ -1542,8 +1617,6 @@ MppMainWindow :: MidiInit(void)
 
 	umidi20_init();
 
-	handle_config_reload();
-
 	for (n = 0; n != UMIDI20_N_DEVICES; n++)
 		umidi20_set_record_event_callback(n, &MidiEventCallback, this);
 
@@ -1566,10 +1639,16 @@ MppMainWindow :: MidiInit(void)
 
 	mid_init(&mid_data, track);
 
-	umidi20_song_start(song, 0x40000000, 0x80000000, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
+	umidi20_song_start(song, 0x40000000, 0x80000000,
+	    UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
+
 	main_sc.ScPosition = umidi20_get_curr_position();
 
 	pthread_mutex_unlock(&mtx);
+
+	/* reload the configuration */
+
+	handle_config_reload();
 }
 
 void
