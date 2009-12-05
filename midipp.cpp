@@ -465,6 +465,20 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_bank = new QLabel(tr("Bank:"));
 	lbl_prog = new QLabel(tr("Prog:"));
 
+	lbl_bpm_max = new QLabel(tr("Max"));
+	lbl_bpm_max->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+	lbl_bpm_min = new QLabel(tr("Min"));
+	lbl_bpm_min->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+	lbl_bpm_avg = new QLabel(tr("Avg"));
+	lbl_bpm_avg->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+	lbl_bpm_min_val = new QLabel(QString());
+	lbl_bpm_min_val->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+	lbl_bpm_avg_val = new QLabel(QString());
+	lbl_bpm_avg_val->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+	lbl_bpm_max_val = new QLabel(QString());
+	lbl_bpm_max_val->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
 	spn_channel = new QSpinBox();
 	spn_channel->setMaximum(15);
 	spn_channel->setMinimum(0);
@@ -597,8 +611,24 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_play_gl->addWidget(but_jump[3], n++, 4, 1, 2);
 
 	tab_play_gl->addWidget(but_compile, n++, 4, 1, 4);
-	tab_play_gl->setRowStretch(n++, 4);
-	tab_play_gl->addWidget(but_play, n++, 4, 3, 4);
+
+	tab_play_gl->addWidget(lbl_bpm_max, n, 4, 1, 1);
+	tab_play_gl->addWidget(lbl_bpm_avg, n, 5, 1, 2);
+	tab_play_gl->addWidget(lbl_bpm_min, n, 7, 1, 1);
+
+	n++;
+
+	tab_play_gl->addWidget(lbl_bpm_max_val, n, 4, 1, 1);
+	tab_play_gl->addWidget(lbl_bpm_avg_val, n, 5, 1, 2);
+	tab_play_gl->addWidget(lbl_bpm_min_val, n, 7, 1, 1);
+
+	n++;
+
+	tab_play_gl->setRowStretch(n, 4);
+
+	tab_play_gl->addWidget(but_play, n, 4, 3, 4);
+
+	n++;
 
 	/* <Configuration> Tab */
 
@@ -610,6 +640,12 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_config_rec->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 	lbl_config_synth = new QLabel(tr("Synth"));
 	lbl_config_synth->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+	lbl_bpm_count = new QLabel(tr("BPM average length (0..32)"));
+
+	spn_bpm_length = new QSpinBox();
+	spn_bpm_length->setMaximum(MPP_MAX_BPM);
+	spn_bpm_length->setMinimum(0);
+	spn_bpm_length->setValue(0);
 
 	but_config_apply = new QPushButton(tr("Apply"));
 	but_config_load = new QPushButton(tr("Revert"));
@@ -644,6 +680,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 		x++;
 	}
+
+	tab_config_gl->addWidget(lbl_bpm_count, x, 0, 1, 6);
+	tab_config_gl->addWidget(spn_bpm_length, x, 6, 1, 2);
+
+	x++;
 
 	tab_config_gl->setRowStretch(x, 4);
 
@@ -974,6 +1015,8 @@ MppMainWindow :: handle_watchdog()
 		cursor.insertText(QString(mid_key_str[events_copy[x] & 0x7F]));
 		cursor.endEditBlock();
 	}
+
+	do_bpm_stats();
 }
 
 
@@ -1340,6 +1383,8 @@ MppMainWindow :: handle_config_load()
 		cbx_config_dev[(3*n)+2]->setChecked(
 		    (main_sc.ScDeviceBits & (1UL << ((3*n)+2))) ? 1 : 0);
 	}
+
+	spn_bpm_length->setValue(main_sc.ScBpmAvgLength);
 }
 
 void
@@ -1363,6 +1408,12 @@ MppMainWindow :: handle_config_apply()
 		if (cbx_config_dev[(3*n)+2]->isChecked())
 			main_sc.ScDeviceBits |= 1UL << ((3*n)+2);
 	}
+
+	n = spn_bpm_length->value();
+
+	pthread_mutex_lock(&mtx);
+	main_sc.ScBpmAvgLength = n;
+	pthread_mutex_unlock(&mtx);
 
 	handle_config_reload();
 }
@@ -1487,6 +1538,8 @@ MppMainWindow :: handle_key_press(int in_key, int vel)
 
 	if (main_sc.ScCurrPos >= main_sc.ScLinesMax)
 		main_sc.ScCurrPos = 0;
+
+	do_update_bpm();
 }
 
 /* must be called locked */
@@ -1514,6 +1567,88 @@ MppMainWindow :: handle_key_release(int in_key)
 		if (main_sc.ScPressed[x] != 0)
 			main_sc.ScPressed[x] --;
 	}
+}
+
+/* This function must be called locked */
+
+void
+MppMainWindow :: do_update_bpm(void)
+{
+	uint32_t delta;
+	uint32_t curr;
+
+	curr = umidi20_get_curr_position();
+	delta = curr - main_sc.ScLastKeyPress;
+	main_sc.ScLastKeyPress = curr;
+
+	/* too big delay */
+	if (delta >= (UMIDI20_BPM / 15))
+		return;
+
+	/* store statistics */
+	main_sc.ScBpmData[main_sc.ScBpmAvgPos] = delta;
+	main_sc.ScBpmAvgPos++;
+
+	if (main_sc.ScBpmAvgPos >= main_sc.ScBpmAvgLength)
+		main_sc.ScBpmAvgPos = 0;
+}
+
+void
+MppMainWindow :: do_bpm_stats(void)
+{
+	uint32_t min = -1UL;
+	uint32_t max = 0;
+	uint32_t sum = 0;
+	uint32_t val;
+	uint8_t x;
+	uint8_t len;
+	char buf[32];
+
+	len = main_sc.ScBpmAvgLength;
+
+	if (len == 0)
+		return;
+
+	pthread_mutex_lock(&mtx);
+
+	for (x = 0; x != len; x++) {
+		val = main_sc.ScBpmData[x];
+
+		sum += val;
+		if (val > max)
+			max = val;
+		if (val < min)
+			min = val;
+	}
+
+	pthread_mutex_unlock(&mtx);
+
+	if (sum == 0)
+		sum = 1;
+	if (max == 0)
+		max = 1;
+	if (min == 0)
+		min = 1;
+
+	sum = (len * UMIDI20_BPM) / sum;
+	max = UMIDI20_BPM / max;
+	min = UMIDI20_BPM / min;
+
+	if (sum > 999)
+		sum = 999;
+	if (min > 999)
+		min = 999;
+	if (max > 999)
+		max = 999;
+
+	snprintf(buf, sizeof(buf), "%d", min);
+	lbl_bpm_max_val->setText(QString(buf));
+
+	snprintf(buf, sizeof(buf), "%d", max);
+	lbl_bpm_min_val->setText(QString(buf));
+
+	snprintf(buf, sizeof(buf), "%d", sum);
+	lbl_bpm_avg_val->setText(QString(buf));
 }
 
 static void
@@ -1556,7 +1691,6 @@ MidiEventCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uin
 				mw->handle_key_press(key, vel);
 			}
 		} else {
-
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
 				if (mw->check_synth(y)) {
 					mid_key_press(d, key, vel, 0);
@@ -1604,6 +1738,7 @@ MppMainWindow :: MidiInit(void)
 	main_sc.ScDeviceName[0] = strdup("/midi");
 	main_sc.ScDeviceName[1] = strdup("/dev/umidi0.0");
 	main_sc.ScDeviceName[2] = strdup("/dev/umidi1.0");
+	main_sc.ScBpmAvgLength = 4;
 
 	handle_track_N(0);
 	handle_track_N(1);

@@ -49,6 +49,7 @@
 #define	MPP_MAX_LABELS	32
 #define	MPP_MAX_QUEUE	32
 #define	MPP_MAX_DEVS	4
+#define MPP_MAX_BPM	32
 
 struct MppNote {
 	uint8_t key;
@@ -58,6 +59,9 @@ struct MppNote {
 
 struct MppSoftc {
 	struct MppNote ScNotes[MPP_MAX_LINES][MPP_MAX_NOTES];
+
+	uint32_t ScBpmData[MPP_MAX_BPM];
+	uint32_t ScLastKeyPress;
 
 	uint32_t ScTrackMask;
 	uint32_t ScPosition;
@@ -83,6 +87,8 @@ struct MppSoftc {
 	uint8_t ScPlayDevice;
 	uint8_t ScCmdKey;
 	uint8_t ScChannel;
+	uint8_t ScBpmAvgLength;
+	uint8_t ScBpmAvgPos;
 
 	uint8_t is_note_record_off;
 	uint8_t is_midi_record_off;
@@ -106,7 +112,9 @@ class MppMainWindow : public QWidget
 	void handle_key_press(int in_key, int vel);
 	void handle_key_release(int in_key);
 	void handle_stop(void);
-	void update_play_device_no();
+	void update_play_device_no(void);
+	void do_bpm_stats(void);
+	void do_update_bpm(void);
 
 	uint8_t handle_jump(int pos);
 	uint8_t check_record(void);
@@ -148,6 +156,14 @@ class MppMainWindow : public QWidget
 	QLabel *lbl_channel;
 	QLabel *lbl_bank;
 	QLabel *lbl_prog;
+
+	QLabel *lbl_bpm_min;
+	QLabel *lbl_bpm_avg;
+	QLabel *lbl_bpm_max;
+
+	QLabel *lbl_bpm_min_val;
+	QLabel *lbl_bpm_avg_val;
+	QLabel *lbl_bpm_max_val;
 
 	QSpinBox *spn_channel;
 	QSpinBox *spn_bank;
@@ -199,6 +215,9 @@ class MppMainWindow : public QWidget
 	QLabel *lbl_config_rec;
 	QLabel *lbl_config_synth;
 	QLabel *lbl_config_dev[MPP_MAX_DEVS];
+	QLabel *lbl_bpm_count;
+
+	QSpinBox *spn_bpm_length;
 
 	QLineEdit *led_config_dev[MPP_MAX_DEVS];
 	QCheckBox *cbx_config_dev[3 * MPP_MAX_DEVS];
