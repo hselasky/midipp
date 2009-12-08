@@ -469,15 +469,23 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_bpm_max->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 	lbl_bpm_min = new QLabel(tr("Min"));
 	lbl_bpm_min->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-	lbl_bpm_avg = new QLabel(tr("Avg"));
+	lbl_bpm_avg = new QLabel(tr("Average BPM"));
 	lbl_bpm_avg->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
-	lbl_bpm_min_val = new QLabel(QString());
-	lbl_bpm_min_val->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-	lbl_bpm_avg_val = new QLabel(QString());
-	lbl_bpm_avg_val->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-	lbl_bpm_max_val = new QLabel(QString());
-	lbl_bpm_max_val->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+	lbl_bpm_min_val = new QLCDNumber(3);
+	lbl_bpm_min_val->setMode(QLCDNumber::Dec);
+	lbl_bpm_min_val->setFrameShape(QLCDNumber::NoFrame);
+	lbl_bpm_min_val->setSegmentStyle(QLCDNumber::Flat);
+
+	lbl_bpm_avg_val = new QLCDNumber(3);
+	lbl_bpm_avg_val->setMode(QLCDNumber::Dec);
+	lbl_bpm_avg_val->setFrameShape(QLCDNumber::NoFrame);
+	lbl_bpm_avg_val->setSegmentStyle(QLCDNumber::Flat);
+
+	lbl_bpm_max_val = new QLCDNumber(3);
+	lbl_bpm_max_val->setMode(QLCDNumber::Dec);
+	lbl_bpm_max_val->setFrameShape(QLCDNumber::NoFrame);
+	lbl_bpm_max_val->setSegmentStyle(QLCDNumber::Flat);
 
 	spn_channel = new QSpinBox();
 	spn_channel->setMaximum(15);
@@ -1642,13 +1650,13 @@ MppMainWindow :: do_bpm_stats(void)
 		max = 999;
 
 	snprintf(buf, sizeof(buf), "%d", min);
-	lbl_bpm_max_val->setText(QString(buf));
+	lbl_bpm_max_val->display(QString(buf));
 
 	snprintf(buf, sizeof(buf), "%d", max);
-	lbl_bpm_min_val->setText(QString(buf));
+	lbl_bpm_min_val->display(QString(buf));
 
 	snprintf(buf, sizeof(buf), "%d", sum);
-	lbl_bpm_avg_val->setText(QString(buf));
+	lbl_bpm_avg_val->display(QString(buf));
 }
 
 static void

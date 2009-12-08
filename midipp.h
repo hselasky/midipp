@@ -41,6 +41,7 @@
 #include <QCheckBox>
 #include <QLineEdit>
 #include <QSpacerItem>
+#include <QLCDNumber>
 
 #include <umidi20.h>
 
@@ -161,9 +162,9 @@ class MppMainWindow : public QWidget
 	QLabel *lbl_bpm_avg;
 	QLabel *lbl_bpm_max;
 
-	QLabel *lbl_bpm_min_val;
-	QLabel *lbl_bpm_avg_val;
-	QLabel *lbl_bpm_max_val;
+	QLCDNumber *lbl_bpm_min_val;
+	QLCDNumber *lbl_bpm_avg_val;
+	QLCDNumber *lbl_bpm_max_val;
 
 	QSpinBox *spn_channel;
 	QSpinBox *spn_bank;
