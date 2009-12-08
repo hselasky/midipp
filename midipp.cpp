@@ -391,6 +391,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	watchdog = new QTimer(this);
 	connect(watchdog, SIGNAL(timeout()), this, SLOT(handle_watchdog()));
 
+	auto_play_timer = new QTimer(this);
+	connect(auto_play_timer, SIGNAL(timeout()), this, SLOT(handle_auto_play()));
+
 	/* Editor */
 
 	main_edit = new QTextEdit();
@@ -649,11 +652,17 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_config_synth = new QLabel(tr("Synth"));
 	lbl_config_synth->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 	lbl_bpm_count = new QLabel(tr("BPM average length (0..32)"));
+	lbl_auto_play = new QLabel(tr("Auto Play BPM (0..6000)"));
 
 	spn_bpm_length = new QSpinBox();
 	spn_bpm_length->setMaximum(MPP_MAX_BPM);
 	spn_bpm_length->setMinimum(0);
 	spn_bpm_length->setValue(0);
+
+	spn_auto_play = new QSpinBox();
+	spn_auto_play->setMaximum(6000);
+	spn_auto_play->setMinimum(0);
+	spn_auto_play->setValue(0);
 
 	but_config_apply = new QPushButton(tr("Apply"));
 	but_config_load = new QPushButton(tr("Revert"));
@@ -691,6 +700,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_config_gl->addWidget(lbl_bpm_count, x, 0, 1, 6);
 	tab_config_gl->addWidget(spn_bpm_length, x, 6, 1, 2);
+
+	x++;
+
+	tab_config_gl->addWidget(lbl_auto_play, x, 0, 1, 6);
+	tab_config_gl->addWidget(spn_auto_play, x, 6, 1, 2);
 
 	x++;
 
@@ -979,6 +993,20 @@ MppMainWindow :: handle_midi_record()
 		lbl_midi_record->setText(tr("OFF"));
 }
 
+void
+MppMainWindow :: handle_auto_play()
+{
+	int x;
+	
+	pthread_mutex_lock(&mtx);
+	x = main_sc.is_midi_triggered;
+	pthread_mutex_unlock(&mtx);
+
+	if (x) {
+		handle_play_press();
+		handle_play_release();
+	}
+}
 
 void
 MppMainWindow :: handle_play_press()
@@ -1368,6 +1396,13 @@ MppMainWindow :: handle_config_reload()
 	handle_compile();
 
 	handle_config_load();
+
+	auto_play_timer->stop();
+
+	if (main_sc.ScBpmAutoPlay != 0) {
+		auto_play_timer->setInterval(60000 / main_sc.ScBpmAutoPlay);
+		auto_play_timer->start();
+	}
 }
 
 void
@@ -1393,12 +1428,14 @@ MppMainWindow :: handle_config_load()
 	}
 
 	spn_bpm_length->setValue(main_sc.ScBpmAvgLength);
+	spn_auto_play->setValue(main_sc.ScBpmAutoPlay);
 }
 
 void
 MppMainWindow :: handle_config_apply()
 {
 	int n;
+	int p;
 
 	main_sc.ScDeviceBits = 0;
 
@@ -1418,9 +1455,11 @@ MppMainWindow :: handle_config_apply()
 	}
 
 	n = spn_bpm_length->value();
+	p = spn_auto_play->value();
 
 	pthread_mutex_lock(&mtx);
 	main_sc.ScBpmAvgLength = n;
+	main_sc.ScBpmAutoPlay = p;
 	pthread_mutex_unlock(&mtx);
 
 	handle_config_reload();
@@ -1716,6 +1755,8 @@ MidiEventCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uin
 			}
 
 			mw->main_sc.ScPressed[key] = 1;
+
+			mw->do_update_bpm();
 		}
 	} else if (umidi20_event_is_key_end(event)) {
 
@@ -1748,10 +1789,12 @@ MppMainWindow :: MidiInit(void)
 	int n;
 
 	main_sc.ScTrackMask ^= 0x0F;
-	main_sc.ScDeviceBits = MPP_DEV0_SYNTH | MPP_DEV0_PLAY | MPP_DEV1_RECORD | MPP_DEV2_RECORD;
+	main_sc.ScDeviceBits = MPP_DEV0_SYNTH | MPP_DEV0_PLAY | 
+	  MPP_DEV1_RECORD | MPP_DEV2_RECORD | MPP_DEV3_RECORD;
 	main_sc.ScDeviceName[0] = strdup("/midi");
 	main_sc.ScDeviceName[1] = strdup("/dev/umidi0.0");
 	main_sc.ScDeviceName[2] = strdup("/dev/umidi1.0");
+	main_sc.ScDeviceName[3] = strdup("/dev/umidi2.0");
 	main_sc.ScBpmAvgLength = 4;
 
 	handle_track_N(0);

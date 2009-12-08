@@ -63,6 +63,7 @@ struct MppSoftc {
 
 	uint32_t ScBpmData[MPP_MAX_BPM];
 	uint32_t ScLastKeyPress;
+	uint32_t ScBpmAutoPlay;
 
 	uint32_t ScTrackMask;
 	uint32_t ScPosition;
@@ -76,6 +77,9 @@ struct MppSoftc {
 #define	MPP_DEV2_PLAY	0x0040UL
 #define	MPP_DEV2_RECORD	0x0080UL
 #define	MPP_DEV2_SYNTH	0x0100UL
+#define	MPP_DEV3_PLAY	0x0200UL
+#define	MPP_DEV3_RECORD	0x0400UL
+#define	MPP_DEV3_SYNTH	0x0800UL
 
 	uint16_t ScJumpNext[MPP_MAX_LINES];
 	uint16_t ScJumpTable[MPP_MAX_LABELS];
@@ -127,6 +131,7 @@ class MppMainWindow : public QWidget
 	QTabWidget *main_tw;
 
 	QTimer *watchdog;
+	QTimer *auto_play_timer;
 
 	/* editor */
 
@@ -211,6 +216,7 @@ class MppMainWindow : public QWidget
 	QGridLayout *tab_config_gl;
 	QWidget *tab_config_wg;
 
+	QLabel *lbl_auto_play;
 	QLabel *lbl_config_title;
 	QLabel *lbl_config_play;
 	QLabel *lbl_config_rec;
@@ -219,6 +225,7 @@ class MppMainWindow : public QWidget
 	QLabel *lbl_bpm_count;
 
 	QSpinBox *spn_bpm_length;
+	QSpinBox *spn_auto_play;
 
 	QLineEdit *led_config_dev[MPP_MAX_DEVS];
 	QCheckBox *cbx_config_dev[3 * MPP_MAX_DEVS];
@@ -292,6 +299,7 @@ class MppMainWindow : public QWidget
 	void handle_config_load();
 	void handle_config_reload();
 	void handle_synth_program();
+	void handle_auto_play();
 
  protected:
 	void keyPressEvent(QKeyEvent *event);
