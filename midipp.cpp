@@ -1468,8 +1468,12 @@ void
 MppMainWindow :: handle_stop(void)
 {
 	struct mid_data *d = &mid_data;
+	uint8_t is_midi_triggered;
 	uint8_t x;
 	uint8_t y;
+
+	is_midi_triggered = main_sc.is_midi_triggered;
+	main_sc.is_midi_triggered = 1;
 
 	for (x = 0; x != 128; x++) {
 		if (main_sc.ScPressed[x] != 0) {
@@ -1486,6 +1490,8 @@ MppMainWindow :: handle_stop(void)
 			}
 		}
 	}
+
+	main_sc.is_midi_triggered = is_midi_triggered;
 }
 
 uint8_t
