@@ -869,7 +869,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x++;
 
-	tab_instr_gl->addWidget(txt_instr_comment, x, 0, 1, 8);
+	tab_instr_gl->addWidget(txt_instr_comment, x, 0, 2, 8);
 
 	x++;
 
