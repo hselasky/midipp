@@ -122,7 +122,7 @@ MppParse(struct MppSoftc *sc, const QString &ps)
 	x = -1;
 	line = 0;
 	index = 0;
-	memset(sc->ScNotes, 0, sizeof(sc->ScNotes));
+	memset(sc->ScScores, 0, sizeof(sc->ScScores));
 	memset(sc->ScJumpNext, 0, sizeof(sc->ScJumpNext));
 	memset(sc->ScJumpTable, 0, sizeof(sc->ScJumpTable));
 
@@ -148,44 +148,44 @@ next_char:
 	case 'C':
 		if (y == 0) {
 			base_key = C0;
-			goto parse_note;
+			goto parse_score;
 		}
 		goto next_char;
 	case 'D':
 		if (y == 0) {
 			base_key = D0;
-			goto parse_note;
+			goto parse_score;
 		}
 		goto next_char;
 	case 'E':
 		if (y == 0) {
 			base_key = E0;
-			goto parse_note;
+			goto parse_score;
 		}
 		goto next_char;
 	case 'F':
 		if (y == 0) {
 			base_key = F0;
-			goto parse_note;
+			goto parse_score;
 		}
 		goto next_char;
 	case 'G':
 		if (y == 0) {
 			base_key = G0;
-			goto parse_note;
+			goto parse_score;
 		}
 		goto next_char;
 	case 'A':
 		if (y == 0) {
 			base_key = A0;
-			goto parse_note;
+			goto parse_score;
 		}
 		goto next_char;
 	case 'B':
 	case 'H':
 		if (y == 0) {
 			base_key = H0;
-			goto parse_note;
+			goto parse_score;
 		}
 		goto next_char;
 	case 'T':
@@ -244,7 +244,7 @@ next_char:
 		goto next_char;
 	}
 
-parse_note:
+parse_score:
 	c = ps[x+1].toAscii();
 	if (c >= '0' && c <= '9') {
 		d = ps[x+2].toAscii();
@@ -261,10 +261,10 @@ parse_note:
 			base_key -= 1;
 			x += 1;
 		}
-		if ((line < MPP_MAX_LINES) && (index < MPP_MAX_NOTES)) {
-			sc->ScNotes[line][index].key = base_key & 127;
-			sc->ScNotes[line][index].dur = duration & 255;
-			sc->ScNotes[line][index].channel = channel & 15;
+		if ((line < MPP_MAX_LINES) && (index < MPP_MAX_SCORES)) {
+			sc->ScScores[line][index].key = base_key & 127;
+			sc->ScScores[line][index].dur = duration & 255;
+			sc->ScScores[line][index].channel = channel & 15;
 			index++;
 		}
 
@@ -374,7 +374,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	memset(&mid_data, 0, sizeof(mid_data));
 
-	CurrNoteFileName = NULL;
+	CurrScoreFileName = NULL;
 	CurrMidiFileName = NULL;
 	song = NULL;
 	track = NULL;
@@ -409,30 +409,33 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_play_wg = new QWidget();
 	tab_edit_wg = new QWidget();
 	tab_config_wg = new QWidget();
+	tab_instr_wg = new QWidget();
 
 	tab_file_gl = new QGridLayout(tab_file_wg);
 	tab_play_gl = new QGridLayout(tab_play_wg);
 	tab_edit_gl = new QGridLayout(tab_edit_wg);
 	tab_config_gl = new QGridLayout(tab_config_wg);
+	tab_instr_gl = new QGridLayout(tab_instr_wg);
 
 	main_tw->addTab(tab_file_wg, tr("File"));
 	main_tw->addTab(tab_play_wg, tr("Play"));
 	main_tw->addTab(tab_edit_wg, tr("Edit"));
 	main_tw->addTab(tab_config_wg, tr("Config"));
+	main_tw->addTab(tab_instr_wg, tr("Instrument"));
 
 	/* <File> Tab */
 
-	lbl_note_file = new QLabel(tr("- Note File -"));
-	lbl_note_file->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+	lbl_score_file = new QLabel(tr("- Score File -"));
+	lbl_score_file->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
 	lbl_midi_file = new QLabel(tr("- MIDI File -"));
 	lbl_midi_file->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
-	but_note_file_new = new QPushButton(tr("New"));
-	but_note_file_open = new QPushButton(tr("Open"));
-	but_note_file_save = new QPushButton(tr("Save"));
-	but_note_file_save_as = new QPushButton(tr("Save As"));
-	but_note_file_print = new QPushButton(tr("Print"));
+	but_score_file_new = new QPushButton(tr("New"));
+	but_score_file_open = new QPushButton(tr("Open"));
+	but_score_file_save = new QPushButton(tr("Save"));
+	but_score_file_save_as = new QPushButton(tr("Save As"));
+	but_score_file_print = new QPushButton(tr("Print"));
 	but_quit = new QPushButton(tr("Quit"));
 
 	but_midi_file_new = new QPushButton(tr("New"));
@@ -442,22 +445,57 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n = 0;
 
-	tab_file_gl->addWidget(lbl_note_file, n++, 0, 1, 4);
-	tab_file_gl->addWidget(but_note_file_new, n++, 0, 1, 4);
-	tab_file_gl->addWidget(but_note_file_open, n++, 0, 1, 4);
-	tab_file_gl->addWidget(but_note_file_save, n++, 0, 1, 4);
-	tab_file_gl->addWidget(but_note_file_save_as, n++, 0, 1, 4);
-	tab_file_gl->addWidget(but_note_file_print, n++, 0, 1, 4);
-	tab_file_gl->setRowStretch(n++, 4);
-	tab_file_gl->addWidget(but_quit, n++, 0, 1, 8);
+	tab_file_gl->addWidget(lbl_score_file, n, 0, 1, 4);
+
+	n++;
+
+	tab_file_gl->addWidget(but_score_file_new, n, 0, 1, 4);
+
+	n++;
+
+	tab_file_gl->addWidget(but_score_file_open, n, 0, 1, 4);
+
+	n++;
+
+	tab_file_gl->addWidget(but_score_file_save, n, 0, 1, 4);
+
+	n++;
+
+	tab_file_gl->addWidget(but_score_file_save_as, n, 0, 1, 4);
+
+	n++;
+
+	tab_file_gl->addWidget(but_score_file_print, n, 0, 1, 4);
+
+	n++;
+
+	tab_file_gl->setRowStretch(n, 4);
+
+	n++;
+
+	tab_file_gl->addWidget(but_quit, n, 0, 1, 8);
 
 	n = 0;
 
-	tab_file_gl->addWidget(lbl_midi_file, n++, 4, 1, 4);
-	tab_file_gl->addWidget(but_midi_file_new, n++, 4, 1, 4);
-	tab_file_gl->addWidget(but_midi_file_open, n++, 4, 1, 4);
-	tab_file_gl->addWidget(but_midi_file_save, n++, 4, 1, 4);
-	tab_file_gl->addWidget(but_midi_file_save_as, n++, 4, 1, 4);
+	tab_file_gl->addWidget(lbl_midi_file, n, 4, 1, 4);
+
+	n++;
+
+	tab_file_gl->addWidget(but_midi_file_new, n, 4, 1, 4);
+
+	n++;
+
+	tab_file_gl->addWidget(but_midi_file_open, n, 4, 1, 4);
+
+	n++;
+
+	tab_file_gl->addWidget(but_midi_file_save, n, 4, 1, 4);
+
+	n++;
+
+	tab_file_gl->addWidget(but_midi_file_save_as, n, 4, 1, 4);
+
+	n++;
 
 	/* <Play> Tab */
 
@@ -507,7 +545,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	but_synth_program = new QPushButton(tr("Program"));
 
-	lbl_note_record = new QLabel(QString());
+	lbl_score_record = new QLabel(QString());
 	lbl_midi_record = new QLabel(QString());
 	lbl_midi_pass_thru = new QLabel(QString());
 	lbl_midi_play = new QLabel(QString());
@@ -529,7 +567,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	but_midi_pass_thru = new QPushButton(tr("Pass Thru"));
 	but_compile = new QPushButton(tr("Compile"));
-	but_note_record = new QPushButton(tr("Notes"));
+	but_score_record = new QPushButton(tr("Scores"));
 	but_midi_record = new QPushButton(tr("MIDI"));
 
 	but_midi_play = new QPushButton(tr("MIDI"));
@@ -589,8 +627,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_play_gl->addWidget(lbl_midi_pass_thru, n, 3, 1, 1);
 	tab_play_gl->addWidget(but_midi_pass_thru, n++, 0, 1, 3);
 
-	tab_play_gl->addWidget(lbl_note_record, n, 3, 1, 1);
-	tab_play_gl->addWidget(but_note_record, n++, 0, 1, 3);
+	tab_play_gl->addWidget(lbl_score_record, n, 3, 1, 1);
+	tab_play_gl->addWidget(but_score_record, n++, 0, 1, 3);
 
 	tab_play_gl->addWidget(lbl_midi_record, n, 3, 1, 1);
 	tab_play_gl->addWidget(but_midi_record, n++, 0, 1, 3);
@@ -779,6 +817,66 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_edit_gl->setRowStretch(n, 4);
 
+	/* <Instrument> tab */
+
+	lbl_instr_title = new QLabel(tr("- Channel/Bank/Program/Mute -"));
+	lbl_instr_title->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+	lbl_instr_comment = new QLabel(tr("- Comments -"));
+	lbl_instr_comment->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+	txt_instr_comment = new QTextEdit(QString());
+
+	but_instr_apply = new QPushButton(tr("Apply"));
+	but_instr_revert = new QPushButton(tr("Revert"));
+	
+	x = 0;
+
+	tab_instr_gl->addWidget(lbl_instr_title, x, 0, 1, 8);
+
+	x++;
+
+	for (n = 0; n != 16; n++) {
+		int y_off = (n & 8) ? 4 : 0;
+
+		char buf[16];
+
+		snprintf(buf, sizeof(buf), "Ch%X", n);
+
+		lbl_instr_desc[n] = new QLabel(tr(buf));
+
+		spn_instr_bank[n] = new QSpinBox();
+		spn_instr_bank[n]->setMaximum(127);
+		spn_instr_bank[n]->setMinimum(0);
+		spn_instr_bank[n]->setValue(0);
+
+		spn_instr_prog[n] = new QSpinBox();
+		spn_instr_prog[n]->setMaximum(127);
+		spn_instr_prog[n]->setMinimum(0);
+		spn_instr_prog[n]->setValue(0);
+
+		cbx_instr_mute[n] = new QCheckBox();
+
+		tab_instr_gl->addWidget(lbl_instr_desc[n], (n & 7) + x, 0 + y_off, 1, 1);
+		tab_instr_gl->addWidget(spn_instr_bank[n], (n & 7) + x, 1 + y_off, 1, 1);
+		tab_instr_gl->addWidget(spn_instr_prog[n], (n & 7) + x, 2 + y_off, 1, 1);
+		tab_instr_gl->addWidget(cbx_instr_mute[n], (n & 7) + x, 3 + y_off, 1, 1);
+	}
+
+	x += 8;
+
+	tab_instr_gl->addWidget(lbl_instr_comment, x, 0, 1, 8);
+
+	x++;
+
+	tab_instr_gl->addWidget(txt_instr_comment, x, 0, 1, 8);
+	tab_file_gl->setRowStretch(x, 2);
+
+	x++;
+
+	tab_instr_gl->addWidget(but_instr_revert, x, 4, 1, 2);
+	tab_instr_gl->addWidget(but_instr_apply, x, 6, 1, 2);
+
 	/* Connect all */
 
 	connect(but_jump[0], SIGNAL(pressed()), this, SLOT(handle_jump_0()));
@@ -793,17 +891,17 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	connect(but_midi_pass_thru, SIGNAL(pressed()), this, SLOT(handle_pass_thru()));
 	connect(but_compile, SIGNAL(pressed()), this, SLOT(handle_compile()));
-	connect(but_note_record, SIGNAL(pressed()), this, SLOT(handle_note_record()));
+	connect(but_score_record, SIGNAL(pressed()), this, SLOT(handle_score_record()));
 	connect(but_midi_record, SIGNAL(pressed()), this, SLOT(handle_midi_record()));
 	connect(but_midi_play, SIGNAL(pressed()), this, SLOT(handle_midi_play()));
 	connect(but_play, SIGNAL(pressed()), this, SLOT(handle_play_press()));
 	connect(but_play, SIGNAL(released()), this, SLOT(handle_play_release()));
 	connect(but_quit, SIGNAL(pressed()), this, SLOT(handle_quit()));
 
-	connect(but_note_file_new, SIGNAL(pressed()), this, SLOT(handle_note_file_new()));
-	connect(but_note_file_open, SIGNAL(pressed()), this, SLOT(handle_note_file_open()));
-	connect(but_note_file_save, SIGNAL(pressed()), this, SLOT(handle_note_file_save()));
-	connect(but_note_file_save_as, SIGNAL(pressed()), this, SLOT(handle_note_file_save_as()));
+	connect(but_score_file_new, SIGNAL(pressed()), this, SLOT(handle_score_file_new()));
+	connect(but_score_file_open, SIGNAL(pressed()), this, SLOT(handle_score_file_open()));
+	connect(but_score_file_save, SIGNAL(pressed()), this, SLOT(handle_score_file_save()));
+	connect(but_score_file_save_as, SIGNAL(pressed()), this, SLOT(handle_score_file_save_as()));
 
 	connect(but_midi_file_new, SIGNAL(pressed()), this, SLOT(handle_midi_file_new()));
 	connect(but_midi_file_open, SIGNAL(pressed()), this, SLOT(handle_midi_file_open()));
@@ -949,16 +1047,16 @@ MppMainWindow :: handle_compile()
 }
 
 void
-MppMainWindow :: handle_note_record()
+MppMainWindow :: handle_score_record()
 {
 	pthread_mutex_lock(&mtx);
-	main_sc.is_note_record_off = !main_sc.is_note_record_off;
+	main_sc.is_score_record_off = !main_sc.is_score_record_off;
 	pthread_mutex_unlock(&mtx);
 
-	if (main_sc.is_note_record_off == 0)
-		lbl_note_record->setText(tr("ON"));
+	if (main_sc.is_score_record_off == 0)
+		lbl_score_record->setText(tr("ON"));
 	else
-		lbl_note_record->setText(tr("OFF"));
+		lbl_score_record->setText(tr("OFF"));
 }
 
 void
@@ -1057,34 +1155,34 @@ MppMainWindow :: handle_watchdog()
 
 
 void
-MppMainWindow :: handle_note_file_new()
+MppMainWindow :: handle_score_file_new()
 {
 	main_edit->setText(QString());
 	handle_compile();
-	if (CurrNoteFileName != NULL) {
-		delete (CurrNoteFileName);
-		CurrNoteFileName = NULL;
+	if (CurrScoreFileName != NULL) {
+		delete (CurrScoreFileName);
+		CurrScoreFileName = NULL;
 	}
 }
 
 void
-MppMainWindow :: handle_note_file_open()
+MppMainWindow :: handle_score_file_open()
 {
 	QFileDialog *diag = 
-	  new QFileDialog(this, tr("Select Note File"), 
-		QString(), QString("Note File (*.txt)"));
-	QString notes;
+	  new QFileDialog(this, tr("Select Score File"), 
+		QString(), QString("Score File (*.txt)"));
+	QString scores;
 
 	diag->setAcceptMode(QFileDialog::AcceptOpen);
 	diag->setFileMode(QFileDialog::ExistingFile);
 
-	handle_note_file_new();
+	handle_score_file_new();
 
 	if (diag->exec()) {
-		CurrNoteFileName = new QString(diag->selectedFiles()[0]);
-		notes = MppReadFile(*CurrNoteFileName);
-		if (notes != NULL) {
-			main_edit->setText(notes);
+		CurrScoreFileName = new QString(diag->selectedFiles()[0]);
+		scores = MppReadFile(*CurrScoreFileName);
+		if (scores != NULL) {
+			main_edit->setText(scores);
 			handle_compile();
 		}
 	}
@@ -1093,33 +1191,33 @@ MppMainWindow :: handle_note_file_open()
 }
 
 void
-MppMainWindow :: handle_note_file_save()
+MppMainWindow :: handle_score_file_save()
 {
-	if (CurrNoteFileName != NULL) {
-		MppWriteFile(*CurrNoteFileName, main_edit->toPlainText());
+	if (CurrScoreFileName != NULL) {
+		MppWriteFile(*CurrScoreFileName, main_edit->toPlainText());
 	} else {
-		handle_note_file_save_as();
+		handle_score_file_save_as();
 	}
 }
 
 void
-MppMainWindow :: handle_note_file_save_as()
+MppMainWindow :: handle_score_file_save_as()
 {
 	QFileDialog *diag = 
-	  new QFileDialog(this, tr("Select Note File"), 
-		QString(), QString("Note File (*.txt)"));
+	  new QFileDialog(this, tr("Select Score File"), 
+		QString(), QString("Score File (*.txt)"));
 
 	diag->setAcceptMode(QFileDialog::AcceptSave);
 	diag->setFileMode(QFileDialog::AnyFile);
 
 	if (diag->exec()) {
-		if (CurrNoteFileName != NULL)
-			delete (CurrNoteFileName);
+		if (CurrScoreFileName != NULL)
+			delete (CurrScoreFileName);
 
-		CurrNoteFileName = new QString(diag->selectedFiles()[0]);
+		CurrScoreFileName = new QString(diag->selectedFiles()[0]);
 
-		if (CurrNoteFileName != NULL)
-			handle_note_file_save();
+		if (CurrScoreFileName != NULL)
+			handle_score_file_save();
 	}
 
 	delete diag;
@@ -1550,7 +1648,7 @@ void
 MppMainWindow :: handle_key_press(int in_key, int vel)
 {
 	struct mid_data *d = &mid_data;
-	struct MppNote *pn;
+	struct MppScore *pn;
 	uint16_t pos;
 	uint8_t x;
 	uint8_t y;
@@ -1560,9 +1658,9 @@ MppMainWindow :: handle_key_press(int in_key, int vel)
 	if (pos != 0)
 		main_sc.ScCurrPos = pos - 1;
 
-	pn = &main_sc.ScNotes[main_sc.ScCurrPos][0];
+	pn = &main_sc.ScScores[main_sc.ScCurrPos][0];
 
-	for (x = 0; x != MPP_MAX_NOTES; x++) {
+	for (x = 0; x != MPP_MAX_SCORES; x++) {
 
 		if (pn->dur != 0) {
 			out_key = pn->key + (in_key - C4);
@@ -1732,7 +1830,7 @@ MidiEventCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uin
 		key = umidi20_event_get_key(event) & 0x7F;
 		vel = umidi20_event_get_velocity(event);
 
-		if (mw->main_sc.is_note_record_off == 0) {
+		if (mw->main_sc.is_score_record_off == 0) {
 			if (mw->main_sc.ScNumInputEvents < MPP_MAX_QUEUE) {
 				mw->main_sc.ScInputEvents[mw->main_sc.ScNumInputEvents] = key;
 				mw->main_sc.ScNumInputEvents++;
@@ -1804,7 +1902,7 @@ MppMainWindow :: MidiInit(void)
 
 	handle_midi_record();
 	handle_midi_play();
-	handle_note_record();
+	handle_score_record();
 	handle_pass_thru();
 
 	umidi20_init();

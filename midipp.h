@@ -46,20 +46,20 @@
 #include <umidi20.h>
 
 #define	MPP_MAX_LINES	1024
-#define	MPP_MAX_NOTES	16
+#define	MPP_MAX_SCORES	16
 #define	MPP_MAX_LABELS	32
 #define	MPP_MAX_QUEUE	32
 #define	MPP_MAX_DEVS	4
 #define MPP_MAX_BPM	32
 
-struct MppNote {
+struct MppScore {
 	uint8_t key;
 	uint8_t dur;
 	uint8_t channel;
 };
 
 struct MppSoftc {
-	struct MppNote ScNotes[MPP_MAX_LINES][MPP_MAX_NOTES];
+	struct MppScore ScScores[MPP_MAX_LINES][MPP_MAX_SCORES];
 
 	uint32_t ScBpmData[MPP_MAX_BPM];
 	uint32_t ScLastKeyPress;
@@ -95,7 +95,7 @@ struct MppSoftc {
 	uint8_t ScBpmAvgLength;
 	uint8_t ScBpmAvgPos;
 
-	uint8_t is_note_record_off;
+	uint8_t is_score_record_off;
 	uint8_t is_midi_record_off;
 	uint8_t is_midi_play_off;
 	uint8_t is_midi_pass_thru_off;
@@ -108,7 +108,7 @@ class MppMainWindow : public QWidget
 {
 	Q_OBJECT;
 
- public:
+public:
 	MppMainWindow(QWidget *parent = 0);
 	~MppMainWindow();
 
@@ -141,14 +141,14 @@ class MppMainWindow : public QWidget
 
 	QWidget *tab_file_wg;
 	QGridLayout *tab_file_gl;
-	QLabel *lbl_note_file;
+	QLabel *lbl_score_file;
 	QLabel *lbl_midi_file;
 
-	QPushButton *but_note_file_new;
-	QPushButton *but_note_file_open;
-	QPushButton *but_note_file_save;
-	QPushButton *but_note_file_save_as;
-	QPushButton *but_note_file_print;
+	QPushButton *but_score_file_new;
+	QPushButton *but_score_file_open;
+	QPushButton *but_score_file_save;
+	QPushButton *but_score_file_save_as;
+	QPushButton *but_score_file_print;
 	QPushButton *but_quit;
 
 	QPushButton *but_midi_file_new;
@@ -192,7 +192,7 @@ class MppMainWindow : public QWidget
 	QLabel	*lbl_cmd_key;
 	QSpinBox *spn_cmd_key;
 
-	QLabel	*lbl_note_record;
+	QLabel	*lbl_score_record;
 	QLabel	*lbl_midi_record;
 	QLabel	*lbl_midi_play;
 	QLabel	*lbl_midi_pass_thru;
@@ -204,7 +204,7 @@ class MppMainWindow : public QWidget
 
 	QPushButton *but_midi_pass_thru;
 	QPushButton *but_compile;
-	QPushButton *but_note_record;
+	QPushButton *but_score_record;
 	QPushButton *but_play;
 	QPushButton *but_midi_record;
 	QPushButton *but_midi_play;
@@ -233,7 +233,7 @@ class MppMainWindow : public QWidget
 	QPushButton *but_config_apply;
 	QPushButton *but_config_load;
 
-	QString *CurrNoteFileName;
+	QString *CurrScoreFileName;
 	QString *CurrMidiFileName;
 
 	/* tab <Edit> */
@@ -256,6 +256,22 @@ class MppMainWindow : public QWidget
 	QPushButton *but_edit_remove_keys;
 	QPushButton *but_edit_remove_all;
 
+	/* tab <Instrument> */
+
+	QGridLayout *tab_instr_gl;
+	QWidget *tab_instr_wg;
+
+	QTextEdit *txt_instr_comment;
+	QLabel *lbl_instr_title;
+	QLabel *lbl_instr_comment;
+	QLabel *lbl_instr_desc[16];
+	QSpinBox *spn_instr_bank[16];
+	QSpinBox *spn_instr_prog[16];
+	QCheckBox *cbx_instr_mute[16];
+
+	QPushButton *but_instr_apply;
+	QPushButton *but_instr_revert;
+
 	/* MIDI stuff */
 	struct mid_data mid_data;
 	struct umidi20_song *song;
@@ -263,7 +279,7 @@ class MppMainWindow : public QWidget
 
 	pthread_mutex_t mtx;
 
- public slots:
+public slots:
 	void handle_quit();
 	void handle_play_key_changed(int);
 	void handle_cmd_key_changed(int);
@@ -279,16 +295,16 @@ class MppMainWindow : public QWidget
 	void handle_track_N(int index);
 	void handle_pass_thru();
 	void handle_compile();
-	void handle_note_record();
+	void handle_score_record();
 	void handle_midi_record();
 	void handle_midi_play();
 	void handle_play_press();
 	void handle_play_release();
 	void handle_watchdog();
-	void handle_note_file_new();
-	void handle_note_file_open();
-	void handle_note_file_save();
-	void handle_note_file_save_as();
+	void handle_score_file_new();
+	void handle_score_file_open();
+	void handle_score_file_save();
+	void handle_score_file_save_as();
 	void handle_midi_file_new();
 	void handle_midi_file_open();
 	void handle_midi_file_save();
@@ -301,7 +317,7 @@ class MppMainWindow : public QWidget
 	void handle_synth_program();
 	void handle_auto_play();
 
- protected:
+protected:
 	void keyPressEvent(QKeyEvent *event);
 	void keyReleaseEvent(QKeyEvent *event);
 };
