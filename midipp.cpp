@@ -891,10 +891,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x++;
 
-	tab_instr_gl->addWidget(spn_instr_curr_chan, x, 0, 1, 2);
-	tab_instr_gl->addWidget(spn_instr_curr_bank, x, 2, 1, 2);
-	tab_instr_gl->addWidget(spn_instr_curr_prog, x, 4, 1, 1);
-	tab_instr_gl->addWidget(but_instr_program, x, 5, 1, 3);
+	tab_instr_gl->addWidget(spn_instr_curr_chan, x, 0, 1, 1);
+	tab_instr_gl->addWidget(spn_instr_curr_bank, x, 1, 1, 1);
+	tab_instr_gl->addWidget(spn_instr_curr_prog, x, 2, 1, 1);
+	tab_instr_gl->addWidget(but_instr_program, x, 4, 1, 4);
 
 	x++;
 
