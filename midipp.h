@@ -75,6 +75,7 @@ struct MppSoftc {
 	uint32_t ScBpmAutoPlay;
 	uint32_t ScLastInputEvent;
 
+	uint32_t ScChanUsageMask;
 	uint32_t ScTrackMask;
 	uint32_t ScPosition;
 	uint32_t ScDeviceBits;

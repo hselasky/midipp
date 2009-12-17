@@ -1363,6 +1363,7 @@ MppMainWindow :: handle_midi_file_new()
 		}
 		main_sc.ScInstrUpdated = 1;
 		main_sc.ScSynthChannel = 0;
+		main_sc.ScChanUsageMask = 0;
 		pthread_mutex_unlock(&mtx);
 	}
 }
@@ -1455,10 +1456,16 @@ load_file:
 	        if (umidi20_event_is_voice(event) ||
 		    umidi20_event_is_sysex(event)) {
 
-		    if (do_instr_check(event))
-				event_copy = NULL;
-		    else
-		    		event_copy = umidi20_event_copy(event, 0);
+		    if (do_instr_check(event)) {
+			event_copy = NULL;
+		    } else {
+			if (umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL) {
+				uint8_t chan;
+				chan = umidi20_event_get_channel(event);
+				main_sc.ScChanUsageMask |= (1 << chan);
+			}
+			event_copy = umidi20_event_copy(event, 0);
+		    }
 
 		    if (event_copy != NULL) {
 			/* reserve low positions for channel program events */
@@ -1495,10 +1502,19 @@ MppMainWindow :: handle_midi_file_instr_prepend()
 	uint8_t x;
 
 	for (x = 0; x != 16; x++) {
+
+		/* 
+		 * Don't insert instrument bank and program commands
+		 * for channels without events!
+		 */
+		if (!(main_sc.ScChanUsageMask & (1 << x)))
+			continue;
+
 		mid_set_channel(d, x);
 		mid_set_position(d, 0);
 		mid_set_device_no(d, 0xFF);
-		mid_set_bank_program(d, x, main_sc.ScInstr[x].bank, main_sc.ScInstr[x].prog);
+		mid_set_bank_program(d, x, main_sc.ScInstr[x].bank,
+		    main_sc.ScInstr[x].prog);
 	}
 }
 
@@ -1747,6 +1763,7 @@ MppMainWindow :: check_record()
 {
 	struct mid_data *d = &mid_data;
 	uint32_t pos;
+	uint8_t chan;
 
 	if (main_sc.ScMidiRecordOff)
 		return (0);
@@ -1757,7 +1774,10 @@ MppMainWindow :: check_record()
 	if (pos < MPP_MIN_POS)
 		pos = MPP_MIN_POS;
 
-	mid_set_channel(d, main_sc.ScSynthChannel);
+	chan = main_sc.ScSynthChannel;
+	main_sc.ScChanUsageMask |= (1 << chan);
+
+	mid_set_channel(d, chan);
 	mid_set_position(d, pos);
 	mid_set_device_no(d, 0xFF);
 
