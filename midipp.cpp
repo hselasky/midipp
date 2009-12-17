@@ -1461,9 +1461,9 @@ load_file:
 		    		event_copy = umidi20_event_copy(event, 0);
 
 		    if (event_copy != NULL) {
-			/* reserve position zero for channel program events */
-			if (event_copy->position == 0)
-				event_copy->position = 1;
+			/* reserve low positions for channel program events */
+			if (event_copy->position < MPP_MIN_POS)
+				event_copy->position = MPP_MIN_POS;
 
 			umidi20_event_queue_insert(&(track->queue),
 			    event_copy, UMIDI20_CACHE_INPUT);
@@ -1506,7 +1506,7 @@ MppMainWindow :: handle_midi_file_instr_prepend()
 void
 MppMainWindow :: handle_midi_file_instr_delete()
 {
-	umidi20_event_queue_move(&(track->queue), NULL, 0, 1, 0, 0-1, UMIDI20_CACHE_INPUT);
+	umidi20_event_queue_move(&(track->queue), NULL, 0, MPP_MIN_POS, 0, 0-1, UMIDI20_CACHE_INPUT);
 }
 
 void
@@ -1720,6 +1720,7 @@ uint8_t
 MppMainWindow :: check_synth(uint8_t device_no)
 {
 	struct mid_data *d = &mid_data;
+	uint32_t pos;
 
 	if (device_no >= MPP_MAX_DEVS)
 		return (0);
@@ -1728,8 +1729,12 @@ MppMainWindow :: check_synth(uint8_t device_no)
 
 		handle_play_trigger();
 
+		pos = umidi20_get_curr_position() - main_sc.ScPosition;
+		if (pos < MPP_MIN_POS)
+			pos = MPP_MIN_POS;
+
 		mid_set_channel(d, main_sc.ScSynthChannel);
-		mid_set_position(d, umidi20_get_curr_position() - main_sc.ScPosition + 1);
+		mid_set_position(d, pos);
 		mid_set_device_no(d, device_no);
 
 		return (1);
@@ -1741,14 +1746,19 @@ uint8_t
 MppMainWindow :: check_record()
 {
 	struct mid_data *d = &mid_data;
+	uint32_t pos;
 
 	if (main_sc.ScMidiRecordOff)
 		return (0);
 
 	handle_play_trigger();
 
+	pos = umidi20_get_curr_position() - main_sc.ScPosition;
+	if (pos < MPP_MIN_POS)
+		pos = MPP_MIN_POS;
+
 	mid_set_channel(d, main_sc.ScSynthChannel);
-	mid_set_position(d, umidi20_get_curr_position() - main_sc.ScPosition + 1);
+	mid_set_position(d, pos);
 	mid_set_device_no(d, 0xFF);
 
 	return (1);
