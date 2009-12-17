@@ -863,7 +863,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_instr_title = new QLabel(tr("- Channel/Bank/Program/Mute -"));
 	lbl_instr_title->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
-	lbl_instr_prog = new QLabel(tr("- Current Channel/Bank/Program -"));
+	lbl_instr_prog = new QLabel(tr("- Current Bank/Program -"));
 	lbl_instr_prog->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
 	but_instr_apply = new QPushButton(tr("Apply"));
@@ -1242,9 +1242,11 @@ MppMainWindow :: handle_watchdog()
 
 			if (y != last_duration) {
 				last_duration = y;
-				snprintf(buf, sizeof(buf), "U%d %s ", y, mid_key_str[events_copy[x] & 0x7F]);
+				snprintf(buf, sizeof(buf), "U%d %s ",
+				    y, mid_key_str[events_copy[x] & 0x7F]);
 			} else {
-				snprintf(buf, sizeof(buf), "%s ", mid_key_str[events_copy[x] & 0x7F]);
+				snprintf(buf, sizeof(buf), "%s ",
+				    mid_key_str[events_copy[x] & 0x7F]);
 			}
 
 			cursor.insertText(QString(buf));
@@ -1513,7 +1515,8 @@ MppMainWindow :: handle_midi_file_instr_prepend()
 		mid_set_channel(d, x);
 		mid_set_position(d, 0);
 		mid_set_device_no(d, 0xFF);
-		mid_set_bank_program(d, x, main_sc.ScInstr[x].bank,
+		mid_set_bank_program(d, x,
+		    main_sc.ScInstr[x].bank,
 		    main_sc.ScInstr[x].prog);
 	}
 }
@@ -1522,7 +1525,8 @@ MppMainWindow :: handle_midi_file_instr_prepend()
 void
 MppMainWindow :: handle_midi_file_instr_delete()
 {
-	umidi20_event_queue_move(&(track->queue), NULL, 0, MPP_MIN_POS, 0, 0-1, UMIDI20_CACHE_INPUT);
+	umidi20_event_queue_move(&(track->queue), NULL, 0,
+	    MPP_MIN_POS, 0, 0-1, UMIDI20_CACHE_INPUT);
 }
 
 void
@@ -1745,9 +1749,7 @@ MppMainWindow :: check_synth(uint8_t device_no)
 
 		handle_play_trigger();
 
-		pos = umidi20_get_curr_position() - main_sc.ScPosition;
-		if (pos < MPP_MIN_POS)
-			pos = MPP_MIN_POS;
+		pos = umidi20_get_curr_position() - main_sc.ScPosition + 1;
 
 		mid_set_channel(d, main_sc.ScSynthChannel);
 		mid_set_position(d, pos);
@@ -2118,16 +2120,16 @@ MppMainWindow :: do_instr_check(struct umidi20_event *event)
 		chan = umidi20_event_get_channel(event) & 0xF;
 
 		if (addr == 0x00) {
-			main_sc.ScInstr[chan].bank = 
-				(main_sc.ScInstr[chan].bank & 0x7F) | (val << 7);
+			main_sc.ScInstr[chan].bank &= 0x007F;
+			main_sc.ScInstr[chan].bank |= (val << 7);
 			main_sc.ScInstr[chan].updated = 1;
 			main_sc.ScInstr[chan].muted = 0;
 			main_sc.ScInstrUpdated = 1;
 			main_sc.ScSynthChannel = chan;
 			return (1);
 		} else if (addr == 0x20) {
-			main_sc.ScInstr[chan].bank = 
-				(main_sc.ScInstr[chan].bank & 0x3F8) | val;
+			main_sc.ScInstr[chan].bank &= 0xFF80;
+			main_sc.ScInstr[chan].bank |= (val & 0x7F);
 			main_sc.ScInstr[chan].updated = 1;
 			main_sc.ScInstr[chan].muted = 0;
 			main_sc.ScInstrUpdated = 1;
@@ -2243,7 +2245,9 @@ MppMainWindow :: handle_instr_reload()
 		main_sc.ScInstr[x].updated = 0;
 		for (y = 0; y != MPP_MAX_DEVS; y++) {
 			if (check_synth(y)) {
-				mid_set_bank_program(d, x, main_sc.ScInstr[x].bank, main_sc.ScInstr[x].prog);
+				mid_set_bank_program(d, x, 
+				    main_sc.ScInstr[x].bank,
+				    main_sc.ScInstr[x].prog);
 			}
 		}
 	}
