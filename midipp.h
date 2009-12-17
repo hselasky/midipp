@@ -58,8 +58,16 @@ struct MppScore {
 	uint8_t channel;
 };
 
+struct MppInstr {
+	uint16_t bank;
+	uint8_t prog;
+	uint8_t muted;
+	uint8_t updated;
+};
+
 struct MppSoftc {
 	struct MppScore ScScores[MPP_MAX_LINES][MPP_MAX_SCORES];
+	struct MppInstr ScInstr[16];
 
 	uint32_t ScBpmData[MPP_MAX_BPM];
 	uint32_t ScLastKeyPress;
@@ -91,15 +99,16 @@ struct MppSoftc {
 	uint8_t ScNumInputEvents;
 	uint8_t ScPlayDevice;
 	uint8_t ScCmdKey;
-	uint8_t ScChannel;
+	uint8_t ScSynthChannel;
 	uint8_t ScBpmAvgLength;
 	uint8_t ScBpmAvgPos;
 
-	uint8_t is_score_record_off;
-	uint8_t is_midi_record_off;
-	uint8_t is_midi_play_off;
-	uint8_t is_midi_pass_thru_off;
-	uint8_t is_midi_triggered;
+	uint8_t ScScoreRecordOff;
+	uint8_t ScInstrUpdated;
+	uint8_t ScMidiRecordOff;
+	uint8_t ScMidiPlayOff;
+	uint8_t ScMidiPassThruOff;
+	uint8_t ScMidiTriggered;
 
 	char *ScDeviceName[MPP_MAX_DEVS];
 };
@@ -117,10 +126,16 @@ public:
 	void handle_key_press(int in_key, int vel);
 	void handle_key_release(int in_key);
 	void handle_stop(void);
+	void handle_midi_file_open(int merge);
+	void handle_midi_file_clear_name(void);
+	void handle_midi_file_instr_prepend(void);
+	void handle_midi_file_instr_delete(void);
 	void update_play_device_no(void);
 	void do_bpm_stats(void);
+	void do_clock_stats(void);
 	void do_update_bpm(void);
 
+	uint8_t do_instr_check(struct umidi20_event *event);
 	uint8_t handle_jump(int pos);
 	uint8_t check_record(void);
 	uint8_t check_synth(uint8_t device_no);
@@ -153,28 +168,20 @@ public:
 
 	QPushButton *but_midi_file_new;
 	QPushButton *but_midi_file_open;
+	QPushButton *but_midi_file_merge;
 	QPushButton *but_midi_file_save;
 	QPushButton *but_midi_file_save_as;
 
 	/* tab <Play> */
 
-	QLabel *lbl_prog_title;
-	QLabel *lbl_channel;
-	QLabel *lbl_bank;
-	QLabel *lbl_prog;
-
 	QLabel *lbl_bpm_min;
 	QLabel *lbl_bpm_avg;
 	QLabel *lbl_bpm_max;
 
+	QLCDNumber *lbl_curr_time_val;
 	QLCDNumber *lbl_bpm_min_val;
 	QLCDNumber *lbl_bpm_avg_val;
 	QLCDNumber *lbl_bpm_max_val;
-
-	QSpinBox *spn_channel;
-	QSpinBox *spn_bank;
-	QSpinBox *spn_prog;
-	QPushButton *but_synth_program;
 
 	QLabel *lbl_synth;
 	QLabel *lbl_playback;
@@ -231,7 +238,7 @@ public:
 	QCheckBox *cbx_config_dev[3 * MPP_MAX_DEVS];
 
 	QPushButton *but_config_apply;
-	QPushButton *but_config_load;
+	QPushButton *but_config_revert;
 
 	QString *CurrScoreFileName;
 	QString *CurrMidiFileName;
@@ -261,14 +268,19 @@ public:
 	QGridLayout *tab_instr_gl;
 	QWidget *tab_instr_wg;
 
-	QTextEdit *txt_instr_comment;
-	QLabel *lbl_instr_title;
-	QLabel *lbl_instr_comment;
-	QLabel *lbl_instr_desc[16];
+	QSpinBox *spn_instr_curr_chan;
+	QSpinBox *spn_instr_curr_bank;
+	QSpinBox *spn_instr_curr_prog;
 	QSpinBox *spn_instr_bank[16];
 	QSpinBox *spn_instr_prog[16];
+
+	QLabel *lbl_instr_title;
+	QLabel *lbl_instr_prog;
+	QLabel *lbl_instr_desc[16];
+
 	QCheckBox *cbx_instr_mute[16];
 
+	QPushButton *but_instr_program;
 	QPushButton *but_instr_apply;
 	QPushButton *but_instr_revert;
 
@@ -306,16 +318,21 @@ public slots:
 	void handle_score_file_save();
 	void handle_score_file_save_as();
 	void handle_midi_file_new();
-	void handle_midi_file_open();
+	void handle_midi_file_merge_open();
+	void handle_midi_file_new_open();
 	void handle_midi_file_save();
 	void handle_midi_file_save_as();
 	void handle_rewind();
 	void handle_play_trigger();
-	void handle_config_apply();
-	void handle_config_load();
-	void handle_config_reload();
-	void handle_synth_program();
 	void handle_auto_play();
+	void handle_config_apply();
+	void handle_config_revert();
+	void handle_config_reload();
+
+	void handle_instr_apply();
+	void handle_instr_revert();
+	void handle_instr_reload();
+	void handle_instr_program();
 
 protected:
 	void keyPressEvent(QKeyEvent *event);

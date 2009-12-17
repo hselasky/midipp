@@ -440,6 +440,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	but_midi_file_new = new QPushButton(tr("New"));
 	but_midi_file_open = new QPushButton(tr("Open"));
+	but_midi_file_merge = new QPushButton(tr("Merge"));
 	but_midi_file_save = new QPushButton(tr("Save"));
 	but_midi_file_save_as = new QPushButton(tr("Save As"));
 
@@ -489,6 +490,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n++;
 
+	tab_file_gl->addWidget(but_midi_file_merge, n, 4, 1, 4);
+
+	n++;
+
 	tab_file_gl->addWidget(but_midi_file_save, n, 4, 1, 4);
 
 	n++;
@@ -499,19 +504,17 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* <Play> Tab */
 
-	lbl_prog_title = new QLabel(tr("- Synth Prog -"));
-	lbl_prog_title->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-
-	lbl_channel = new QLabel(tr("Chan:"));
-	lbl_bank = new QLabel(tr("Bank:"));
-	lbl_prog = new QLabel(tr("Prog:"));
-
 	lbl_bpm_max = new QLabel(tr("Max"));
 	lbl_bpm_max->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 	lbl_bpm_min = new QLabel(tr("Min"));
 	lbl_bpm_min->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 	lbl_bpm_avg = new QLabel(tr("Average BPM"));
 	lbl_bpm_avg->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+	lbl_curr_time_val = new QLCDNumber(8);
+	lbl_curr_time_val->setMode(QLCDNumber::Dec);
+	lbl_curr_time_val->setFrameShape(QLCDNumber::NoFrame);
+	lbl_curr_time_val->setSegmentStyle(QLCDNumber::Flat);
 
 	lbl_bpm_min_val = new QLCDNumber(3);
 	lbl_bpm_min_val->setMode(QLCDNumber::Dec);
@@ -527,23 +530,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_bpm_max_val->setMode(QLCDNumber::Dec);
 	lbl_bpm_max_val->setFrameShape(QLCDNumber::NoFrame);
 	lbl_bpm_max_val->setSegmentStyle(QLCDNumber::Flat);
-
-	spn_channel = new QSpinBox();
-	spn_channel->setMaximum(15);
-	spn_channel->setMinimum(0);
-	spn_channel->setValue(0);
-
-	spn_bank = new QSpinBox();
-	spn_bank->setMaximum(127);
-	spn_bank->setMinimum(0);
-	spn_bank->setValue(0);
-
-	spn_prog = new QSpinBox();
-	spn_prog->setMaximum(127);
-	spn_prog->setMinimum(0);
-	spn_prog->setValue(0);
-
-	but_synth_program = new QPushButton(tr("Program"));
 
 	lbl_score_record = new QLabel(QString());
 	lbl_midi_record = new QLabel(QString());
@@ -607,31 +593,43 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n = 0;
 
-	tab_play_gl->addWidget(lbl_prog_title, n++, 0, 1, 4);
-	tab_play_gl->addWidget(lbl_channel, n, 0, 1, 2);
-	tab_play_gl->addWidget(spn_channel, n++, 2, 1, 2);
-	tab_play_gl->addWidget(lbl_bank, n, 0, 1, 2);
-	tab_play_gl->addWidget(spn_bank, n++, 2, 1, 2);
-	tab_play_gl->addWidget(lbl_prog, n, 0, 1, 2);
-	tab_play_gl->addWidget(spn_prog, n++, 2, 1, 2);
-	tab_play_gl->addWidget(but_synth_program, n++, 0, 1, 4);
+	tab_play_gl->addWidget(lbl_curr_time_val, n, 0, 1, 4);
 
-	tab_play_gl->addWidget(lbl_playback, n++, 0, 1, 4);
+	n++;
+
+	tab_play_gl->addWidget(lbl_playback, n, 0, 1, 4);
+
+	n++;
 
 	tab_play_gl->addWidget(lbl_midi_play, n, 3, 1, 1);
-	tab_play_gl->addWidget(but_midi_play, n++, 0, 1, 3);
-	tab_play_gl->addWidget(but_midi_trigger, n++, 0, 1, 4);
-	tab_play_gl->addWidget(but_midi_rewind, n++, 0, 1, 4);
+	tab_play_gl->addWidget(but_midi_play, n, 0, 1, 3);
 
-	tab_play_gl->addWidget(lbl_recording, n++, 0, 1, 4);
+	n++;
+
+	tab_play_gl->addWidget(but_midi_trigger, n, 0, 1, 4);
+
+	n++;
+
+	tab_play_gl->addWidget(but_midi_rewind, n, 0, 1, 4);
+
+	n++;
+
+	tab_play_gl->addWidget(lbl_recording, n, 0, 1, 4);
+
+	n++;
+
 	tab_play_gl->addWidget(lbl_midi_pass_thru, n, 3, 1, 1);
-	tab_play_gl->addWidget(but_midi_pass_thru, n++, 0, 1, 3);
+	tab_play_gl->addWidget(but_midi_pass_thru, n, 0, 1, 3);
+
+	n++;
 
 	tab_play_gl->addWidget(lbl_score_record, n, 3, 1, 1);
-	tab_play_gl->addWidget(but_score_record, n++, 0, 1, 3);
+	tab_play_gl->addWidget(but_score_record, n, 0, 1, 3);
+
+	n++;
 
 	tab_play_gl->addWidget(lbl_midi_record, n, 3, 1, 1);
-	tab_play_gl->addWidget(but_midi_record, n++, 0, 1, 3);
+	tab_play_gl->addWidget(but_midi_record, n, 0, 1, 3);
 
 	n = 0;
 
@@ -703,7 +701,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_auto_play->setValue(0);
 
 	but_config_apply = new QPushButton(tr("Apply"));
-	but_config_load = new QPushButton(tr("Revert"));
+	but_config_revert = new QPushButton(tr("Revert"));
 
 	x = 0;
 
@@ -750,8 +748,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x++;
 
-	tab_config_gl->addWidget(but_config_apply, x, 4, 1, 4);
-	tab_config_gl->addWidget(but_config_load, x, 0, 1, 4);
+	tab_config_gl->addWidget(but_config_apply, x, 4, 1, 2);
+	tab_config_gl->addWidget(but_config_revert, x, 6, 1, 2);
 
 	/* <Edit> Tab */
 
@@ -822,15 +820,40 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_instr_title = new QLabel(tr("- Channel/Bank/Program/Mute -"));
 	lbl_instr_title->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
-	lbl_instr_comment = new QLabel(tr("- Comments -"));
-	lbl_instr_comment->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-
-	txt_instr_comment = new QTextEdit(QString());
+	lbl_instr_prog = new QLabel(tr("- Current Channel/Bank/Program -"));
+	lbl_instr_prog->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
 	but_instr_apply = new QPushButton(tr("Apply"));
 	but_instr_revert = new QPushButton(tr("Revert"));
-	
+	but_instr_program = new QPushButton(tr("Program"));
+
+	spn_instr_curr_chan = new QSpinBox();
+	spn_instr_curr_chan->setMaximum(15);
+	spn_instr_curr_chan->setMinimum(0);
+	spn_instr_curr_chan->setValue(0);
+
+	spn_instr_curr_bank = new QSpinBox();
+	spn_instr_curr_bank->setMaximum(16383);
+	spn_instr_curr_bank->setMinimum(0);
+	spn_instr_curr_bank->setValue(0);
+
+	spn_instr_curr_prog = new QSpinBox();
+	spn_instr_curr_prog->setMaximum(127);
+	spn_instr_curr_prog->setMinimum(0);
+	spn_instr_curr_prog->setValue(0);
+
 	x = 0;
+
+	tab_instr_gl->addWidget(lbl_instr_prog, x, 0, 1, 8);
+
+	x++;
+
+	tab_instr_gl->addWidget(spn_instr_curr_chan, x, 0, 1, 2);
+	tab_instr_gl->addWidget(spn_instr_curr_bank, x, 2, 1, 2);
+	tab_instr_gl->addWidget(spn_instr_curr_prog, x, 4, 1, 1);
+	tab_instr_gl->addWidget(but_instr_program, x, 5, 1, 3);
+
+	x++;
 
 	tab_instr_gl->addWidget(lbl_instr_title, x, 0, 1, 8);
 
@@ -844,9 +867,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		snprintf(buf, sizeof(buf), "Ch%X", n);
 
 		lbl_instr_desc[n] = new QLabel(tr(buf));
+		lbl_instr_desc[n]->setAlignment(Qt::AlignVCenter|Qt::AlignRight);
 
 		spn_instr_bank[n] = new QSpinBox();
-		spn_instr_bank[n]->setMaximum(127);
+		spn_instr_bank[n]->setMaximum(16383);
 		spn_instr_bank[n]->setMinimum(0);
 		spn_instr_bank[n]->setValue(0);
 
@@ -865,11 +889,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x += 8;
 
-	tab_instr_gl->addWidget(lbl_instr_comment, x, 0, 1, 8);
-
-	x++;
-
-	tab_instr_gl->addWidget(txt_instr_comment, x, 0, 2, 8);
+	tab_instr_gl->setRowStretch(x, 4);
 
 	x++;
 
@@ -903,19 +923,23 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_score_file_save_as, SIGNAL(pressed()), this, SLOT(handle_score_file_save_as()));
 
 	connect(but_midi_file_new, SIGNAL(pressed()), this, SLOT(handle_midi_file_new()));
-	connect(but_midi_file_open, SIGNAL(pressed()), this, SLOT(handle_midi_file_open()));
+	connect(but_midi_file_open, SIGNAL(pressed()), this, SLOT(handle_midi_file_new_open()));
+	connect(but_midi_file_merge, SIGNAL(pressed()), this, SLOT(handle_midi_file_merge_open()));
 	connect(but_midi_file_save, SIGNAL(pressed()), this, SLOT(handle_midi_file_save()));
 	connect(but_midi_file_save_as, SIGNAL(pressed()), this, SLOT(handle_midi_file_save_as()));
 
 	connect(but_midi_trigger, SIGNAL(pressed()), this, SLOT(handle_play_trigger()));
 	connect(but_midi_rewind, SIGNAL(pressed()), this, SLOT(handle_rewind()));
 	connect(but_config_apply, SIGNAL(pressed()), this, SLOT(handle_config_apply()));
-	connect(but_config_load, SIGNAL(pressed()), this, SLOT(handle_config_load()));
-	connect(but_synth_program, SIGNAL(pressed()), this, SLOT(handle_synth_program()));
+	connect(but_config_revert, SIGNAL(pressed()), this, SLOT(handle_config_revert()));
+
+	connect(but_instr_program, SIGNAL(pressed()), this, SLOT(handle_instr_program()));
+	connect(but_instr_apply, SIGNAL(pressed()), this, SLOT(handle_instr_apply()));
+	connect(but_instr_revert, SIGNAL(pressed()), this, SLOT(handle_instr_revert()));
 
 	MidiInit();
 
-	setWindowTitle(tr("MIDI Player Plus v1.0"));
+	setWindowTitle(tr("MIDI Player Pro v1.0"));
 
 	watchdog->start(250);
 }
@@ -1027,10 +1051,10 @@ void
 MppMainWindow :: handle_pass_thru()
 {
 	pthread_mutex_lock(&mtx);
-	main_sc.is_midi_pass_thru_off = !main_sc.is_midi_pass_thru_off;
+	main_sc.ScMidiPassThruOff = !main_sc.ScMidiPassThruOff;
 	pthread_mutex_unlock(&mtx);
 
-	if (main_sc.is_midi_pass_thru_off == 0)
+	if (main_sc.ScMidiPassThruOff == 0)
 		lbl_midi_pass_thru->setText(tr("ON"));
 	else
 		lbl_midi_pass_thru->setText(tr("OFF"));
@@ -1049,10 +1073,10 @@ void
 MppMainWindow :: handle_score_record()
 {
 	pthread_mutex_lock(&mtx);
-	main_sc.is_score_record_off = !main_sc.is_score_record_off;
+	main_sc.ScScoreRecordOff = !main_sc.ScScoreRecordOff;
 	pthread_mutex_unlock(&mtx);
 
-	if (main_sc.is_score_record_off == 0)
+	if (main_sc.ScScoreRecordOff == 0)
 		lbl_score_record->setText(tr("ON"));
 	else
 		lbl_score_record->setText(tr("OFF"));
@@ -1062,12 +1086,12 @@ void
 MppMainWindow :: handle_midi_play()
 {
 	pthread_mutex_lock(&mtx);
-	main_sc.is_midi_play_off = !main_sc.is_midi_play_off;
-	main_sc.is_midi_triggered = 0;
+	main_sc.ScMidiPlayOff = !main_sc.ScMidiPlayOff;
+	main_sc.ScMidiTriggered = 0;
 	update_play_device_no();
 	pthread_mutex_unlock(&mtx);
 
-	if (main_sc.is_midi_play_off == 0)
+	if (main_sc.ScMidiPlayOff == 0)
 		lbl_midi_play->setText(tr("ON"));
 	else {
 		handle_rewind();
@@ -1079,12 +1103,12 @@ void
 MppMainWindow :: handle_midi_record()
 {
 	pthread_mutex_lock(&mtx);
-	main_sc.is_midi_record_off = !main_sc.is_midi_record_off;
-	main_sc.is_midi_triggered = 0;
+	main_sc.ScMidiRecordOff = !main_sc.ScMidiRecordOff;
+	main_sc.ScMidiTriggered = 0;
 	update_play_device_no();
 	pthread_mutex_unlock(&mtx);
 
-	if (main_sc.is_midi_record_off == 0)
+	if (main_sc.ScMidiRecordOff == 0)
 		lbl_midi_record->setText(tr("ON"));
 	else
 		lbl_midi_record->setText(tr("OFF"));
@@ -1096,7 +1120,7 @@ MppMainWindow :: handle_auto_play()
 	int x;
 	
 	pthread_mutex_lock(&mtx);
-	x = main_sc.is_midi_triggered;
+	x = main_sc.ScMidiTriggered;
 	pthread_mutex_unlock(&mtx);
 
 	if (x) {
@@ -1133,15 +1157,17 @@ MppMainWindow :: handle_watchdog()
 	uint8_t events_copy[MPP_MAX_QUEUE];
 	uint8_t num_events;
 	uint8_t x;
+	uint8_t instr_update;
 
 	pthread_mutex_lock(&mtx);
+	instr_update = main_sc.ScInstrUpdated;
+	main_sc.ScInstrUpdated = 0;
 	num_events = main_sc.ScNumInputEvents;
 	main_sc.ScNumInputEvents = 0;
 	memcpy(events_copy, main_sc.ScInputEvents, num_events);
 	pthread_mutex_unlock(&mtx);
 
 	for (x = 0; x != num_events; x++) {
-
 		cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::MoveAnchor, 1);
 		cursor.beginEditBlock();
 		cursor.insertText(QString(" "));
@@ -1149,9 +1175,14 @@ MppMainWindow :: handle_watchdog()
 		cursor.endEditBlock();
 	}
 
-	do_bpm_stats();
-}
+	if (instr_update) {
+		handle_instr_revert();
+	}
 
+	do_bpm_stats();
+
+	do_clock_stats();
+}
 
 void
 MppMainWindow :: handle_score_file_new()
@@ -1169,7 +1200,7 @@ MppMainWindow :: handle_score_file_open()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(this, tr("Select Score File"), 
-		QString(), QString("Score File (*.txt)"));
+		QString(), QString("Score File (*.txt; *.TXT)"));
 	QString scores;
 
 	diag->setAcceptMode(QFileDialog::AcceptOpen);
@@ -1204,7 +1235,7 @@ MppMainWindow :: handle_score_file_save_as()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(this, tr("Select Score File"), 
-		QString(), QString("Score File (*.txt)"));
+		QString(), QString("Score File (*.txt; *.TXT)"));
 
 	diag->setAcceptMode(QFileDialog::AcceptSave);
 	diag->setFileMode(QFileDialog::AnyFile);
@@ -1223,12 +1254,18 @@ MppMainWindow :: handle_score_file_save_as()
 }
 
 void
-MppMainWindow :: handle_midi_file_new()
+MppMainWindow :: handle_midi_file_clear_name()
 {
 	if (CurrMidiFileName != NULL) {
 		delete (CurrMidiFileName);
 		CurrMidiFileName = NULL;
 	}
+}
+
+void
+MppMainWindow :: handle_midi_file_new()
+{
+	handle_midi_file_clear_name();
 
 	handle_rewind();
 
@@ -1254,21 +1291,39 @@ MppMainWindow :: update_play_device_no()
 }
 
 void
-MppMainWindow :: handle_midi_file_open()
+MppMainWindow :: handle_midi_file_merge_open()
+{
+	handle_midi_file_open(1);
+}
+
+void
+MppMainWindow :: handle_midi_file_new_open()
+{
+	handle_midi_file_open(0);
+}
+
+void
+MppMainWindow :: handle_midi_file_open(int merge)
 {
 	QFileDialog *diag = 
 	  new QFileDialog(this, tr("Select MIDI File"), 
-		QString(), QString("MIDI File (*.mid)"));
+		QString(), QString("MIDI File (*.mid; *.MID)"));
 	struct umidi20_song *song_copy;
 	struct umidi20_track *track_copy;
 	struct umidi20_event *event;
 	struct umidi20_event *event_copy;
 	const char *filename;
+	uint8_t chan;
 
 	diag->setAcceptMode(QFileDialog::AcceptOpen);
 	diag->setFileMode(QFileDialog::ExistingFile);
 
-	handle_midi_file_new();
+	if (merge) {
+		handle_midi_file_clear_name();
+		handle_rewind();
+	} else {
+		handle_midi_file_new();
+	}
 
 	if (diag->exec()) {
 		CurrMidiFileName = new QString(diag->selectedFiles()[0]);
@@ -1298,6 +1353,8 @@ load_file:
 
 	pthread_mutex_lock(&mtx);
 
+	chan = main_sc.ScSynthChannel;
+
 	UMIDI20_QUEUE_FOREACH(track_copy, &(song_copy->queue)) {
 
 	    printf("track %p\n", track_copy);
@@ -1307,9 +1364,16 @@ load_file:
 	        if (umidi20_event_is_voice(event) ||
 		    umidi20_event_is_sysex(event)) {
 
-		    event_copy = umidi20_event_copy(event, 0);
+		    if (do_instr_check(event))
+				event_copy = NULL;
+		    else
+		    		event_copy = umidi20_event_copy(event, 0);
 
 		    if (event_copy != NULL) {
+			/* reserve position zero for channel program events */
+			if (event_copy->position == 0)
+				event_copy->position = 1;
+
 			umidi20_event_queue_insert(&(track->queue),
 			    event_copy, UMIDI20_CACHE_INPUT);
 		    }
@@ -1319,10 +1383,39 @@ load_file:
 
 	umidi20_song_free(song_copy);
 
+	/* restore synth channel */
+	main_sc.ScSynthChannel = chan;
+
 	pthread_mutex_unlock(&mtx);
 
 done:
+	/* make sure we save into a new file */
+	if (merge)
+		handle_midi_file_clear_name();
+
 	delete diag;
+}
+
+/* must be called locked */
+void
+MppMainWindow :: handle_midi_file_instr_prepend()
+{
+	struct mid_data *d = &mid_data;
+	uint8_t x;
+
+	for (x = 0; x != 16; x++) {
+		mid_set_channel(d, x);
+		mid_set_position(d, 0);
+		mid_set_device_no(d, 0xFF);
+		mid_set_bank_program(d, x, main_sc.ScInstr[x].bank, main_sc.ScInstr[x].prog);
+	}
+}
+
+/* must be called locked */
+void
+MppMainWindow :: handle_midi_file_instr_delete()
+{
+	umidi20_event_queue_move(&(track->queue), NULL, 0, 1, 0, 0-1, UMIDI20_CACHE_INPUT);
 }
 
 void
@@ -1336,7 +1429,9 @@ MppMainWindow :: handle_midi_file_save()
 
 		if (filename != NULL) {
 			pthread_mutex_lock(&mtx);
+			handle_midi_file_instr_prepend();
 			umidi20_save_file(song, filename);
+			handle_midi_file_instr_delete();
 			pthread_mutex_unlock(&mtx);
 			free((void *)filename);
 		}
@@ -1350,7 +1445,7 @@ MppMainWindow :: handle_midi_file_save_as()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(this, tr("Select MIDI File"), 
-		QString(), QString("MIDI File (*.mid)"));
+		QString(), QString("MIDI File (*.mid; *.MID)"));
 
 	diag->setAcceptMode(QFileDialog::AcceptSave);
 	diag->setFileMode(QFileDialog::AnyFile);
@@ -1373,7 +1468,7 @@ MppMainWindow :: handle_rewind()
 {
 	pthread_mutex_lock(&mtx);
 
-	main_sc.is_midi_triggered = 0;
+	main_sc.ScMidiTriggered = 0;
 	update_play_device_no();
 
 	if (song != NULL) {
@@ -1392,8 +1487,8 @@ MppMainWindow :: handle_play_trigger()
 {
 	pthread_mutex_lock(&mtx);
 
-	if (main_sc.is_midi_triggered == 0) {
-		if (main_sc.is_midi_play_off == 0) {
+	if (main_sc.ScMidiTriggered == 0) {
+		if (main_sc.ScMidiPlayOff == 0) {
 			umidi20_song_stop(song,
 			    UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
 			umidi20_song_start(song, 0, 0x40000000,
@@ -1408,40 +1503,8 @@ MppMainWindow :: handle_play_trigger()
 			main_sc.ScPosition = umidi20_get_curr_position();
 
 		}
-		main_sc.is_midi_triggered = 1;
+		main_sc.ScMidiTriggered = 1;
 	}
-
-	pthread_mutex_unlock(&mtx);
-}
-
-void
-MppMainWindow :: handle_synth_program()
-{
-	struct mid_data *d = &mid_data;
-	int chan = spn_channel->value();
-	int bank = spn_bank->value();
-	int prog = spn_prog->value();
-	uint8_t y;
-	uint8_t is_midi_triggered;
-
-	pthread_mutex_lock(&mtx);
-
-	main_sc.ScChannel = chan;
-
-	is_midi_triggered = main_sc.is_midi_triggered;
-	main_sc.is_midi_triggered = 1;
-
-	for (y = 0; y != MPP_MAX_DEVS; y++) {
-		if (check_synth(y)) {
-			mid_set_bank_program(d, chan, bank, prog);
-		}
-	}
-
-	if (check_record()) {
-		mid_set_bank_program(d, chan, bank, prog);
-	}
-
-	main_sc.is_midi_triggered = is_midi_triggered;
 
 	pthread_mutex_unlock(&mtx);
 }
@@ -1492,7 +1555,7 @@ MppMainWindow :: handle_config_reload()
 
 	handle_compile();
 
-	handle_config_load();
+	handle_config_revert();
 
 	auto_play_timer->stop();
 
@@ -1503,7 +1566,7 @@ MppMainWindow :: handle_config_reload()
 }
 
 void
-MppMainWindow :: handle_config_load()
+MppMainWindow :: handle_config_revert()
 {
 	int n;
 
@@ -1574,7 +1637,7 @@ MppMainWindow :: check_synth(uint8_t device_no)
 
 		handle_play_trigger();
 
-		mid_set_channel(d, main_sc.ScChannel);
+		mid_set_channel(d, main_sc.ScSynthChannel);
 		mid_set_position(d, umidi20_get_curr_position() - main_sc.ScPosition + 1);
 		mid_set_device_no(d, device_no);
 
@@ -1588,12 +1651,12 @@ MppMainWindow :: check_record()
 {
 	struct mid_data *d = &mid_data;
 
-	if (main_sc.is_midi_record_off)
+	if (main_sc.ScMidiRecordOff)
 		return (0);
 
 	handle_play_trigger();
 
-	mid_set_channel(d, main_sc.ScChannel);
+	mid_set_channel(d, main_sc.ScSynthChannel);
 	mid_set_position(d, umidi20_get_curr_position() - main_sc.ScPosition + 1);
 	mid_set_device_no(d, 0xFF);
 
@@ -1604,12 +1667,12 @@ void
 MppMainWindow :: handle_stop(void)
 {
 	struct mid_data *d = &mid_data;
-	uint8_t is_midi_triggered;
+	uint8_t ScMidiTriggered;
 	uint8_t x;
 	uint8_t y;
 
-	is_midi_triggered = main_sc.is_midi_triggered;
-	main_sc.is_midi_triggered = 1;
+	ScMidiTriggered = main_sc.ScMidiTriggered;
+	main_sc.ScMidiTriggered = 1;
 
 	for (x = 0; x != 128; x++) {
 		if (main_sc.ScPressed[x] != 0) {
@@ -1627,7 +1690,7 @@ MppMainWindow :: handle_stop(void)
 		}
 	}
 
-	main_sc.is_midi_triggered = is_midi_triggered;
+	main_sc.ScMidiTriggered = ScMidiTriggered;
 }
 
 uint8_t
@@ -1744,9 +1807,30 @@ MppMainWindow :: do_update_bpm(void)
 }
 
 void
+MppMainWindow :: do_clock_stats(void)
+{
+	uint32_t time_offset;
+	char buf[32];
+
+	pthread_mutex_lock(&mtx);
+
+	if (main_sc.ScMidiTriggered == 0) {
+		time_offset = 0;
+	} else {
+		time_offset = umidi20_get_curr_position() - main_sc.ScPosition;
+		time_offset %= 100000000UL;
+	}
+
+	pthread_mutex_unlock(&mtx);
+
+	snprintf(buf, sizeof(buf), "%d", time_offset);
+	lbl_curr_time_val->display(QString(buf));
+}
+
+void
 MppMainWindow :: do_bpm_stats(void)
 {
-	uint32_t min = -1UL;
+	uint32_t min = 0xFFFFFFFFUL;
 	uint32_t max = 0;
 	uint32_t sum = 0;
 	uint32_t val;
@@ -1801,8 +1885,9 @@ MppMainWindow :: do_bpm_stats(void)
 	lbl_bpm_avg_val->display(QString(buf));
 }
 
+/* is called locked */
 static void
-MidiEventCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uint8_t *drop)
+MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uint8_t *drop)
 {
 	MppMainWindow *mw = (MppMainWindow *)arg;
 	struct mid_data *d = &mw->mid_data;
@@ -1829,14 +1914,14 @@ MidiEventCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uin
 		key = umidi20_event_get_key(event) & 0x7F;
 		vel = umidi20_event_get_velocity(event);
 
-		if (mw->main_sc.is_score_record_off == 0) {
+		if (mw->main_sc.ScScoreRecordOff == 0) {
 			if (mw->main_sc.ScNumInputEvents < MPP_MAX_QUEUE) {
 				mw->main_sc.ScInputEvents[mw->main_sc.ScNumInputEvents] = key;
 				mw->main_sc.ScNumInputEvents++;
 			}
 		}
 
-		if (mw->main_sc.is_midi_pass_thru_off != 0) {
+		if (mw->main_sc.ScMidiPassThruOff != 0) {
 			if (mw->handle_jump(key - mw->main_sc.ScCmdKey) == 0) {
 				mw->handle_key_press(key, vel);
 			}
@@ -1859,7 +1944,7 @@ MidiEventCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uin
 
 		key = umidi20_event_get_key(event) & 0x7F;
 
-		if (mw->main_sc.is_midi_pass_thru_off != 0) {
+		if (mw->main_sc.ScMidiPassThruOff != 0) {
 
 			mw->handle_key_release(key);
 
@@ -1877,8 +1962,175 @@ MidiEventCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uin
 
 			mw->main_sc.ScPressed[key] = 0;
 		}
+	} else if (mw->do_instr_check(event)) {
+		/* found instrument */
 	}
 }
+
+/* is called locked */
+static void
+MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uint8_t *drop)
+{
+	MppMainWindow *mw = (MppMainWindow *)arg;
+
+	if (umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL) {
+		uint8_t chan;
+
+		chan = umidi20_event_get_channel(event) & 0xF;
+
+		*drop = mw->main_sc.ScInstr[chan].muted;
+	}
+}
+
+/* must be called locked */
+uint8_t
+MppMainWindow :: do_instr_check(struct umidi20_event *event)
+{
+	if (umidi20_event_get_what(event) & UMIDI20_WHAT_CONTROL_VALUE) {
+		uint8_t addr;
+		uint8_t val;
+		uint8_t chan;
+
+		addr = umidi20_event_get_control_address(event);
+		val = umidi20_event_get_control_value(event);
+		chan = umidi20_event_get_channel(event) & 0xF;
+
+		if (addr == 0x00) {
+			main_sc.ScInstr[chan].bank = 
+				(main_sc.ScInstr[chan].bank & 0x7F) | (val << 7);
+			main_sc.ScInstr[chan].updated = 1;
+			main_sc.ScInstr[chan].muted = 0;
+			main_sc.ScInstrUpdated = 1;
+			main_sc.ScSynthChannel = chan;
+			return (1);
+		} else if (addr == 0x20) {
+			main_sc.ScInstr[chan].bank = 
+				(main_sc.ScInstr[chan].bank & 0x3F8) | val;
+			main_sc.ScInstr[chan].updated = 1;
+			main_sc.ScInstr[chan].muted = 0;
+			main_sc.ScInstrUpdated = 1;
+			main_sc.ScSynthChannel = chan;
+			return (1);
+		}
+	} else if (umidi20_event_get_what(event) & UMIDI20_WHAT_PROGRAM_VALUE) {
+		uint8_t val;
+		uint8_t chan;
+
+		val = umidi20_event_get_program_number(event);
+		chan = umidi20_event_get_channel(event) & 0xF;
+
+		main_sc.ScInstr[chan].prog = val;
+		main_sc.ScInstr[chan].updated = 1;
+		main_sc.ScInstr[chan].muted = 0;
+		main_sc.ScInstrUpdated = 1;
+		main_sc.ScSynthChannel = chan;
+		return (1);
+	}
+	return (0);
+}
+
+void
+MppMainWindow :: handle_instr_program()
+{
+	int chan = spn_instr_curr_chan->value();
+	int bank = spn_instr_curr_bank->value();
+	int prog = spn_instr_curr_prog->value();
+
+	pthread_mutex_lock(&mtx);
+	main_sc.ScSynthChannel = chan;
+	main_sc.ScInstr[chan].bank = bank;
+	main_sc.ScInstr[chan].prog = prog;
+	main_sc.ScInstr[chan].muted = 0;
+	main_sc.ScInstr[chan].updated = 1;
+	pthread_mutex_unlock(&mtx);
+
+	handle_instr_revert();
+}
+
+void 
+MppMainWindow :: handle_instr_apply()
+{
+	int temp[3];
+	uint8_t x;
+
+	for (x = 0; x != 16; x++) {
+
+		temp[0] = spn_instr_bank[x]->value();
+		temp[1] = spn_instr_prog[x]->value();
+		temp[2] = cbx_instr_mute[x]->isChecked();
+
+		pthread_mutex_lock(&mtx);
+		main_sc.ScInstr[x].bank = temp[0];
+		main_sc.ScInstr[x].prog = temp[1];
+		main_sc.ScInstr[x].muted = temp[2];
+		main_sc.ScInstr[x].updated = 1;
+		pthread_mutex_unlock(&mtx);
+	}
+
+	handle_instr_reload();
+}
+
+void 
+MppMainWindow :: handle_instr_revert()
+{
+	int temp[3];
+	uint8_t x;
+	uint8_t update_curr;
+
+	for (x = 0; x != 16; x++) {
+
+		pthread_mutex_lock(&mtx);
+		temp[0] = main_sc.ScInstr[x].bank;
+		temp[1] = main_sc.ScInstr[x].prog;
+		temp[2] = main_sc.ScInstr[x].muted;
+		update_curr = (main_sc.ScSynthChannel == x);
+		pthread_mutex_unlock(&mtx);
+
+		spn_instr_bank[x]->setValue(temp[0]);
+		spn_instr_prog[x]->setValue(temp[1]);
+		cbx_instr_mute[x]->setChecked(temp[2]);
+
+		if (update_curr) {
+			spn_instr_curr_chan->setValue(x);
+			spn_instr_curr_bank->setValue(temp[0]);
+			spn_instr_curr_prog->setValue(temp[1]);
+		}
+	}
+	handle_instr_reload();
+}
+
+void
+MppMainWindow :: handle_instr_reload()
+{
+	struct mid_data *d = &mid_data;
+	uint8_t x;
+	uint8_t y;
+	uint8_t chan;
+	uint8_t trig;
+
+	pthread_mutex_lock(&mtx);
+	chan = main_sc.ScSynthChannel;
+	trig = main_sc.ScMidiTriggered;
+	main_sc.ScMidiTriggered = 1;
+
+	for (x = 0; x != 16; x++) {
+		if (main_sc.ScInstr[x].updated == 0)
+			continue;
+
+		main_sc.ScSynthChannel = x;
+		main_sc.ScInstr[x].updated = 0;
+		for (y = 0; y != MPP_MAX_DEVS; y++) {
+			if (check_synth(y)) {
+				mid_set_bank_program(d, x, main_sc.ScInstr[x].bank, main_sc.ScInstr[x].prog);
+			}
+		}
+	}
+
+	main_sc.ScSynthChannel = chan;
+	main_sc.ScMidiTriggered = trig;
+	pthread_mutex_unlock(&mtx);
+}
+
 
 void
 MppMainWindow :: MidiInit(void)
@@ -1906,8 +2158,10 @@ MppMainWindow :: MidiInit(void)
 
 	umidi20_init();
 
-	for (n = 0; n != UMIDI20_N_DEVICES; n++)
-		umidi20_set_record_event_callback(n, &MidiEventCallback, this);
+	for (n = 0; n != UMIDI20_N_DEVICES; n++) {
+		umidi20_set_record_event_callback(n, &MidiEventRxCallback, this);
+		umidi20_set_play_event_callback(n, &MidiEventTxCallback, this);
+	}
 
 	pthread_mutex_lock(&mtx);
 
