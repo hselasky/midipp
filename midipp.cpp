@@ -397,7 +397,22 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	/* Editor */
 
 	main_edit = new QTextEdit();
-	main_edit->setText(tr("/* Copyright (c) 2009 Hans Petter Selasky. All rights reserved. */\n\nC3\n"));
+	main_edit->setText(tr("/*\n"
+		" * Copyright (c) 2009 Hans Petter Selasky. All rights reserved.\n"
+		" * Development partly sponsored by Bitfrost A/S.\n"
+		" * See: http://www.bitfrost.no for more information.\n"
+		" */\n"
+
+		"\n"
+		"/*\n"
+		" * Command syntax:\n"
+		" * U<number> - specifies the duration of the following scores (0..255)\n"
+		" * T<number> - specifies the track number of the following scores (0..31)\n"
+		" * L<number> - defines a label (0..31)\n"
+		" * J<number> - jumps to the given label (0..31)\n"
+		" * CDEFGAH<number><B> - defines a score in the given octave (0..10)\n"
+		" */\n"
+		"\nC3\n"));
 
 	main_gl->addWidget(main_edit,0,0,1,2);
 
@@ -582,6 +597,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_cmd_key->setMinimum(0);
 	spn_cmd_key->setValue(C3);
 
+	lbl_time_counter = new QLabel(tr(" - Time Counter -"));
+	lbl_time_counter->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
 	lbl_synth = new QLabel(tr("- Synth Play -"));
 	lbl_synth->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
@@ -592,6 +610,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_recording->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
 	n = 0;
+
+	tab_play_gl->addWidget(lbl_time_counter, n, 0, 1, 4);
+
+	n++;
 
 	tab_play_gl->addWidget(lbl_curr_time_val, n, 0, 1, 4);
 
@@ -633,31 +655,52 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n = 0;
 
-	tab_play_gl->addWidget(lbl_synth, n++, 4, 1, 4);
+	tab_play_gl->addWidget(lbl_synth, n, 4, 1, 4);
+
+	n++;
+
 	tab_play_gl->addWidget(lbl_volume, n, 4, 1, 3);
-	tab_play_gl->addWidget(spn_volume, n++, 7, 1, 1);
+	tab_play_gl->addWidget(spn_volume, n, 7, 1, 1);
+
+	n++;
+
 	tab_play_gl->addWidget(lbl_play_key, n, 4, 1, 3);
-	tab_play_gl->addWidget(spn_play_key, n++, 7, 1, 1);
+	tab_play_gl->addWidget(spn_play_key, n, 7, 1, 1);
+
+	n++;
+
 	tab_play_gl->addWidget(lbl_cmd_key, n, 4, 1, 3);
-	tab_play_gl->addWidget(spn_cmd_key, n++, 7, 1, 1);
+	tab_play_gl->addWidget(spn_cmd_key, n, 7, 1, 1);
+
+	n++;
 
 	tab_play_gl->addWidget(lbl_track[0], n, 7, 1, 1);
 	tab_play_gl->addWidget(but_track[0], n, 6, 1, 1);
-	tab_play_gl->addWidget(but_jump[0], n++, 4, 1, 2);
+	tab_play_gl->addWidget(but_jump[0], n, 4, 1, 2);
+
+	n++;
 
 	tab_play_gl->addWidget(lbl_track[1], n, 7, 1, 1);
 	tab_play_gl->addWidget(but_track[1], n, 6, 1, 1);
-	tab_play_gl->addWidget(but_jump[1], n++, 4, 1, 2);
+	tab_play_gl->addWidget(but_jump[1], n, 4, 1, 2);
+
+	n++;
 
 	tab_play_gl->addWidget(lbl_track[2], n, 7, 1, 1);
 	tab_play_gl->addWidget(but_track[2], n, 6, 1, 1);
-	tab_play_gl->addWidget(but_jump[2], n++, 4, 1, 2);
+	tab_play_gl->addWidget(but_jump[2], n, 4, 1, 2);
+
+	n++;
 
 	tab_play_gl->addWidget(lbl_track[3], n, 7, 1, 1);
 	tab_play_gl->addWidget(but_track[3], n, 6, 1, 1);
-	tab_play_gl->addWidget(but_jump[3], n++, 4, 1, 2);
+	tab_play_gl->addWidget(but_jump[3], n, 4, 1, 2);
 
-	tab_play_gl->addWidget(but_compile, n++, 4, 1, 4);
+	n++;
+
+	tab_play_gl->addWidget(but_compile, n, 4, 1, 4);
+
+	n++;
 
 	tab_play_gl->addWidget(lbl_bpm_max, n, 4, 1, 1);
 	tab_play_gl->addWidget(lbl_bpm_avg, n, 5, 1, 2);
@@ -1154,24 +1197,62 @@ void
 MppMainWindow :: handle_watchdog()
 {
 	QTextCursor cursor(main_edit->textCursor());
+	uint32_t delta;
+	char buf[32];
 	uint8_t events_copy[MPP_MAX_QUEUE];
 	uint8_t num_events;
 	uint8_t x;
+	uint8_t y;
+	uint8_t z;
+	uint8_t last_duration;
 	uint8_t instr_update;
 
 	pthread_mutex_lock(&mtx);
 	instr_update = main_sc.ScInstrUpdated;
 	main_sc.ScInstrUpdated = 0;
 	num_events = main_sc.ScNumInputEvents;
-	main_sc.ScNumInputEvents = 0;
-	memcpy(events_copy, main_sc.ScInputEvents, num_events);
+	if (num_events != 0) {
+		delta =  umidi20_get_curr_position() - main_sc.ScLastInputEvent;
+		if (delta >= ((UMIDI20_BPM + 45 -1) / 45)) {
+			main_sc.ScNumInputEvents = 0;
+			memcpy(events_copy, main_sc.ScInputEvents, num_events);
+		} else {
+			/* wait until 2 seconds have elapsed */
+			num_events = 0;
+		}
+	}
 	pthread_mutex_unlock(&mtx);
 
-	for (x = 0; x != num_events; x++) {
-		cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::MoveAnchor, 1);
+	if (num_events != 0) {
+		mid_sort(events_copy, num_events);
+
+		last_duration = 0;
+
+		cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor, 1);
 		cursor.beginEditBlock();
-		cursor.insertText(QString(" "));
-		cursor.insertText(QString(mid_key_str[events_copy[x] & 0x7F]));
+
+		for (x = 0; x != num_events; x++) {
+			for (y = x; y != num_events; y++) {
+				if (events_copy[x] != events_copy[y])
+					break;
+			}
+
+			z = y - 1;
+			y = y - x;
+
+			if (y != last_duration) {
+				last_duration = y;
+				snprintf(buf, sizeof(buf), "U%d %s ", y, mid_key_str[events_copy[x] & 0x7F]);
+			} else {
+				snprintf(buf, sizeof(buf), "%s ", mid_key_str[events_copy[x] & 0x7F]);
+			}
+
+			cursor.insertText(QString(buf));
+
+			x = z;
+		}
+
+		cursor.insertText(QString("\n"));
 		cursor.endEditBlock();
 	}
 
@@ -1918,6 +1999,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			if (mw->main_sc.ScNumInputEvents < MPP_MAX_QUEUE) {
 				mw->main_sc.ScInputEvents[mw->main_sc.ScNumInputEvents] = key;
 				mw->main_sc.ScNumInputEvents++;
+				mw->main_sc.ScLastInputEvent = umidi20_get_curr_position();
 			}
 		}
 

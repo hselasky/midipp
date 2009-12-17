@@ -72,6 +72,7 @@ struct MppSoftc {
 	uint32_t ScBpmData[MPP_MAX_BPM];
 	uint32_t ScLastKeyPress;
 	uint32_t ScBpmAutoPlay;
+	uint32_t ScLastInputEvent;
 
 	uint32_t ScTrackMask;
 	uint32_t ScPosition;
@@ -184,6 +185,7 @@ public:
 	QLCDNumber *lbl_bpm_max_val;
 
 	QLabel *lbl_synth;
+	QLabel *lbl_time_counter;
 	QLabel *lbl_playback;
 	QLabel *lbl_recording;
 
