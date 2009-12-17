@@ -1346,6 +1346,8 @@ MppMainWindow :: handle_midi_file_clear_name()
 void
 MppMainWindow :: handle_midi_file_new()
 {
+	uint8_t x;
+
 	handle_midi_file_clear_name();
 
 	handle_rewind();
@@ -1353,6 +1355,14 @@ MppMainWindow :: handle_midi_file_new()
 	if (track != NULL) {
 		pthread_mutex_lock(&mtx);
 		umidi20_event_queue_drain(&(track->queue));
+		for (x = 0; x != 16; x++) {
+			main_sc.ScInstr[x].bank = 0;
+			main_sc.ScInstr[x].prog = 0;
+			main_sc.ScInstr[x].updated = 1;
+			main_sc.ScInstr[x].muted = 0;
+		}
+		main_sc.ScInstrUpdated = 1;
+		main_sc.ScSynthChannel = 0;
 		pthread_mutex_unlock(&mtx);
 	}
 }
