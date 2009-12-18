@@ -281,7 +281,7 @@ public:
 	QSpinBox *spn_instr_bank[16];
 	QSpinBox *spn_instr_prog[16];
 
-	QLabel *lbl_instr_title;
+	QLabel *lbl_instr_title[2];
 	QLabel *lbl_instr_prog;
 	QLabel *lbl_instr_desc[16];
 

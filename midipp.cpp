@@ -865,10 +865,13 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* <Instrument> tab */
 
-	lbl_instr_title = new QLabel(tr("- Channel/Bank/Program/Mute -"));
-	lbl_instr_title->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+	lbl_instr_title[0] = new QLabel(tr("- Bank/Program/Mute -"));
+	lbl_instr_title[0]->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
-	lbl_instr_prog = new QLabel(tr("- Current Bank/Program -"));
+	lbl_instr_title[1] = new QLabel(tr("- Bank/Program/Mute -"));
+	lbl_instr_title[1]->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+	lbl_instr_prog = new QLabel(tr("- Synth/Record Channel and Selected Bank/Program -"));
 	lbl_instr_prog->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
 	but_instr_apply = new QPushButton(tr("Apply"));
@@ -903,7 +906,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x++;
 
-	tab_instr_gl->addWidget(lbl_instr_title, x, 0, 1, 8);
+	tab_instr_gl->addWidget(lbl_instr_title[0], x, 0, 1, 4);
+	tab_instr_gl->addWidget(lbl_instr_title[1], x, 4, 1, 4);
 
 	x++;
 
