@@ -572,6 +572,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_midi_record = new QPushButton(tr("MIDI"));
 
 	but_midi_play = new QPushButton(tr("MIDI"));
+	but_midi_pause = new QPushButton(tr("Pause"));
 	but_midi_trigger = new QPushButton(tr("Trigger"));
 	but_midi_rewind = new QPushButton(tr("Rewind"));
 
@@ -625,6 +626,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_play_gl->addWidget(lbl_midi_play, n, 3, 1, 1);
 	tab_play_gl->addWidget(but_midi_play, n, 0, 1, 3);
+
+	n++;
+
+	tab_play_gl->addWidget(but_midi_pause, n, 0, 1, 4);
 
 	n++;
 
@@ -971,7 +976,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_midi_file_save, SIGNAL(pressed()), this, SLOT(handle_midi_file_save()));
 	connect(but_midi_file_save_as, SIGNAL(pressed()), this, SLOT(handle_midi_file_save_as()));
 
-	connect(but_midi_trigger, SIGNAL(pressed()), this, SLOT(handle_play_trigger()));
+	connect(but_midi_trigger, SIGNAL(pressed()), this, SLOT(handle_midi_trigger()));
 	connect(but_midi_rewind, SIGNAL(pressed()), this, SLOT(handle_rewind()));
 	connect(but_config_apply, SIGNAL(pressed()), this, SLOT(handle_config_apply()));
 	connect(but_config_revert, SIGNAL(pressed()), this, SLOT(handle_config_revert()));
@@ -979,6 +984,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_instr_program, SIGNAL(pressed()), this, SLOT(handle_instr_program()));
 	connect(but_instr_apply, SIGNAL(pressed()), this, SLOT(handle_instr_apply()));
 	connect(but_instr_revert, SIGNAL(pressed()), this, SLOT(handle_instr_revert()));
+
+	connect(but_midi_pause, SIGNAL(pressed()), this, SLOT(handle_midi_pause()));
 
 	MidiInit();
 
@@ -989,6 +996,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 MppMainWindow :: ~MppMainWindow()
 {
+	MidiUnInit();
 }
 
 void
@@ -1126,28 +1134,61 @@ MppMainWindow :: handle_score_record()
 }
 
 void
+MppMainWindow :: handle_midi_pause()
+{
+	uint32_t pos;
+	uint8_t triggered;
+	uint8_t paused;
+
+	pthread_mutex_lock(&mtx);
+	pos = (umidi20_get_curr_position() - main_sc.ScStartPosition) % 0x40000000UL;
+	triggered = main_sc.ScMidiTriggered;
+	paused = main_sc.ScMidiPaused;
+	pthread_mutex_unlock(&mtx);
+
+	if (paused)
+		return;		/* nothing to do */
+
+	handle_rewind();
+
+	pthread_mutex_lock(&mtx);
+	if (triggered != 0) {
+		main_sc.ScMidiPaused = 1;
+		main_sc.ScPausePosition = pos;
+	}
+	pthread_mutex_unlock(&mtx);
+}
+
+void
 MppMainWindow :: handle_midi_play()
 {
+	uint8_t triggered;
+
 	pthread_mutex_lock(&mtx);
 	main_sc.ScMidiPlayOff = !main_sc.ScMidiPlayOff;
-	main_sc.ScMidiTriggered = 0;
+	triggered = main_sc.ScMidiTriggered;
 	update_play_device_no();
 	pthread_mutex_unlock(&mtx);
 
 	if (main_sc.ScMidiPlayOff == 0)
 		lbl_midi_play->setText(tr("ON"));
-	else {
-		handle_rewind();
+	else
 		lbl_midi_play->setText(tr("OFF"));
-	}
+
+	handle_midi_pause();
+
+	if (triggered)
+		handle_midi_trigger();
 }
 
 void
 MppMainWindow :: handle_midi_record()
 {
+	uint8_t triggered;
+
 	pthread_mutex_lock(&mtx);
 	main_sc.ScMidiRecordOff = !main_sc.ScMidiRecordOff;
-	main_sc.ScMidiTriggered = 0;
+	triggered = main_sc.ScMidiTriggered;
 	update_play_device_no();
 	pthread_mutex_unlock(&mtx);
 
@@ -1155,6 +1196,11 @@ MppMainWindow :: handle_midi_record()
 		lbl_midi_record->setText(tr("ON"));
 	else
 		lbl_midi_record->setText(tr("OFF"));
+
+	handle_midi_pause();
+
+	if (triggered)
+		handle_midi_trigger();
 }
 
 void
@@ -1580,6 +1626,9 @@ MppMainWindow :: handle_rewind()
 	pthread_mutex_lock(&mtx);
 
 	main_sc.ScMidiTriggered = 0;
+	main_sc.ScMidiPaused = 0;
+	main_sc.ScPausePosition = 0;
+
 	update_play_device_no();
 
 	if (song != NULL) {
@@ -1587,14 +1636,14 @@ MppMainWindow :: handle_rewind()
 		    UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
 		umidi20_song_start(song, 0x40000000, 0x80000000,
 		    UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
-		main_sc.ScPosition = umidi20_get_curr_position();
+		main_sc.ScStartPosition = umidi20_get_curr_position() - 0x40000000;
 	}
 
 	pthread_mutex_unlock(&mtx);
 }
 
 void
-MppMainWindow :: handle_play_trigger()
+MppMainWindow :: handle_midi_trigger()
 {
 	pthread_mutex_lock(&mtx);
 
@@ -1602,19 +1651,19 @@ MppMainWindow :: handle_play_trigger()
 		if (main_sc.ScMidiPlayOff == 0) {
 			umidi20_song_stop(song,
 			    UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
-			umidi20_song_start(song, 0, 0x40000000,
+			umidi20_song_start(song, main_sc.ScPausePosition, 0x40000000,
 			    UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
-			main_sc.ScPosition = umidi20_get_curr_position();
-
+			main_sc.ScStartPosition = umidi20_get_curr_position() - main_sc.ScPausePosition;
 		} else {
 			umidi20_song_stop(song,
 			    UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
-			umidi20_song_start(song, 0x40000000, 0x80000000,
+			umidi20_song_start(song, 0x40000000 + main_sc.ScPausePosition, 0x80000000,
 			    UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
-			main_sc.ScPosition = umidi20_get_curr_position();
-
+			main_sc.ScStartPosition = umidi20_get_curr_position() - 0x40000000 - main_sc.ScPausePosition;
 		}
 		main_sc.ScMidiTriggered = 1;
+		main_sc.ScMidiPaused = 0;
+		main_sc.ScPausePosition = 0;
 	}
 
 	pthread_mutex_unlock(&mtx);
@@ -1747,9 +1796,9 @@ MppMainWindow :: check_synth(uint8_t device_no)
 
 	if (main_sc.ScDeviceBits & (MPP_DEV0_SYNTH << (3 * device_no))) {
 
-		handle_play_trigger();
+		handle_midi_trigger();
 
-		pos = umidi20_get_curr_position() - main_sc.ScPosition + 1;
+		pos = umidi20_get_curr_position() - main_sc.ScStartPosition + 1;
 
 		mid_set_channel(d, main_sc.ScSynthChannel);
 		mid_set_position(d, pos);
@@ -1770,9 +1819,9 @@ MppMainWindow :: check_record()
 	if (main_sc.ScMidiRecordOff)
 		return (0);
 
-	handle_play_trigger();
+	handle_midi_trigger();
 
-	pos = umidi20_get_curr_position() - main_sc.ScPosition;
+	pos = (umidi20_get_curr_position() - main_sc.ScStartPosition) % 0x40000000UL;
 	if (pos < MPP_MIN_POS)
 		pos = MPP_MIN_POS;
 
@@ -1938,11 +1987,15 @@ MppMainWindow :: do_clock_stats(void)
 	pthread_mutex_lock(&mtx);
 
 	if (main_sc.ScMidiTriggered == 0) {
-		time_offset = 0;
+		if (main_sc.ScMidiPaused != 0)
+			time_offset = main_sc.ScPausePosition;
+		else
+			time_offset = 0;
 	} else {
-		time_offset = umidi20_get_curr_position() - main_sc.ScPosition;
-		time_offset %= 100000000UL;
+		time_offset = (umidi20_get_curr_position() - main_sc.ScStartPosition) % 0x40000000UL;
 	}
+
+	time_offset %= 100000000UL;
 
 	pthread_mutex_unlock(&mtx);
 
@@ -2245,6 +2298,7 @@ MppMainWindow :: handle_instr_reload()
 		main_sc.ScInstr[x].updated = 0;
 		for (y = 0; y != MPP_MAX_DEVS; y++) {
 			if (check_synth(y)) {
+				mid_delay(d, (4 * x));
 				mid_set_bank_program(d, x, 
 				    main_sc.ScInstr[x].bank,
 				    main_sc.ScInstr[x].prog);
@@ -2311,7 +2365,7 @@ MppMainWindow :: MidiInit(void)
 	umidi20_song_start(song, 0x40000000, 0x80000000,
 	    UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
 
-	main_sc.ScPosition = umidi20_get_curr_position();
+	main_sc.ScStartPosition = umidi20_get_curr_position() - 0x40000000;
 
 	pthread_mutex_unlock(&mtx);
 

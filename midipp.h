@@ -77,7 +77,8 @@ struct MppSoftc {
 
 	uint32_t ScChanUsageMask;
 	uint32_t ScTrackMask;
-	uint32_t ScPosition;
+	uint32_t ScStartPosition;
+	uint32_t ScPausePosition;
 	uint32_t ScDeviceBits;
 #define	MPP_DEV0_PLAY	0x0001UL
 #define	MPP_DEV0_RECORD	0x0002UL
@@ -112,6 +113,7 @@ struct MppSoftc {
 	uint8_t ScMidiPlayOff;
 	uint8_t ScMidiPassThruOff;
 	uint8_t ScMidiTriggered;
+	uint8_t ScMidiPaused;
 
 	char *ScDeviceName[MPP_MAX_DEVS];
 };
@@ -217,6 +219,7 @@ public:
 	QPushButton *but_compile;
 	QPushButton *but_score_record;
 	QPushButton *but_play;
+	QPushButton *but_midi_pause;
 	QPushButton *but_midi_record;
 	QPushButton *but_midi_play;
 	QPushButton *but_midi_trigger;
@@ -313,6 +316,7 @@ public slots:
 	void handle_compile();
 	void handle_score_record();
 	void handle_midi_record();
+	void handle_midi_pause();
 	void handle_midi_play();
 	void handle_play_press();
 	void handle_play_release();
@@ -327,7 +331,7 @@ public slots:
 	void handle_midi_file_save();
 	void handle_midi_file_save_as();
 	void handle_rewind();
-	void handle_play_trigger();
+	void handle_midi_trigger();
 	void handle_auto_play();
 	void handle_config_apply();
 	void handle_config_revert();
