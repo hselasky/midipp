@@ -103,6 +103,7 @@ struct MppSoftc {
 	uint8_t ScNumInputEvents;
 	uint8_t ScPlayDevice;
 	uint8_t ScCmdKey;
+	uint8_t ScBaseKey;
 	uint8_t ScSynthChannel;
 	uint8_t ScBpmAvgLength;
 	uint8_t ScBpmAvgPos;
@@ -192,6 +193,7 @@ public:
 	QLabel *lbl_time_counter;
 	QLabel *lbl_playback;
 	QLabel *lbl_recording;
+	QLabel *lbl_scores;
 
 	QWidget *tab_play_wg;
 	QGridLayout *tab_play_gl;
@@ -204,6 +206,9 @@ public:
 
 	QLabel	*lbl_cmd_key;
 	QSpinBox *spn_cmd_key;
+
+	QLabel	*lbl_base_key;
+	QSpinBox *spn_base_key;
 
 	QLabel	*lbl_score_record;
 	QLabel	*lbl_midi_record;
@@ -302,6 +307,7 @@ public slots:
 	void handle_quit();
 	void handle_play_key_changed(int);
 	void handle_cmd_key_changed(int);
+	void handle_base_key_changed(int);
 	void handle_jump_0();
 	void handle_jump_1();
 	void handle_jump_2();

@@ -399,8 +399,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_edit = new QTextEdit();
 	main_edit->setText(tr("/*\n"
 		" * Copyright (c) 2009 Hans Petter Selasky. All rights reserved.\n"
-		" * Development partly sponsored by Bitfrost A/S.\n"
-		" * See: http://www.bitfrost.no for more information.\n"
 		" */\n"
 
 		"\n"
@@ -598,6 +596,13 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_cmd_key->setMinimum(0);
 	spn_cmd_key->setValue(C3);
 
+	lbl_base_key = new QLabel(QString());
+	spn_base_key = new QSpinBox();
+	connect(spn_base_key, SIGNAL(valueChanged(int)), this, SLOT(handle_base_key_changed(int)));
+	spn_base_key->setMaximum(127);
+	spn_base_key->setMinimum(0);
+	spn_base_key->setValue(C4);
+
 	lbl_time_counter = new QLabel(tr(" - Time Counter -"));
 	lbl_time_counter->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
@@ -609,6 +614,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	lbl_recording = new QLabel(tr("- Recording -"));
 	lbl_recording->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+	lbl_scores = new QLabel(tr("- Scores -"));
+	lbl_scores->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
 	n = 0;
 
@@ -638,6 +646,14 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	n++;
 
 	tab_play_gl->addWidget(but_midi_rewind, n, 0, 1, 4);
+
+	n++;
+
+	tab_play_gl->addWidget(lbl_scores, n, 0, 1, 4);
+
+	n++;
+
+	tab_play_gl->addWidget(but_compile, n, 0, 1, 4);
 
 	n++;
 
@@ -679,6 +695,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n++;
 
+	tab_play_gl->addWidget(lbl_base_key, n, 4, 1, 3);
+	tab_play_gl->addWidget(spn_base_key, n, 7, 1, 1);
+
+	n++;
+
 	tab_play_gl->addWidget(lbl_track[0], n, 7, 1, 1);
 	tab_play_gl->addWidget(but_track[0], n, 6, 1, 1);
 	tab_play_gl->addWidget(but_jump[0], n, 4, 1, 2);
@@ -700,10 +721,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_play_gl->addWidget(lbl_track[3], n, 7, 1, 1);
 	tab_play_gl->addWidget(but_track[3], n, 6, 1, 1);
 	tab_play_gl->addWidget(but_jump[3], n, 4, 1, 2);
-
-	n++;
-
-	tab_play_gl->addWidget(but_compile, n, 4, 1, 4);
 
 	n++;
 
@@ -1100,6 +1117,18 @@ MppMainWindow :: handle_cmd_key_changed(int key)
 	pthread_mutex_unlock(&mtx);
 
 	lbl_cmd_key->setText(tr("Cmd Key ") + QString(mid_key_str[key]));
+}
+
+void
+MppMainWindow :: handle_base_key_changed(int key)
+{
+	key &= 0x7F;
+
+	pthread_mutex_lock(&mtx);
+	main_sc.ScBaseKey = key;
+	pthread_mutex_unlock(&mtx);
+
+	lbl_base_key->setText(tr("Base Key ") + QString(mid_key_str[key]));
 }
 
 void
@@ -1901,7 +1930,7 @@ MppMainWindow :: handle_key_press(int in_key, int vel)
 	for (x = 0; x != MPP_MAX_SCORES; x++) {
 
 		if (pn->dur != 0) {
-			out_key = pn->key + (in_key - C4);
+			out_key = pn->key + (in_key - main_sc.ScBaseKey);
 			out_key &= 127;
 
 			/* check if channel is masked */
