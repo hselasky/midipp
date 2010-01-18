@@ -1873,25 +1873,37 @@ MppMainWindow :: handle_stop(void)
 {
 	struct mid_data *d = &mid_data;
 	uint8_t ScMidiTriggered;
+	uint8_t out_key;
+	uint8_t old_chan;
+	uint8_t chan;
 	uint8_t x;
 	uint8_t y;
 
 	ScMidiTriggered = main_sc.ScMidiTriggered;
 	main_sc.ScMidiTriggered = 1;
 
-	for (x = 0; x != 128; x++) {
+	for (x = 0; x != MPP_PRESSED_MAX; x++) {
 		if (main_sc.ScPressed[x] != 0) {
+
+			out_key = (main_sc.ScPressed[x] >> 8) & 0xFF;
+			chan = (main_sc.ScPressed[x] >> 16) & 0xFF;
+
+			old_chan = main_sc.ScSynthChannel;
+			main_sc.ScSynthChannel = chan;
+
 			main_sc.ScPressed[x] = 0;
 
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
 				if (check_synth(y)) {
-					mid_key_press(d, x, 0, 0);
+					mid_key_press(d, out_key, 0, 0);
 				}
 			}
 
 			if (check_record()) {
-				mid_key_press(d, x, 0, 0);
+				mid_key_press(d, out_key, 0, 0);
 			}
+
+			main_sc.ScSynthChannel = old_chan;
 		}
 	}
 
@@ -1911,12 +1923,31 @@ MppMainWindow :: handle_jump(int pos)
 	return (1);
 }
 
+int
+MppMainWindow :: set_pressed_key(int chan, int out_key, int dur)
+{
+	uint8_t y;
+
+	for (y = 0; y != MPP_PRESSED_MAX; y++) {
+		if (main_sc.ScPressed[y] != 0)
+			continue;
+		main_sc.ScPressed[y] =
+		  (dur & 0xFF) | 
+		  ((out_key & 0xFF) << 8) |
+		  ((chan & 0xFF) << 16);
+		return (0);
+	}
+	return (1);
+}
+
 void
 MppMainWindow :: handle_key_press(int in_key, int vel)
 {
 	struct mid_data *d = &mid_data;
 	struct MppScore *pn;
 	uint16_t pos;
+	uint8_t old_chan;
+	uint8_t chan;
 	uint8_t x;
 	uint8_t y;
 	uint8_t out_key;
@@ -1927,7 +1958,7 @@ MppMainWindow :: handle_key_press(int in_key, int vel)
 
 	pn = &main_sc.ScScores[main_sc.ScCurrPos][0];
 
-	for (x = 0; x != MPP_MAX_SCORES; x++) {
+	for (x = 0; x != MPP_MAX_SCORES; x++, pn++) {
 
 		if (pn->dur != 0) {
 			out_key = pn->key + (in_key - main_sc.ScBaseKey);
@@ -1936,6 +1967,14 @@ MppMainWindow :: handle_key_press(int in_key, int vel)
 			/* check if channel is masked */
 			if (main_sc.ScTrackMask & (1UL << pn->channel))
 				continue;
+
+			chan = (main_sc.ScSynthChannel + pn->channel) & 15;
+
+			if (set_pressed_key(chan, out_key, pn->dur))
+				continue;
+
+			old_chan = main_sc.ScSynthChannel;
+			main_sc.ScSynthChannel = chan;
 
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
 				if (check_synth(y)) {
@@ -1947,9 +1986,8 @@ MppMainWindow :: handle_key_press(int in_key, int vel)
 				mid_key_press(d, out_key, vel, 0);
 			}
 
-			main_sc.ScPressed[out_key] = pn->dur;
+			main_sc.ScSynthChannel= old_chan;
 		}
-		pn++;
 	}
 
 	main_sc.ScCurrPos++;
@@ -1965,21 +2003,35 @@ void
 MppMainWindow :: handle_key_release(int in_key)
 {
 	struct mid_data *d = &mid_data;
+	uint8_t out_key;
+	uint8_t old_chan;
+	uint8_t chan;
 	uint8_t x;
 	uint8_t y;
 
-	for (x = 0; x != 128; x++) {
-		if (main_sc.ScPressed[x] == 1) {
+	for (x = 0; x != MPP_PRESSED_MAX; x++) {
+		if ((main_sc.ScPressed[x] & 0xFF) == 1) {
+
+			out_key = (main_sc.ScPressed[x] >> 8) & 0xFF;
+			chan = (main_sc.ScPressed[x] >> 16) & 0xFF;
+
+			/* clear entry */
+			main_sc.ScPressed[x] = 0;
+
+			old_chan = main_sc.ScSynthChannel;
+			main_sc.ScSynthChannel = chan;
 
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
 				if (check_synth(y)) {
-					mid_key_press(d, x, 0, 0);
+					mid_key_press(d, out_key, 0, 0);
 				}
 			}
 
 			if (check_record()) {
-				mid_key_press(d, x, 0, 0);
+				mid_key_press(d, out_key, 0, 0);
 			}
+
+			main_sc.ScSynthChannel = old_chan;
 		}
 
 		if (main_sc.ScPressed[x] != 0)
@@ -2135,7 +2187,8 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			if (mw->handle_jump(key - mw->main_sc.ScCmdKey) == 0) {
 				mw->handle_key_press(key, vel);
 			}
-		} else {
+		} else if (mw->set_pressed_key(mw->main_sc.ScSynthChannel,
+		    key, 1) == 0) {
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
 				if (mw->check_synth(y)) {
 					mid_key_press(d, key, vel, 0);
@@ -2145,8 +2198,6 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			if (mw->check_record()) {
 				mid_key_press(d, key, vel, 0);
 			}
-
-			mw->main_sc.ScPressed[key] = 1;
 
 			mw->do_update_bpm();
 		}

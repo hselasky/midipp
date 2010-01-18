@@ -52,6 +52,7 @@
 #define	MPP_MAX_DEVS	4
 #define	MPP_MAX_BPM	32
 #define	MPP_MIN_POS	4	/* ticks */
+#define	MPP_PRESSED_MAX	128
 
 struct MppScore {
 	uint8_t key;
@@ -75,6 +76,7 @@ struct MppSoftc {
 	uint32_t ScBpmAutoPlay;
 	uint32_t ScLastInputEvent;
 
+	uint32_t ScPressed[MPP_PRESSED_MAX];
 	uint32_t ScChanUsageMask;
 	uint32_t ScTrackMask;
 	uint32_t ScStartPosition;
@@ -98,7 +100,6 @@ struct MppSoftc {
 	uint16_t ScLinesMax;
 	uint16_t ScCurrPos;
 
-	uint8_t ScPressed[128];
 	uint8_t ScInputEvents[MPP_MAX_QUEUE];
 	uint8_t ScNumInputEvents;
 	uint8_t ScPlayDevice;
@@ -140,6 +141,7 @@ public:
 	void do_bpm_stats(void);
 	void do_clock_stats(void);
 	void do_update_bpm(void);
+	int set_pressed_key(int, int, int);
 
 	uint8_t do_instr_check(struct umidi20_event *event);
 	uint8_t handle_jump(int pos);
