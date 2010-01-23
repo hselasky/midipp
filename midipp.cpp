@@ -32,6 +32,10 @@
 
 #include <err.h>
 
+QColor color_black   (0x00, 0x00, 0x00, 0xff);
+QColor color_white   (0xff, 0xff, 0xff, 0xff);
+QColor color_logo    (0xc4, 0x40, 0x20, 0xff);
+
 static char *
 MppQStringToAscii(QString s)
 {
@@ -106,22 +110,252 @@ MppWriteFile(QString fname, QString text)
 }
 
 static void
+MppParseMax(uint16_t *pmax, float value)
+{
+	value += MPP_VISUAL_MARGIN;
+
+	if (value > 2048.0)
+		value = 2048.0;
+	if (value < 0.0)
+		value = 0.0;
+
+	if ((uint16_t)value > *pmax)
+		*pmax = value;
+}
+
+static void
+MppParseVisualEntries(struct MppSoftc *sc)
+{
+	uint16_t x;
+	uint16_t y;
+	uint16_t z;
+	char *ptr;
+	uint8_t draw_chord;
+	uint8_t last_dot;
+
+	float chord_x;
+	float text_x;
+	float adj_x;
+
+	QFont fnt_a;
+	QFont fnt_b;
+
+	fnt_a.fromString(QString("Arial,12,-1,5,75,0,0,0,0,0"));
+	fnt_b.fromString(QString("Arial,16,-1,5,75,0,0,0,0,0"));
+
+	for (x = 0; x != MPP_MAX_LINES; x++) {
+		sc->ScVisualScores[x].x_off = 0;
+	}
+
+	for (x = 0; x != MPP_MAX_LINES; x++) {
+
+		if (sc->ScVisualScores[x].pic != NULL) {
+			delete (sc->ScVisualScores[x].pic);
+			sc->ScVisualScores[x].pic = NULL;
+		}
+
+		ptr = sc->ScVisualScores[x].pstr;
+		if (ptr == NULL)
+			continue;
+
+		sc->ScVisualScores[x].pic = new QPicture();
+
+		QPainter paint(sc->ScVisualScores[x].pic);
+
+		draw_chord = 0;
+		last_dot = 0;
+		chord_x = MPP_VISUAL_MARGIN;
+		text_x = MPP_VISUAL_MARGIN;
+		z = x;
+
+		for (y = 0; ptr[y] != 0; y++) {
+
+			if (draw_chord)
+				paint.setFont(fnt_b);
+			else
+				paint.setFont(fnt_a);
+
+			QString temp(ptr[y]);
+			QRectF temp_size = paint.boundingRect(QRectF(0,0,0,0), temp);
+
+			if (temp_size.width() == 0.0) {
+				temp_size = paint.boundingRect(QRectF(0,0,0,0), QString("-"));
+			}
+
+			if (ptr[y] == '(') {
+				draw_chord = 1;
+				continue;
+			} else if (ptr[y] == ')') {
+				draw_chord = 0;
+				continue;
+			} else if (ptr[y] == '.') {
+				paint.setPen(QPen(color_black, 1));
+				paint.setBrush(QColor(color_black));
+
+				if (last_dot) {
+					text_x += MPP_VISUAL_R_MAX;
+				}
+
+				if (ptr[y+1] != 0) {
+					adj_x = paint.boundingRect(QRectF(0,0,0,0),
+					    QString(ptr[y+1])).width();
+					if (adj_x == 0) {
+						paint.boundingRect(QRectF(0,0,0,0),
+						   QString("-")).width();
+					}
+					adj_x = (adj_x - MPP_VISUAL_R_MAX) / 2.0;
+				} else {
+					adj_x = 0.0;
+				}
+
+				if (z < MPP_MAX_LINES) {
+
+					sc->ScVisualScores[z].x_off = text_x + adj_x;
+					sc->ScVisualScores[z].y_off = (MPP_VISUAL_Y_MAX/3);
+
+					MppParseMax(&sc->ScMaxScoresWidth, 
+					    sc->ScVisualScores[z].x_off + MPP_VISUAL_R_MAX);
+
+					paint.drawEllipse(QRect(sc->ScVisualScores[z].x_off,
+						sc->ScVisualScores[z].y_off,
+						MPP_VISUAL_R_MAX, MPP_VISUAL_R_MAX));
+				}
+
+				last_dot = 1;
+				z++;
+				continue;
+			} else if (ptr[y] == '\n' || ptr[y] == '\r') {
+				continue;
+			}
+
+			paint.setPen(QPen(color_black, 1));
+			paint.setBrush(QColor(color_black));
+
+			if (draw_chord) {
+
+				paint.drawText(QPointF(chord_x, MPP_VISUAL_MARGIN + 
+				    (MPP_VISUAL_Y_MAX/4)), temp);
+
+				chord_x += temp_size.width();
+
+				MppParseMax(&sc->ScMaxScoresWidth, chord_x);
+			} else {
+				paint.drawText(QPointF(text_x, MPP_VISUAL_Y_MAX -
+				    (MPP_VISUAL_Y_MAX/4) - MPP_VISUAL_MARGIN), temp);
+
+				text_x += temp_size.width();
+				chord_x = text_x;
+				last_dot = 0;
+
+				MppParseMax(&sc->ScMaxScoresWidth, text_x);
+			}
+		}
+	}
+}
+
+MppVisualScores :: MppVisualScores(struct MppSoftc *sc_init)
+{
+	sc = sc_init;
+}
+
+void
+MppVisualScores :: paintEvent(QPaintEvent *event)
+{
+	QPainter paint(this);
+	uint16_t max;
+	uint16_t pos;
+	uint16_t y_blocks;
+	uint16_t y_div;
+	uint16_t y_rem;
+	uint16_t x;
+	uint16_t y;
+
+	paint.fillRect(event->rect(), color_white);
+
+	pthread_mutex_lock(&sc->mtx);
+	pos = sc->ScCurrPos;
+	max = sc->ScLinesMax;
+	pthread_mutex_unlock(&sc->mtx);
+
+	y_blocks = (this->height() + MPP_VISUAL_Y_MAX - 1) / MPP_VISUAL_Y_MAX;
+	y_div = 0;
+	y_rem = 0;
+
+	/* locate */
+
+	for (x = y = 0; x != max; x++) {
+
+		if (sc->ScVisualScores[x].pic != NULL) {
+			y++;
+		}
+
+		if (x >= pos) {
+			if (y != 0) {
+				y_div = (y-1) / y_blocks;
+				y_rem = (y-1) % y_blocks;
+				break;
+			}
+		}
+	}
+
+	/* paint */
+
+	for (x = y = 0; x != max; x++) {
+
+		if (sc->ScVisualScores[x].pic != NULL) {
+			if (y_div == (y / y_blocks)) {
+				paint.drawPicture(QPoint(0,(y % y_blocks) * MPP_VISUAL_Y_MAX),
+				    *(sc->ScVisualScores[x].pic));
+			}
+			y++;
+		}
+	}
+
+	/* overlay */
+
+	if (sc->ScVisualScores[pos].x_off != 0) {
+		paint.setPen(QPen(color_logo, 4));
+		paint.setBrush(QColor(color_logo));
+		paint.drawEllipse(QRect(sc->ScVisualScores[pos].x_off,
+			sc->ScVisualScores[pos].y_off + (y_rem * MPP_VISUAL_Y_MAX),
+			MPP_VISUAL_R_MAX, MPP_VISUAL_R_MAX));
+	}
+}
+
+static void
+MppParseNewLine(struct MppSoftc *sc)
+{
+	if (sc->line < MPP_MAX_LINES) {
+		sc->line++;
+		sc->index = 0;
+	}
+}
+
+static void
 MppParse(struct MppSoftc *sc, const QString &ps)
 {
 	int c;
 	int d;
+	int e;
 	int x;
 	int y;
-	int line;
 	int label;
-	int index;
 	int channel;
 	int base_key;
 	int duration;
 
+	/* cleanup all scores */
+
+	for (x = 0; x != MPP_MAX_LINES; x++) {
+		if (sc->ScVisualScores[x].pstr != NULL) {
+			free(sc->ScVisualScores[x].pstr);
+			sc->ScVisualScores[x].pstr = NULL;
+		}
+	}
+
 	x = -1;
-	line = 0;
-	index = 0;
+	sc->line = 0;
+	sc->index = 0;
 	memset(sc->ScScores, 0, sizeof(sc->ScScores));
 	memset(sc->ScJumpNext, 0, sizeof(sc->ScJumpNext));
 	memset(sc->ScJumpTable, 0, sizeof(sc->ScJumpTable));
@@ -130,10 +364,10 @@ MppParse(struct MppSoftc *sc, const QString &ps)
 		goto done;
 
 next_line:
-	if (index != 0) {
-		line++;
-		index = 0;
+	if (sc->index != 0) {
+		MppParseNewLine(sc);
 	}
+
 	y = -1;
 	channel = 0;
 	duration = 1;
@@ -208,6 +442,11 @@ next_char:
 			goto parse_duration;
 		}
 		goto next_char;
+	case 'S':
+		if (y == 0) {
+			goto parse_string;
+		}
+		goto next_char;
 	case 0:
 		goto done;
 	case '\n':
@@ -261,11 +500,11 @@ parse_score:
 			base_key -= 1;
 			x += 1;
 		}
-		if ((line < MPP_MAX_LINES) && (index < MPP_MAX_SCORES)) {
-			sc->ScScores[line][index].key = base_key & 127;
-			sc->ScScores[line][index].dur = duration & 255;
-			sc->ScScores[line][index].channel = channel & 15;
-			index++;
+		if ((sc->line < MPP_MAX_LINES) && (sc->index < MPP_MAX_SCORES)) {
+			sc->ScScores[sc->line][sc->index].key = base_key & 127;
+			sc->ScScores[sc->line][sc->index].dur = duration & 255;
+			sc->ScScores[sc->line][sc->index].channel = channel & 15;
+			sc->index++;
 		}
 
 	}
@@ -318,7 +557,35 @@ parse_label:
 		label = 0;
 	}
 	if ((label >= 0) && (label < MPP_MAX_LABELS)) {
-		sc->ScJumpTable[label] = line + 1;
+		sc->ScJumpTable[label] = sc->line + 1;
+	}
+	goto next_char;
+
+
+parse_string:
+	c = ps[x+1].toAscii();
+	if (c != '\"')
+		goto next_char;
+			
+	e = 0;
+	while ((c = ps[x+2].toAscii()) != 0) {
+		if (c == '\"')
+			break;
+
+		if (e == (sizeof(sc->buf)-1))
+			break;
+		else
+			sc->buf[e] = c;
+		x++;
+		e++;
+	}
+	sc->buf[e] = 0;
+	x += 1;
+
+	if (sc->line < MPP_MAX_LINES) {
+		if (sc->ScVisualScores[sc->line].pstr != NULL)
+			free(sc->ScVisualScores[sc->line].pstr);
+		sc->ScVisualScores[sc->line].pstr = strdup(sc->buf);
 	}
 	goto next_char;
 
@@ -337,29 +604,32 @@ parse_jump:
 		label = 0;
 	}
 
-	if (index != 0) {
-		line++;
-		index = 0;
+	if (sc->index != 0) {
+		MppParseNewLine(sc);
 	}
 
-	if ((label >= 0) && (label < MPP_MAX_LABELS) && (line < MPP_MAX_LINES)) {
-		sc->ScJumpNext[line] = label + 1;
-		line++;
+	if ((label >= 0) && (label < MPP_MAX_LABELS) && (sc->line < MPP_MAX_LINES)) {
+		sc->ScJumpNext[sc->line] = label + 1;
+		sc->line++;
 	}
 	goto next_char;
 
 done:
-	if (index != 0)
-		line++;
+	if (sc->index != 0) {
+		MppParseNewLine(sc);
+	}
 
 	/* resolve all jumps */
-	for (x = 0; x != line; x++) {
+	for (x = 0; x != sc->line; x++) {
 		if (sc->ScJumpNext[x] != 0)
 			sc->ScJumpNext[x] = sc->ScJumpTable[sc->ScJumpNext[x] - 1];
 	}
 
-	sc->ScLinesMax = line;
+	sc->ScLinesMax = sc->line;
 	sc->ScCurrPos = 0;
+	sc->ScMaxScoresWidth = 0;
+
+	MppParseVisualEntries(sc);
 }
 
 MppMainWindow :: MppMainWindow(QWidget *parent)
@@ -379,12 +649,13 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	song = NULL;
 	track = NULL;
 
-	umidi20_mutex_init(&mtx);
+	umidi20_mutex_init(&main_sc.mtx);
 
 	/* Setup GUI */
 
 	main_gl = new QGridLayout(this);
 	main_tw = new QTabWidget();
+	scores_tw = new QTabWidget();
 
 	/* Watchdog */
 
@@ -408,15 +679,20 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		" * T<number> - specifies the track number of the following scores (0..31)\n"
 		" * L<number> - defines a label (0..31)\n"
 		" * J<number> - jumps to the given label (0..31)\n"
+		" * S\"<string>\" - creates a visual string\n"
 		" * CDEFGAH<number><B> - defines a score in the given octave (0..10)\n"
 		" */\n"
+		"\n"
+		"S\"(L0:) .Welcom.e!\"\n"
+		"\nC3"
 		"\nC3\n"));
-
-	main_gl->addWidget(main_edit,0,0,1,2);
 
 	/* Tabs */
 
-	main_gl->addWidget(main_tw,0,2,1,1);
+	main_gl->addWidget(scores_tw,0,0,1,1);
+	main_gl->addWidget(main_tw,0,1,1,1);
+
+	scores_wg = new MppVisualScores(&main_sc);
 
 	tab_file_wg = new QWidget();
 	tab_play_wg = new QWidget();
@@ -429,6 +705,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_edit_gl = new QGridLayout(tab_edit_wg);
 	tab_config_gl = new QGridLayout(tab_config_wg);
 	tab_instr_gl = new QGridLayout(tab_instr_wg);
+
+	scores_tw->addTab(scores_wg, tr("View Scores"));
+	scores_tw->addTab(main_edit, tr("Edit Scores"));
 
 	main_tw->addTab(tab_file_wg, tr("File"));
 	main_tw->addTab(tab_play_wg, tr("Play"));
@@ -1029,9 +1308,9 @@ MppMainWindow :: handle_quit()
 void
 MppMainWindow :: handle_jump_N(int index)
 {
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 	handle_jump(index);
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 }
 
 void
@@ -1064,10 +1343,10 @@ MppMainWindow :: handle_track_N(int index)
 	uint32_t mask = (1UL << index);
 	uint32_t val;
 
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 	main_sc.ScTrackMask ^= mask;
 	val = main_sc.ScTrackMask & mask;
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 
 	if (val)
 		lbl_track[index]->setText(tr("OFF"));
@@ -1112,9 +1391,9 @@ MppMainWindow :: handle_cmd_key_changed(int key)
 {
 	key &= 0x7F;
 
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 	main_sc.ScCmdKey = key;
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 
 	lbl_cmd_key->setText(tr("Cmd Key ") + QString(mid_key_str[key]));
 }
@@ -1124,9 +1403,9 @@ MppMainWindow :: handle_base_key_changed(int key)
 {
 	key &= 0x7F;
 
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 	main_sc.ScBaseKey = key;
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 
 	lbl_base_key->setText(tr("Base Key ") + QString(mid_key_str[key]));
 }
@@ -1134,9 +1413,9 @@ MppMainWindow :: handle_base_key_changed(int key)
 void
 MppMainWindow :: handle_pass_thru()
 {
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 	main_sc.ScMidiPassThruOff = !main_sc.ScMidiPassThruOff;
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 
 	if (main_sc.ScMidiPassThruOff == 0)
 		lbl_midi_pass_thru->setText(tr("ON"));
@@ -1147,18 +1426,20 @@ MppMainWindow :: handle_pass_thru()
 void
 MppMainWindow :: handle_compile()
 {
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 	handle_stop();
 	MppParse(&main_sc, main_edit->toPlainText());
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
+
+	scores_wg->setMinimumWidth(main_sc.ScMaxScoresWidth);
 }
 
 void
 MppMainWindow :: handle_score_record()
 {
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 	main_sc.ScScoreRecordOff = !main_sc.ScScoreRecordOff;
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 
 	if (main_sc.ScScoreRecordOff == 0)
 		lbl_score_record->setText(tr("ON"));
@@ -1173,23 +1454,23 @@ MppMainWindow :: handle_midi_pause()
 	uint8_t triggered;
 	uint8_t paused;
 
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 	pos = (umidi20_get_curr_position() - main_sc.ScStartPosition) % 0x40000000UL;
 	triggered = main_sc.ScMidiTriggered;
 	paused = main_sc.ScMidiPaused;
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 
 	if (paused)
 		return;		/* nothing to do */
 
 	handle_rewind();
 
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 	if (triggered != 0) {
 		main_sc.ScMidiPaused = 1;
 		main_sc.ScPausePosition = pos;
 	}
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 }
 
 void
@@ -1197,11 +1478,11 @@ MppMainWindow :: handle_midi_play()
 {
 	uint8_t triggered;
 
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 	main_sc.ScMidiPlayOff = !main_sc.ScMidiPlayOff;
 	triggered = main_sc.ScMidiTriggered;
 	update_play_device_no();
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 
 	if (main_sc.ScMidiPlayOff == 0)
 		lbl_midi_play->setText(tr("ON"));
@@ -1219,11 +1500,11 @@ MppMainWindow :: handle_midi_record()
 {
 	uint8_t triggered;
 
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 	main_sc.ScMidiRecordOff = !main_sc.ScMidiRecordOff;
 	triggered = main_sc.ScMidiTriggered;
 	update_play_device_no();
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 
 	if (main_sc.ScMidiRecordOff == 0)
 		lbl_midi_record->setText(tr("ON"));
@@ -1241,9 +1522,9 @@ MppMainWindow :: handle_auto_play()
 {
 	int x;
 	
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 	x = main_sc.ScMidiTriggered;
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 
 	if (x) {
 		handle_play_press();
@@ -1257,9 +1538,9 @@ MppMainWindow :: handle_play_press()
 	int vel = spn_volume->value();
 	int key = spn_play_key->value();
 
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 	handle_key_press(key, vel);
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 }
 
 void
@@ -1267,9 +1548,9 @@ MppMainWindow :: handle_play_release()
 {
 	int key = spn_play_key->value();
 
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 	handle_key_release(key);
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 }
 
 void
@@ -1286,7 +1567,7 @@ MppMainWindow :: handle_watchdog()
 	uint8_t last_duration;
 	uint8_t instr_update;
 
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 	instr_update = main_sc.ScInstrUpdated;
 	main_sc.ScInstrUpdated = 0;
 	num_events = main_sc.ScNumInputEvents;
@@ -1300,7 +1581,7 @@ MppMainWindow :: handle_watchdog()
 			num_events = 0;
 		}
 	}
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 
 	if (num_events != 0) {
 		mid_sort(events_copy, num_events);
@@ -1344,6 +1625,8 @@ MppMainWindow :: handle_watchdog()
 	do_bpm_stats();
 
 	do_clock_stats();
+
+	scores_wg->repaint();
 }
 
 void
@@ -1434,7 +1717,7 @@ MppMainWindow :: handle_midi_file_new()
 	handle_rewind();
 
 	if (track != NULL) {
-		pthread_mutex_lock(&mtx);
+		pthread_mutex_lock(&main_sc.mtx);
 		umidi20_event_queue_drain(&(track->queue));
 		for (x = 0; x != 16; x++) {
 			main_sc.ScInstr[x].bank = 0;
@@ -1445,7 +1728,7 @@ MppMainWindow :: handle_midi_file_new()
 		main_sc.ScInstrUpdated = 1;
 		main_sc.ScSynthChannel = 0;
 		main_sc.ScChanUsageMask = 0;
-		pthread_mutex_unlock(&mtx);
+		pthread_mutex_unlock(&main_sc.mtx);
 	}
 }
 
@@ -1504,9 +1787,9 @@ MppMainWindow :: handle_midi_file_open(int merge)
 		filename = MppQStringToAscii(*CurrMidiFileName);
 
 		if (filename != NULL) {
-			pthread_mutex_lock(&mtx);
-			song_copy = umidi20_load_file(&mtx, filename);
-			pthread_mutex_unlock(&mtx);
+			pthread_mutex_lock(&main_sc.mtx);
+			song_copy = umidi20_load_file(&main_sc.mtx, filename);
+			pthread_mutex_unlock(&main_sc.mtx);
 
 			free((void *)filename);
 
@@ -1524,7 +1807,7 @@ load_file:
 	printf("resolution %d\n", song_copy->midi_resolution);
 	printf("division_type %d\n", song_copy->midi_division_type);
 
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 
 	chan = main_sc.ScSynthChannel;
 
@@ -1565,7 +1848,7 @@ load_file:
 	/* restore synth channel */
 	main_sc.ScSynthChannel = chan;
 
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 
 done:
 	/* make sure we save into a new file */
@@ -1618,11 +1901,11 @@ MppMainWindow :: handle_midi_file_save()
 		filename = MppQStringToAscii(*CurrMidiFileName);
 
 		if (filename != NULL) {
-			pthread_mutex_lock(&mtx);
+			pthread_mutex_lock(&main_sc.mtx);
 			handle_midi_file_instr_prepend();
 			umidi20_save_file(song, filename);
 			handle_midi_file_instr_delete();
-			pthread_mutex_unlock(&mtx);
+			pthread_mutex_unlock(&main_sc.mtx);
 			free((void *)filename);
 		}
 	} else {
@@ -1656,7 +1939,7 @@ MppMainWindow :: handle_midi_file_save_as()
 void
 MppMainWindow :: handle_rewind()
 {
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 
 	main_sc.ScMidiTriggered = 0;
 	main_sc.ScMidiPaused = 0;
@@ -1672,13 +1955,13 @@ MppMainWindow :: handle_rewind()
 		main_sc.ScStartPosition = umidi20_get_curr_position() - 0x40000000;
 	}
 
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 }
 
 void
 MppMainWindow :: handle_midi_trigger()
 {
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 
 	if (main_sc.ScMidiTriggered == 0) {
 		if (main_sc.ScMidiPlayOff == 0) {
@@ -1699,7 +1982,7 @@ MppMainWindow :: handle_midi_trigger()
 		main_sc.ScPausePosition = 0;
 	}
 
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 }
 
 void
@@ -1810,10 +2093,10 @@ MppMainWindow :: handle_config_apply()
 	n = spn_bpm_length->value();
 	p = spn_auto_play->value();
 
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 	main_sc.ScBpmAvgLength = n;
 	main_sc.ScBpmAutoPlay = p;
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 
 	handle_config_reload();
 }
@@ -2069,7 +2352,7 @@ MppMainWindow :: do_clock_stats(void)
 	uint32_t time_offset;
 	char buf[32];
 
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 
 	if (main_sc.ScMidiTriggered == 0) {
 		if (main_sc.ScMidiPaused != 0)
@@ -2082,7 +2365,7 @@ MppMainWindow :: do_clock_stats(void)
 
 	time_offset %= 100000000UL;
 
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 
 	snprintf(buf, sizeof(buf), "%d", time_offset);
 	lbl_curr_time_val->display(QString(buf));
@@ -2104,7 +2387,7 @@ MppMainWindow :: do_bpm_stats(void)
 	if (len == 0)
 		return;
 
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 
 	for (x = 0; x != len; x++) {
 		val = main_sc.ScBpmData[x];
@@ -2116,7 +2399,7 @@ MppMainWindow :: do_bpm_stats(void)
 			min = val;
 	}
 
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 
 	if (sum == 0)
 		sum = 1;
@@ -2297,13 +2580,13 @@ MppMainWindow :: handle_instr_program()
 	int bank = spn_instr_curr_bank->value();
 	int prog = spn_instr_curr_prog->value();
 
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 	main_sc.ScSynthChannel = chan;
 	main_sc.ScInstr[chan].bank = bank;
 	main_sc.ScInstr[chan].prog = prog;
 	main_sc.ScInstr[chan].muted = 0;
 	main_sc.ScInstr[chan].updated = 1;
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 
 	handle_instr_revert();
 }
@@ -2320,12 +2603,12 @@ MppMainWindow :: handle_instr_apply()
 		temp[1] = spn_instr_prog[x]->value();
 		temp[2] = cbx_instr_mute[x]->isChecked();
 
-		pthread_mutex_lock(&mtx);
+		pthread_mutex_lock(&main_sc.mtx);
 		main_sc.ScInstr[x].bank = temp[0];
 		main_sc.ScInstr[x].prog = temp[1];
 		main_sc.ScInstr[x].muted = temp[2];
 		main_sc.ScInstr[x].updated = 1;
-		pthread_mutex_unlock(&mtx);
+		pthread_mutex_unlock(&main_sc.mtx);
 	}
 
 	handle_instr_reload();
@@ -2340,12 +2623,12 @@ MppMainWindow :: handle_instr_revert()
 
 	for (x = 0; x != 16; x++) {
 
-		pthread_mutex_lock(&mtx);
+		pthread_mutex_lock(&main_sc.mtx);
 		temp[0] = main_sc.ScInstr[x].bank;
 		temp[1] = main_sc.ScInstr[x].prog;
 		temp[2] = main_sc.ScInstr[x].muted;
 		update_curr = (main_sc.ScSynthChannel == x);
-		pthread_mutex_unlock(&mtx);
+		pthread_mutex_unlock(&main_sc.mtx);
 
 		spn_instr_bank[x]->setValue(temp[0]);
 		spn_instr_prog[x]->setValue(temp[1]);
@@ -2369,7 +2652,7 @@ MppMainWindow :: handle_instr_reload()
 	uint8_t chan;
 	uint8_t trig;
 
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 	chan = main_sc.ScSynthChannel;
 	trig = main_sc.ScMidiTriggered;
 	main_sc.ScMidiTriggered = 1;
@@ -2392,7 +2675,7 @@ MppMainWindow :: handle_instr_reload()
 
 	main_sc.ScSynthChannel = chan;
 	main_sc.ScMidiTriggered = trig;
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 }
 
 
@@ -2427,15 +2710,15 @@ MppMainWindow :: MidiInit(void)
 		umidi20_set_play_event_callback(n, &MidiEventTxCallback, this);
 	}
 
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 
-	song = umidi20_song_alloc(&mtx, UMIDI20_FILE_FORMAT_TYPE_0, 500,
+	song = umidi20_song_alloc(&main_sc.mtx, UMIDI20_FILE_FORMAT_TYPE_0, 500,
 	    UMIDI20_FILE_DIVISION_TYPE_PPQ);
 
 	track = umidi20_track_alloc();
 
 	if (song == NULL || track == NULL) {
-		pthread_mutex_unlock(&mtx);
+		pthread_mutex_unlock(&main_sc.mtx);
 		err(1, "Could not allocate new song or track\n");
 	}
 	umidi20_song_track_add(song, NULL, track, 0);
@@ -2451,7 +2734,7 @@ MppMainWindow :: MidiInit(void)
 
 	main_sc.ScStartPosition = umidi20_get_curr_position() - 0x40000000;
 
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 
 	/* reload the configuration */
 
@@ -2465,7 +2748,7 @@ MppMainWindow :: MidiUnInit(void)
 
 	handle_rewind();
 
-	pthread_mutex_lock(&mtx);
+	pthread_mutex_lock(&main_sc.mtx);
 
 	umidi20_song_free(song);
 
@@ -2473,7 +2756,7 @@ MppMainWindow :: MidiUnInit(void)
 
 	umidi20_song_stop(song, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
 
-	pthread_mutex_unlock(&mtx);
+	pthread_mutex_unlock(&main_sc.mtx);
 
 	for (n = 0; n != MPP_MAX_DEVS; n++) {
 		if (main_sc.ScDeviceName[n] != NULL) {

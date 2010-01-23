@@ -42,17 +42,26 @@
 #include <QLineEdit>
 #include <QSpacerItem>
 #include <QLCDNumber>
+#include <QPicture>
+#include <QColor>
+#include <QPaintEvent>
+#include <QPainter>
+#include <QFont>
 
 #include <umidi20.h>
 
 #define	MPP_MAX_LINES	1024
-#define	MPP_MAX_SCORES	16
+#define	MPP_MAX_SCORES	32
 #define	MPP_MAX_LABELS	32
 #define	MPP_MAX_QUEUE	32
 #define	MPP_MAX_DEVS	4
 #define	MPP_MAX_BPM	32
 #define	MPP_MIN_POS	4	/* ticks */
 #define	MPP_PRESSED_MAX	128
+
+#define	MPP_VISUAL_MARGIN	8
+#define	MPP_VISUAL_Y_MAX	80
+#define	MPP_VISUAL_R_MAX	8
 
 struct MppScore {
 	uint8_t key;
@@ -67,14 +76,31 @@ struct MppInstr {
 	uint8_t updated;
 };
 
+struct MppScoreEntry {
+	char *pstr;
+	QPicture *pic;
+	int32_t x_off;
+	int32_t y_off;
+};
+
 struct MppSoftc {
 	struct MppScore ScScores[MPP_MAX_LINES][MPP_MAX_SCORES];
+	struct MppScoreEntry ScVisualScores[MPP_MAX_LINES];
 	struct MppInstr ScInstr[16];
+
+	pthread_mutex_t mtx;
 
 	uint32_t ScBpmData[MPP_MAX_BPM];
 	uint32_t ScLastKeyPress;
 	uint32_t ScBpmAutoPlay;
 	uint32_t ScLastInputEvent;
+
+	/* parse state */
+	int line;
+	int index;
+
+	/* parse buffer */
+	char buf[128];
 
 	uint32_t ScPressed[MPP_PRESSED_MAX];
 	uint32_t ScChanUsageMask;
@@ -99,6 +125,7 @@ struct MppSoftc {
 	uint16_t ScJumpTable[MPP_MAX_LABELS];
 	uint16_t ScLinesMax;
 	uint16_t ScCurrPos;
+	uint16_t ScMaxScoresWidth;
 
 	uint8_t ScInputEvents[MPP_MAX_QUEUE];
 	uint8_t ScNumInputEvents;
@@ -118,6 +145,16 @@ struct MppSoftc {
 	uint8_t ScMidiPaused;
 
 	char *ScDeviceName[MPP_MAX_DEVS];
+};
+
+class MppVisualScores : public QWidget
+{
+
+public:
+	MppVisualScores(struct MppSoftc *sc_init);
+
+	void paintEvent(QPaintEvent *event);
+	struct MppSoftc *sc;
 };
 
 class MppMainWindow : public QWidget
@@ -153,8 +190,14 @@ public:
 	QGridLayout *main_gl;
 	QTabWidget *main_tw;
 
+	QTabWidget *scores_tw;
+
 	QTimer *watchdog;
 	QTimer *auto_play_timer;
+
+	/* visual scores */
+
+	MppVisualScores *scores_wg;
 
 	/* editor */
 
@@ -302,8 +345,6 @@ public:
 	struct mid_data mid_data;
 	struct umidi20_song *song;
 	struct umidi20_track *track;
-
-	pthread_mutex_t mtx;
 
 public slots:
 	void handle_quit();
