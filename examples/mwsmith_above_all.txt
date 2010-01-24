@@ -2,6 +2,7 @@ L0:
 
 /* Song title: Above All */
 /* Song author: Michael W. Smith */
+/* Song programmer: Hans Petter Selasky */
 
 /* Verse 1 */
 

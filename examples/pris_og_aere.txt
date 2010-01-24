@@ -1,0 +1,97 @@
+/* Song title: Pris og Ære */
+/* Song author: Unknown */
+/* Song programmer: Hans Petter Selasky */
+
+L0:
+
+/* Verse 1 */
+
+S"(0)Vers: (Em9).Står .her (D/E).nå "
+U2 E3 E4 U1 G4 D5 E5 
+U1 D5 E5 G5 
+U4 E3 E4 U1 A4 D5 G5B 
+
+S".inn.for (Em9).din .tron.e(D/E);"
+U1 A4 D5 G5B 
+U1 D5 E5 G5 
+U1 D5 E5 G5 
+U2 E3 E4 U1 A4 D5 G5B 
+U1 D5 G5B A5 
+
+S"(Em9).Løf.ter .opp "
+U2 E3 E4 U1 G4 D5 E5 
+U1 D5 E5 G5 
+U4 E3 E4 U1 A4 D5 G5B 
+
+S"(D/E).mine .hen.der (C/E).til .deg(D/E);"
+U1 A4 D5 G5B 
+U1 A4 D5 G5B 
+U1 G4B A4 D5 
+U2 E3 E4 U1 G4 C5 E5 
+U1 A4 D5 G5B 
+
+S"(Em9).Står .her (D/E).nå "
+U2 E3 E4 U1 G4 D5 E5 
+U1 D5 E5 G5 
+U4 E3 E4 U1 A4 D5 G5B 
+
+S".i .stor (Em9).be .undr.ing(D/E);"
+U1 A4 D5 G5B 
+U1 D5 E5 G5 
+U1 D5 E5 G5 
+U2 E3 E4 U1 A4 D5 G5B 
+U1 D5 G5B A5 
+
+S"(Em9).Til.ber .deg "
+U2 E3 E4 U1 G4 D5 E5 
+U1 D5 E5 G5 
+U4 E3 E4 U1 A4 D5 G5B 
+
+S"(D/E).min .her.re (C/E).og .Gud(D/E);"
+U1 A4 D5 G5B 
+U1 A4 D5 G5B 
+U1 G4B A4 D5 
+U2 E3 E4 U1 G4 C5 E5 
+U1 A4 D5 G5B 
+
+J0
+
+/* Chorus */
+
+L1:
+
+S"(1)Kor: .Pris .og (E).Ær.e, (A/C#).det er min sang;"
+U4 E3 E4 U1 H4 E5 A5B 
+U1 H4 E5 A5B 
+U1 H4 E5 A5B 
+U1 A4B H4 E5 
+U1 D3B D4B A4 D5B E5 
+
+S"Pris og (E/H).Ære, til (Asus).deg Guds lam;"
+U1 H3 H4 U1 H4 E5 A5B 
+U1 A3 A4 D5B E5 
+
+S"Halle(E/G#).luja, jeg (A/C#).synger det ut til (D).deg (Hsus).;"
+U1 A3B A4B U1 H4 E5 A5B 
+U1 D3B D4B A4 D5B E5 
+U1 D3 D4 A4 D5 G5B 
+U1 H2 H3 U1 H4 E5B G5B 
+
+S"Pris og (E).Ære, (A/C#).det er min sang;"
+U1 E3 E4 U1 H4 E5 A5B 
+U1 D3B D4B A4 D5B E5 
+
+S"Pris og (E/H).Ære, til (Asus).deg Guds lam;"
+U1 H3 H4 U1 H4 E5 A5B 
+U1 A3 A4 D5B E5 
+
+S"Halle(E/G#).luja, jeg (A/C#).synger det ut til (D).deg (Hsus).;"
+U1 A3B A4B U1 H4 E5 A5B 
+U1 D3B D4B A4 D5B E5 
+U1 D3 D4 A4 D5 G5B 
+U1 H2 H3 H4 E5B G5B 
+
+S"Min Herre og (Em9).Gud;"
+U1 E3 E4 G4 D5 E5 
+
+J0
