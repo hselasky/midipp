@@ -300,7 +300,9 @@ MppVisualScores :: paintEvent(QPaintEvent *event)
 	max = sc->ScLinesMax;
 	pthread_mutex_unlock(&sc->mtx);
 
-	y_blocks = (this->height() + MPP_VISUAL_Y_MAX - 1) / MPP_VISUAL_Y_MAX;
+	y_blocks = (this->height() / MPP_VISUAL_Y_MAX);
+	if (y_blocks == 0)
+		y_blocks = 1;
 	y_div = 0;
 	y_rem = 0;
 	yo_div = 0;
