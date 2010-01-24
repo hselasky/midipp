@@ -98,6 +98,8 @@ struct MppSoftc {
 	/* parse state */
 	int line;
 	int index;
+	int buf_index;
+	int buf_line;
 
 	/* parse buffer */
 	char buf[128];
@@ -125,6 +127,7 @@ struct MppSoftc {
 	uint16_t ScJumpTable[MPP_MAX_LABELS];
 	uint16_t ScLinesMax;
 	uint16_t ScCurrPos;
+	uint16_t ScLastPos;
 	uint16_t ScMaxScoresWidth;
 
 	uint8_t ScInputEvents[MPP_MAX_QUEUE];

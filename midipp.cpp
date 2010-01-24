@@ -35,6 +35,7 @@
 QColor color_black   (0x00, 0x00, 0x00, 0xff);
 QColor color_white   (0xff, 0xff, 0xff, 0xff);
 QColor color_logo    (0xc4, 0x40, 0x20, 0xff);
+QColor color_green   (0x40, 0xc4, 0x20, 0xff);
 
 static char *
 MppQStringToAscii(QString s)
@@ -264,9 +265,12 @@ MppVisualScores :: paintEvent(QPaintEvent *event)
 	QPainter paint(this);
 	uint16_t max;
 	uint16_t pos;
+	uint16_t opos;
 	uint16_t y_blocks;
 	uint16_t y_div;
 	uint16_t y_rem;
+	uint16_t yo_div;
+	uint16_t yo_rem;
 	uint16_t x;
 	uint16_t y;
 
@@ -274,12 +278,15 @@ MppVisualScores :: paintEvent(QPaintEvent *event)
 
 	pthread_mutex_lock(&sc->mtx);
 	pos = sc->ScCurrPos;
+	opos = sc->ScLastPos;
 	max = sc->ScLinesMax;
 	pthread_mutex_unlock(&sc->mtx);
 
 	y_blocks = (this->height() + MPP_VISUAL_Y_MAX - 1) / MPP_VISUAL_Y_MAX;
 	y_div = 0;
 	y_rem = 0;
+	yo_div = 0;
+	yo_rem = 0;
 
 	/* locate */
 
@@ -298,6 +305,21 @@ MppVisualScores :: paintEvent(QPaintEvent *event)
 		}
 	}
 
+	for (x = y = 0; x != max; x++) {
+
+		if (sc->ScVisualScores[x].pic != NULL) {
+			y++;
+		}
+
+		if (x >= opos) {
+			if (y != 0) {
+				yo_div = (y-1) / y_blocks;
+				yo_rem = (y-1) % y_blocks;
+				break;
+			}
+		}
+	}
+
 	/* paint */
 
 	for (x = y = 0; x != max; x++) {
@@ -311,7 +333,20 @@ MppVisualScores :: paintEvent(QPaintEvent *event)
 		}
 	}
 
-	/* overlay */
+	/* overlay (last) */
+
+	if ((pos != opos) && (yo_div == y_div) &&
+	    (sc->ScVisualScores[opos].x_off != 0)) {
+
+		paint.setPen(QPen(color_green, 4));
+		paint.setBrush(QColor(color_green));
+		paint.drawEllipse(QRect(sc->ScVisualScores[opos].x_off,
+			sc->ScVisualScores[opos].y_off + (yo_rem * MPP_VISUAL_Y_MAX),
+			MPP_VISUAL_R_MAX, MPP_VISUAL_R_MAX));
+
+	}
+
+	/* overlay (current) */
 
 	if (sc->ScVisualScores[pos].x_off != 0) {
 		paint.setPen(QPen(color_logo, 4));
@@ -332,11 +367,25 @@ MppParseNewLine(struct MppSoftc *sc)
 }
 
 static void
+MppParseNewVisual(struct MppSoftc *sc)
+{
+	if (sc->buf_line < MPP_MAX_LINES) {
+
+		sc->buf[sc->buf_index] = 0;
+
+		if (sc->ScVisualScores[sc->buf_line].pstr != NULL)
+			free(sc->ScVisualScores[sc->buf_line].pstr);
+		sc->ScVisualScores[sc->buf_line].pstr = strdup(sc->buf);
+		sc->buf_index = 0;
+		sc->buf_line = sc->line;
+	}
+}
+
+static void
 MppParse(struct MppSoftc *sc, const QString &ps)
 {
 	int c;
 	int d;
-	int e;
 	int x;
 	int y;
 	int label;
@@ -356,6 +405,8 @@ MppParse(struct MppSoftc *sc, const QString &ps)
 	x = -1;
 	sc->line = 0;
 	sc->index = 0;
+	sc->buf_index = 0;
+	sc->buf_line = 0;
 	memset(sc->ScScores, 0, sizeof(sc->ScScores));
 	memset(sc->ScJumpNext, 0, sizeof(sc->ScJumpNext));
 	memset(sc->ScJumpTable, 0, sizeof(sc->ScJumpTable));
@@ -566,27 +617,24 @@ parse_string:
 	c = ps[x+1].toAscii();
 	if (c != '\"')
 		goto next_char;
-			
-	e = 0;
+
+	if (sc->buf_index == 0)
+		sc->buf_line = sc->line;
+
 	while ((c = ps[x+2].toAscii()) != 0) {
 		if (c == '\"')
 			break;
-
-		if (e == (sizeof(sc->buf)-1))
+		else if (c == '\n' || c == ';')
+			MppParseNewVisual(sc);
+		else if (sc->buf_index == (sizeof(sc->buf) - 1))
 			break;
-		else
-			sc->buf[e] = c;
+		else {
+			sc->buf[sc->buf_index] = c;
+			sc->buf_index++;
+		}
 		x++;
-		e++;
 	}
-	sc->buf[e] = 0;
 	x += 1;
-
-	if (sc->line < MPP_MAX_LINES) {
-		if (sc->ScVisualScores[sc->line].pstr != NULL)
-			free(sc->ScVisualScores[sc->line].pstr);
-		sc->ScVisualScores[sc->line].pstr = strdup(sc->buf);
-	}
 	goto next_char;
 
 parse_jump:
@@ -619,6 +667,10 @@ done:
 		MppParseNewLine(sc);
 	}
 
+	if (sc->buf_index != 0) {
+		MppParseNewVisual(sc);
+	}
+
 	/* resolve all jumps */
 	for (x = 0; x != sc->line; x++) {
 		if (sc->ScJumpNext[x] != 0)
@@ -627,6 +679,7 @@ done:
 
 	sc->ScLinesMax = sc->line;
 	sc->ScCurrPos = 0;
+	sc->ScLastPos = 0;
 	sc->ScMaxScoresWidth = 0;
 
 	MppParseVisualEntries(sc);
@@ -2273,6 +2326,7 @@ MppMainWindow :: handle_key_press(int in_key, int vel)
 		}
 	}
 
+	main_sc.ScLastPos = main_sc.ScCurrPos;
 	main_sc.ScCurrPos++;
 
 	if (main_sc.ScCurrPos >= main_sc.ScLinesMax)
@@ -2320,6 +2374,8 @@ MppMainWindow :: handle_key_release(int in_key)
 		if (main_sc.ScPressed[x] != 0)
 			main_sc.ScPressed[x] --;
 	}
+
+	main_sc.ScLastPos = main_sc.ScCurrPos;
 }
 
 /* This function must be called locked */
