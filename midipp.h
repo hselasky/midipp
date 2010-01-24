@@ -94,6 +94,7 @@ struct MppSoftc {
 	uint32_t ScLastKeyPress;
 	uint32_t ScBpmAutoPlay;
 	uint32_t ScLastInputEvent;
+	uint32_t ScNoiseRem;
 
 	/* parse state */
 	int line;
@@ -146,6 +147,7 @@ struct MppSoftc {
 	uint8_t ScMidiPassThruOff;
 	uint8_t ScMidiTriggered;
 	uint8_t ScMidiPaused;
+	uint8_t ScDelayNoise;
 
 	char *ScDeviceName[MPP_MAX_DEVS];
 };
@@ -181,7 +183,7 @@ public:
 	void do_bpm_stats(void);
 	void do_clock_stats(void);
 	void do_update_bpm(void);
-	int set_pressed_key(int, int, int);
+	int set_pressed_key(int, int, int, int);
 
 	uint8_t do_instr_check(struct umidi20_event *event);
 	uint8_t handle_jump(int pos);
@@ -294,6 +296,9 @@ public:
 	QSpinBox *spn_bpm_length;
 	QSpinBox *spn_auto_play;
 
+	QLabel	*lbl_key_delay;
+	QSpinBox *spn_key_delay;
+
 	QLineEdit *led_config_dev[MPP_MAX_DEVS];
 	QCheckBox *cbx_config_dev[3 * MPP_MAX_DEVS];
 
@@ -354,6 +359,7 @@ public slots:
 	void handle_play_key_changed(int);
 	void handle_cmd_key_changed(int);
 	void handle_base_key_changed(int);
+	void handle_key_delay_changed(int);
 	void handle_jump_0();
 	void handle_jump_1();
 	void handle_jump_2();

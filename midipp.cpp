@@ -119,9 +119,27 @@ MppParseMax(uint16_t *pmax, float value)
 		value = 2048.0;
 	if (value < 0.0)
 		value = 0.0;
-
 	if ((uint16_t)value > *pmax)
 		*pmax = value;
+}
+
+static uint8_t
+MppNoise(struct MppSoftc *sc, uint8_t factor)
+{
+	uint32_t temp;
+	const uint32_t prime = 0xFFFF1D;
+
+	if (factor == 0)
+		return (0);
+
+	if (sc->ScNoiseRem & 1)
+		sc->ScNoiseRem += prime;
+
+	sc->ScNoiseRem /= 2;
+
+	temp = sc->ScNoiseRem * factor;
+
+	return (temp >> 24);
 }
 
 static void
@@ -704,6 +722,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	umidi20_mutex_init(&main_sc.mtx);
 
+	main_sc.ScNoiseRem = 1;
+
 	/* Setup GUI */
 
 	main_gl = new QGridLayout(this);
@@ -1087,6 +1107,15 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_bpm_count = new QLabel(tr("BPM average length (0..32)"));
 	lbl_auto_play = new QLabel(tr("Auto Play BPM (0..6000)"));
 
+	lbl_key_delay = new QLabel(tr("Random Key Delay (0..255)"));
+	spn_key_delay = new QSpinBox();
+
+	connect(spn_key_delay, SIGNAL(valueChanged(int)), this, SLOT(handle_key_delay_changed(int)));
+	spn_key_delay->setMaximum(255);
+	spn_key_delay->setMinimum(0);
+	spn_key_delay->setValue(0);
+	spn_key_delay->setSuffix(tr(" ms"));
+
 	spn_bpm_length = new QSpinBox();
 	spn_bpm_length->setMaximum(MPP_MAX_BPM);
 	spn_bpm_length->setMinimum(0);
@@ -1141,7 +1170,12 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x++;
 
-	tab_config_gl->setRowStretch(x, 4);
+	tab_config_gl->addWidget(lbl_key_delay, x, 0, 1, 6);
+	tab_config_gl->addWidget(spn_key_delay, x, 6, 1, 2);
+
+	x++;
+
+	tab_config_gl->setRowStretch(x, 3);
 
 	x++;
 
@@ -1461,6 +1495,16 @@ MppMainWindow :: handle_base_key_changed(int key)
 	pthread_mutex_unlock(&main_sc.mtx);
 
 	lbl_base_key->setText(tr("Base Key ") + QString(mid_key_str[key]));
+}
+
+void
+MppMainWindow :: handle_key_delay_changed(int delay)
+{
+	delay &= 0xFF;
+
+	pthread_mutex_lock(&main_sc.mtx);
+	main_sc.ScDelayNoise = delay;
+	pthread_mutex_unlock(&main_sc.mtx);
 }
 
 void
@@ -2214,6 +2258,7 @@ MppMainWindow :: handle_stop(void)
 	uint8_t chan;
 	uint8_t x;
 	uint8_t y;
+	uint8_t delay;
 
 	ScMidiTriggered = main_sc.ScMidiTriggered;
 	main_sc.ScMidiTriggered = 1;
@@ -2223,6 +2268,7 @@ MppMainWindow :: handle_stop(void)
 
 			out_key = (main_sc.ScPressed[x] >> 8) & 0xFF;
 			chan = (main_sc.ScPressed[x] >> 16) & 0xFF;
+			delay = (main_sc.ScPressed[x] >> 24) & 0xFF;
 
 			old_chan = main_sc.ScSynthChannel;
 			main_sc.ScSynthChannel = chan;
@@ -2231,11 +2277,13 @@ MppMainWindow :: handle_stop(void)
 
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
 				if (check_synth(y)) {
+					mid_delay(d, delay);
 					mid_key_press(d, out_key, 0, 0);
 				}
 			}
 
 			if (check_record()) {
+				mid_delay(d, delay);
 				mid_key_press(d, out_key, 0, 0);
 			}
 
@@ -2253,6 +2301,7 @@ MppMainWindow :: handle_jump(int pos)
 		return (0);
 
 	main_sc.ScCurrPos = main_sc.ScJumpTable[pos] - 1;
+	main_sc.ScLastPos = main_sc.ScCurrPos;
 
 	handle_stop();
 
@@ -2260,7 +2309,7 @@ MppMainWindow :: handle_jump(int pos)
 }
 
 int
-MppMainWindow :: set_pressed_key(int chan, int out_key, int dur)
+MppMainWindow :: set_pressed_key(int chan, int out_key, int dur, int delay)
 {
 	uint8_t y;
 
@@ -2270,7 +2319,8 @@ MppMainWindow :: set_pressed_key(int chan, int out_key, int dur)
 		main_sc.ScPressed[y] =
 		  (dur & 0xFF) | 
 		  ((out_key & 0xFF) << 8) |
-		  ((chan & 0xFF) << 16);
+		  ((chan & 0xFF) << 16) |
+		  ((delay & 0xFF) << 24);
 		return (0);
 	}
 	return (1);
@@ -2287,6 +2337,7 @@ MppMainWindow :: handle_key_press(int in_key, int vel)
 	uint8_t x;
 	uint8_t y;
 	uint8_t out_key;
+	uint8_t delay;
 
 	pos = main_sc.ScJumpNext[main_sc.ScCurrPos];
 	if (pos != 0)
@@ -2306,7 +2357,9 @@ MppMainWindow :: handle_key_press(int in_key, int vel)
 
 			chan = (main_sc.ScSynthChannel + pn->channel) & 15;
 
-			if (set_pressed_key(chan, out_key, pn->dur))
+			delay = MppNoise(&main_sc, main_sc.ScDelayNoise);
+
+			if (set_pressed_key(chan, out_key, pn->dur, delay))
 				continue;
 
 			old_chan = main_sc.ScSynthChannel;
@@ -2314,11 +2367,13 @@ MppMainWindow :: handle_key_press(int in_key, int vel)
 
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
 				if (check_synth(y)) {
+					mid_delay(d, delay);
 					mid_key_press(d, out_key, vel, 0);
 				}
 			}
 
 			if (check_record()) {
+				mid_delay(d, delay);
 				mid_key_press(d, out_key, vel, 0);
 			}
 
@@ -2343,6 +2398,7 @@ MppMainWindow :: handle_key_release(int in_key)
 	uint8_t out_key;
 	uint8_t old_chan;
 	uint8_t chan;
+	uint8_t delay;
 	uint8_t x;
 	uint8_t y;
 
@@ -2351,6 +2407,7 @@ MppMainWindow :: handle_key_release(int in_key)
 
 			out_key = (main_sc.ScPressed[x] >> 8) & 0xFF;
 			chan = (main_sc.ScPressed[x] >> 16) & 0xFF;
+			delay = (main_sc.ScPressed[x] >> 24) & 0xFF;
 
 			/* clear entry */
 			main_sc.ScPressed[x] = 0;
@@ -2360,11 +2417,13 @@ MppMainWindow :: handle_key_release(int in_key)
 
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
 				if (check_synth(y)) {
+					mid_delay(d, delay);
 					mid_key_press(d, out_key, 0, 0);
 				}
 			}
 
 			if (check_record()) {
+				mid_delay(d, delay);
 				mid_key_press(d, out_key, 0, 0);
 			}
 
@@ -2527,7 +2586,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 				mw->handle_key_press(key, vel);
 			}
 		} else if (mw->set_pressed_key(mw->main_sc.ScSynthChannel,
-		    key, 1) == 0) {
+		    key, 1, 0) == 0) {
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
 				if (mw->check_synth(y)) {
 					mid_key_press(d, key, vel, 0);
