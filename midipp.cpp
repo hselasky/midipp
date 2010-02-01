@@ -2308,6 +2308,8 @@ MppMainWindow :: handle_jump(int pos, int do_jump)
 	main_sc.ScCurrPos = main_sc.ScJumpTable[pos] - 1;
 	main_sc.ScLastPos = main_sc.ScCurrPos;
 
+	handle_stop();
+
 	return (1);
 }
 
