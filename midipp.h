@@ -186,7 +186,7 @@ public:
 	int set_pressed_key(int, int, int, int);
 
 	uint8_t do_instr_check(struct umidi20_event *event);
-	uint8_t handle_jump(int pos);
+	uint8_t handle_jump(int pos, int do_jump);
 	uint8_t check_record(void);
 	uint8_t check_synth(uint8_t device_no);
 

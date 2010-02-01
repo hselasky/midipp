@@ -1398,7 +1398,7 @@ void
 MppMainWindow :: handle_jump_N(int index)
 {
 	pthread_mutex_lock(&main_sc.mtx);
-	handle_jump(index);
+	handle_jump(index, 1);
 	pthread_mutex_unlock(&main_sc.mtx);
 }
 
@@ -2297,15 +2297,16 @@ MppMainWindow :: handle_stop(void)
 }
 
 uint8_t
-MppMainWindow :: handle_jump(int pos)
+MppMainWindow :: handle_jump(int pos, int do_jump)
 {
 	if ((pos < 0) || (pos > 3) || (main_sc.ScJumpTable[pos] == 0))
 		return (0);
 
+	if (do_jump == 0)
+		return (1);
+
 	main_sc.ScCurrPos = main_sc.ScJumpTable[pos] - 1;
 	main_sc.ScLastPos = main_sc.ScCurrPos;
-
-	handle_stop();
 
 	return (1);
 }
@@ -2584,11 +2585,10 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 		}
 
 		if (mw->main_sc.ScMidiPassThruOff != 0) {
-			if (mw->handle_jump(key - mw->main_sc.ScCmdKey) == 0) {
+			if (mw->handle_jump(key - mw->main_sc.ScCmdKey, 1) == 0) {
 				mw->handle_key_press(key, vel);
 			}
-		} else if (mw->set_pressed_key(mw->main_sc.ScSynthChannel,
-		    key, 1, 0) == 0) {
+		} else if (mw->set_pressed_key(mw->main_sc.ScSynthChannel, key, 1, 0) == 0) {
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
 				if (mw->check_synth(y)) {
 					mid_key_press(d, key, vel, 0);
@@ -2607,7 +2607,9 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 		if (mw->main_sc.ScMidiPassThruOff != 0) {
 
-			mw->handle_key_release(key);
+			if (mw->handle_jump(key - mw->main_sc.ScCmdKey, 0) == 0) {
+				mw->handle_key_release(key);
+			}
 
 		} else {
 
