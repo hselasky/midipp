@@ -2636,7 +2636,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			if (mw->handle_jump(key - mw->main_sc.ScCmdKey, 1) == 0) {
 				mw->handle_key_press(key, vel);
 			}
-		} else if (mw->set_pressed_key(mw->main_sc.ScSynthChannel, key, 1, 0) == 0) {
+		} else if (mw->set_pressed_key(mw->main_sc.ScSynthChannel, key, 255, 0) == 0) {
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
 				if (mw->check_synth(y)) {
 					mid_key_press(d, key, vel, 0);
