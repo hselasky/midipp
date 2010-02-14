@@ -139,6 +139,8 @@ struct MppSoftc {
 	uint8_t ScSynthChannel;
 	uint8_t ScBpmAvgLength;
 	uint8_t ScBpmAvgPos;
+	uint8_t ScVolume;
+	uint8_t ScSynthIsLocal;
 
 	uint8_t ScScoreRecordOff;
 	uint8_t ScInstrUpdated;
@@ -302,6 +304,9 @@ public:
 	QLineEdit *led_config_dev[MPP_MAX_DEVS];
 	QCheckBox *cbx_config_dev[3 * MPP_MAX_DEVS];
 
+	QLabel *lbl_config_local;
+	QCheckBox *cbx_config_local;
+
 	QPushButton *but_config_apply;
 	QPushButton *but_config_revert;
 
@@ -360,6 +365,8 @@ public slots:
 	void handle_cmd_key_changed(int);
 	void handle_base_key_changed(int);
 	void handle_key_delay_changed(int);
+	void handle_volume_changed(int);
+	void handle_config_local_changed(int);
 	void handle_jump_0();
 	void handle_jump_1();
 	void handle_jump_2();

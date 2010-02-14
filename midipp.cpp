@@ -253,7 +253,7 @@ MppParseVisualEntries(struct MppSoftc *sc)
 			if (draw_chord) {
 
 				paint.drawText(QPointF(chord_x, MPP_VISUAL_MARGIN + 
-				    (MPP_VISUAL_Y_MAX/4)), temp);
+				    (MPP_VISUAL_Y_MAX/6)), temp);
 
 				chord_x += temp_size.width();
 
@@ -932,9 +932,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	lbl_volume = new QLabel(tr("Volume (0..127)"));
 	spn_volume = new QSpinBox();
+	connect(spn_volume, SIGNAL(valueChanged(int)), this, SLOT(handle_volume_changed(int)));
 	spn_volume->setMaximum(127);
 	spn_volume->setMinimum(0);
-	spn_volume->setValue(80);
+	spn_volume->setValue(100);
 
 	lbl_play_key = new QLabel(QString());
 	spn_play_key = new QSpinBox();
@@ -1128,6 +1129,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_auto_play->setMinimum(0);
 	spn_auto_play->setValue(0);
 
+	lbl_config_local = new QLabel(tr("Enable local MIDI on synth\n"));
+	cbx_config_local = new QCheckBox();
+	connect(cbx_config_local, SIGNAL(stateChanged(int)), this, SLOT(handle_config_local_changed(int)));
+	cbx_config_local->setCheckState(Qt::Checked);
+
 	but_config_apply = new QPushButton(tr("Apply"));
 	but_config_revert = new QPushButton(tr("Revert"));
 
@@ -1177,7 +1183,13 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x++;
 
-	tab_config_gl->setRowStretch(x, 3);
+	tab_config_gl->addWidget(lbl_config_local, x, 0, 1, 7);
+	tab_config_gl->addWidget(cbx_config_local, x, 7, 1, 1);
+
+	x++;
+
+
+	tab_config_gl->setRowStretch(x, 2);
 
 	x++;
 
@@ -1468,6 +1480,24 @@ MppMainWindow :: handle_track_3()
 }
 
 void
+MppMainWindow :: handle_config_local_changed(int state)
+{
+	pthread_mutex_lock(&main_sc.mtx);
+	main_sc.ScSynthIsLocal = (state == Qt::Checked);
+	pthread_mutex_unlock(&main_sc.mtx);
+}
+
+void
+MppMainWindow :: handle_volume_changed(int vol)
+{
+	vol &= 0x7F;
+
+	pthread_mutex_lock(&main_sc.mtx);
+	main_sc.ScVolume = vol;
+	pthread_mutex_unlock(&main_sc.mtx);
+}
+
+void
 MppMainWindow :: handle_play_key_changed(int key)
 {
 	key &= 0x7F;
@@ -1634,11 +1664,10 @@ MppMainWindow :: handle_auto_play()
 void
 MppMainWindow :: handle_play_press()
 {
-	int vel = spn_volume->value();
 	int key = spn_play_key->value();
 
 	pthread_mutex_lock(&main_sc.mtx);
-	handle_key_press(key, vel);
+	handle_key_press(key, 90);
 	pthread_mutex_unlock(&main_sc.mtx);
 }
 
@@ -2089,6 +2118,7 @@ MppMainWindow :: handle_config_reload()
 {
 	struct umidi20_config cfg;
 	int n;
+	int y;
 
 	/* setup the I/O devices */
 
@@ -2138,6 +2168,20 @@ MppMainWindow :: handle_config_reload()
 		auto_play_timer->setInterval(60000 / main_sc.ScBpmAutoPlay);
 		auto_play_timer->start();
 	}
+
+	pthread_mutex_lock(&main_sc.mtx);
+	for (y = 0; y != MPP_MAX_DEVS; y++) {
+		if (check_synth(y)) {
+			uint8_t buf[4];
+
+			buf[0] = 0xB0;
+			buf[1] = 0x7A;
+			buf[2] = main_sc.ScSynthIsLocal ? 0x7F : 0x00;
+
+			mid_add_raw(&mid_data, buf, 3, 0);
+		}
+	}
+	pthread_mutex_unlock(&main_sc.mtx);
 }
 
 void
@@ -2343,6 +2387,8 @@ MppMainWindow :: handle_key_press(int in_key, int vel)
 	uint8_t y;
 	uint8_t out_key;
 	uint8_t delay;
+
+	vel = (vel * main_sc.ScVolume) / 127;
 
 	pos = main_sc.ScJumpNext[main_sc.ScCurrPos];
 	if (pos != 0)
