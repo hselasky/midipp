@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2010 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -786,7 +786,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	main_tw->addTab(tab_file_wg, tr("File"));
 	main_tw->addTab(tab_play_wg, tr("Play"));
+#if 0
 	main_tw->addTab(tab_edit_wg, tr("Edit"));
+#endif
 	main_tw->addTab(tab_config_wg, tr("Config"));
 	main_tw->addTab(tab_instr_wg, tr("Instrument"));
 
@@ -1274,6 +1276,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_instr_apply = new QPushButton(tr("Apply"));
 	but_instr_revert = new QPushButton(tr("Revert"));
 	but_instr_program = new QPushButton(tr("Program"));
+	but_instr_reset = new QPushButton(tr("Reset"));
 
 	spn_instr_curr_chan = new QSpinBox();
 	spn_instr_curr_chan->setMaximum(15);
@@ -1342,6 +1345,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x++;
 
+	tab_instr_gl->addWidget(but_instr_reset, x, 2, 1, 2);
 	tab_instr_gl->addWidget(but_instr_revert, x, 4, 1, 2);
 	tab_instr_gl->addWidget(but_instr_apply, x, 6, 1, 2);
 
@@ -1385,6 +1389,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_instr_program, SIGNAL(pressed()), this, SLOT(handle_instr_program()));
 	connect(but_instr_apply, SIGNAL(pressed()), this, SLOT(handle_instr_apply()));
 	connect(but_instr_revert, SIGNAL(pressed()), this, SLOT(handle_instr_revert()));
+	connect(but_instr_reset, SIGNAL(pressed()), this, SLOT(handle_instr_reset()));
 
 	connect(but_midi_pause, SIGNAL(pressed()), this, SLOT(handle_midi_pause()));
 
@@ -2807,6 +2812,24 @@ MppMainWindow :: handle_instr_revert()
 			spn_instr_curr_prog->setValue(temp[1]);
 		}
 	}
+	handle_instr_reload();
+}
+
+void 
+MppMainWindow :: handle_instr_reset()
+{
+	uint8_t x;
+
+	for (x = 0; x != 16; x++) {
+		spn_instr_bank[x]->setValue(0);
+		spn_instr_prog[x]->setValue(0);
+		cbx_instr_mute[x]->setChecked(0);
+	}
+
+	spn_instr_curr_chan->setValue(0);
+	spn_instr_curr_bank->setValue(0);
+	spn_instr_curr_prog->setValue(0);
+
 	handle_instr_reload();
 }
 

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2010 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -353,6 +353,7 @@ public:
 	QPushButton *but_instr_program;
 	QPushButton *but_instr_apply;
 	QPushButton *but_instr_revert;
+	QPushButton *but_instr_reset;
 
 	/* MIDI stuff */
 	struct mid_data mid_data;
@@ -404,6 +405,7 @@ public slots:
 
 	void handle_instr_apply();
 	void handle_instr_revert();
+	void handle_instr_reset();
 	void handle_instr_reload();
 	void handle_instr_program();
 
