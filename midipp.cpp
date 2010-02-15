@@ -2123,6 +2123,7 @@ MppMainWindow :: handle_config_reload()
 {
 	struct umidi20_config cfg;
 	int n;
+	int x;
 	int y;
 
 	/* setup the I/O devices */
@@ -2178,12 +2179,13 @@ MppMainWindow :: handle_config_reload()
 	for (y = 0; y != MPP_MAX_DEVS; y++) {
 		if (check_synth(y)) {
 			uint8_t buf[4];
-
-			buf[0] = 0xB0;
-			buf[1] = 0x7A;
-			buf[2] = main_sc.ScSynthIsLocal ? 0x7F : 0x00;
-
-			mid_add_raw(&mid_data, buf, 3, 0);
+			/* set local on all channels */
+			for (x = 0; x != 16; x++) {
+				buf[0] = 0xB0 | x;
+				buf[1] = 0x7A;
+				buf[2] = main_sc.ScSynthIsLocal ? 0x7F : 0x00;
+				mid_add_raw(&mid_data, buf, 3, x);
+			}
 		}
 	}
 	pthread_mutex_unlock(&main_sc.mtx);
