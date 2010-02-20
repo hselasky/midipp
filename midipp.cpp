@@ -143,43 +143,95 @@ MppNoise(struct MppSoftc *sc, uint8_t factor)
 }
 
 static void
-MppParseVisualEntries(struct MppSoftc *sc)
+MppParseVisualEntries(struct MppSoftc *sc, QPrinter *pd, QPoint orig, float scale_f)
 {
+	QPainter paint;
 	uint16_t x;
 	uint16_t y;
 	uint16_t z;
 	char *ptr;
 	uint8_t draw_chord;
 	uint8_t last_dot;
+	uint8_t last_jump = 0;
 
 	float chord_x;
 	float text_x;
 	float adj_x;
+	float scale_min;
 
 	QFont fnt_a;
 	QFont fnt_b;
 
-	fnt_a.fromString(QString("Arial,12,-1,5,75,0,0,0,0,0"));
-	fnt_b.fromString(QString("Arial,16,-1,5,75,0,0,0,0,0"));
+	fnt_a.fromString(QString("Arial,1,-1,5,75,0,0,0,0,0"));
+	fnt_a.setPixelSize(20);
+
+	fnt_b.fromString(QString("Arial,1,-1,5,75,0,0,0,0,0"));
+	fnt_b.setPixelSize(24);
+
+	sc->ScMaxScoresWidth = 0;
 
 	for (x = 0; x != MPP_MAX_LINES; x++) {
 		sc->ScVisualScores[x].x_off = 0;
 	}
 
+	if (pd != NULL) {
+
+		/* count number of lines */
+		for (x = y = 0; x != MPP_MAX_LINES; x++) {
+
+			if (sc->ScJumpNext[x] != 0) {
+				y++;
+				last_jump = 1;
+			}
+
+			ptr = sc->ScVisualScores[x].pstr;
+			if (ptr == NULL)
+				continue;
+
+			y++;
+			last_jump = 0;
+		}
+
+		y -= last_jump;
+
+		if (y != 0) {
+			scale_min = ((float)(pd->height() - (2*orig.y()))) / ((float)(y * MPP_VISUAL_Y_MAX));
+
+			if (scale_min < scale_f)
+				scale_f = scale_min;
+		}
+
+		paint.begin(pd);
+		paint.translate(orig);
+		paint.scale(scale_f, scale_f);
+		paint.translate(QPoint(0,-MPP_VISUAL_Y_MAX));
+	}
+
 	for (x = 0; x != MPP_MAX_LINES; x++) {
 
-		if (sc->ScVisualScores[x].pic != NULL) {
-			delete (sc->ScVisualScores[x].pic);
-			sc->ScVisualScores[x].pic = NULL;
+		if (pd == NULL) {
+
+			if (sc->ScVisualScores[x].pic != NULL) {
+				delete (sc->ScVisualScores[x].pic);
+				sc->ScVisualScores[x].pic = NULL;
+			}
+		} else {
+
+			if (sc->ScJumpNext[x] != 0) {
+				paint.translate(QPoint(0,MPP_VISUAL_Y_MAX));
+			}
 		}
 
 		ptr = sc->ScVisualScores[x].pstr;
 		if (ptr == NULL)
 			continue;
 
-		sc->ScVisualScores[x].pic = new QPicture();
-
-		QPainter paint(sc->ScVisualScores[x].pic);
+		if (pd == NULL) {
+			sc->ScVisualScores[x].pic = new QPicture();
+			paint.begin(sc->ScVisualScores[x].pic);
+		} else {
+			paint.translate(QPoint(0,MPP_VISUAL_Y_MAX));
+		}
 
 		draw_chord = 0;
 		last_dot = 0;
@@ -251,7 +303,6 @@ MppParseVisualEntries(struct MppSoftc *sc)
 			paint.setBrush(QColor(color_black));
 
 			if (draw_chord) {
-
 				paint.drawText(QPointF(chord_x, MPP_VISUAL_MARGIN + 
 				    (MPP_VISUAL_Y_MAX/6)), temp);
 
@@ -269,7 +320,13 @@ MppParseVisualEntries(struct MppSoftc *sc)
 				MppParseMax(&sc->ScMaxScoresWidth, text_x);
 			}
 		}
+
+		if (pd == NULL)
+			paint.end();
 	}
+
+	if (pd != NULL)
+		paint.end();
 }
 
 MppVisualScores :: MppVisualScores(struct MppSoftc *sc_init)
@@ -700,9 +757,8 @@ done:
 	sc->ScLinesMax = sc->line;
 	sc->ScCurrPos = 0;
 	sc->ScLastPos = 0;
-	sc->ScMaxScoresWidth = 0;
 
-	MppParseVisualEntries(sc);
+	MppParseVisualEntries(sc, NULL, QPoint(0,0), 1.0);
 }
 
 MppMainWindow :: MppMainWindow(QWidget *parent)
@@ -1374,6 +1430,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_score_file_open, SIGNAL(pressed()), this, SLOT(handle_score_file_open()));
 	connect(but_score_file_save, SIGNAL(pressed()), this, SLOT(handle_score_file_save()));
 	connect(but_score_file_save_as, SIGNAL(pressed()), this, SLOT(handle_score_file_save_as()));
+	connect(but_score_file_print, SIGNAL(pressed()), this, SLOT(handle_score_print()));
 
 	connect(but_midi_file_new, SIGNAL(pressed()), this, SLOT(handle_midi_file_new()));
 	connect(but_midi_file_open, SIGNAL(pressed()), this, SLOT(handle_midi_file_new_open()));
@@ -2870,6 +2927,43 @@ MppMainWindow :: handle_instr_reload()
 	pthread_mutex_unlock(&main_sc.mtx);
 }
 
+void
+MppMainWindow :: handle_score_print(void)
+{
+	QPrinter printer(QPrinter::HighResolution);
+	QPrintDialog *dlg;
+	QPoint orig;
+	qreal scale_f;
+
+	printer.setOutputFormat(QPrinter::PdfFormat);
+	printer.setFontEmbeddingEnabled(true);
+	printer.setFullPage(true);
+	printer.setResolution(600);
+
+	if (CurrScoreFileName != NULL) {
+		printer.setOutputFileName(CurrScoreFileName->
+		    replace(QString(".txt"), QString(".pdf"),
+		    Qt::CaseInsensitive));
+	} else {
+		printer.setOutputFileName(QString("NewSong.pdf"));
+	}
+
+	printer.setColorMode(QPrinter::Color);
+
+	dlg = new QPrintDialog(&printer, this);
+
+	if(dlg->exec() == QDialog::Accepted) {
+
+		orig = QPoint(printer.logicalDpiX() * 0.5,
+			      printer.logicalDpiY() * 0.5);
+
+		scale_f = ((qreal)printer.logicalDpiY()) / (qreal)MPP_VISUAL_Y_MAX;
+
+		MppParseVisualEntries(&main_sc, &printer, orig, scale_f);
+	}
+
+	delete dlg;
+}
 
 void
 MppMainWindow :: MidiInit(void)

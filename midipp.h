@@ -47,6 +47,8 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QFont>
+#include <QPrintDialog>
+#include <QPrinter>
 
 #include <umidi20.h>
 
@@ -391,6 +393,7 @@ public slots:
 	void handle_score_file_open();
 	void handle_score_file_save();
 	void handle_score_file_save_as();
+	void handle_score_print();
 	void handle_midi_file_new();
 	void handle_midi_file_merge_open();
 	void handle_midi_file_new_open();
