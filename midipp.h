@@ -49,6 +49,8 @@
 #include <QFont>
 #include <QPrintDialog>
 #include <QPrinter>
+#include <QFontDialog>
+#include <QFileInfo>
 
 #include <umidi20.h>
 
@@ -92,6 +94,8 @@ struct MppSoftc {
 
 	pthread_mutex_t mtx;
 
+	QFont *ScFont;
+
 	uint32_t ScBpmData[MPP_MAX_BPM];
 	uint32_t ScLastKeyPress;
 	uint32_t ScBpmAutoPlay;
@@ -109,7 +113,6 @@ struct MppSoftc {
 
 	uint32_t ScPressed[MPP_PRESSED_MAX];
 	uint32_t ScChanUsageMask;
-	uint32_t ScTrackMask;
 	uint32_t ScStartPosition;
 	uint32_t ScPausePosition;
 	uint32_t ScDeviceBits;
@@ -201,6 +204,8 @@ public:
 
 	QTabWidget *scores_tw;
 
+	QFont default_font;
+
 	QTimer *watchdog;
 	QTimer *auto_play_timer;
 
@@ -218,6 +223,7 @@ public:
 	QGridLayout *tab_file_gl;
 	QLabel *lbl_score_file;
 	QLabel *lbl_midi_file;
+	QLabel *lbl_file_status;
 
 	QPushButton *but_score_file_new;
 	QPushButton *but_score_file_open;
@@ -269,11 +275,7 @@ public:
 	QLabel	*lbl_midi_play;
 	QLabel	*lbl_midi_pass_thru;
 
-	QPushButton *but_jump[4];
-	QPushButton *but_track[4];
-
-	QLabel *lbl_track[4];
-
+	QPushButton *but_jump[8];
 	QPushButton *but_midi_pass_thru;
 	QPushButton *but_compile;
 	QPushButton *but_score_record;
@@ -311,6 +313,7 @@ public:
 
 	QPushButton *but_config_apply;
 	QPushButton *but_config_revert;
+	QPushButton *but_config_fontsel;
 
 	QString *CurrScoreFileName;
 	QString *CurrMidiFileName;
@@ -374,12 +377,11 @@ public slots:
 	void handle_jump_1();
 	void handle_jump_2();
 	void handle_jump_3();
+	void handle_jump_4();
+	void handle_jump_5();
+	void handle_jump_6();
+	void handle_jump_7();
 	void handle_jump_N(int index);
-	void handle_track_0();
-	void handle_track_1();
-	void handle_track_2();
-	void handle_track_3();
-	void handle_track_N(int index);
 	void handle_pass_thru();
 	void handle_compile();
 	void handle_score_record();
@@ -405,6 +407,7 @@ public slots:
 	void handle_config_apply();
 	void handle_config_revert();
 	void handle_config_reload();
+	void handle_config_fontsel();
 
 	void handle_instr_apply();
 	void handle_instr_revert();

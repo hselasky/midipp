@@ -37,6 +37,13 @@ QColor color_white   (0xff, 0xff, 0xff, 0xff);
 QColor color_logo    (0xc4, 0x40, 0x20, 0xff);
 QColor color_green   (0x40, 0xc4, 0x20, 0xff);
 
+static QString
+MppBaseName(QString fname)
+{
+	QFileInfo fi(fname);
+	return (fi.fileName());
+}
+
 static char *
 MppQStringToAscii(QString s)
 {
@@ -77,36 +84,64 @@ MppQStringToAscii(QString s)
 	return (ptr);
 }
 
-/* XXX TODO: Error handling */
-
 static QString
-MppReadFile(QString fname)
+MppReadFile(QString fname, QString *perr)
 {
 	QFile file(fname);
 	QString retval;
 
 	if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-		return (NULL);
+		goto failure;
 
 	retval = file.readAll();
+	if (file.error()) {
+		file.close();
+		goto failure;
+	}
 
 	file.close();
 
+	if (perr != NULL) {
+		*perr = MppBaseName(fname) + 
+		    QString(": Scores read from disk");
+	}
+
 	return (retval);
+
+failure:
+	if (perr != NULL) {
+		*perr = MppBaseName(fname) + 
+		    QString(": Could not read scores from disk");
+	}
+
+	return (QString());
 }
 
 static void
-MppWriteFile(QString fname, QString text)
+MppWriteFile(QString fname, QString text, QString *perr)
 {
 	QFile file(fname);
 
 	if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
-		return;
+		goto failure;
 
 	file.write(text.toAscii());
 
+	if (file.error()) {
+		file.close();
+		goto failure;
+	}
+
 	file.close();
 
+	if (perr != NULL)
+		*perr = MppBaseName(fname) + QString(": Scores written to disk");
+	return;
+
+failure:
+
+	if (perr)
+		*perr = MppBaseName(fname) + QString(": Could not write scores to disk");
 	return;
 }
 
@@ -162,10 +197,10 @@ MppParseVisualEntries(struct MppSoftc *sc, QPrinter *pd, QPoint orig, float scal
 	QFont fnt_a;
 	QFont fnt_b;
 
-	fnt_a.fromString(QString("Arial,1,-1,5,75,0,0,0,0,0"));
+	fnt_a = *(sc->ScFont);
 	fnt_a.setPixelSize(20);
 
-	fnt_b.fromString(QString("Arial,1,-1,5,75,0,0,0,0,0"));
+	fnt_b = *(sc->ScFont);
 	fnt_b.setPixelSize(24);
 
 	sc->ScMaxScoresWidth = 0;
@@ -782,6 +817,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	main_sc.ScNoiseRem = 1;
 
+	default_font.fromString(QString("Sans Serif,12,-1,5,75,0,0,0,0,0"));
+	main_sc.ScFont = &default_font;
+
 	/* Setup GUI */
 
 	main_gl = new QGridLayout(this);
@@ -856,6 +894,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_midi_file = new QLabel(tr("- MIDI File -"));
 	lbl_midi_file->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
+	lbl_file_status = new QLabel(QString());
+	lbl_file_status->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+
 	but_score_file_new = new QPushButton(tr("New"));
 	but_score_file_open = new QPushButton(tr("Open"));
 	but_score_file_save = new QPushButton(tr("Save"));
@@ -895,7 +936,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n++;
 
-	tab_file_gl->setRowStretch(n, 4);
+	tab_file_gl->addWidget(lbl_file_status, n, 0, 1, 8);
+
+	n++;
+
+	tab_file_gl->setRowStretch(n, 3);
 
 	n++;
 
@@ -965,16 +1010,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_jump[1] = new QPushButton(tr("J1"));
 	but_jump[2] = new QPushButton(tr("J2"));
 	but_jump[3] = new QPushButton(tr("J3"));
-
-	but_track[0] = new QPushButton(tr("T0"));
-	but_track[1] = new QPushButton(tr("T1"));
-	but_track[2] = new QPushButton(tr("T2"));
-	but_track[3] = new QPushButton(tr("T3"));
-
-	lbl_track[0] = new QLabel(QString());
-	lbl_track[1] = new QLabel(QString());
-	lbl_track[2] = new QLabel(QString());
-	lbl_track[3] = new QLabel(QString());
+	but_jump[4] = new QPushButton(tr("J4"));
+	but_jump[5] = new QPushButton(tr("J5"));
+	but_jump[6] = new QPushButton(tr("J6"));
+	but_jump[7] = new QPushButton(tr("J7"));
 
 	but_midi_pass_thru = new QPushButton(tr("Pass Thru"));
 	but_compile = new QPushButton(tr("Compile"));
@@ -1113,27 +1152,23 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_track[0], n, 7, 1, 1);
-	tab_play_gl->addWidget(but_track[0], n, 6, 1, 1);
-	tab_play_gl->addWidget(but_jump[0], n, 4, 1, 2);
+	tab_play_gl->addWidget(but_jump[4], n, 5, 1, 1);
+	tab_play_gl->addWidget(but_jump[0], n, 4, 1, 1);
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_track[1], n, 7, 1, 1);
-	tab_play_gl->addWidget(but_track[1], n, 6, 1, 1);
-	tab_play_gl->addWidget(but_jump[1], n, 4, 1, 2);
+	tab_play_gl->addWidget(but_jump[5], n, 5, 1, 1);
+	tab_play_gl->addWidget(but_jump[1], n, 4, 1, 1);
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_track[2], n, 7, 1, 1);
-	tab_play_gl->addWidget(but_track[2], n, 6, 1, 1);
-	tab_play_gl->addWidget(but_jump[2], n, 4, 1, 2);
+	tab_play_gl->addWidget(but_jump[6], n, 5, 1, 1);
+	tab_play_gl->addWidget(but_jump[2], n, 4, 1, 1);
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_track[3], n, 7, 1, 1);
-	tab_play_gl->addWidget(but_track[3], n, 6, 1, 1);
-	tab_play_gl->addWidget(but_jump[3], n, 4, 1, 2);
+	tab_play_gl->addWidget(but_jump[7], n, 5, 1, 1);
+	tab_play_gl->addWidget(but_jump[3], n, 4, 1, 1);
 
 	n++;
 
@@ -1149,11 +1184,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n++;
 
-	tab_play_gl->setRowStretch(n, 4);
-
 	tab_play_gl->addWidget(but_play, n, 4, 3, 4);
 
-	n++;
+	n += 3;
+
+	tab_play_gl->setRowStretch(n, 4);
 
 	/* <Configuration> Tab */
 
@@ -1194,6 +1229,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	but_config_apply = new QPushButton(tr("Apply"));
 	but_config_revert = new QPushButton(tr("Revert"));
+	but_config_fontsel = new QPushButton(tr("Select Font"));
 
 	x = 0;
 
@@ -1246,8 +1282,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x++;
 
+	tab_config_gl->addWidget(but_config_fontsel, x, 0, 1, 2);
 
-	tab_config_gl->setRowStretch(x, 2);
+	x++;
+
+	tab_config_gl->setRowStretch(x, 1);
 
 	x++;
 
@@ -1411,11 +1450,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_jump[1], SIGNAL(pressed()), this, SLOT(handle_jump_1()));
 	connect(but_jump[2], SIGNAL(pressed()), this, SLOT(handle_jump_2()));
 	connect(but_jump[3], SIGNAL(pressed()), this, SLOT(handle_jump_3()));
-
-	connect(but_track[0], SIGNAL(pressed()), this, SLOT(handle_track_0()));
-	connect(but_track[1], SIGNAL(pressed()), this, SLOT(handle_track_1()));
-	connect(but_track[2], SIGNAL(pressed()), this, SLOT(handle_track_2()));
-	connect(but_track[3], SIGNAL(pressed()), this, SLOT(handle_track_3()));
+	connect(but_jump[4], SIGNAL(pressed()), this, SLOT(handle_jump_4()));
+	connect(but_jump[5], SIGNAL(pressed()), this, SLOT(handle_jump_5()));
+	connect(but_jump[6], SIGNAL(pressed()), this, SLOT(handle_jump_6()));
+	connect(but_jump[7], SIGNAL(pressed()), this, SLOT(handle_jump_7()));
 
 	connect(but_midi_pass_thru, SIGNAL(pressed()), this, SLOT(handle_pass_thru()));
 	connect(but_compile, SIGNAL(pressed()), this, SLOT(handle_compile()));
@@ -1442,6 +1480,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_midi_rewind, SIGNAL(pressed()), this, SLOT(handle_rewind()));
 	connect(but_config_apply, SIGNAL(pressed()), this, SLOT(handle_config_apply()));
 	connect(but_config_revert, SIGNAL(pressed()), this, SLOT(handle_config_revert()));
+	connect(but_config_fontsel, SIGNAL(pressed()), this, SLOT(handle_config_fontsel()));
 
 	connect(but_instr_program, SIGNAL(pressed()), this, SLOT(handle_instr_program()));
 	connect(but_instr_apply, SIGNAL(pressed()), this, SLOT(handle_instr_apply()));
@@ -1501,44 +1540,27 @@ MppMainWindow :: handle_jump_3()
 }
 
 void
-MppMainWindow :: handle_track_N(int index)
+MppMainWindow :: handle_jump_4()
 {
-	uint32_t mask = (1UL << index);
-	uint32_t val;
-
-	pthread_mutex_lock(&main_sc.mtx);
-	main_sc.ScTrackMask ^= mask;
-	val = main_sc.ScTrackMask & mask;
-	pthread_mutex_unlock(&main_sc.mtx);
-
-	if (val)
-		lbl_track[index]->setText(tr("OFF"));
-	else
-		lbl_track[index]->setText(tr("ON"));
+	handle_jump_N(4);
 }
 
 void
-MppMainWindow :: handle_track_0()
+MppMainWindow :: handle_jump_5()
 {
-	handle_track_N(0);
+	handle_jump_N(5);
 }
 
 void
-MppMainWindow :: handle_track_1()
+MppMainWindow :: handle_jump_6()
 {
-	handle_track_N(1);
+	handle_jump_N(6);
 }
 
 void
-MppMainWindow :: handle_track_2()
+MppMainWindow :: handle_jump_7()
 {
-	handle_track_N(2);
-}
-
-void
-MppMainWindow :: handle_track_3()
-{
-	handle_track_N(3);
+	handle_jump_N(7);
 }
 
 void
@@ -1823,7 +1845,10 @@ void
 MppMainWindow :: handle_score_file_new()
 {
 	main_edit->setText(QString());
+	lbl_file_status->setText(QString());
+
 	handle_compile();
+
 	if (CurrScoreFileName != NULL) {
 		delete (CurrScoreFileName);
 		CurrScoreFileName = NULL;
@@ -1837,6 +1862,7 @@ MppMainWindow :: handle_score_file_open()
 	  new QFileDialog(this, tr("Select Score File"), 
 		QString(), QString("Score File (*.txt; *.TXT)"));
 	QString scores;
+	QString status;
 
 	diag->setAcceptMode(QFileDialog::AcceptOpen);
 	diag->setFileMode(QFileDialog::ExistingFile);
@@ -1845,11 +1871,10 @@ MppMainWindow :: handle_score_file_open()
 
 	if (diag->exec()) {
 		CurrScoreFileName = new QString(diag->selectedFiles()[0]);
-		scores = MppReadFile(*CurrScoreFileName);
-		if (scores != NULL) {
-			main_edit->setText(scores);
-			handle_compile();
-		}
+		scores = MppReadFile(*CurrScoreFileName, &status);
+		main_edit->setText(scores);
+		handle_compile();
+		lbl_file_status->setText(status);
 	}
 
 	delete diag;
@@ -1858,8 +1883,13 @@ MppMainWindow :: handle_score_file_open()
 void
 MppMainWindow :: handle_score_file_save()
 {
+	QString status;
+
 	if (CurrScoreFileName != NULL) {
-		MppWriteFile(*CurrScoreFileName, main_edit->toPlainText());
+		MppWriteFile(*CurrScoreFileName, main_edit->toPlainText(), 
+		    &status);
+
+		lbl_file_status->setText(status);
 	} else {
 		handle_score_file_save_as();
 	}
@@ -1895,6 +1925,7 @@ MppMainWindow :: handle_midi_file_clear_name()
 		delete (CurrMidiFileName);
 		CurrMidiFileName = NULL;
 	}
+	lbl_file_status->setText(QString());
 }
 
 void
@@ -1984,7 +2015,12 @@ MppMainWindow :: handle_midi_file_open(int merge)
 			free((void *)filename);
 
 			if (song_copy != NULL) {
+				lbl_file_status->setText(MppBaseName(*CurrMidiFileName) +
+				    tr(": MIDI file opened"));
 				goto load_file;
+			} else {
+				lbl_file_status->setText(MppBaseName(*CurrMidiFileName) +
+				    tr(": Could not open MIDI file"));
 			}
 		}
 	}
@@ -2085,6 +2121,7 @@ void
 MppMainWindow :: handle_midi_file_save()
 {
 	const char *filename;
+	uint8_t status;
 
 	if (CurrMidiFileName != NULL) {
 
@@ -2093,10 +2130,18 @@ MppMainWindow :: handle_midi_file_save()
 		if (filename != NULL) {
 			pthread_mutex_lock(&main_sc.mtx);
 			handle_midi_file_instr_prepend();
-			umidi20_save_file(song, filename);
+			status = umidi20_save_file(song, filename);
 			handle_midi_file_instr_delete();
 			pthread_mutex_unlock(&main_sc.mtx);
 			free((void *)filename);
+
+			if (status) {
+				lbl_file_status->setText(MppBaseName(*CurrMidiFileName) + 
+				    tr(": Could not save MIDI file"));
+			} else {
+				lbl_file_status->setText(MppBaseName(*CurrMidiFileName) + 
+				    tr(": MIDI file saved"));
+			}
 		}
 	} else {
 		handle_midi_file_save_as();
@@ -2308,6 +2353,20 @@ MppMainWindow :: handle_config_apply()
 	handle_config_reload();
 }
 
+void
+MppMainWindow :: handle_config_fontsel()
+{
+	bool success;
+	QFont font = QFontDialog::getFont(&success, default_font, this);
+	if (success) {
+		default_font = font;
+		MppParseVisualEntries(&main_sc, NULL, QPoint(0,0), 1.0);
+
+		/* update minimum width */
+		scores_wg->setMinimumWidth(main_sc.ScMaxScoresWidth);
+	}
+}
+
 uint8_t
 MppMainWindow :: check_synth(uint8_t device_no)
 {
@@ -2407,7 +2466,7 @@ MppMainWindow :: handle_stop(void)
 uint8_t
 MppMainWindow :: handle_jump(int pos, int do_jump)
 {
-	if ((pos < 0) || (pos > 3) || (main_sc.ScJumpTable[pos] == 0))
+	if ((pos < 0) || (pos > 7) || (main_sc.ScJumpTable[pos] == 0))
 		return (0);
 
 	if (do_jump == 0)
@@ -2465,10 +2524,6 @@ MppMainWindow :: handle_key_press(int in_key, int vel)
 		if (pn->dur != 0) {
 			out_key = pn->key + (in_key - main_sc.ScBaseKey);
 			out_key &= 127;
-
-			/* check if channel is masked */
-			if (main_sc.ScTrackMask & (1UL << pn->channel))
-				continue;
 
 			chan = (main_sc.ScSynthChannel + pn->channel) & 15;
 
@@ -2970,7 +3025,6 @@ MppMainWindow :: MidiInit(void)
 {
 	int n;
 
-	main_sc.ScTrackMask ^= 0x0F;
 	main_sc.ScDeviceBits = MPP_DEV0_SYNTH | MPP_DEV0_PLAY | 
 	  MPP_DEV1_RECORD | MPP_DEV2_RECORD | MPP_DEV3_RECORD;
 	main_sc.ScDeviceName[0] = strdup("/midi");
@@ -2978,11 +3032,6 @@ MppMainWindow :: MidiInit(void)
 	main_sc.ScDeviceName[2] = strdup("/dev/umidi1.0");
 	main_sc.ScDeviceName[3] = strdup("/dev/umidi2.0");
 	main_sc.ScBpmAvgLength = 4;
-
-	handle_track_N(0);
-	handle_track_N(1);
-	handle_track_N(2);
-	handle_track_N(3);
 
 	handle_midi_record();
 	handle_midi_play();
