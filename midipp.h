@@ -137,6 +137,7 @@ struct MppSoftc {
 	uint16_t ScLastPos;
 	uint16_t ScMaxScoresWidth;
 
+	uint8_t ScPageNext[MPP_MAX_LINES];
 	uint8_t ScInputEvents[MPP_MAX_QUEUE];
 	uint8_t ScNumInputEvents;
 	uint8_t ScPlayDevice;

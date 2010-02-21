@@ -180,12 +180,14 @@ MppNoise(struct MppSoftc *sc, uint8_t factor)
 }
 
 static void
-MppParseVisualEntries(struct MppSoftc *sc, QPrinter *pd, QPoint orig, float scale_f)
+MppParseVisualEntries(struct MppSoftc *sc, QPrinter *pd,
+    QPoint orig, float scale_f)
 {
 	QPainter paint;
 	uint16_t x;
 	uint16_t y;
 	uint16_t z;
+	uint16_t y_max;
 	char *ptr;
 	uint8_t draw_chord;
 	uint8_t last_dot;
@@ -214,9 +216,14 @@ MppParseVisualEntries(struct MppSoftc *sc, QPrinter *pd, QPoint orig, float scal
 	if (pd != NULL) {
 
 		/* count number of lines */
-		for (x = y = 0; x != MPP_MAX_LINES; x++) {
+		for (x = y_max = y = 0; x != MPP_MAX_LINES; x++) {
 
-			if (sc->ScJumpNext[x] != 0) {
+			if (sc->ScPageNext[x] != 0) {
+				if (y > y_max)
+					y_max = y;
+				y = 0;
+				last_jump = 0;
+			} else if (sc->ScJumpNext[x] != 0) {
 				y++;
 				last_jump = 1;
 			}
@@ -231,10 +238,16 @@ MppParseVisualEntries(struct MppSoftc *sc, QPrinter *pd, QPoint orig, float scal
 
 		y -= last_jump;
 
-		if (y != 0) {
-			scale_min = ((float)(pd->height() - (2*orig.y()))) / ((float)(y * MPP_VISUAL_Y_MAX));
+		if (y > y_max)
+			y_max = y;
 
-			if (scale_min < scale_f)
+		if (y_max != 0) {
+			scale_min = ((float)(pd->height() - (2*orig.y()))) / 
+			    (((float)y_max) * MPP_VISUAL_Y_MAX);
+
+			if (scale_min < 0)
+				scale_f = 0.5;	/* dummy */
+			else if (scale_min < scale_f)
 				scale_f = scale_min;
 		}
 
@@ -243,6 +256,8 @@ MppParseVisualEntries(struct MppSoftc *sc, QPrinter *pd, QPoint orig, float scal
 		paint.scale(scale_f, scale_f);
 		paint.translate(QPoint(0,-MPP_VISUAL_Y_MAX));
 	}
+
+	y_max = 0;
 
 	for (x = 0; x != MPP_MAX_LINES; x++) {
 
@@ -254,8 +269,14 @@ MppParseVisualEntries(struct MppSoftc *sc, QPrinter *pd, QPoint orig, float scal
 			}
 		} else {
 
-			if (sc->ScJumpNext[x] != 0) {
+			if (sc->ScPageNext[x] != 0) {
+				pd->newPage();
+				while (y_max--)
+					paint.translate(QPoint(0, -MPP_VISUAL_Y_MAX));
+				y_max = 0;
+			} else if (sc->ScJumpNext[x] != 0) {
 				paint.translate(QPoint(0,MPP_VISUAL_Y_MAX));
+				y_max++;
 			}
 		}
 
@@ -268,6 +289,7 @@ MppParseVisualEntries(struct MppSoftc *sc, QPrinter *pd, QPoint orig, float scal
 			paint.begin(sc->ScVisualScores[x].pic);
 		} else {
 			paint.translate(QPoint(0,MPP_VISUAL_Y_MAX));
+			y_max++;
 		}
 
 		draw_chord = 0;
@@ -284,10 +306,13 @@ MppParseVisualEntries(struct MppSoftc *sc, QPrinter *pd, QPoint orig, float scal
 				paint.setFont(fnt_a);
 
 			QString temp(ptr[y]);
-			QRectF temp_size = paint.boundingRect(QRectF(0,0,0,0), temp);
+			QRectF temp_size = 
+			    paint.boundingRect(QRectF(0,0,0,0), temp);
 
 			if (temp_size.width() == 0.0) {
-				temp_size = paint.boundingRect(QRectF(0,0,0,0), QString("-"));
+				temp_size = 
+				    paint.boundingRect(
+				    QRectF(0,0,0,0), QString("-"));
 			}
 
 			if (ptr[y] == '(') {
@@ -506,6 +531,7 @@ MppParse(struct MppSoftc *sc, const QString &ps)
 	int channel;
 	int base_key;
 	int duration;
+	int flag;
 
 	/* cleanup all scores */
 
@@ -524,6 +550,7 @@ MppParse(struct MppSoftc *sc, const QString &ps)
 	memset(sc->ScScores, 0, sizeof(sc->ScScores));
 	memset(sc->ScJumpNext, 0, sizeof(sc->ScJumpNext));
 	memset(sc->ScJumpTable, 0, sizeof(sc->ScJumpTable));
+	memset(sc->ScPageNext, 0, sizeof(sc->ScPageNext));
 
 	if (ps.isNull() || ps.isEmpty())
 		goto done;
@@ -753,6 +780,15 @@ parse_string:
 
 parse_jump:
 	c = ps[x+1].toAscii();
+
+	flag = 0;
+
+	if (c == 'P') {
+		c = ps[x+2].toAscii();
+		x++;
+		flag |= 1;
+	}
+
 	if (c >= '0' && c <= '9') {
 		d = ps[x+2].toAscii();
 		if (d >= '0' && d <= '9') {
@@ -770,7 +806,14 @@ parse_jump:
 		MppParseNewLine(sc);
 	}
 
-	if ((label >= 0) && (label < MPP_MAX_LABELS) && (sc->line < MPP_MAX_LINES)) {
+	if (flag & 1) {
+		if (sc->line < MPP_MAX_LINES)
+			sc->ScPageNext[sc->line] = 1;
+	}
+
+	if ((label >= 0) && 
+	    (label < MPP_MAX_LABELS) && 
+	    (sc->line < MPP_MAX_LINES)) {
 		sc->ScJumpNext[sc->line] = label + 1;
 		sc->line++;
 	}
@@ -847,6 +890,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		" * T<number> - specifies the track number of the following scores (0..31)\n"
 		" * L<number> - defines a label (0..31)\n"
 		" * J<number> - jumps to the given label (0..31)\n"
+		" * JP<number> - jumps to the given label (0..31) and starts a new page\n"
 		" * S\"<string>\" - creates a visual string\n"
 		" * CDEFGAH<number><B> - defines a score in the given octave (0..10)\n"
 		" */\n"
@@ -1773,8 +1817,6 @@ MppSetTimer(MppMainWindow *mw)
 void
 MppMainWindow :: handle_auto_play(int bpm)
 {
-	int i;
-
 	pthread_mutex_lock(&main_sc.mtx);
 
 	main_sc.ScBpmAutoPlay = bpm;
