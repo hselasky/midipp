@@ -99,6 +99,7 @@ struct MppSoftc {
 	uint32_t ScBpmData[MPP_MAX_BPM];
 	uint32_t ScLastKeyPress;
 	uint32_t ScBpmAutoPlay;
+	uint32_t ScBpmAutoPlayOld;
 	uint32_t ScLastInputEvent;
 	uint32_t ScNoiseRem;
 
@@ -141,6 +142,7 @@ struct MppSoftc {
 	uint8_t ScPlayDevice;
 	uint8_t ScCmdKey;
 	uint8_t ScBaseKey;
+	uint8_t ScPlayKey;
 	uint8_t ScSynthChannel;
 	uint8_t ScBpmAvgLength;
 	uint8_t ScBpmAvgPos;
@@ -207,7 +209,6 @@ public:
 	QFont default_font;
 
 	QTimer *watchdog;
-	QTimer *auto_play_timer;
 
 	/* visual scores */
 
@@ -403,7 +404,7 @@ public slots:
 	void handle_midi_file_save_as();
 	void handle_rewind();
 	void handle_midi_trigger();
-	void handle_auto_play();
+	void handle_auto_play(int bpm);
 	void handle_config_apply();
 	void handle_config_revert();
 	void handle_config_reload();

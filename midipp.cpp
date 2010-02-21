@@ -37,6 +37,8 @@ QColor color_white   (0xff, 0xff, 0xff, 0xff);
 QColor color_logo    (0xc4, 0x40, 0x20, 0xff);
 QColor color_green   (0x40, 0xc4, 0x20, 0xff);
 
+static void MppTimerCallback(void *arg);
+
 static QString
 MppBaseName(QString fname)
 {
@@ -831,9 +833,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	watchdog = new QTimer(this);
 	connect(watchdog, SIGNAL(timeout()), this, SLOT(handle_watchdog()));
 
-	auto_play_timer = new QTimer(this);
-	connect(auto_play_timer, SIGNAL(timeout()), this, SLOT(handle_auto_play()));
-
 	/* Editor */
 
 	main_edit = new QTextEdit();
@@ -1220,6 +1219,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_auto_play = new QSpinBox();
 	spn_auto_play->setMaximum(6000);
 	spn_auto_play->setMinimum(0);
+	connect(spn_auto_play, SIGNAL(valueChanged(int)), this, SLOT(handle_auto_play(int)));
 	spn_auto_play->setValue(0);
 
 	lbl_config_local = new QLabel(tr("Enable local MIDI on synth\n"));
@@ -1498,6 +1498,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 MppMainWindow :: ~MppMainWindow()
 {
+	umidi20_unset_timer(&MppTimerCallback, this);
+
 	MidiUnInit();
 }
 
@@ -1587,6 +1589,10 @@ MppMainWindow :: handle_play_key_changed(int key)
 	key &= 0x7F;
 
 	lbl_play_key->setText(tr("Play Key ") + QString(mid_key_str[key]));
+
+	pthread_mutex_lock(&main_sc.mtx);
+	main_sc.ScPlayKey = key;
+	pthread_mutex_unlock(&main_sc.mtx);
 }
 
 void
@@ -1730,38 +1736,67 @@ MppMainWindow :: handle_midi_record()
 		handle_midi_trigger();
 }
 
-void
-MppMainWindow :: handle_auto_play()
+static void
+MppTimerCallback(void *arg)
 {
+	MppMainWindow *mw = (MppMainWindow *)arg;
 	int x;
-	
-	pthread_mutex_lock(&main_sc.mtx);
-	x = main_sc.ScMidiTriggered;
-	pthread_mutex_unlock(&main_sc.mtx);
+
+	pthread_mutex_lock(&mw->main_sc.mtx);
+	x = mw->main_sc.ScMidiTriggered;
+	pthread_mutex_unlock(&mw->main_sc.mtx);
 
 	if (x) {
-		handle_play_press();
-		handle_play_release();
+		mw->handle_play_press();
+		mw->handle_play_release();
 	}
+}
+
+/* must be called locked */
+static void
+MppSetTimer(MppMainWindow *mw)
+{
+	int bpm = mw->main_sc.ScBpmAutoPlay;
+	int i;
+
+	if (bpm > 0) {
+		i = 60000 / bpm;
+		if (i == 0)
+			i = 1;
+	} else {
+		i = 0;
+	}
+
+	umidi20_set_timer(&MppTimerCallback, mw, i);
+}
+
+void
+MppMainWindow :: handle_auto_play(int bpm)
+{
+	int i;
+
+	pthread_mutex_lock(&main_sc.mtx);
+
+	main_sc.ScBpmAutoPlay = bpm;
+
+	MppSetTimer(this);
+
+	pthread_mutex_unlock(&main_sc.mtx);
 }
 
 void
 MppMainWindow :: handle_play_press()
 {
-	int key = spn_play_key->value();
-
 	pthread_mutex_lock(&main_sc.mtx);
-	handle_key_press(key, 90);
+	handle_key_press(main_sc.ScPlayKey, 90);
 	pthread_mutex_unlock(&main_sc.mtx);
 }
 
 void
 MppMainWindow :: handle_play_release()
 {
-	int key = spn_play_key->value();
-
 	pthread_mutex_lock(&main_sc.mtx);
-	handle_key_release(key);
+	handle_key_release(main_sc.ScPlayKey);
 	pthread_mutex_unlock(&main_sc.mtx);
 }
 
@@ -2215,6 +2250,7 @@ MppMainWindow :: handle_midi_trigger()
 		main_sc.ScMidiTriggered = 1;
 		main_sc.ScMidiPaused = 0;
 		main_sc.ScPausePosition = 0;
+		MppSetTimer(this);
 	}
 
 	pthread_mutex_unlock(&main_sc.mtx);
@@ -2268,14 +2304,9 @@ MppMainWindow :: handle_config_reload()
 
 	handle_compile();
 
+	main_sc.ScBpmAutoPlayOld = main_sc.ScBpmAutoPlay;
+
 	handle_config_revert();
-
-	auto_play_timer->stop();
-
-	if (main_sc.ScBpmAutoPlay != 0) {
-		auto_play_timer->setInterval(60000 / main_sc.ScBpmAutoPlay);
-		auto_play_timer->start();
-	}
 
 	pthread_mutex_lock(&main_sc.mtx);
 	for (y = 0; y != MPP_MAX_DEVS; y++) {
@@ -2316,14 +2347,13 @@ MppMainWindow :: handle_config_revert()
 	}
 
 	spn_bpm_length->setValue(main_sc.ScBpmAvgLength);
-	spn_auto_play->setValue(main_sc.ScBpmAutoPlay);
+	spn_auto_play->setValue(main_sc.ScBpmAutoPlayOld);
 }
 
 void
 MppMainWindow :: handle_config_apply()
 {
 	int n;
-	int p;
 
 	main_sc.ScDeviceBits = 0;
 
@@ -2343,11 +2373,9 @@ MppMainWindow :: handle_config_apply()
 	}
 
 	n = spn_bpm_length->value();
-	p = spn_auto_play->value();
 
 	pthread_mutex_lock(&main_sc.mtx);
 	main_sc.ScBpmAvgLength = n;
-	main_sc.ScBpmAutoPlay = p;
 	pthread_mutex_unlock(&main_sc.mtx);
 
 	handle_config_reload();
@@ -3038,8 +3066,6 @@ MppMainWindow :: MidiInit(void)
 	handle_score_record();
 	handle_pass_thru();
 
-	umidi20_init();
-
 	for (n = 0; n != UMIDI20_N_DEVICES; n++) {
 		umidi20_set_record_event_callback(n, &MidiEventRxCallback, this);
 		umidi20_set_play_event_callback(n, &MidiEventTxCallback, this);
@@ -3133,6 +3159,9 @@ int
 main(int argc, char **argv)
 {
 	QApplication app(argc, argv);
+
+	umidi20_init();
+
 	MppMainWindow main;
 
 	main.show();
