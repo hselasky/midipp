@@ -3054,6 +3054,7 @@ MppMainWindow :: handle_instr_program()
 	pthread_mutex_unlock(&main_sc.mtx);
 
 	handle_instr_revert();
+	handle_volume_revert();
 }
 
 void 
