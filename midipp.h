@@ -436,6 +436,7 @@ public slots:
 	void handle_instr_reset();
 	void handle_instr_reload();
 	void handle_instr_program();
+	void handle_instr_channel_changed(int);
 
 	void handle_volume_changed(int);
 	void handle_volume_apply();

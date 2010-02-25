@@ -1421,6 +1421,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_instr_reset = new QPushButton(tr("Reset"));
 
 	spn_instr_curr_chan = new QSpinBox();
+	connect(spn_instr_curr_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_instr_channel_changed(int)));
 	spn_instr_curr_chan->setMaximum(15);
 	spn_instr_curr_chan->setMinimum(0);
 	spn_instr_curr_chan->setValue(0);
@@ -1962,10 +1963,8 @@ MppMainWindow :: handle_watchdog()
 		cursor.endEditBlock();
 	}
 
-	if (instr_update) {
+	if (instr_update)
 		handle_instr_revert();
-		handle_volume_revert();
-	}
 
 	do_bpm_stats();
 
@@ -2080,9 +2079,10 @@ MppMainWindow :: handle_midi_file_new()
 			main_sc.ScInstr[x].muted = 0;
 		}
 		main_sc.ScInstrUpdated = 1;
-		main_sc.ScSynthChannel = 0;
 		main_sc.ScChanUsageMask = 0;
 		pthread_mutex_unlock(&main_sc.mtx);
+
+		handle_instr_channel_changed(0);
 	}
 }
 
@@ -2619,6 +2619,7 @@ MppMainWindow :: handle_stop(void)
 				do_key_press(d, out_key, 0, 0);
 			}
 
+			/* restore synth channel */
 			main_sc.ScSynthChannel = old_chan;
 		}
 	}
@@ -2708,6 +2709,7 @@ MppMainWindow :: handle_key_press(int in_key, int vel)
 				do_key_press(d, out_key, vel, 0);
 			}
 
+			/* restore synth channel */
 			main_sc.ScSynthChannel= old_chan;
 		}
 	}
@@ -2758,6 +2760,7 @@ MppMainWindow :: handle_key_release(int in_key)
 				do_key_press(d, out_key, 0, 0);
 			}
 
+			/* restore synth channel */
 			main_sc.ScSynthChannel = old_chan;
 		}
 
@@ -3039,6 +3042,26 @@ MppMainWindow :: do_instr_check(struct umidi20_event *event)
 }
 
 void
+MppMainWindow :: handle_instr_channel_changed(int chan)
+{
+	int temp[3];
+
+	pthread_mutex_lock(&main_sc.mtx);
+	main_sc.ScSynthChannel = chan;
+	temp[0] = main_sc.ScInstr[chan].bank;
+	temp[1] = main_sc.ScInstr[chan].prog;
+	temp[2] = main_sc.ScSynthVolume[chan];
+	pthread_mutex_unlock(&main_sc.mtx);
+
+	spn_instr_curr_bank->setValue(temp[0]);
+	spn_instr_curr_prog->setValue(temp[1]);
+	spn_volume->setValue(temp[2]);
+
+	if (spn_instr_curr_chan->value() != chan)
+		spn_instr_curr_chan->setValue(chan);
+}
+
+void
 MppMainWindow :: handle_instr_program()
 {
 	int chan = spn_instr_curr_chan->value();
@@ -3046,7 +3069,6 @@ MppMainWindow :: handle_instr_program()
 	int prog = spn_instr_curr_prog->value();
 
 	pthread_mutex_lock(&main_sc.mtx);
-	main_sc.ScSynthChannel = chan;
 	main_sc.ScInstr[chan].bank = bank;
 	main_sc.ScInstr[chan].prog = prog;
 	main_sc.ScInstr[chan].muted = 0;
@@ -3054,7 +3076,6 @@ MppMainWindow :: handle_instr_program()
 	pthread_mutex_unlock(&main_sc.mtx);
 
 	handle_instr_revert();
-	handle_volume_revert();
 }
 
 void 
@@ -3062,6 +3083,7 @@ MppMainWindow :: handle_instr_apply()
 {
 	int temp[3];
 	uint8_t x;
+	uint8_t update_curr;
 
 	for (x = 0; x != 16; x++) {
 
@@ -3074,9 +3096,15 @@ MppMainWindow :: handle_instr_apply()
 		main_sc.ScInstr[x].prog = temp[1];
 		main_sc.ScInstr[x].muted = temp[2];
 		main_sc.ScInstr[x].updated = 1;
+		update_curr = (main_sc.ScSynthChannel == x);
 		pthread_mutex_unlock(&main_sc.mtx);
-	}
 
+		if (update_curr) {
+			spn_instr_curr_chan->setValue(x);
+			spn_instr_curr_bank->setValue(temp[0]);
+			spn_instr_curr_prog->setValue(temp[1]);
+		}
+	}
 	handle_instr_reload();
 }
 
@@ -3157,6 +3185,7 @@ MppMainWindow :: handle_instr_reload()
 		}
 	}
 
+	/* restore synth channel */
 	main_sc.ScSynthChannel = chan;
 	main_sc.ScMidiTriggered = trig;
 	pthread_mutex_unlock(&main_sc.mtx);
@@ -3194,9 +3223,8 @@ MppMainWindow :: handle_volume_apply()
 		update_curr = (main_sc.ScSynthChannel == x);
 		pthread_mutex_unlock(&main_sc.mtx);
 
-		if (update_curr) {
+		if (update_curr)
 			spn_volume->setValue(temp[1]);
-		}
 	}
 
 	handle_volume_reload();
@@ -3221,9 +3249,8 @@ MppMainWindow :: handle_volume_revert()
 		spn_volume_play[x]->setValue(temp[0]);
 		spn_volume_synth[x]->setValue(temp[1]);
 
-		if (update_curr) {
+		if (update_curr)
 			spn_volume->setValue(temp[1]);
-		}
 	}
 
 	handle_volume_reload();
