@@ -66,6 +66,7 @@
 #define	MPP_VISUAL_MARGIN	8
 #define	MPP_VISUAL_Y_MAX	80
 #define	MPP_VISUAL_R_MAX	8
+#define	MPP_VOLUME_UNIT		127
 
 struct MppScore {
 	uint8_t key;
@@ -136,6 +137,8 @@ struct MppSoftc {
 	uint16_t ScCurrPos;
 	uint16_t ScLastPos;
 	uint16_t ScMaxScoresWidth;
+	uint16_t ScPlayVolume[16];
+	uint16_t ScSynthVolume[16];
 
 	uint8_t ScPageNext[MPP_MAX_LINES];
 	uint8_t ScInputEvents[MPP_MAX_QUEUE];
@@ -147,7 +150,6 @@ struct MppSoftc {
 	uint8_t ScSynthChannel;
 	uint8_t ScBpmAvgLength;
 	uint8_t ScBpmAvgPos;
-	uint8_t ScVolume;
 	uint8_t ScSynthIsLocal;
 
 	uint8_t ScScoreRecordOff;
@@ -182,6 +184,7 @@ public:
 
 	void MidiInit(void);
 	void MidiUnInit(void);
+
 	void handle_key_press(int in_key, int vel);
 	void handle_key_release(int in_key);
 	void handle_stop(void);
@@ -193,6 +196,8 @@ public:
 	void do_bpm_stats(void);
 	void do_clock_stats(void);
 	void do_update_bpm(void);
+	void do_key_press(struct mid_data *d, int key, int vel, int dur);
+
 	int set_pressed_key(int, int, int, int);
 
 	uint8_t do_instr_check(struct umidi20_event *event);
@@ -362,6 +367,22 @@ public:
 	QPushButton *but_instr_revert;
 	QPushButton *but_instr_reset;
 
+	/* tab <Volume> */
+
+	QGridLayout *tab_volume_gl;
+	QWidget *tab_volume_wg;
+
+	QSpinBox *spn_volume_play[16];
+	QSpinBox *spn_volume_synth[16];
+
+	QLabel *lbl_volume_title[2];
+	QLabel *lbl_volume_play[16];
+	QLabel *lbl_volume_synth[16];
+
+	QPushButton *but_volume_apply;
+	QPushButton *but_volume_revert;
+	QPushButton *but_volume_reset;
+
 	/* MIDI stuff */
 	struct mid_data mid_data;
 	struct umidi20_song *song;
@@ -373,7 +394,6 @@ public slots:
 	void handle_cmd_key_changed(int);
 	void handle_base_key_changed(int);
 	void handle_key_delay_changed(int);
-	void handle_volume_changed(int);
 	void handle_config_local_changed(int);
 	void handle_jump_0();
 	void handle_jump_1();
@@ -416,6 +436,12 @@ public slots:
 	void handle_instr_reset();
 	void handle_instr_reload();
 	void handle_instr_program();
+
+	void handle_volume_changed(int);
+	void handle_volume_apply();
+	void handle_volume_revert();
+	void handle_volume_reset();
+	void handle_volume_reload();
 
 protected:
 	void keyPressEvent(QKeyEvent *event);

@@ -863,6 +863,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_sc.ScNoiseRem = 1;
 
 	default_font.fromString(QString("Sans Serif,12,-1,5,75,0,0,0,0,0"));
+
 	main_sc.ScFont = &default_font;
 
 	/* Setup GUI */
@@ -911,12 +912,14 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_edit_wg = new QWidget();
 	tab_config_wg = new QWidget();
 	tab_instr_wg = new QWidget();
+	tab_volume_wg = new QWidget();
 
 	tab_file_gl = new QGridLayout(tab_file_wg);
 	tab_play_gl = new QGridLayout(tab_play_wg);
 	tab_edit_gl = new QGridLayout(tab_edit_wg);
 	tab_config_gl = new QGridLayout(tab_config_wg);
 	tab_instr_gl = new QGridLayout(tab_instr_wg);
+	tab_volume_gl = new QGridLayout(tab_volume_wg);
 
 	scores_tw->addTab(scores_wg, tr("View Scores"));
 	scores_tw->addTab(main_edit, tr("Edit Scores"));
@@ -928,6 +931,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 #endif
 	main_tw->addTab(tab_config_wg, tr("Config"));
 	main_tw->addTab(tab_instr_wg, tr("Instrument"));
+	main_tw->addTab(tab_volume_wg, tr("Volume"));
 
 	/* <File> Tab */
 
@@ -1070,12 +1074,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	but_play = new QPushButton(tr(" \nPlay\n "));
 
-	lbl_volume = new QLabel(tr("Volume (0..127)"));
+	lbl_volume = new QLabel(tr("Volume (0..127..511)"));
 	spn_volume = new QSpinBox();
 	connect(spn_volume, SIGNAL(valueChanged(int)), this, SLOT(handle_volume_changed(int)));
-	spn_volume->setMaximum(127);
+	spn_volume->setMaximum(511);
 	spn_volume->setMinimum(0);
-	spn_volume->setValue(100);
 
 	lbl_play_key = new QLabel(QString());
 	spn_play_key = new QSpinBox();
@@ -1488,6 +1491,64 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_instr_gl->addWidget(but_instr_revert, x, 4, 1, 2);
 	tab_instr_gl->addWidget(but_instr_apply, x, 6, 1, 2);
 
+	/* <Volume> tab */
+
+	lbl_volume_title[0] = new QLabel(tr("- Playback -"));
+	lbl_volume_title[0]->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+	lbl_volume_title[1] = new QLabel(tr("- Synth/Record -"));
+	lbl_volume_title[1]->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+	but_volume_apply = new QPushButton(tr("Apply"));
+	but_volume_revert = new QPushButton(tr("Revert"));
+	but_volume_reset = new QPushButton(tr("Reset"));
+
+	x = 0;
+
+	tab_volume_gl->addWidget(lbl_volume_title[0], x, 0, 1, 4);
+	tab_volume_gl->addWidget(lbl_volume_title[1], x, 4, 1, 4);
+
+	x++;
+
+	for (n = 0; n != 16; n++) {
+		int y_off = (n & 8) ? 2 : 0;
+
+		char buf[16];
+
+		snprintf(buf, sizeof(buf), "Ch%X", n);
+
+		lbl_volume_play[n] = new QLabel(tr(buf));
+		lbl_volume_play[n]->setAlignment(Qt::AlignVCenter|Qt::AlignRight);
+
+		lbl_volume_synth[n] = new QLabel(tr(buf));
+		lbl_volume_synth[n]->setAlignment(Qt::AlignVCenter|Qt::AlignRight);
+
+		spn_volume_synth[n] = new QSpinBox();
+		spn_volume_synth[n]->setMaximum(511);
+		spn_volume_synth[n]->setMinimum(0);
+		spn_volume_synth[n]->setValue(MPP_VOLUME_UNIT);
+
+		spn_volume_play[n] = new QSpinBox();
+		spn_volume_play[n]->setMaximum(511);
+		spn_volume_play[n]->setMinimum(0);
+		spn_volume_play[n]->setValue(MPP_VOLUME_UNIT);
+
+		tab_volume_gl->addWidget(lbl_volume_play[n], (n & 7) + x, 0 + y_off, 1, 1);
+		tab_volume_gl->addWidget(spn_volume_play[n], (n & 7) + x, 1 + y_off, 1, 1);
+		tab_volume_gl->addWidget(lbl_volume_synth[n], (n & 7) + x, 4 + y_off, 1, 1);
+		tab_volume_gl->addWidget(spn_volume_synth[n], (n & 7) + x, 5 + y_off, 1, 1);
+	}
+
+	x += 8;
+
+	tab_volume_gl->setRowStretch(x, 4);
+
+	x++;
+
+	tab_volume_gl->addWidget(but_volume_reset, x, 2, 1, 2);
+	tab_volume_gl->addWidget(but_volume_revert, x, 4, 1, 2);
+	tab_volume_gl->addWidget(but_volume_apply, x, 6, 1, 2);
+
 	/* Connect all */
 
 	connect(but_jump[0], SIGNAL(pressed()), this, SLOT(handle_jump_0()));
@@ -1530,6 +1591,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_instr_apply, SIGNAL(pressed()), this, SLOT(handle_instr_apply()));
 	connect(but_instr_revert, SIGNAL(pressed()), this, SLOT(handle_instr_revert()));
 	connect(but_instr_reset, SIGNAL(pressed()), this, SLOT(handle_instr_reset()));
+
+	connect(but_volume_apply, SIGNAL(pressed()), this, SLOT(handle_volume_apply()));
+	connect(but_volume_revert, SIGNAL(pressed()), this, SLOT(handle_volume_revert()));
+	connect(but_volume_reset, SIGNAL(pressed()), this, SLOT(handle_volume_reset()));
 
 	connect(but_midi_pause, SIGNAL(pressed()), this, SLOT(handle_midi_pause()));
 
@@ -1618,21 +1683,11 @@ MppMainWindow :: handle_config_local_changed(int state)
 }
 
 void
-MppMainWindow :: handle_volume_changed(int vol)
-{
-	vol &= 0x7F;
-
-	pthread_mutex_lock(&main_sc.mtx);
-	main_sc.ScVolume = vol;
-	pthread_mutex_unlock(&main_sc.mtx);
-}
-
-void
 MppMainWindow :: handle_play_key_changed(int key)
 {
 	key &= 0x7F;
 
-	lbl_play_key->setText(tr("Play Key ") + QString(mid_key_str[key]));
+	lbl_play_key->setText(tr("Play Key (0..127) ") + QString(mid_key_str[key]));
 
 	pthread_mutex_lock(&main_sc.mtx);
 	main_sc.ScPlayKey = key;
@@ -1648,7 +1703,7 @@ MppMainWindow :: handle_cmd_key_changed(int key)
 	main_sc.ScCmdKey = key;
 	pthread_mutex_unlock(&main_sc.mtx);
 
-	lbl_cmd_key->setText(tr("Cmd Key ") + QString(mid_key_str[key]));
+	lbl_cmd_key->setText(tr("Cmd Key (0..127) ") + QString(mid_key_str[key]));
 }
 
 void
@@ -1660,7 +1715,7 @@ MppMainWindow :: handle_base_key_changed(int key)
 	main_sc.ScBaseKey = key;
 	pthread_mutex_unlock(&main_sc.mtx);
 
-	lbl_base_key->setText(tr("Base Key ") + QString(mid_key_str[key]));
+	lbl_base_key->setText(tr("Base Key (0..127) ") + QString(mid_key_str[key]));
 }
 
 void
@@ -1909,6 +1964,7 @@ MppMainWindow :: handle_watchdog()
 
 	if (instr_update) {
 		handle_instr_revert();
+		handle_volume_revert();
 	}
 
 	do_bpm_stats();
@@ -2035,12 +2091,20 @@ MppMainWindow :: update_play_device_no()
 {
 	uint8_t device_no = main_sc.ScPlayDevice;
 	struct umidi20_event *event;
+	uint8_t vel;
 
 	if (track == NULL)
 		return;
 
 	UMIDI20_QUEUE_FOREACH(event, &(track->queue)) {
 		event->device_no = device_no;
+
+		vel = umidi20_event_get_velocity(event);
+
+		if (vel != 0) {
+			vel |= 1;	/* hint for "MidiEventTxCallback()" */
+			umidi20_event_set_velocity(event, vel);
+		}
 	}
 }
 
@@ -2488,6 +2552,35 @@ MppMainWindow :: check_record()
 }
 
 void
+MppMainWindow :: do_key_press(struct mid_data *d, int key, int vel, int dur)
+{
+	int ch = mid_get_channel(d);
+
+	if (vel != 0) {
+		vel = (main_sc.ScSynthVolume[ch] * vel) / MPP_VOLUME_UNIT;
+
+		if (vel > 127)
+			vel = 127;
+		else if (vel < 0)
+			vel = 0;
+		else if (vel == 1)
+			vel = 2;
+
+		vel &= 0x7E;	/* hint for "MidiEventTxCallback()" */
+	}
+
+	if (key > 127)
+		return;
+	else if (key < 0)
+		return;
+
+	if (dur < 0)
+		return;
+
+	mid_key_press(d, key, vel, dur);
+}
+
+void
 MppMainWindow :: handle_stop(void)
 {
 	struct mid_data *d = &mid_data;
@@ -2517,13 +2610,13 @@ MppMainWindow :: handle_stop(void)
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
 				if (check_synth(y)) {
 					mid_delay(d, delay);
-					mid_key_press(d, out_key, 0, 0);
+					do_key_press(d, out_key, 0, 0);
 				}
 			}
 
 			if (check_record()) {
 				mid_delay(d, delay);
-				mid_key_press(d, out_key, 0, 0);
+				do_key_press(d, out_key, 0, 0);
 			}
 
 			main_sc.ScSynthChannel = old_chan;
@@ -2581,8 +2674,6 @@ MppMainWindow :: handle_key_press(int in_key, int vel)
 	uint8_t out_key;
 	uint8_t delay;
 
-	vel = (vel * main_sc.ScVolume) / 127;
-
 	pos = main_sc.ScJumpNext[main_sc.ScCurrPos];
 	if (pos != 0)
 		main_sc.ScCurrPos = pos - 1;
@@ -2608,13 +2699,13 @@ MppMainWindow :: handle_key_press(int in_key, int vel)
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
 				if (check_synth(y)) {
 					mid_delay(d, delay);
-					mid_key_press(d, out_key, vel, 0);
+					do_key_press(d, out_key, vel, 0);
 				}
 			}
 
 			if (check_record()) {
 				mid_delay(d, delay);
-				mid_key_press(d, out_key, vel, 0);
+				do_key_press(d, out_key, vel, 0);
 			}
 
 			main_sc.ScSynthChannel= old_chan;
@@ -2658,13 +2749,13 @@ MppMainWindow :: handle_key_release(int in_key)
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
 				if (check_synth(y)) {
 					mid_delay(d, delay);
-					mid_key_press(d, out_key, 0, 0);
+					do_key_press(d, out_key, 0, 0);
 				}
 			}
 
 			if (check_record()) {
 				mid_delay(d, delay);
-				mid_key_press(d, out_key, 0, 0);
+				do_key_press(d, out_key, 0, 0);
 			}
 
 			main_sc.ScSynthChannel = old_chan;
@@ -2828,12 +2919,12 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 		} else if (mw->set_pressed_key(mw->main_sc.ScSynthChannel, key, 255, 0) == 0) {
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
 				if (mw->check_synth(y)) {
-					mid_key_press(d, key, vel, 0);
+					mw->do_key_press(d, key, vel, 0);
 				}
 			}
 
 			if (mw->check_record()) {
-				mid_key_press(d, key, vel, 0);
+				mw->do_key_press(d, key, vel, 0);
 			}
 
 			mw->do_update_bpm();
@@ -2852,12 +2943,12 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
 				if (mw->check_synth(y)) {
-					mid_key_press(d, key, 0, 0);
+					mw->do_key_press(d, key, 0, 0);
 				}
 			}
 
 			if (mw->check_record()) {
-				mid_key_press(d, key, 0, 0);
+				mw->do_key_press(d, key, 0, 0);
 			}
 
 			mw->main_sc.ScPressed[key] = 0;
@@ -2872,11 +2963,29 @@ static void
 MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uint8_t *drop)
 {
 	MppMainWindow *mw = (MppMainWindow *)arg;
+	int vel;
 
 	if (umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL) {
 		uint8_t chan;
 
 		chan = umidi20_event_get_channel(event) & 0xF;
+
+		vel = umidi20_event_get_velocity(event);
+
+		/* update playback velocity, if any */
+
+		if (vel & 1) {
+			vel |= 1;	/* hint for "MidiEventTxCallback()" */
+
+			vel = (vel * mw->main_sc.ScPlayVolume[chan]) / MPP_VOLUME_UNIT;
+
+			if (vel > 127)
+				vel = 127;
+			else if (vel < 0)
+				vel = 0;
+
+			umidi20_event_set_velocity(event, vel);
+		}
 
 		*drop = mw->main_sc.ScInstr[chan].muted;
 	}
@@ -3053,6 +3162,94 @@ MppMainWindow :: handle_instr_reload()
 }
 
 void
+MppMainWindow :: handle_volume_changed(int vol)
+{
+	int x;
+
+	pthread_mutex_lock(&main_sc.mtx);
+	x = main_sc.ScSynthChannel;
+	main_sc.ScSynthVolume[x] = vol;
+	pthread_mutex_unlock(&main_sc.mtx);
+
+	spn_volume_synth[x]->setValue(vol);
+}
+
+void 
+MppMainWindow :: handle_volume_apply()
+{
+	int temp[2];
+
+	uint8_t x;
+	uint8_t update_curr;
+
+	for (x = 0; x != 16; x++) {
+
+		temp[0] = spn_volume_play[x]->value();
+		temp[1] = spn_volume_synth[x]->value();
+
+		pthread_mutex_lock(&main_sc.mtx);
+		main_sc.ScPlayVolume[x] = temp[0];
+		main_sc.ScSynthVolume[x] = temp[1];
+		update_curr = (main_sc.ScSynthChannel == x);
+		pthread_mutex_unlock(&main_sc.mtx);
+
+		if (update_curr) {
+			spn_volume->setValue(temp[1]);
+		}
+	}
+
+	handle_volume_reload();
+}
+
+void 
+MppMainWindow :: handle_volume_revert()
+{
+	int temp[2];
+
+	uint8_t x;
+	uint8_t update_curr;
+
+	for (x = 0; x != 16; x++) {
+
+		pthread_mutex_lock(&main_sc.mtx);
+		temp[0] = main_sc.ScPlayVolume[x];
+		temp[1] = main_sc.ScSynthVolume[x];
+		update_curr = (main_sc.ScSynthChannel == x);
+		pthread_mutex_unlock(&main_sc.mtx);
+
+		spn_volume_play[x]->setValue(temp[0]);
+		spn_volume_synth[x]->setValue(temp[1]);
+
+		if (update_curr) {
+			spn_volume->setValue(temp[1]);
+		}
+	}
+
+	handle_volume_reload();
+}
+
+void 
+MppMainWindow :: handle_volume_reset()
+{
+	uint8_t x;
+
+	for (x = 0; x != 16; x++) {
+		spn_volume_play[x]->setValue(MPP_VOLUME_UNIT);
+		spn_volume_synth[x]->setValue(MPP_VOLUME_UNIT);
+	}
+
+	spn_volume->setValue(MPP_VOLUME_UNIT);
+
+	handle_volume_reload();
+}
+
+void
+MppMainWindow :: handle_volume_reload()
+{
+
+}
+
+void
 MppMainWindow :: handle_score_print(void)
 {
 	QPrinter printer(QPrinter::HighResolution);
@@ -3107,6 +3304,8 @@ MppMainWindow :: MidiInit(void)
 	handle_midi_play();
 	handle_score_record();
 	handle_pass_thru();
+	handle_instr_apply();
+	handle_volume_apply();
 
 	for (n = 0; n != UMIDI20_N_DEVICES; n++) {
 		umidi20_set_record_event_callback(n, &MidiEventRxCallback, this);
