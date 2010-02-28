@@ -51,6 +51,7 @@
 #include <QPrinter>
 #include <QFontDialog>
 #include <QFileInfo>
+#include <QPixmap>
 
 #include <umidi20.h>
 
@@ -83,7 +84,7 @@ struct MppInstr {
 
 struct MppScoreEntry {
 	char *pstr;
-	QPicture *pic;
+	QPixmap *pic;
 	int32_t x_off;
 	int32_t y_off;
 };

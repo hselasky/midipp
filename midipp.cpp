@@ -184,10 +184,12 @@ MppParseVisualEntries(struct MppSoftc *sc, QPrinter *pd,
     QPoint orig, float scale_f)
 {
 	QPainter paint;
+	QPicture *pic;
 	uint16_t x;
 	uint16_t y;
 	uint16_t z;
 	uint16_t y_max;
+	uint16_t x_max;
 	char *ptr;
 	uint8_t draw_chord;
 	uint8_t last_dot;
@@ -200,6 +202,8 @@ MppParseVisualEntries(struct MppSoftc *sc, QPrinter *pd,
 
 	QFont fnt_a;
 	QFont fnt_b;
+
+	pic = NULL;
 
 	fnt_a = *(sc->ScFont);
 	fnt_a.setPixelSize(20);
@@ -285,8 +289,8 @@ MppParseVisualEntries(struct MppSoftc *sc, QPrinter *pd,
 			continue;
 
 		if (pd == NULL) {
-			sc->ScVisualScores[x].pic = new QPicture();
-			paint.begin(sc->ScVisualScores[x].pic);
+			pic = new QPicture();
+			paint.begin(pic);
 		} else {
 			paint.translate(QPoint(0,MPP_VISUAL_Y_MAX));
 			y_max++;
@@ -297,6 +301,7 @@ MppParseVisualEntries(struct MppSoftc *sc, QPrinter *pd,
 		chord_x = MPP_VISUAL_MARGIN;
 		text_x = MPP_VISUAL_MARGIN;
 		z = x;
+		x_max = 0;
 
 		for (y = 0; ptr[y] != 0; y++) {
 
@@ -349,6 +354,9 @@ MppParseVisualEntries(struct MppSoftc *sc, QPrinter *pd,
 					MppParseMax(&sc->ScMaxScoresWidth, 
 					    sc->ScVisualScores[z].x_off + MPP_VISUAL_R_MAX);
 
+					MppParseMax(&x_max, 
+					    sc->ScVisualScores[z].x_off + MPP_VISUAL_R_MAX);
+
 					paint.drawEllipse(QRect(sc->ScVisualScores[z].x_off,
 						sc->ScVisualScores[z].y_off,
 						MPP_VISUAL_R_MAX, MPP_VISUAL_R_MAX));
@@ -371,6 +379,8 @@ MppParseVisualEntries(struct MppSoftc *sc, QPrinter *pd,
 				chord_x += temp_size.width();
 
 				MppParseMax(&sc->ScMaxScoresWidth, chord_x);
+
+				MppParseMax(&x_max, chord_x);
 			} else {
 				paint.drawText(QPointF(text_x, MPP_VISUAL_Y_MAX -
 				    (MPP_VISUAL_Y_MAX/4) - MPP_VISUAL_MARGIN), temp);
@@ -380,11 +390,36 @@ MppParseVisualEntries(struct MppSoftc *sc, QPrinter *pd,
 				last_dot = 0;
 
 				MppParseMax(&sc->ScMaxScoresWidth, text_x);
+
+				MppParseMax(&x_max, text_x);
 			}
 		}
 
-		if (pd == NULL)
+		if (pd == NULL) {
+			int w;
+			int h;
+
+			w = x_max;
+			h = MPP_VISUAL_Y_MAX;
+
 			paint.end();
+
+			if (w && h) {
+				sc->ScVisualScores[x].pic = new QPixmap(w, h);
+
+				paint.begin(sc->ScVisualScores[x].pic);
+				paint.setRenderHints(QPainter::Antialiasing, 1);
+				paint.setPen(QPen(color_white, 0));
+				paint.setBrush(QColor(color_white));
+				paint.drawRect(QRect(0,0, w, h));
+				paint.drawPicture(0,0, *pic);
+				paint.end();
+			}
+
+			delete (pic);
+
+			pic = NULL;
+		}
 	}
 
 	if (pd != NULL)
@@ -465,7 +500,8 @@ MppVisualScores :: paintEvent(QPaintEvent *event)
 
 		if (sc->ScVisualScores[x].pic != NULL) {
 			if (y_div == (y / y_blocks)) {
-				paint.drawPicture(QPoint(0,(y % y_blocks) * MPP_VISUAL_Y_MAX),
+				paint.drawPixmap(
+				    QPoint(0, (y % y_blocks) * MPP_VISUAL_Y_MAX),
 				    *(sc->ScVisualScores[x].pic));
 			}
 			y++;
