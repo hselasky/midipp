@@ -2035,9 +2035,9 @@ MppMainWindow :: handle_score_file_open()
 	diag->setAcceptMode(QFileDialog::AcceptOpen);
 	diag->setFileMode(QFileDialog::ExistingFile);
 
-	handle_score_file_new();
-
 	if (diag->exec()) {
+		handle_score_file_new();
+
 		CurrScoreFileName = new QString(diag->selectedFiles()[0]);
 		scores = MppReadFile(*CurrScoreFileName, &status);
 		main_edit->setText(scores);
@@ -2172,14 +2172,15 @@ MppMainWindow :: handle_midi_file_open(int merge)
 	diag->setAcceptMode(QFileDialog::AcceptOpen);
 	diag->setFileMode(QFileDialog::ExistingFile);
 
-	if (merge) {
-		handle_midi_file_clear_name();
-		handle_rewind();
-	} else {
-		handle_midi_file_new();
-	}
-
 	if (diag->exec()) {
+
+		if (merge) {
+			handle_midi_file_clear_name();
+			handle_rewind();
+		} else {
+			handle_midi_file_new();
+		}
+
 		CurrMidiFileName = new QString(diag->selectedFiles()[0]);
 
 		filename = MppQStringToAscii(*CurrMidiFileName);
