@@ -52,6 +52,7 @@
 #include <QFontDialog>
 #include <QFileInfo>
 #include <QPixmap>
+#include <QMouseEvent>
 
 #include <umidi20.h>
 
@@ -68,6 +69,8 @@
 #define	MPP_VISUAL_Y_MAX	80
 #define	MPP_VISUAL_R_MAX	8
 #define	MPP_VOLUME_UNIT		127
+
+class MppMainWindow;
 
 struct MppScore {
 	uint8_t key;
@@ -169,10 +172,15 @@ class MppVisualScores : public QWidget
 {
 
 public:
-	MppVisualScores(struct MppSoftc *sc_init);
+	MppVisualScores(struct MppSoftc *sc_init, MppMainWindow *mw_init);
 
 	void paintEvent(QPaintEvent *event);
+	void mousePressEvent(QMouseEvent *e);
+
 	struct MppSoftc *sc;
+	MppMainWindow *mw;
+
+	uint16_t mousePressPos[MPP_MAX_LINES];
 };
 
 class MppMainWindow : public QWidget

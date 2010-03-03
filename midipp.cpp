@@ -426,9 +426,37 @@ MppParseVisualEntries(struct MppSoftc *sc, QPrinter *pd,
 		paint.end();
 }
 
-MppVisualScores :: MppVisualScores(struct MppSoftc *sc_init)
+MppVisualScores :: MppVisualScores(struct MppSoftc *sc_init, MppMainWindow *mw_init)
 {
 	sc = sc_init;
+	mw = mw_init;
+
+	memset(mousePressPos, 0, sizeof(mousePressPos));
+}
+
+void
+MppVisualScores :: mousePressEvent(QMouseEvent *e)
+{
+	int yi;
+	uint16_t max;
+
+	yi = e->y() / MPP_VISUAL_Y_MAX;
+
+	if ((yi < 0) || (yi >= MPP_MAX_LINES))
+		return;
+
+	pthread_mutex_lock(&sc->mtx);
+
+	max = sc->ScLinesMax;
+
+	if (mousePressPos[yi] < max) {
+		sc->ScCurrPos = mousePressPos[yi];
+		sc->ScLastPos = mousePressPos[yi];
+	}
+
+	mw->handle_stop();
+
+	pthread_mutex_unlock(&sc->mtx);
 }
 
 void
@@ -445,6 +473,7 @@ MppVisualScores :: paintEvent(QPaintEvent *event)
 	uint16_t yo_rem;
 	uint16_t x;
 	uint16_t y;
+	uint16_t z;
 
 	paint.fillRect(event->rect(), color_white);
 
@@ -496,16 +525,27 @@ MppVisualScores :: paintEvent(QPaintEvent *event)
 
 	/* paint */
 
-	for (x = y = 0; x != max; x++) {
+	for (x = y = z = 0; x != max; x++) {
 
 		if (sc->ScVisualScores[x].pic != NULL) {
 			if (y_div == (y / y_blocks)) {
+				/* compute mouse press jump positions */
+				if (z < MPP_MAX_LINES) {
+					mousePressPos[z] = x;
+					z++;
+				}
 				paint.drawPixmap(
 				    QPoint(0, (y % y_blocks) * MPP_VISUAL_Y_MAX),
 				    *(sc->ScVisualScores[x].pic));
 			}
 			y++;
 		}
+	}
+
+	/* fill out rest of mousePressPos[] */
+	while ((z < MPP_MAX_LINES) && (z <= y_blocks)) {
+			mousePressPos[z] = 65535;
+			z++;
 	}
 
 	/* overlay (last) */
@@ -941,7 +981,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_gl->addWidget(scores_tw,0,0,1,1);
 	main_gl->addWidget(main_tw,0,1,1,1);
 
-	scores_wg = new MppVisualScores(&main_sc);
+	scores_wg = new MppVisualScores(&main_sc, this);
 
 	tab_file_wg = new QWidget();
 	tab_play_wg = new QWidget();
