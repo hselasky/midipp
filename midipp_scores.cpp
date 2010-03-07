@@ -865,7 +865,6 @@ MppTimerCallback(void *arg)
 {
 	MppScoreMain *sm = (MppScoreMain *)arg;
 	MppMainWindow *mw = sm->mainWindow;
-	int x;
 	int key;
 
 	pthread_mutex_lock(&mw->mtx);

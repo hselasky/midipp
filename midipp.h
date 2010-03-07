@@ -63,7 +63,7 @@
 #include <umidi20.h>
 
 #define	MPP_MAX_VIEWS	2
-#define	MPP_MAX_LINES	1024
+#define	MPP_MAX_LINES	8192
 #define	MPP_MAX_SCORES	32
 #define	MPP_MAX_LABELS	32
 #define	MPP_MAX_QUEUE	32

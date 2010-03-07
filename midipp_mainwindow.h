@@ -46,6 +46,8 @@ public:
 	void handle_midi_file_instr_delete(void);
 	void handle_jump_locked(int index);
 
+	int convert_midi_duration(uint32_t thres);
+
 	void update_play_device_no(void);
 
 	void do_bpm_stats(void);
@@ -67,6 +69,8 @@ public:
 	struct MppInstr instr[16];
 
 	MppScoreMain *currScoreMain;
+
+	uint32_t newLinePosition[MPP_MAX_LINES];
 
 	uint32_t bpmData[MPP_MAX_BPM];
 	uint32_t lastKeyPress;
@@ -140,6 +144,7 @@ public:
 	QPushButton *but_midi_file_merge;
 	QPushButton *but_midi_file_save;
 	QPushButton *but_midi_file_save_as;
+	QPushButton *but_midi_file_convert;
 
 	/* tab <Play> */
 
@@ -207,6 +212,9 @@ public:
 
 	QLabel	*lbl_key_delay;
 	QSpinBox *spn_key_delay;
+
+	QLabel	*lbl_parse_thres;
+	QSpinBox *spn_parse_thres;
 
 	QLineEdit *led_config_dev[MPP_MAX_DEVS];
 	QCheckBox *cbx_config_dev[3 * MPP_MAX_DEVS];
@@ -337,6 +345,8 @@ public slots:
 
 	void handle_auto_play(int bpm);
 	void handle_tab_changed(int index);
+
+	void handle_midi_file_convert();
 
 protected:
 	void keyPressEvent(QKeyEvent *event);

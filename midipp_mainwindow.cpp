@@ -137,6 +137,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_midi_file_merge = new QPushButton(tr("Merge"));
 	but_midi_file_save = new QPushButton(tr("Save"));
 	but_midi_file_save_as = new QPushButton(tr("Save As"));
+	but_midi_file_convert = new QPushButton(tr("ToScores"));
 
 	n = 0;
 
@@ -168,6 +169,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_file_gl->addWidget(scores_main[0]->butScoreFilePrint, n, 0, 1, 3);
 	tab_file_gl->addWidget(scores_main[1]->butScoreFilePrint, n, 3, 1, 3);
 
+	n++;
 	n++;
 
 	tab_file_gl->addWidget(lbl_file_status, n, 0, 1, 8);
@@ -203,6 +205,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	n++;
 
 	tab_file_gl->addWidget(but_midi_file_save_as, n, 6, 1, 2);
+
+	n++;
+
+	tab_file_gl->addWidget(but_midi_file_convert, n, 6, 1, 2);
 
 	n++;
 
@@ -451,6 +457,13 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_bpm_length->setMinimum(0);
 	spn_bpm_length->setValue(0);
 
+	lbl_parse_thres = new QLabel(tr("MIDI To Scores Threshold (0..255)"));
+	spn_parse_thres = new QSpinBox();
+	spn_parse_thres->setMaximum(255);
+	spn_parse_thres->setMinimum(0);
+	spn_parse_thres->setValue(30);
+	spn_parse_thres->setSuffix(tr(" ms"));
+
 	lbl_config_local = new QLabel(tr("Enable local MIDI on synth\n"));
 	cbx_config_local = new QCheckBox();
 	connect(cbx_config_local, SIGNAL(stateChanged(int)), this, SLOT(handle_config_local_changed(int)));
@@ -508,6 +521,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_config_gl->addWidget(lbl_base_key, x, 0, 1, 7);
 	tab_config_gl->addWidget(spn_base_key, x, 7, 1, 1);
+
+	x++;
+
+	tab_config_gl->addWidget(lbl_parse_thres, x, 0, 1, 7);
+	tab_config_gl->addWidget(spn_parse_thres, x, 7, 1, 1);
 
 	x++;
 
@@ -762,6 +780,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_midi_file_merge, SIGNAL(pressed()), this, SLOT(handle_midi_file_merge_open()));
 	connect(but_midi_file_save, SIGNAL(pressed()), this, SLOT(handle_midi_file_save()));
 	connect(but_midi_file_save_as, SIGNAL(pressed()), this, SLOT(handle_midi_file_save_as()));
+	connect(but_midi_file_convert, SIGNAL(pressed()), this, SLOT(handle_midi_file_convert()));
 
 	connect(but_midi_trigger, SIGNAL(pressed()), this, SLOT(handle_midi_trigger()));
 	connect(but_midi_rewind, SIGNAL(pressed()), this, SLOT(handle_rewind()));
@@ -2214,14 +2233,18 @@ MppMainWindow :: handle_auto_play(int bpm)
 void
 MppMainWindow :: handle_tab_changed(int index)
 {
-	int x;
 	QWidget *pw;
+	int x;
+	int compile = 0;
 
 	pw = scores_tw->widget(index);
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
-		if ((pw == scores_main[x]->viewWidget) ||
-		    (pw == scores_main[x]->editWidget))
+		if (pw == scores_main[x]->viewWidget) {
+			compile = 1;
+			break;
+		}
+		if (pw == scores_main[x]->editWidget)
 			break;
 	}
 
@@ -2233,6 +2256,9 @@ MppMainWindow :: handle_tab_changed(int index)
 	handle_instr_channel_changed(currScoreMain->synthChannel);
 
 	spn_auto_play->setValue(currScoreMain->bpmAutoPlay);
+
+	if (compile)
+		handle_compile();
 }
 
 void 
@@ -2254,6 +2280,128 @@ void
 MppMainWindow :: handle_volume_reload()
 {
 
+}
+
+int
+MppMainWindow :: convert_midi_duration(uint32_t thres)
+{
+	struct umidi20_event *event;
+
+	uint32_t last_pos;
+	uint32_t delta;
+	uint32_t index;
+
+	last_pos = 0;
+	index = 0;
+
+	memset(newLinePosition, 0, sizeof(newLinePosition));
+
+	UMIDI20_QUEUE_FOREACH(event, &(track->queue)) {
+
+		delta = event->position - last_pos;
+
+		if (!(umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL))
+			continue;
+		if (instr[umidi20_event_get_channel(event) & 0xF].muted)
+			continue;
+
+		if (umidi20_event_is_key_start(event) || 
+		    (umidi20_event_get_control_address(event) == 0x40)) {
+
+			if (delta > thres) {
+				last_pos = event->position;
+
+				if (index < MPP_MAX_LINES) {
+					newLinePosition[index] = last_pos;
+					index++;
+				}
+			}
+
+		}
+	}
+
+	if (index < MPP_MAX_LINES) {
+		newLinePosition[index] = 0x80000000;
+		index++;
+	}
+	return (index);
+}
+
+void
+MppMainWindow :: handle_midi_file_convert()
+{
+	QTextCursor cursor(currScoreMain->editWidget->textCursor());
+	QString output;
+	int thres = spn_parse_thres->value();
+
+	struct umidi20_event *event;
+
+	char buf[128];
+
+	uint32_t last_pos = 0;
+	uint32_t delta;
+	uint32_t end;
+
+	int index = 0;
+	int max_index;
+	int x;
+	int last_u = 255;
+
+	pthread_mutex_lock(&mtx);
+
+	umidi20_track_compute_max_min(track);
+
+	max_index = convert_midi_duration(thres);
+
+	UMIDI20_QUEUE_FOREACH(event, &(track->queue)) {
+
+		delta = event->position - last_pos;
+
+		if (!(umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL))
+			continue;
+		if (instr[umidi20_event_get_channel(event) & 0xF].muted)
+			continue;
+
+		while ((index < max_index) &&
+		       (event->position > newLinePosition[index])) {
+			index++;
+			output += "\n";
+			last_u = 255;
+		}
+
+		end = event->position + event->duration;
+
+		x = index;
+		while (x < max_index) {
+			if (newLinePosition[x] >= end)
+				break;
+			x++;
+		}
+
+		if (umidi20_event_is_key_start(event)) {
+
+			x = x - index;
+			if (x > 255)
+				x = 255;
+
+			if (x != last_u) {
+				last_u = x;
+				snprintf(buf, sizeof(buf), "U%u ", x);
+				output += buf;
+			}
+
+			output += QString(mid_key_str[umidi20_event_get_key(event)]);
+			output += " ";
+		}
+	}
+
+	output += "\n";
+
+	pthread_mutex_unlock(&mtx);
+
+	cursor.insertText(output);
+
+	handle_compile();
 }
 
 void
