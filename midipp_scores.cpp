@@ -142,6 +142,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 	uint8_t draw_chord;
 	uint8_t last_dot;
 	uint8_t last_jump = 0;
+	uint16_t duration;
 
 	float chord_x;
 	float text_x;
@@ -275,6 +276,26 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 				draw_chord = 0;
 				continue;
 			} else if (ptr[y] == '.') {
+
+				if (ptr[y+1] == '[') {
+					if ((ptr[y+2] >= '0') && (ptr[y+2] <= '9')) {
+						if ((ptr[y+3] >= '0') && (ptr[y+3] <= '9')) {
+							duration = 9;
+						} else {
+							duration = ptr[y+2] - '0';
+						}
+					} else {
+						duration = 0;
+					}
+					while ((ptr[y+1] != ']') && (ptr[y+1] != 0))
+						y++;
+
+					if (ptr[y+1] != 0)
+						y++;
+				} else {
+					duration = 0;
+				}
+
 				paint.setPen(QPen(color_black, 1));
 				paint.setBrush(QColor(color_black));
 
@@ -296,6 +317,8 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 
 				if (z < MPP_MAX_LINES) {
 
+					uint32_t foff;
+
 					visual[z].x_off = text_x + adj_x;
 					visual[z].y_off = (MPP_VISUAL_Y_MAX/3);
 
@@ -308,6 +331,33 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 					paint.drawEllipse(QRect(visual[z].x_off,
 						visual[z].y_off,
 						MPP_VISUAL_R_MAX, MPP_VISUAL_R_MAX));
+
+					if (duration != 0) {
+
+					  foff = 0;
+
+					  if (duration > 5)
+						duration = 5;
+
+					  paint.drawLine(
+					      visual[z].x_off + MPP_VISUAL_R_MAX,
+					      visual[z].y_off + (MPP_VISUAL_R_MAX/2),
+					      visual[z].x_off + MPP_VISUAL_R_MAX,
+					      visual[z].y_off + (MPP_VISUAL_R_MAX/2) -
+					      (3*MPP_VISUAL_R_MAX));
+
+					  while (duration--) {
+						paint.drawLine(
+						    visual[z].x_off + MPP_VISUAL_R_MAX,
+						    visual[z].y_off + (MPP_VISUAL_R_MAX/2) -
+						    (3*MPP_VISUAL_R_MAX) + foff,
+						    visual[z].x_off,
+						    visual[z].y_off + MPP_VISUAL_R_MAX -
+						    (3*MPP_VISUAL_R_MAX) + foff);
+
+						foff += (MPP_VISUAL_R_MAX/2);
+					  }
+					}
 				}
 
 				last_dot = 1;
@@ -784,14 +834,27 @@ parse_string:
 	while ((c = ps[x+2].toAscii()) != 0) {
 		if (c == '\"')
 			break;
-		else if (c == '\n' || c == ';')
-			newVisual();
-		else if (bufIndex == (sizeof(bufData) - 1))
-			break;
-		else {
-			bufData[bufIndex] = c;
-			bufIndex++;
+
+		if (c == '\r') {
+			/* drop character */
+			x++;
+			continue;
 		}
+		if (c == '\n' || c == ';') {
+			/* new line */
+			newVisual();
+			bufIndex = 0;
+			x++;
+			continue;
+		}
+		if (bufIndex == (sizeof(bufData) - 1)) {
+			/* wrap long line */
+			newVisual();
+			bufIndex = 0;
+		}
+
+		bufData[bufIndex] = c;
+		bufIndex++;
 		x++;
 	}
 	x += 1;
@@ -819,6 +882,8 @@ parse_jump:
 		}
 	} else {
 		label = 0;
+
+		flag |= 2;
 	}
 
 	if (index != 0) {
@@ -829,6 +894,11 @@ parse_jump:
 		if (line < MPP_MAX_LINES)
 			pageNext[line] = 1;
 	}
+
+	/* no jump number - ignore */
+
+	if (flag & 2)
+		goto next_char;
 
 	if ((label >= 0) && 
 	    (label < MPP_MAX_LABELS) && 

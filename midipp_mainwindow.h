@@ -47,6 +47,8 @@ public:
 	void handle_jump_locked(int index);
 
 	int convert_midi_duration(uint32_t thres);
+	int convert_midi_score_duration();
+
 
 	void update_play_device_no(void);
 
@@ -70,7 +72,10 @@ public:
 
 	MppScoreMain *currScoreMain;
 
-	uint32_t newLinePosition[MPP_MAX_LINES];
+	uint64_t convEndPos[0x100];
+	uint32_t convLineStart[MPP_MAX_LINES];
+	uint32_t convIndex;
+	uint16_t convEndCount[0x100];
 
 	uint32_t bpmData[MPP_MAX_BPM];
 	uint32_t lastKeyPress;

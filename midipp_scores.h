@@ -109,7 +109,7 @@ protected:
 	int bufLine;
 
 	/* parse buffer */
-	char bufData[128];
+	char bufData[512];
 
 	uint8_t auto_zero_end[0];
 

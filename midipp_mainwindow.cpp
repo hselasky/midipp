@@ -2294,7 +2294,7 @@ MppMainWindow :: convert_midi_duration(uint32_t thres)
 	last_pos = 0;
 	index = 0;
 
-	memset(newLinePosition, 0, sizeof(newLinePosition));
+	memset(convLineStart, 0, sizeof(convLineStart));
 
 	UMIDI20_QUEUE_FOREACH(event, &(track->queue)) {
 
@@ -2305,14 +2305,13 @@ MppMainWindow :: convert_midi_duration(uint32_t thres)
 		if (instr[umidi20_event_get_channel(event) & 0xF].muted)
 			continue;
 
-		if (umidi20_event_is_key_start(event) || 
-		    (umidi20_event_get_control_address(event) == 0x40)) {
+		if (umidi20_event_is_key_start(event)) {
 
 			if (delta > thres) {
 				last_pos = event->position;
 
 				if (index < MPP_MAX_LINES) {
-					newLinePosition[index] = last_pos;
+					convLineStart[index] = last_pos;
 					index++;
 				}
 			}
@@ -2321,31 +2320,65 @@ MppMainWindow :: convert_midi_duration(uint32_t thres)
 	}
 
 	if (index < MPP_MAX_LINES) {
-		newLinePosition[index] = 0x80000000;
+		convLineStart[index] = 0x80000000;
 		index++;
 	}
 	return (index);
+}
+
+int
+MppMainWindow :: convert_midi_score_duration()
+{
+	uint32_t retval;
+	uint8_t i;
+	uint8_t j;
+
+	i = convIndex & 0xFF;
+
+	if (convEndCount[i] == 0 || (convIndex == 0)) {
+		retval = 9;
+	} else {
+		retval = (convEndPos[i] / convEndCount[i]) - convLineStart[convIndex - 1];
+
+		printf("%u\n", retval);
+
+		for (j = 0; j != 9; j++) {
+			if (retval > (1000U >> (j+1)))
+				break;
+		}
+		retval = j;
+	}
+
+	convEndPos[i] = 0;
+	convEndCount[i] = 0;
+
+	return (retval);
 }
 
 void
 MppMainWindow :: handle_midi_file_convert()
 {
 	QTextCursor cursor(currScoreMain->editWidget->textCursor());
+
 	QString output;
+	QString out_block;
+	QString out_desc;
+
 	int thres = spn_parse_thres->value();
 
 	struct umidi20_event *event;
 
 	char buf[128];
 
-	uint32_t last_pos = 0;
-	uint32_t delta;
 	uint32_t end;
+	uint32_t max_index;
+	uint32_t x;
+	uint32_t last_u = MPP_MAX_DURATION + 1;
 
-	int index = 0;
-	int max_index;
-	int x;
-	int last_u = 255;
+	memset(convEndPos, 0, sizeof(convEndPos));
+	memset(convEndCount, 0, sizeof(convEndCount));
+
+	convIndex = 0;
 
 	pthread_mutex_lock(&mtx);
 
@@ -2355,49 +2388,97 @@ MppMainWindow :: handle_midi_file_convert()
 
 	UMIDI20_QUEUE_FOREACH(event, &(track->queue)) {
 
-		delta = event->position - last_pos;
-
 		if (!(umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL))
 			continue;
 		if (instr[umidi20_event_get_channel(event) & 0xF].muted)
 			continue;
 
-		while ((index < max_index) &&
-		       (event->position > newLinePosition[index])) {
-			index++;
-			output += "\n";
-			last_u = 255;
+		while ((convIndex < max_index) &&
+		       (event->position > convLineStart[convIndex])) {
+
+			uint8_t do_flush;
+			uint8_t new_page;
+			uint8_t duration;
+
+			convIndex++;
+
+			duration = convert_midi_score_duration();
+			do_flush = ((convIndex & 0xF) == 0);
+			new_page = ((convIndex & 0xFF) == 0);
+
+			snprintf(buf, sizeof(buf), ".[%u]   ", (int)duration);
+
+			out_desc += buf;
+			out_block += "\n";
+
+			if (do_flush) {
+
+				snprintf(buf, sizeof(buf), "%5u", convIndex / 16);
+
+				output += "\nS\"";
+				output += buf;
+				output += out_desc;
+				output += ";\"\n";
+				output += out_block;
+				if (new_page)
+					output += "\nJP\n";
+				output += "\n";
+
+				out_desc = "";
+				out_block = "";
+			}
+
+			last_u = MPP_MAX_DURATION + 1;
 		}
 
 		end = event->position + event->duration;
 
-		x = index;
-		while (x < max_index) {
-			if (newLinePosition[x] >= end)
-				break;
-			x++;
-		}
-
 		if (umidi20_event_is_key_start(event)) {
 
-			x = x - index;
-			if (x > 255)
-				x = 255;
+			x = convIndex;
+			while (x < max_index) {
+				if (convLineStart[x] >= end)
+					break;
+				x++;
+			}
+
+			x = x - convIndex;
+
+			if (x > MPP_MAX_DURATION)
+				x = MPP_MAX_DURATION;
+			else if (x == 0) {
+				x = 1;
+				if ((convIndex + 1) < max_index)
+					end = convLineStart[convIndex + 1];
+				else
+					end = 0;	/* should not happen */
+
+			}
+
+			convEndPos[(convIndex + x) & 0xFF] += end;
+			convEndCount[(convIndex + x) & 0xFF] += 1;
 
 			if (x != last_u) {
 				last_u = x;
 				snprintf(buf, sizeof(buf), "U%u ", x);
-				output += buf;
+				out_block += buf;
 			}
 
-			output += QString(mid_key_str[umidi20_event_get_key(event)]);
-			output += " ";
+			out_block += mid_key_str[umidi20_event_get_key(event)];
+			out_block += " ";
 		}
 	}
 
-	output += "\n";
-
 	pthread_mutex_unlock(&mtx);
+
+	snprintf(buf, sizeof(buf), "%5u", (convIndex + 15) / 16);
+
+	output += "\nS\"";
+	output += buf;
+	output += out_desc;
+	output += ";\"\n";
+	output += out_block;
+	output += "\n";
 
 	cursor.insertText(output);
 
