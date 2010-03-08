@@ -2338,9 +2338,8 @@ MppMainWindow :: convert_midi_score_duration()
 	if (convEndCount[i] == 0 || (convIndex == 0)) {
 		retval = 9;
 	} else {
-		retval = (convEndPos[i] / convEndCount[i]) - convLineStart[convIndex - 1];
-
-		printf("%u\n", retval);
+		retval = (convEndPos[i] / convEndCount[i]) -
+		    convLineStart[convIndex - 1];
 
 		for (j = 0; j != 9; j++) {
 			if (retval > (1000U >> (j+1)))
