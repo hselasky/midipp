@@ -1284,6 +1284,8 @@ load_file:
 
 	umidi20_song_free(song_copy);
 
+	update_play_device_no();
+
 	pthread_mutex_unlock(&mtx);
 
 done:
