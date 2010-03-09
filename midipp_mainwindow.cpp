@@ -2388,7 +2388,7 @@ MppMainWindow :: handle_midi_file_convert()
 			if (duration != 0)
 				snprintf(buf, sizeof(buf), ".[%u]   ", (int)duration);
 			else
-				snprintf(buf, sizeof(buf), ".");
+				snprintf(buf, sizeof(buf), ".   ");
 
 			out_desc += buf;
 			out_block += "\n";
