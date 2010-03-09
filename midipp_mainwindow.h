@@ -49,7 +49,6 @@ public:
 	int convert_midi_duration(uint32_t thres);
 	int convert_midi_score_duration();
 
-
 	void update_play_device_no(void);
 
 	void do_bpm_stats(void);
@@ -120,6 +119,7 @@ public:
 	uint8_t midiPassThruOff;
 	uint8_t midiTriggered;
 	uint8_t midiPaused;
+	uint8_t playKeyFixed;
 
 	char *deviceName[MPP_MAX_DEVS];
 
@@ -214,6 +214,9 @@ public:
 
 	QSpinBox *spn_bpm_length;
 	QSpinBox *spn_auto_play;
+
+	QLabel	*lbl_fixed_key;
+	QCheckBox *cbx_fixed_key;
 
 	QLabel	*lbl_key_delay;
 	QSpinBox *spn_key_delay;

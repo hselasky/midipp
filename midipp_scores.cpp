@@ -101,9 +101,9 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 
 	viewWidget = new MppScoreView(this);
 
-	/* Initial parse */
+	/* Initial compile */
 
-	handleParse(defaultText);
+	handleCompile();
 }
 
 MppScoreMain :: ~MppScoreMain()
@@ -1251,11 +1251,19 @@ MppScoreMain :: setPressedKey(int chan, int out_key, int dur, int delay)
 void
 MppScoreMain :: handleCompile()
 {
-	pthread_mutex_lock(&mainWindow->mtx);
+	QString temp;
 
-	handleParse(editWidget->toPlainText());
+	temp = editWidget->toPlainText();
 
-	pthread_mutex_unlock(&mainWindow->mtx);
+	if (temp != editText) {
+		editText = temp;
 
-	viewWidget->setMinimumWidth(maxScoresWidth);
+		pthread_mutex_lock(&mainWindow->mtx);
+
+		handleParse(editText);
+
+		pthread_mutex_unlock(&mainWindow->mtx);
+
+		viewWidget->setMinimumWidth(maxScoresWidth);
+	}
 }

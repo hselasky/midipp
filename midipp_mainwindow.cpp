@@ -119,16 +119,12 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	/* <File> Tab */
 
 	lbl_score_Afile = new QLabel(tr("- A-Score File -"));
-	lbl_score_Afile->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
 	lbl_score_Bfile = new QLabel(tr("- B-Score File -"));
-	lbl_score_Bfile->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
 	lbl_midi_file = new QLabel(tr("- MIDI File -"));
-	lbl_midi_file->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
 	lbl_file_status = new QLabel(QString());
-	lbl_file_status->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
 
 	but_quit = new QPushButton(tr("Quit"));
 
@@ -141,8 +137,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n = 0;
 
-	tab_file_gl->addWidget(lbl_score_Afile, n, 0, 1, 3);
-	tab_file_gl->addWidget(lbl_score_Bfile, n, 3, 1, 3);
+	tab_file_gl->addWidget(lbl_score_Afile, n, 0, 1, 3, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_file_gl->addWidget(lbl_score_Bfile, n, 3, 1, 3, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	n++;
 
@@ -172,7 +168,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	n++;
 	n++;
 
-	tab_file_gl->addWidget(lbl_file_status, n, 0, 1, 8);
+	tab_file_gl->addWidget(lbl_file_status, n, 0, 1, 8, Qt::AlignLeft|Qt::AlignVCenter);
 
 	n++;
 
@@ -184,7 +180,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n = 0;
 
-	tab_file_gl->addWidget(lbl_midi_file, n, 6, 1, 2);
+	tab_file_gl->addWidget(lbl_midi_file, n, 6, 1, 2, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	n++;
 
@@ -222,11 +218,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_auto_play->setValue(0);
 
 	lbl_bpm_max = new QLabel(tr("Max"));
-	lbl_bpm_max->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 	lbl_bpm_min = new QLabel(tr("Min"));
-	lbl_bpm_min->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 	lbl_bpm_avg = new QLabel(tr("Average BPM"));
-	lbl_bpm_avg->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
 	lbl_curr_time_val = new QLCDNumber(8);
 	lbl_curr_time_val->setMode(QLCDNumber::Dec);
@@ -288,31 +281,22 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_play_key->setValue(C4);
 
 	lbl_time_counter = new QLabel(tr(" - Time Counter -"));
-	lbl_time_counter->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-
 	lbl_synth = new QLabel(tr("- Synth Play -"));
-	lbl_synth->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-
 	lbl_playback = new QLabel(tr("- Playback -"));
-	lbl_playback->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-
 	lbl_recording = new QLabel(tr("- Recording -"));
-	lbl_recording->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-
 	lbl_scores = new QLabel(tr("- Scores -"));
-	lbl_scores->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
 	n = 0;
 
-	tab_play_gl->addWidget(lbl_time_counter, n, 0, 1, 4);
+	tab_play_gl->addWidget(lbl_time_counter, n, 0, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_curr_time_val, n, 0, 1, 4);
+	tab_play_gl->addWidget(lbl_curr_time_val, n, 0, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_playback, n, 0, 1, 4);
+	tab_play_gl->addWidget(lbl_playback, n, 0, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	n++;
 
@@ -333,7 +317,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_scores, n, 0, 1, 4);
+	tab_play_gl->addWidget(lbl_scores, n, 0, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	n++;
 
@@ -341,7 +325,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_recording, n, 0, 1, 4);
+	tab_play_gl->addWidget(lbl_recording, n, 0, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	n++;
 
@@ -360,7 +344,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n = 0;
 
-	tab_play_gl->addWidget(lbl_synth, n, 4, 1, 4);
+	tab_play_gl->addWidget(lbl_synth, n, 4, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	n++;
 
@@ -399,15 +383,15 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_bpm_max, n, 4, 1, 1);
-	tab_play_gl->addWidget(lbl_bpm_avg, n, 5, 1, 2);
-	tab_play_gl->addWidget(lbl_bpm_min, n, 7, 1, 1);
+	tab_play_gl->addWidget(lbl_bpm_max, n, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_play_gl->addWidget(lbl_bpm_avg, n, 5, 1, 2, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_play_gl->addWidget(lbl_bpm_min, n, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_bpm_max_val, n, 4, 1, 1);
-	tab_play_gl->addWidget(lbl_bpm_avg_val, n, 5, 1, 2);
-	tab_play_gl->addWidget(lbl_bpm_min_val, n, 7, 1, 1);
+	tab_play_gl->addWidget(lbl_bpm_max_val, n, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_play_gl->addWidget(lbl_bpm_avg_val, n, 5, 1, 2, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_play_gl->addWidget(lbl_bpm_min_val, n, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	n++;
 
@@ -434,13 +418,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_base_key->setValue(C4);
 
 	lbl_config_title = new QLabel(tr("- Device configuration -"));
-	lbl_config_title->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 	lbl_config_play = new QLabel(tr("Play"));
-	lbl_config_play->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 	lbl_config_rec = new QLabel(tr("Rec."));
-	lbl_config_rec->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 	lbl_config_synth = new QLabel(tr("Synth"));
-	lbl_config_synth->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 	lbl_bpm_count = new QLabel(tr("BPM average length (0..32)"));
 
 	lbl_key_delay = new QLabel(tr("Random Key Delay (0..255)"));
@@ -464,7 +444,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_parse_thres->setValue(30);
 	spn_parse_thres->setSuffix(tr(" ms"));
 
-	lbl_config_local = new QLabel(tr("Enable local MIDI on synth\n"));
+	lbl_fixed_key = new QLabel(tr("Fixed Play Key"));
+	cbx_fixed_key = new QCheckBox();
+
+	lbl_config_local = new QLabel(tr("Enable local MIDI on synth"));
 	cbx_config_local = new QCheckBox();
 	connect(cbx_config_local, SIGNAL(stateChanged(int)), this, SLOT(handle_config_local_changed(int)));
 	cbx_config_local->setCheckState(Qt::Checked);
@@ -475,10 +458,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x = 0;
 
-	tab_config_gl->addWidget(lbl_config_title, x, 0, 1, 5);
-	tab_config_gl->addWidget(lbl_config_play, x, 5, 1, 1);
-	tab_config_gl->addWidget(lbl_config_rec, x, 6, 1, 1);
-	tab_config_gl->addWidget(lbl_config_synth, x, 7, 1, 1);
+	tab_config_gl->addWidget(lbl_config_title, x, 0, 1, 5, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_config_gl->addWidget(lbl_config_play, x, 5, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_config_gl->addWidget(lbl_config_rec, x, 6, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_config_gl->addWidget(lbl_config_synth, x, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	x++;
 
@@ -504,37 +487,40 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		x++;
 	}
 
-	tab_config_gl->addWidget(lbl_bpm_count, x, 0, 1, 6);
-	tab_config_gl->addWidget(spn_bpm_length, x, 6, 1, 2);
+	tab_config_gl->addWidget(lbl_bpm_count, x, 0, 1, 6, Qt::AlignLeft|Qt::AlignVCenter);
+	tab_config_gl->addWidget(spn_bpm_length, x, 6, 1, 2, Qt::AlignRight|Qt::AlignVCenter);
 
 	x++;
 
-	tab_config_gl->addWidget(lbl_key_delay, x, 0, 1, 6);
-	tab_config_gl->addWidget(spn_key_delay, x, 6, 1, 2);
+	tab_config_gl->addWidget(lbl_key_delay, x, 0, 1, 6, Qt::AlignLeft|Qt::AlignVCenter);
+	tab_config_gl->addWidget(spn_key_delay, x, 6, 1, 2, Qt::AlignRight|Qt::AlignVCenter);
 
 	x++;
 
-	tab_config_gl->addWidget(lbl_cmd_key, x, 0, 1, 7);
-	tab_config_gl->addWidget(spn_cmd_key, x, 7, 1, 1);
+	tab_config_gl->addWidget(lbl_cmd_key, x, 0, 1, 7, Qt::AlignLeft|Qt::AlignVCenter);
+	tab_config_gl->addWidget(spn_cmd_key, x, 7, 1, 1, Qt::AlignRight|Qt::AlignVCenter);
 
 	x++;
 
-	tab_config_gl->addWidget(lbl_base_key, x, 0, 1, 7);
-	tab_config_gl->addWidget(spn_base_key, x, 7, 1, 1);
+	tab_config_gl->addWidget(lbl_base_key, x, 0, 1, 7, Qt::AlignLeft|Qt::AlignVCenter);
+	tab_config_gl->addWidget(spn_base_key, x, 7, 1, 1, Qt::AlignRight|Qt::AlignVCenter);
 
 	x++;
 
-	tab_config_gl->addWidget(lbl_parse_thres, x, 0, 1, 7);
-	tab_config_gl->addWidget(spn_parse_thres, x, 7, 1, 1);
+	tab_config_gl->addWidget(lbl_parse_thres, x, 0, 1, 3, Qt::AlignLeft|Qt::AlignVCenter);
+	tab_config_gl->addWidget(spn_parse_thres, x, 3, 1, 1, Qt::AlignRight|Qt::AlignVCenter);
+
+	tab_config_gl->addWidget(lbl_fixed_key, x, 4, 1, 3, Qt::AlignLeft|Qt::AlignVCenter);
+	tab_config_gl->addWidget(cbx_fixed_key, x, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	x++;
 
-	tab_config_gl->addWidget(lbl_config_local, x, 0, 1, 7);
-	tab_config_gl->addWidget(cbx_config_local, x, 7, 1, 1);
+	tab_config_gl->addWidget(lbl_config_local, x, 0, 1, 7, Qt::AlignLeft|Qt::AlignVCenter);
+	tab_config_gl->addWidget(cbx_config_local, x, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	x++;
 
-	tab_config_gl->addWidget(but_config_fontsel, x, 0, 1, 2);
+	tab_config_gl->addWidget(but_config_fontsel, x, 0, 1, 2, Qt::AlignLeft|Qt::AlignVCenter);
 
 	x++;
 
@@ -548,8 +534,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	/* <Edit> Tab */
 
 	lbl_edit_title = new QLabel(tr("- MIDI File Edit -"));
-	lbl_edit_title->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-
 	lbl_edit_channel = new QLabel(tr("Selected Channel (0..15):"));
 	lbl_edit_transpose = new QLabel(tr("Transpose Steps (-128..127):"));
 	lbl_edit_volume = new QLabel(tr("Average Volume (1..127):"));
@@ -577,7 +561,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n = 0;
 
-	tab_edit_gl->addWidget(lbl_edit_title, n, 0, 1, 8);
+	tab_edit_gl->addWidget(lbl_edit_title, n, 0, 1, 8, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	n++;
 
@@ -612,13 +596,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	/* <Instrument> tab */
 
 	lbl_instr_title[0] = new QLabel(tr("- Bank/Program/Mute -"));
-	lbl_instr_title[0]->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-
 	lbl_instr_title[1] = new QLabel(tr("- Bank/Program/Mute -"));
-	lbl_instr_title[1]->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
 	lbl_instr_prog = new QLabel(tr("- Synth/Record Channel and Selected Bank/Program -"));
-	lbl_instr_prog->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
 	but_instr_apply = new QPushButton(tr("Apply"));
 	but_instr_revert = new QPushButton(tr("Revert"));
@@ -643,7 +623,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x = 0;
 
-	tab_instr_gl->addWidget(lbl_instr_prog, x, 0, 1, 8);
+	tab_instr_gl->addWidget(lbl_instr_prog, x, 0, 1, 8, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	x++;
 
@@ -654,8 +634,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x++;
 
-	tab_instr_gl->addWidget(lbl_instr_title[0], x, 0, 1, 4);
-	tab_instr_gl->addWidget(lbl_instr_title[1], x, 4, 1, 4);
+	tab_instr_gl->addWidget(lbl_instr_title[0], x, 0, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_instr_gl->addWidget(lbl_instr_title[1], x, 4, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	x++;
 
@@ -667,7 +647,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		snprintf(buf, sizeof(buf), "Ch%X", n);
 
 		lbl_instr_desc[n] = new QLabel(tr(buf));
-		lbl_instr_desc[n]->setAlignment(Qt::AlignVCenter|Qt::AlignRight);
 
 		spn_instr_bank[n] = new QSpinBox();
 		spn_instr_bank[n]->setMaximum(16383);
@@ -681,10 +660,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 		cbx_instr_mute[n] = new QCheckBox();
 
-		tab_instr_gl->addWidget(lbl_instr_desc[n], (n & 7) + x, 0 + y_off, 1, 1);
-		tab_instr_gl->addWidget(spn_instr_bank[n], (n & 7) + x, 1 + y_off, 1, 1);
-		tab_instr_gl->addWidget(spn_instr_prog[n], (n & 7) + x, 2 + y_off, 1, 1);
-		tab_instr_gl->addWidget(cbx_instr_mute[n], (n & 7) + x, 3 + y_off, 1, 1);
+		tab_instr_gl->addWidget(lbl_instr_desc[n], (n & 7) + x, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
+		tab_instr_gl->addWidget(spn_instr_bank[n], (n & 7) + x, 1 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
+		tab_instr_gl->addWidget(spn_instr_prog[n], (n & 7) + x, 2 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+		tab_instr_gl->addWidget(cbx_instr_mute[n], (n & 7) + x, 3 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
 	}
 
 	x += 8;
@@ -700,10 +679,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	/* <Volume> tab */
 
 	lbl_volume_title[0] = new QLabel(tr("- Playback -"));
-	lbl_volume_title[0]->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-
 	lbl_volume_title[1] = new QLabel(tr("- Synth/Record -"));
-	lbl_volume_title[1]->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
 	but_volume_apply = new QPushButton(tr("Apply"));
 	but_volume_revert = new QPushButton(tr("Revert"));
@@ -711,8 +687,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x = 0;
 
-	tab_volume_gl->addWidget(lbl_volume_title[0], x, 0, 1, 4);
-	tab_volume_gl->addWidget(lbl_volume_title[1], x, 4, 1, 4);
+	tab_volume_gl->addWidget(lbl_volume_title[0], x, 0, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_volume_gl->addWidget(lbl_volume_title[1], x, 4, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	x++;
 
@@ -724,10 +700,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		snprintf(buf, sizeof(buf), "Ch%X", n);
 
 		lbl_volume_play[n] = new QLabel(tr(buf));
-		lbl_volume_play[n]->setAlignment(Qt::AlignVCenter|Qt::AlignRight);
-
 		lbl_volume_synth[n] = new QLabel(tr(buf));
-		lbl_volume_synth[n]->setAlignment(Qt::AlignVCenter|Qt::AlignRight);
 
 		spn_volume_synth[n] = new QSpinBox();
 		spn_volume_synth[n]->setMaximum(511);
@@ -739,10 +712,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		spn_volume_play[n]->setMinimum(0);
 		spn_volume_play[n]->setValue(MPP_VOLUME_UNIT);
 
-		tab_volume_gl->addWidget(lbl_volume_play[n], (n & 7) + x, 0 + y_off, 1, 1);
-		tab_volume_gl->addWidget(spn_volume_play[n], (n & 7) + x, 1 + y_off, 1, 1);
-		tab_volume_gl->addWidget(lbl_volume_synth[n], (n & 7) + x, 4 + y_off, 1, 1);
-		tab_volume_gl->addWidget(spn_volume_synth[n], (n & 7) + x, 5 + y_off, 1, 1);
+		tab_volume_gl->addWidget(lbl_volume_play[n], (n & 7) + x, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
+		tab_volume_gl->addWidget(spn_volume_play[n], (n & 7) + x, 1 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+		tab_volume_gl->addWidget(lbl_volume_synth[n], (n & 7) + x, 4 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
+		tab_volume_gl->addWidget(spn_volume_synth[n], (n & 7) + x, 5 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
 	}
 
 	x += 8;
@@ -1554,12 +1527,14 @@ MppMainWindow :: handle_config_revert()
 
 	spn_bpm_length->setValue(bpmAvgLength);
 	spn_auto_play->setValue(bpmAutoPlayOld);
+	cbx_fixed_key->setChecked(playKeyFixed ? 1 : 0);
 }
 
 void
 MppMainWindow :: handle_config_apply()
 {
 	int n;
+	int m;
 
 	deviceBits = 0;
 
@@ -1579,9 +1554,11 @@ MppMainWindow :: handle_config_apply()
 	}
 
 	n = spn_bpm_length->value();
+	m = cbx_fixed_key->isChecked();
 
 	pthread_mutex_lock(&mtx);
 	bpmAvgLength = n;
+	playKeyFixed = m;
 	pthread_mutex_unlock(&mtx);
 
 	handle_config_reload();
@@ -1885,6 +1862,9 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			if (mw->currScoreMain->checkLabelJump(lbl)) {
 				mw->handle_jump_locked(lbl);
 			} else {
+				if (mw->playKeyFixed != 0)
+					key = mw->playKey;
+
 				mw->currScoreMain->handleKeyPress(key, vel);
 			}
 		} else if (mw->currScoreMain->setPressedKey(chan, key, 255, 0) == 0) {
@@ -2405,7 +2385,10 @@ MppMainWindow :: handle_midi_file_convert()
 			do_flush = ((convIndex & 0xF) == 0);
 			new_page = ((convIndex & 0xFF) == 0);
 
-			snprintf(buf, sizeof(buf), ".[%u]   ", (int)duration);
+			if (duration != 0)
+				snprintf(buf, sizeof(buf), ".[%u]   ", (int)duration);
+			else
+				snprintf(buf, sizeof(buf), ".");
 
 			out_desc += buf;
 			out_block += "\n";

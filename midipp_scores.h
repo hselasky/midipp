@@ -113,6 +113,8 @@ protected:
 
 	uint8_t auto_zero_end[0];
 
+	QString editText;
+
 public slots:
 
 	void handleCompile();
