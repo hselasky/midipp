@@ -2273,7 +2273,7 @@ MppMainWindow :: convert_midi_duration(uint32_t thres)
 	uint32_t delta;
 	uint32_t index;
 
-	last_pos = 0;
+	last_pos = -thres;	/* make sure we get the first score */
 	index = 0;
 
 	memset(convLineStart, 0, sizeof(convLineStart));
@@ -2288,22 +2288,14 @@ MppMainWindow :: convert_midi_duration(uint32_t thres)
 			continue;
 
 		if (umidi20_event_is_key_start(event)) {
-
-			if (delta > thres) {
+			if (delta >= thres) {
 				last_pos = event->position;
-
 				if (index < MPP_MAX_LINES) {
 					convLineStart[index] = last_pos;
 					index++;
 				}
 			}
-
 		}
-	}
-
-	if (index < MPP_MAX_LINES) {
-		convLineStart[index] = 0x80000000;
-		index++;
 	}
 	return (index);
 }
@@ -2375,7 +2367,7 @@ MppMainWindow :: handle_midi_file_convert()
 			continue;
 
 		while ((convIndex < max_index) &&
-		       (event->position > convLineStart[convIndex])) {
+		       (event->position >= (convLineStart[convIndex] + thres))) {
 
 			uint8_t do_flush;
 			uint8_t new_page;
