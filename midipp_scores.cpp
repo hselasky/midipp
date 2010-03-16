@@ -1199,6 +1199,7 @@ MppScoreMain :: handleScorePrint(void)
 	QPrintDialog *dlg;
 	QPoint orig;
 	qreal scale_f;
+	QString temp;
 
 	printer.setOutputFormat(QPrinter::PdfFormat);
 	printer.setFontEmbeddingEnabled(true);
@@ -1206,9 +1207,11 @@ MppScoreMain :: handleScorePrint(void)
 	printer.setResolution(600);
 
 	if (currScoreFileName != NULL) {
-		printer.setOutputFileName(currScoreFileName->
-		    replace(QString(".txt"), QString(".pdf"),
-		    Qt::CaseInsensitive));
+		temp = *currScoreFileName;
+		temp.replace(QString(".txt"), QString(".pdf"),
+		     Qt::CaseInsensitive);
+
+		printer.setOutputFileName(temp);
 	} else {
 		printer.setOutputFileName(QString("NewSong.pdf"));
 	}
