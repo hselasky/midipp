@@ -1236,16 +1236,26 @@ MppScoreMain :: handleScorePrint(void)
 int
 MppScoreMain :: setPressedKey(int chan, int out_key, int dur, int delay)
 {
+	uint32_t temp;
 	uint8_t y;
 
+	dur &= 0xFF;
+	out_key &= 0xFF;
+	chan &= 0xFF;
+	delay &= 0xFF;
+
+	temp = dur | (out_key << 8) | (chan << 16) | (delay << 24);
+
 	for (y = 0; y != MPP_PRESSED_MAX; y++) {
-		if (pressedKeys[y] != 0)
+		if ((pressedKeys[y] != 0) &&
+		    ((pressedKeys[y] ^ temp) & 0x00FFFF00U))
 			continue;
-		pressedKeys[y] =
-		  (dur & 0xFF) | 
-		  ((out_key & 0xFF) << 8) |
-		  ((chan & 0xFF) << 16) |
-		  ((delay & 0xFF) << 24);
+
+		if (dur == 0)
+			pressedKeys[y] = 0;	/* clear key */
+		else
+			pressedKeys[y] = temp;	/* set key */
+
 		return (0);
 	}
 	return (1);

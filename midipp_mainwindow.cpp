@@ -1893,7 +1893,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 				mw->currScoreMain->handleKeyRelease(key);
 			}
 
-		} else {
+		} else if (mw->currScoreMain->setPressedKey(chan, key, 0, 0) == 0) {
 
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
 				if (mw->check_synth(y, chan)) {
@@ -1904,8 +1904,6 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			if (mw->check_record(chan)) {
 				mw->do_key_press(key, 0, 0);
 			}
-
-			mw->currScoreMain->pressedKeys[key] = 0;
 		}
 	} else if (mw->do_instr_check(event, &chan)) {
 		/* found instrument */
