@@ -2302,28 +2302,17 @@ int
 MppMainWindow :: convert_midi_score_duration()
 {
 	uint32_t retval;
-	uint8_t i;
 	uint8_t j;
 
-	i = convIndex & 0xFF;
+	retval = convLineStart[convIndex] - 
+	    convLineStart[convIndex - 1];
 
-	if (convEndCount[i] == 0 || (convIndex == 0)) {
-		retval = 9;
-	} else {
-		retval = (convEndPos[i] / convEndCount[i]) -
-		    convLineStart[convIndex - 1];
-
-		for (j = 0; j != 9; j++) {
-			if (retval > (1000U >> (j+1)))
-				break;
-		}
-		retval = j;
+	for (j = 0; j != 9; j++) {
+		if (retval > (1000U >> (j+1)))
+			break;
 	}
 
-	convEndPos[i] = 0;
-	convEndCount[i] = 0;
-
-	return (retval);
+	return (j);
 }
 
 void
@@ -2345,9 +2334,6 @@ MppMainWindow :: handle_midi_file_convert()
 	uint32_t max_index;
 	uint32_t x;
 	uint32_t last_u = MPP_MAX_DURATION + 1;
-
-	memset(convEndPos, 0, sizeof(convEndPos));
-	memset(convEndCount, 0, sizeof(convEndCount));
 
 	convIndex = 0;
 
@@ -2373,7 +2359,11 @@ MppMainWindow :: handle_midi_file_convert()
 
 			convIndex++;
 
-			duration = convert_midi_score_duration();
+			if (convIndex < max_index)
+				duration = convert_midi_score_duration();
+			else
+				duration = 0;
+
 			do_flush = ((convIndex & 0xF) == 0);
 			new_page = ((convIndex & 0xFF) == 0);
 
@@ -2428,9 +2418,6 @@ MppMainWindow :: handle_midi_file_convert()
 					end = 0;	/* should not happen */
 
 			}
-
-			convEndPos[(convIndex + x) & 0xFF] += end;
-			convEndCount[(convIndex + x) & 0xFF] += 1;
 
 			if (x != last_u) {
 				last_u = x;

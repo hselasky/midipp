@@ -71,10 +71,8 @@ public:
 
 	MppScoreMain *currScoreMain;
 
-	uint64_t convEndPos[0x100];
 	uint32_t convLineStart[MPP_MAX_LINES];
 	uint32_t convIndex;
-	uint16_t convEndCount[0x100];
 
 	uint32_t bpmData[MPP_MAX_BPM];
 	uint32_t lastKeyPress;
