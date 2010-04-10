@@ -1246,19 +1246,28 @@ MppScoreMain :: setPressedKey(int chan, int out_key, int dur, int delay)
 
 	temp = dur | (out_key << 8) | (chan << 16) | (delay << 24);
 
-	for (y = 0; y != MPP_PRESSED_MAX; y++) {
-		if ((pressedKeys[y] != 0) &&
-		    ((pressedKeys[y] ^ temp) & 0x00FFFF00U))
-			continue;
+	if (dur == 0) {
+		/* release key */
+		for (y = 0; y != MPP_PRESSED_MAX; y++) {
+			if ((pressedKeys[y] & 0x00FFFF00U) == (temp & 0x00FFFF00U)) {
+				/* key information matches */
+				/* clear key */
+				pressedKeys[y] = 0;
+			}
+		}
+		return (0);
+	} else {
+		/* press key */
+		for (y = 0; y != MPP_PRESSED_MAX; y++) {
+			if (pressedKeys[y] != 0)
+				continue;	/* key in use */
 
-		if (dur == 0)
-			pressedKeys[y] = 0;	/* clear key */
-		else
 			pressedKeys[y] = temp;	/* set key */
 
-		return (0);
+			return (0);
+		}
+		return (1);
 	}
-	return (1);
 }
 
 void
