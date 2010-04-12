@@ -1201,6 +1201,10 @@ MppScoreMain :: handleScorePrint(void)
 	qreal scale_f;
 	QString temp;
 
+	/* make sure everything is up-to-date */
+
+	handleCompile();
+
 	printer.setOutputFormat(QPrinter::PdfFormat);
 	printer.setFontEmbeddingEnabled(true);
 	printer.setFullPage(true);
