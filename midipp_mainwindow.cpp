@@ -1061,18 +1061,23 @@ MppMainWindow :: handle_watchdog()
 	uint8_t z;
 	uint8_t last_duration;
 	uint8_t instr_update;
+	uint8_t cursor_update;
+	uint32_t play_line;
 
 	pthread_mutex_lock(&mtx);
+	cursor_update = cursorUpdate;
+	cursorUpdate = 0;
 	instr_update = instrUpdated;
 	instrUpdated = 0;
 	num_events = numInputEvents;
+	play_line = currScoreMain->realLine[currScoreMain->currPos];
 	if (num_events != 0) {
 		delta =  umidi20_get_curr_position() - lastInputEvent;
-		if (delta >= ((UMIDI20_BPM + 45 -1) / 45)) {
+		if (delta >= ((UMIDI20_BPM + 60 - 1) / 60)) {
 			numInputEvents = 0;
 			memcpy(events_copy, inputEvents, num_events);
 		} else {
-			/* wait until 2 seconds have elapsed */
+			/* wait until 1 second has elapsed */
 			num_events = 0;
 		}
 	}
@@ -1119,6 +1124,13 @@ MppMainWindow :: handle_watchdog()
 	do_bpm_stats();
 
 	do_clock_stats();
+
+	if (cursor_update) {
+		cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor, 1);
+		cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, play_line);
+		cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor, 1);
+		currScoreMain->editWidget->setTextCursor(cursor);
+	}
 
 	currScoreMain->viewWidget->repaint();
 }

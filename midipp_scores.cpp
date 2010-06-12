@@ -96,6 +96,8 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	editWidget = new QTextEdit();
 
 	editWidget->setText(defaultText);
+	editWidget->setCursorWidth(4);
+	editWidget->setLineWrapMode(QTextEdit::NoWrap);
 
 	/* Visual */
 
@@ -565,36 +567,51 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 void
 MppScoreMain :: newLine()
 {
-	if (line < MPP_MAX_LINES) {
-		line++;
-		index = 0;
+	if (ps.line < MPP_MAX_LINES) {
+		realLine[ps.line] = ps.realLine;
+		ps.line++;
+		ps.index = 0;
 	}
 }
 
 void
 MppScoreMain :: newVisual()
 {
-	if (bufLine < MPP_MAX_LINES) {
+	if (ps.bufLine < MPP_MAX_LINES) {
 
-		bufData[bufIndex] = 0;
+		bufData[ps.bufIndex] = 0;
 
-		if (visual[bufLine].pstr != NULL)
-			free(visual[bufLine].pstr);
+		if (visual[ps.bufLine].pstr != NULL)
+			free(visual[ps.bufLine].pstr);
 
-		visual[bufLine].pstr = strdup(bufData);
+		visual[ps.bufLine].pstr = strdup(bufData);
 
-		bufIndex = 0;
+		ps.bufIndex = 0;
 
-		bufLine = line;
+		ps.bufLine = ps.line;
 	}
 }
 
 void
-MppScoreMain :: handleParse(const QString &ps)
+MppScoreMain :: parseAdv(uint8_t delta)
 {
+	while (delta--) {
+		if (ps.x >= 0) {
+			int c;
+			c = (*(ps.ps))[ps.x].toUpper().toAscii();
+			if (c == '\n')
+				ps.realLine++;
+		}
+		ps.x++;
+	}
+}
+
+void
+MppScoreMain :: handleParse(const QString &pstr)
+{
+	int z;
 	int c;
 	int d;
-	int x;
 	int y;
 	int label;
 	int channel;
@@ -604,40 +621,41 @@ MppScoreMain :: handleParse(const QString &ps)
 
 	/* cleanup all scores */
 
-	for (x = 0; x != MPP_MAX_LINES; x++) {
-		if (visual[x].pstr != NULL) {
-			free(visual[x].pstr);
-			visual[x].pstr = NULL;
+	for (z = 0; z != MPP_MAX_LINES; z++) {
+		if (visual[z].pstr != NULL) {
+			free(visual[z].pstr);
+			visual[z].pstr = NULL;
 		}
 	}
 
-	x = -1;
-	line = 0;
-	index = 0;
-	bufIndex = 0;
-	bufLine = 0;
+	ps.x = -1;
+	ps.line = 0;
+	ps.realLine = 0;
+	ps.index = 0;
+	ps.bufIndex = 0;
+	ps.bufLine = 0;
+	ps.ps = &pstr;
 	memset(scores, 0, sizeof(scores));
 	memset(jumpNext, 0, sizeof(jumpNext));
 	memset(jumpTable, 0, sizeof(jumpTable));
 	memset(pageNext, 0, sizeof(pageNext));
 
-	if (ps.isNull() || ps.isEmpty())
+	if (pstr.isNull() || pstr.isEmpty())
 		goto done;
 
 next_line:
-	if (index != 0) {
+	if (ps.index != 0)
 		newLine();
-	}
 
 	y = -1;
 	channel = 0;
 	duration = 1;
 
 next_char:
-	x++;
+	parseAdv(1);
 	y++;
 
-	c = ps[x].toUpper().toAscii();
+	c = pstr[ps.x].toUpper().toAscii();
 
 	switch (c) {
 	case 'C':
@@ -717,21 +735,21 @@ next_char:
 			goto next_char;
 
 		/* check for comment */
-		c = ps[x+1].toUpper().toAscii();
+		c = pstr[ps.x+1].toUpper().toAscii();
 		if (c == '*') {
 			while (1) {
-				c = ps[x+2].toUpper().toAscii();
+				c = pstr[ps.x+2].toUpper().toAscii();
 				if (c == '*') {
-					c = ps[x+3].toUpper().toAscii();
+					c = pstr[ps.x+3].toUpper().toAscii();
 					if (c == '/') {
 						/* end of comment */
-						x += 3;
+						parseAdv(3);
 						break;
 					}
 				}
 				if (c == 0)
 					goto done;
-				x++;
+				parseAdv(1);
 			}
 			y = -1;
 		}
@@ -745,42 +763,42 @@ next_char:
 	}
 
 parse_score:
-	c = ps[x+1].toAscii();
+	c = pstr[ps.x+1].toAscii();
 	if (c >= '0' && c <= '9') {
-		d = ps[x+2].toAscii();
+		d = pstr[ps.x+2].toAscii();
 		if (d >= '0' && d <= '9') {
 			base_key += 120 * (c - '0');
 			base_key += 12 * (d - '0');
-			x += 2;
+			parseAdv(2);
 		} else {
 			base_key += 12 * (c - '0');
-			x += 1;
+			parseAdv(1);
 		}
-		c = ps[x+1].toUpper().toAscii();
+		c = pstr[ps.x+1].toUpper().toAscii();
 		if (c == 'B') {
 			base_key -= 1;
-			x += 1;
+			parseAdv(1);
 		}
-		if ((line < MPP_MAX_LINES) && (index < MPP_MAX_SCORES)) {
-			scores[line][index].key = base_key & 127;
-			scores[line][index].dur = duration & 255;
-			scores[line][index].channel = channel & 15;
-			index++;
+		if ((ps.line < MPP_MAX_LINES) && (ps.index < MPP_MAX_SCORES)) {
+			scores[ps.line][ps.index].key = base_key & 127;
+			scores[ps.line][ps.index].dur = duration & 255;
+			scores[ps.line][ps.index].channel = channel & 15;
+			ps.index++;
 		}
 
 	}
 	goto next_char;
 
 parse_duration:
-	c = ps[x+1].toAscii();
+	c = pstr[ps.x+1].toAscii();
 	if (c >= '0' && c <= '9') {
-		d = ps[x+2].toAscii();
+		d = pstr[ps.x+2].toAscii();
 		if (d >= '0' && d <= '9') {
 			duration = (10 * (c - '0')) + (d - '0');
-			x += 2;
+			parseAdv(2);
 		} else {
 			duration = (c - '0');
-			x += 1;
+			parseAdv(1);
 		}
 	} else {
 		duration = 0;
@@ -788,15 +806,15 @@ parse_duration:
 	goto next_char;
 
 parse_channel:
-	c = ps[x+1].toAscii();
+	c = pstr[ps.x+1].toAscii();
 	if (c >= '0' && c <= '9') {
-		d = ps[x+2].toAscii();
+		d = pstr[ps.x+2].toAscii();
 		if (d >= '0' && d <= '9') {
 			channel = (10 * (c - '0')) + (d - '0');
-			x += 2;
+			parseAdv(2);
 		} else {
 			channel = (c - '0');
-			x += 1;
+			parseAdv(1);
 		}
 	} else {
 		channel = 0;
@@ -804,81 +822,81 @@ parse_channel:
 	goto next_char;
 
 parse_label:
-	c = ps[x+1].toAscii();
+	c = pstr[ps.x+1].toAscii();
 	if (c >= '0' && c <= '9') {
-		d = ps[x+2].toAscii();
+		d = pstr[ps.x+2].toAscii();
 		if (d >= '0' && d <= '9') {
 			label = (10 * (c - '0')) + (d - '0');
-			x += 2;
+			parseAdv(2);
 		} else {
 			label = (c - '0');
-			x += 1;
+			parseAdv(1);
 		}
 	} else {
 		label = 0;
 	}
 	if ((label >= 0) && (label < MPP_MAX_LABELS)) {
-		jumpTable[label] = line + 1;
+		jumpTable[label] = ps.line + 1;
 	}
 	goto next_char;
 
 
 parse_string:
-	c = ps[x+1].toAscii();
+	c = pstr[ps.x+1].toAscii();
 	if (c != '\"')
 		goto next_char;
 
-	if (bufIndex == 0)
-		bufLine = line;
+	if (ps.bufIndex == 0)
+		ps.bufLine = ps.line;
 
-	while ((c = ps[x+2].toAscii()) != 0) {
+	while ((c = pstr[ps.x+2].toAscii()) != 0) {
 		if (c == '\"')
 			break;
 
 		if (c == '\r') {
 			/* drop character */
-			x++;
+			parseAdv(1);
 			continue;
 		}
 		if (c == '\n' || c == ';') {
 			/* new line */
 			newVisual();
-			bufIndex = 0;
-			x++;
+			ps.bufIndex = 0;
+			parseAdv(1);
 			continue;
 		}
-		if (bufIndex == (sizeof(bufData) - 1)) {
+		if (ps.bufIndex == (sizeof(bufData) - 1)) {
 			/* wrap long line */
 			newVisual();
-			bufIndex = 0;
+			ps.bufIndex = 0;
 		}
 
-		bufData[bufIndex] = c;
-		bufIndex++;
-		x++;
+		bufData[ps.bufIndex] = c;
+		ps.bufIndex++;
+		parseAdv(1);
 	}
-	x += 1;
+	parseAdv(1);
 	goto next_char;
 
 parse_jump:
-	c = ps[x+1].toAscii();
+	c = pstr[ps.x+1].toAscii();
 
 	flag = 0;
 
 	if (c == 'P') {
-		c = ps[x+2].toAscii();
-		x++;
+		c = pstr[ps.x+2].toAscii();
+		parseAdv(1);
 		flag |= 1;
 	}
 
 	if (c >= '0' && c <= '9') {
-		d = ps[x+2].toAscii();
+		d = pstr[ps.x+2].toAscii();
 		if (d >= '0' && d <= '9') {
 			label = (10 * (c - '0')) + (d - '0');
-			x += 2;
+			parseAdv(2);
 		} else {
 			label = (c - '0');
-			x += 1;
+			parseAdv(1);
 		}
 	} else {
 		label = 0;
@@ -886,13 +904,12 @@ parse_jump:
 		flag |= 2;
 	}
 
-	if (index != 0) {
+	if (ps.index != 0)
 		newLine();
-	}
 
 	if (flag & 1) {
-		if (line < MPP_MAX_LINES)
-			pageNext[line] = 1;
+		if (ps.line < MPP_MAX_LINES)
+			pageNext[ps.line] = 1;
 	}
 
 	/* no jump number - ignore */
@@ -902,28 +919,27 @@ parse_jump:
 
 	if ((label >= 0) && 
 	    (label < MPP_MAX_LABELS) && 
-	    (line < MPP_MAX_LINES)) {
-		jumpNext[line] = label + 1;
-		line++;
+	    (ps.line < MPP_MAX_LINES)) {
+		jumpNext[ps.line] = label + 1;
+		ps.line++;
 	}
 	goto next_char;
 
 done:
-	if (index != 0) {
+	if (ps.index != 0)
 		newLine();
-	}
 
-	if (bufIndex != 0) {
+	if (ps.bufIndex != 0) {
 		newVisual();
 	}
 
 	/* resolve all jumps */
-	for (x = 0; x != line; x++) {
-		if (jumpNext[x] != 0)
-			jumpNext[x] = jumpTable[jumpNext[x] - 1];
+	for (z = 0; z != ps.line; z++) {
+		if (jumpNext[z] != 0)
+			jumpNext[z] = jumpTable[jumpNext[z] - 1];
 	}
 
-	linesMax = line;
+	linesMax = ps.line;
 	currPos = 0;
 	lastPos = 0;
 
@@ -1084,6 +1100,8 @@ MppScoreMain :: handleLabelJump(int pos)
 
 	lastPos = currPos = jumpTable[pos] - 1;
 
+	mainWindow->cursorUpdate = 1;
+
 	mainWindow->handle_stop();
 }
 
@@ -1142,6 +1160,8 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 
 	if (currPos >= linesMax)
 		currPos = 0;
+
+	mainWindow->cursorUpdate = 1;
 
 	if (mainWindow->currScoreMain == this)
 		mainWindow->do_update_bpm();

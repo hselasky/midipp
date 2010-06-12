@@ -109,6 +109,7 @@ public:
 	uint8_t bpmAvgPos;
 	uint8_t synthIsLocal;
 	uint8_t restartBpm;
+	uint8_t cursorUpdate;
 
 	uint8_t scoreRecordOff;
 	uint8_t instrUpdated;

@@ -59,6 +59,7 @@ public:
 	void viewPaintEvent(QPaintEvent *event);
 	void viewMousePressEvent(QMouseEvent *e);
 
+	void parseAdv(uint8_t delta);
 	void parseMax(uint16_t *pmax, float value);
 	void newLine();
 	void newVisual();
@@ -85,6 +86,7 @@ public:
 
 	uint32_t bpmAutoPlay;
 	uint32_t pressedKeys[MPP_PRESSED_MAX];
+	uint32_t realLine[MPP_MAX_LINES];
 
 	uint16_t jumpNext[MPP_MAX_LINES];
 	uint16_t jumpTable[MPP_MAX_LABELS];
@@ -103,10 +105,17 @@ public:
 protected:
 
 	/* parse state */
-	int line;
-	int index;
-	int bufIndex;
-	int bufLine;
+	struct {
+		const QString *ps;
+		int x;
+		int line;
+		int index;
+		int bufIndex;
+		int bufLine;
+		int realLine;
+		int channel;
+		int duration;
+	} ps;
 
 	/* parse buffer */
 	char bufData[512];
