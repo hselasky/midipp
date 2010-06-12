@@ -1116,6 +1116,7 @@ MppMainWindow :: handle_watchdog()
 
 		cursor.insertText(QString("\n"));
 		cursor.endEditBlock();
+		currScoreMain->editWidget->setTextCursor(cursor);
 	}
 
 	if (instr_update)
