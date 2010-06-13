@@ -233,6 +233,9 @@ public:
 	QPushButton *but_config_revert;
 	QPushButton *but_config_fontsel;
 
+	QLabel *lbl_config_insert;
+	QLineEdit *led_config_insert;
+
 	QString *CurrMidiFileName;
 
 	/* tab <Edit> */

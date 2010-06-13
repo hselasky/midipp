@@ -456,6 +456,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_config_revert = new QPushButton(tr("Revert"));
 	but_config_fontsel = new QPushButton(tr("Select Font"));
 
+	lbl_config_insert = new QLabel(tr("Scores record prefix string"));
+	led_config_insert = new QLineEdit(QString());
+
 	x = 0;
 
 	tab_config_gl->addWidget(lbl_config_title, x, 0, 1, 5, Qt::AlignHCenter|Qt::AlignVCenter);
@@ -520,7 +523,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x++;
 
-	tab_config_gl->addWidget(but_config_fontsel, x, 0, 1, 2, Qt::AlignLeft|Qt::AlignVCenter);
+	tab_config_gl->addWidget(lbl_config_insert, x, 0, 1, 4);
+	tab_config_gl->addWidget(led_config_insert, x, 4, 1, 4);
 
 	x++;
 
@@ -528,6 +532,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x++;
 
+	tab_config_gl->addWidget(but_config_fontsel, x, 0, 1, 2, Qt::AlignLeft|Qt::AlignVCenter);
 	tab_config_gl->addWidget(but_config_apply, x, 4, 1, 2);
 	tab_config_gl->addWidget(but_config_revert, x, 6, 1, 2);
 
@@ -1090,6 +1095,7 @@ MppMainWindow :: handle_watchdog()
 
 		cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor, 1);
 		cursor.beginEditBlock();
+		cursor.insertText(led_config_insert->text());
 
 		for (x = 0; x != num_events; x++) {
 			for (y = x; y != num_events; y++) {
