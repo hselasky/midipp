@@ -639,6 +639,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 	memset(jumpNext, 0, sizeof(jumpNext));
 	memset(jumpTable, 0, sizeof(jumpTable));
 	memset(pageNext, 0, sizeof(pageNext));
+	memset(realLine, 0, sizeof(realLine));
 
 	if (pstr.isNull() || pstr.isEmpty())
 		goto done;
@@ -921,6 +922,7 @@ parse_jump:
 	    (label < MPP_MAX_LABELS) && 
 	    (ps.line < MPP_MAX_LINES)) {
 		jumpNext[ps.line] = label + 1;
+		realLine[ps.line] = ps.realLine;
 		ps.line++;
 	}
 	goto next_char;
@@ -929,9 +931,8 @@ done:
 	if (ps.index != 0)
 		newLine();
 
-	if (ps.bufIndex != 0) {
+	if (ps.bufIndex != 0)
 		newVisual();
-	}
 
 	/* resolve all jumps */
 	for (z = 0; z != ps.line; z++) {
