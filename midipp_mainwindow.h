@@ -102,7 +102,6 @@ public:
 
 	uint8_t inputEvents[MPP_MAX_QUEUE];
 	uint8_t numInputEvents;
-	uint8_t playDevice;
 	uint8_t cmdKey;
 	uint8_t playKey;
 	uint8_t bpmAvgLength;

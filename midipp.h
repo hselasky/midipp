@@ -72,6 +72,7 @@
 #define	MPP_MIN_POS	4	/* ticks */
 #define	MPP_PRESSED_MAX	128
 #define	MPP_MAX_DURATION 255	/* inclusive */
+#define	MPP_MAGIC_DEVNO	(UMIDI20_N_DEVICES - 1)
 
 #define	MPP_VISUAL_MARGIN	8
 #define	MPP_VISUAL_Y_MAX	80

@@ -1182,23 +1182,13 @@ MppMainWindow :: handle_midi_file_new()
 void
 MppMainWindow :: update_play_device_no()
 {
-	uint8_t device_no = playDevice;
 	struct umidi20_event *event;
-	uint8_t vel;
 
 	if (track == NULL)
 		return;
 
-	UMIDI20_QUEUE_FOREACH(event, &(track->queue)) {
-		event->device_no = device_no;
-
-		vel = umidi20_event_get_velocity(event);
-
-		if (vel != 0) {
-			vel |= 1;	/* hint for "MidiEventTxCallback()" */
-			umidi20_event_set_velocity(event, vel);
-		}
-	}
+	UMIDI20_QUEUE_FOREACH(event, &(track->queue))
+		event->device_no = MPP_MAGIC_DEVNO;	/* hint for "MidiEventTxCallback() */
 }
 
 void
@@ -1468,8 +1458,6 @@ MppMainWindow :: handle_config_reload()
 
 	umidi20_config_export(&cfg);
 
-	playDevice = 0;
-
 	for (n = 0; n != MPP_MAX_DEVS; n++) {
 
 		if ((deviceBits & (MPP_DEV0_RECORD << (3 * n))) && 
@@ -1491,16 +1479,15 @@ MppMainWindow :: handle_config_reload()
 		} else {
 			cfg.cfg_dev[n].play_enabled_cfg = 0;
 		}
-
-		if (deviceBits & (MPP_DEV0_PLAY << (3 * n))) {
-			playDevice = n;
-		}
 	}
 
-	umidi20_config_import(&cfg);
+	/* enable magic device */
+	n = MPP_MAGIC_DEVNO;
+	strlcpy(cfg.cfg_dev[n].play_fname, "/dev/null",
+	    sizeof(cfg.cfg_dev[n].play_fname));
+	cfg.cfg_dev[n].play_enabled_cfg = 1;
 
-	deviceBits &= ~(MPP_DEV0_PLAY|MPP_DEV1_PLAY|MPP_DEV2_PLAY);
-	deviceBits |= MPP_DEV0_PLAY << (3 * playDevice);
+	umidi20_config_import(&cfg);
 
 	handle_compile();
 
@@ -1668,8 +1655,6 @@ MppMainWindow :: do_key_press(int key, int vel, int dur)
 			vel = 0;
 		else if (vel == 1)
 			vel = 2;
-
-		vel &= 0x7E;	/* hint for "MidiEventTxCallback()" */
 	}
 
 	if (key > 127)
@@ -1935,7 +1920,9 @@ static void
 MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uint8_t *drop)
 {
 	MppMainWindow *mw = (MppMainWindow *)arg;
+	struct umidi20_event *p_event;
 	int vel;
+	int do_drop;
 
 	if (umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL) {
 		uint8_t chan;
@@ -1944,22 +1931,39 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 		vel = umidi20_event_get_velocity(event);
 
-		/* update playback velocity, if any */
+		do_drop = (device_no == MPP_MAGIC_DEVNO);
 
-		if (vel & 1) {
-			vel |= 1;	/* hint for "MidiEventTxCallback()" */
+		/* check for playback event */
+		if (do_drop) {
 
-			vel = (vel * mw->playVolume[chan]) / MPP_VOLUME_UNIT;
+			uint8_t x;
 
-			if (vel > 127)
-				vel = 127;
-			else if (vel < 0)
-				vel = 0;
+			if ((vel != 0) && (vel != MPP_VOLUME_UNIT)) {
 
-			umidi20_event_set_velocity(event, vel);
+				vel = (vel * mw->playVolume[chan]) / MPP_VOLUME_UNIT;
+
+				if (vel > 127)
+					vel = 127;
+				else if (vel < 0)
+					vel = 0;
+
+				umidi20_event_set_velocity(event, vel);
+			}
+
+			/* check if we should duplicate events for other devices */
+			for (x = 0; x < MPP_MAX_DEVS; x++) {
+				if (mw->deviceBits & (MPP_DEV0_PLAY << (3 * x))) {
+					p_event = umidi20_event_copy(event, 1);
+					if (p_event != NULL) {
+						p_event->device_no = x;
+						umidi20_event_queue_insert(&(root_dev.play[x].queue),
+							p_event, UMIDI20_CACHE_INPUT);
+					}
+				}
+			}
 		}
 
-		*drop = mw->instr[chan].muted;
+		*drop = mw->instr[chan].muted || do_drop;
 	}
 }
 
