@@ -1450,6 +1450,7 @@ void
 MppMainWindow :: handle_config_reload()
 {
 	struct umidi20_config cfg;
+	uint8_t ScMidiTriggered;
 	int n;
 	int x;
 	int y;
@@ -1496,6 +1497,9 @@ MppMainWindow :: handle_config_reload()
 	handle_config_revert();
 
 	pthread_mutex_lock(&mtx);
+	ScMidiTriggered = midiTriggered;
+	midiTriggered = 1;
+
 	for (y = 0; y != MPP_MAX_DEVS; y++) {
 		/* set local on all channels */
 		for (x = 0; x != 16; x++) {
@@ -1508,6 +1512,8 @@ MppMainWindow :: handle_config_reload()
 			}
 		}
 	}
+
+	midiTriggered = ScMidiTriggered;
 	pthread_mutex_unlock(&mtx);
 }
 
