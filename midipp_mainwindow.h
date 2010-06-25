@@ -100,6 +100,7 @@ public:
 	uint16_t playVolume[16];
 	uint16_t synthVolume[16];
 
+	uint8_t muteMap[MPP_MAX_DEVS][16];
 	uint8_t inputEvents[MPP_MAX_QUEUE];
 	uint8_t numInputEvents;
 	uint8_t cmdKey;
@@ -207,6 +208,7 @@ public:
 	QLabel *lbl_config_play;
 	QLabel *lbl_config_rec;
 	QLabel *lbl_config_synth;
+	QLabel *lbl_config_mm;
 	QLabel *lbl_config_dev[MPP_MAX_DEVS];
 	QLabel *lbl_bpm_count;
 
@@ -222,6 +224,7 @@ public:
 	QLabel	*lbl_parse_thres;
 	QSpinBox *spn_parse_thres;
 
+	QPushButton *but_config_mm[MPP_MAX_DEVS];
 	QLineEdit *led_config_dev[MPP_MAX_DEVS];
 	QCheckBox *cbx_config_dev[3 * MPP_MAX_DEVS];
 
@@ -356,6 +359,8 @@ public slots:
 	void handle_tab_changed(int index);
 
 	void handle_midi_file_convert();
+
+	void handle_mute_map();
 
 protected:
 	void keyPressEvent(QKeyEvent *event);

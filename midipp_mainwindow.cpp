@@ -24,8 +24,8 @@
  */
 
 #include <midipp_mainwindow.h>
-
 #include <midipp_scores.h>
+#include <midipp_mutemap.h>
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -421,6 +421,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_config_play = new QLabel(tr("Play"));
 	lbl_config_rec = new QLabel(tr("Rec."));
 	lbl_config_synth = new QLabel(tr("Synth"));
+	lbl_config_mm = new QLabel(tr("MuteMap"));
 	lbl_bpm_count = new QLabel(tr("BPM average length (0..32)"));
 
 	lbl_key_delay = new QLabel(tr("Random Key Delay (0..255)"));
@@ -462,30 +463,36 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	x = 0;
 
 	tab_config_gl->addWidget(lbl_config_title, x, 0, 1, 5, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_config_gl->addWidget(lbl_config_play, x, 5, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_config_gl->addWidget(lbl_config_rec, x, 6, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_config_gl->addWidget(lbl_config_synth, x, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_config_gl->addWidget(lbl_config_play, x, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_config_gl->addWidget(lbl_config_rec, x, 5, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_config_gl->addWidget(lbl_config_synth, x, 6, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_config_gl->addWidget(lbl_config_mm, x, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	x++;
 
 	for (n = 0; n != MPP_MAX_DEVS; n++) {
 		char buf[16];
 
+		but_config_mm[n] = new QPushButton(tr("MM"));
+
+		connect(but_config_mm[n], SIGNAL(pressed()), this, SLOT(handle_mute_map()));
+
 		led_config_dev[n] = new QLineEdit(QString());
 		cbx_config_dev[(3*n)+0] = new QCheckBox();
 		cbx_config_dev[(3*n)+1] = new QCheckBox();
 		cbx_config_dev[(3*n)+2] = new QCheckBox();
-
 
 		snprintf(buf, sizeof(buf), "Dev%d:", n);
 
 		lbl_config_dev[n] = new QLabel(tr(buf));
 
 		tab_config_gl->addWidget(lbl_config_dev[n], x, 0, 1, 1, Qt::AlignHCenter|Qt::AlignLeft);
-		tab_config_gl->addWidget(led_config_dev[n], x, 1, 1, 4, Qt::AlignHCenter|Qt::AlignLeft);
-		tab_config_gl->addWidget(cbx_config_dev[(3*n)+0], x, 5, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		tab_config_gl->addWidget(cbx_config_dev[(3*n)+1], x, 6, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		tab_config_gl->addWidget(cbx_config_dev[(3*n)+2], x, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		tab_config_gl->addWidget(led_config_dev[n], x, 1, 1, 3, Qt::AlignHCenter|Qt::AlignLeft);
+
+		tab_config_gl->addWidget(cbx_config_dev[(3*n)+0], x, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		tab_config_gl->addWidget(cbx_config_dev[(3*n)+1], x, 5, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		tab_config_gl->addWidget(cbx_config_dev[(3*n)+2], x, 6, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		tab_config_gl->addWidget(but_config_mm[n], x, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 		x++;
 	}
@@ -1969,6 +1976,12 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			}
 		}
 
+		/* check mute map */
+		if ((device_no < MPP_MAX_DEVS) &&
+		    (mw->muteMap[device_no][chan])) {
+			do_drop = 1;
+		}
+
 		*drop = mw->instr[chan].muted || do_drop;
 	}
 }
@@ -2582,4 +2595,19 @@ MppMainWindow :: keyReleaseEvent(QKeyEvent *event)
 		handle_play_release();
 	}
 #endif
+}
+
+void
+MppMainWindow :: handle_mute_map()
+{
+	MppMuteMap *mm_diag;
+	int n;
+
+	for (n = 0; n != MPP_MAX_DEVS; n++) {
+		if (but_config_mm[n]->isDown()) {
+			mm_diag = new MppMuteMap(this, this, n);
+			if (mm_diag != NULL)
+				mm_diag->exec();
+		}
+	}
 }
