@@ -265,7 +265,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_midi_trigger = new QPushButton(tr("Trigger"));
 	but_midi_rewind = new QPushButton(tr("Rewind"));
 
-	but_play = new QPushButton(tr(" \nPlay\n "));
+	but_play = new QPushButton(tr("Play"));
+	but_play->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
 	lbl_volume = new QLabel(tr("Volume (0..127..511)"));
 	spn_volume = new QSpinBox();

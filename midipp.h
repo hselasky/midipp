@@ -59,6 +59,7 @@
 #include <QFileInfo>
 #include <QPixmap>
 #include <QMouseEvent>
+#include <QSizePolicy>
 
 #include <umidi20.h>
 
