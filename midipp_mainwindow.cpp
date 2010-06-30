@@ -265,7 +265,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_midi_trigger = new QPushButton(tr("Trigger"));
 	but_midi_rewind = new QPushButton(tr("Rewind"));
 
-	but_play = new QPushButton(tr("Play"));
+	but_play = new QPushButton(tr("Shift+Play"));
 	but_play->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
 	lbl_volume = new QLabel(tr("Volume (0..127..511)"));
@@ -1836,12 +1836,29 @@ MppMainWindow :: do_bpm_stats(void)
 	lbl_bpm_avg_val->display(QString(buf));
 }
 
+static void
+MidiEventRxPedal(MppMainWindow *mw, uint8_t val)
+{
+	struct mid_data *d = &mw->mid_data;
+	uint8_t y;
+	uint8_t chan;
+
+	chan = mw->currScoreMain->synthChannel;
+
+	for (y = 0; y != MPP_MAX_DEVS; y++) {
+		if (mw->check_synth(y, chan))
+			mid_pedal(d, val);
+	}
+
+	if (mw->check_record(chan))
+		mid_pedal(d, val);
+}
+
 /* is called locked */
 static void
 MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uint8_t *drop)
 {
 	MppMainWindow *mw = (MppMainWindow *)arg;
-	struct mid_data *d = &mw->mid_data;
 	uint8_t y;
 	uint8_t chan;
 	int key;
@@ -1854,15 +1871,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 	if (umidi20_event_get_control_address(event) == 0x40) {
 
-		for (y = 0; y != MPP_MAX_DEVS; y++) {
-			if (mw->check_synth(y, chan)) {
-				mid_pedal(d, umidi20_event_get_control_value(event));
-			}
-		}
-
-		if (mw->check_record(chan)) {
-			mid_pedal(d, umidi20_event_get_control_value(event));
-		}
+		MidiEventRxPedal(mw, umidi20_event_get_control_value(event));
 
 	} else if (umidi20_event_is_key_start(event)) {
 
@@ -2573,29 +2582,23 @@ MppMainWindow :: MidiUnInit(void)
 void
 MppMainWindow :: keyPressEvent(QKeyEvent *event)
 {
-#if 0
-	if (event->isAutoRepeat())
-		return;
-
-	if (event->key() == Qt::Key_PageUp || 
-	    event->key() == Qt::Key_PageDown) {
-		handle_play_press();
+	/* fake pedal down event */
+	if (event->key() == Qt::Key_Shift) {
+		pthread_mutex_lock(&mtx);
+		MidiEventRxPedal(this, 127);
+		pthread_mutex_unlock(&mtx);
 	}
-#endif
 }
 
 void
 MppMainWindow :: keyReleaseEvent(QKeyEvent *event)
 {
-#if 0
-	if (event->isAutoRepeat())
-		return;
-
-	if (event->key() == Qt::Key_PageUp || 
-	    event->key() == Qt::Key_PageDown) {
-		handle_play_release();
+	/* fake pedal up event */
+	if (event->key() == Qt::Key_Shift) {
+		pthread_mutex_lock(&mtx);
+		MidiEventRxPedal(this, 0);
+		pthread_mutex_unlock(&mtx);
 	}
-#endif
 }
 
 void
