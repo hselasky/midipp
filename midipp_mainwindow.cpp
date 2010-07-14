@@ -225,21 +225,25 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_curr_time_val->setMode(QLCDNumber::Dec);
 	lbl_curr_time_val->setFrameShape(QLCDNumber::NoFrame);
 	lbl_curr_time_val->setSegmentStyle(QLCDNumber::Flat);
+	lbl_curr_time_val->setAutoFillBackground(1);
 
 	lbl_bpm_min_val = new QLCDNumber(4);
 	lbl_bpm_min_val->setMode(QLCDNumber::Dec);
 	lbl_bpm_min_val->setFrameShape(QLCDNumber::NoFrame);
 	lbl_bpm_min_val->setSegmentStyle(QLCDNumber::Flat);
+	lbl_bpm_min_val->setAutoFillBackground(1);
 
 	lbl_bpm_avg_val = new QLCDNumber(4);
 	lbl_bpm_avg_val->setMode(QLCDNumber::Dec);
 	lbl_bpm_avg_val->setFrameShape(QLCDNumber::NoFrame);
 	lbl_bpm_avg_val->setSegmentStyle(QLCDNumber::Flat);
+	lbl_bpm_avg_val->setAutoFillBackground(1);
 
 	lbl_bpm_max_val = new QLCDNumber(4);
 	lbl_bpm_max_val->setMode(QLCDNumber::Dec);
 	lbl_bpm_max_val->setFrameShape(QLCDNumber::NoFrame);
 	lbl_bpm_max_val->setSegmentStyle(QLCDNumber::Flat);
+	lbl_bpm_max_val->setAutoFillBackground(1);
 
 	lbl_score_record = new QLabel(QString());
 	lbl_midi_record = new QLabel(QString());
@@ -479,6 +483,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		connect(but_config_mm[n], SIGNAL(pressed()), this, SLOT(handle_mute_map()));
 
 		led_config_dev[n] = new QLineEdit(QString());
+
 		cbx_config_dev[(3*n)+0] = new QCheckBox();
 		cbx_config_dev[(3*n)+1] = new QCheckBox();
 		cbx_config_dev[(3*n)+2] = new QCheckBox();
@@ -1757,7 +1762,6 @@ void
 MppMainWindow :: do_clock_stats(void)
 {
 	uint32_t time_offset;
-	char buf[32];
 
 	pthread_mutex_lock(&mtx);
 
@@ -1774,8 +1778,7 @@ MppMainWindow :: do_clock_stats(void)
 
 	pthread_mutex_unlock(&mtx);
 
-	snprintf(buf, sizeof(buf), "%d", time_offset);
-	lbl_curr_time_val->display(QString(buf));
+	lbl_curr_time_val->display((int)time_offset);
 }
 
 void
@@ -1787,7 +1790,6 @@ MppMainWindow :: do_bpm_stats(void)
 	uint32_t val;
 	uint8_t x;
 	uint8_t len;
-	char buf[32];
 
 	len = bpmAvgLength;
 
@@ -1826,14 +1828,9 @@ MppMainWindow :: do_bpm_stats(void)
 	if (max > 9999)
 		max = 9999;
 
-	snprintf(buf, sizeof(buf), "%d", min);
-	lbl_bpm_max_val->display(QString(buf));
-
-	snprintf(buf, sizeof(buf), "%d", max);
-	lbl_bpm_min_val->display(QString(buf));
-
-	snprintf(buf, sizeof(buf), "%d", sum);
-	lbl_bpm_avg_val->display(QString(buf));
+	lbl_bpm_max_val->display((int)min);
+	lbl_bpm_min_val->display((int)max);
+	lbl_bpm_avg_val->display((int)sum);
 }
 
 static void
