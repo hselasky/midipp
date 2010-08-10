@@ -2582,7 +2582,8 @@ MppMainWindow :: keyPressEvent(QKeyEvent *event)
 	/* fake pedal down event */
 	if (event->key() == Qt::Key_Shift) {
 		pthread_mutex_lock(&mtx);
-		MidiEventRxPedal(this, 127);
+		if (midiTriggered != 0)
+			MidiEventRxPedal(this, 127);
 		pthread_mutex_unlock(&mtx);
 	}
 }
@@ -2593,7 +2594,8 @@ MppMainWindow :: keyReleaseEvent(QKeyEvent *event)
 	/* fake pedal up event */
 	if (event->key() == Qt::Key_Shift) {
 		pthread_mutex_lock(&mtx);
-		MidiEventRxPedal(this, 0);
+		if (midiTriggered != 0)
+			MidiEventRxPedal(this, 0);
 		pthread_mutex_unlock(&mtx);
 	}
 }
