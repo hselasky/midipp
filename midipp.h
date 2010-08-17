@@ -83,6 +83,7 @@
 class MppMainWindow;
 class MppScoreView;
 class MppScoreMain;
+class MppLoopTab;
 
 struct MppScoreEntry {
 	uint8_t key;

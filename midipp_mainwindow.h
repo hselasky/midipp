@@ -56,10 +56,12 @@ public:
 	void do_update_bpm(void);
 	void do_key_press(int key, int vel, int dur);
 
+	uint32_t get_time_offset(void);
+
 	uint8_t noise8(uint8_t factor);
 	uint8_t do_instr_check(struct umidi20_event *event, uint8_t *pchan);
-	uint8_t check_record(uint8_t chan);
-	uint8_t check_synth(uint8_t device_no, uint8_t chan);
+	uint8_t check_record(uint8_t chan, uint32_t off);
+	uint8_t check_synth(uint8_t device_no, uint8_t chan, uint32_t off);
 
 	pthread_mutex_t mtx;
 
@@ -104,6 +106,7 @@ public:
 	uint8_t inputEvents[MPP_MAX_QUEUE];
 	uint8_t numInputEvents;
 	uint8_t cmdKey;
+	uint8_t baseKey;
 	uint8_t playKey;
 	uint8_t bpmAvgLength;
 	uint8_t bpmAvgPos;
@@ -297,6 +300,10 @@ public:
 	QPushButton *but_volume_apply;
 	QPushButton *but_volume_revert;
 	QPushButton *but_volume_reset;
+
+	/* tab <Loop> */
+
+	MppLoopTab *tab_loop;
 
 	/* MIDI stuff */
 	struct mid_data mid_data;

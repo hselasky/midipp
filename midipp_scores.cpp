@@ -24,8 +24,8 @@
  */
 
 #include <midipp_mainwindow.h>
-
 #include <midipp_scores.h>
+#include <midipp_looptab.h>
 
 static void MppTimerCallback(void *arg);
 
@@ -1139,7 +1139,7 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 				continue;
 
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
-				if (mainWindow->check_synth(y, chan)) {
+				if (mainWindow->check_synth(y, chan, 0)) {
 
 					mid_delay(d, delay);
 
@@ -1147,12 +1147,14 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 				}
 			}
 
-			if (mainWindow->check_record(chan)) {
+			if (mainWindow->check_record(chan, 0)) {
 
 				mid_delay(d, delay);
 
 				mainWindow->do_key_press(out_key, vel, 0);
 			}
+
+			mainWindow->tab_loop->add_key(out_key, vel);
 		}
 	}
 
@@ -1190,7 +1192,7 @@ MppScoreMain :: handleKeyRelease(int in_key)
 			pressedKeys[x] = 0;
 
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
-				if (mainWindow->check_synth(y, chan)) {
+				if (mainWindow->check_synth(y, chan, 0)) {
 
 					mid_delay(d, delay);
 
@@ -1198,12 +1200,14 @@ MppScoreMain :: handleKeyRelease(int in_key)
 				}
 			}
 
-			if (mainWindow->check_record(chan)) {
+			if (mainWindow->check_record(chan, 0)) {
 
 				mid_delay(d, delay);
 
 				mainWindow->do_key_press(out_key, 0, 0);
 			}
+
+			mainWindow->tab_loop->add_key(out_key, 0);
 		}
 
 		if (pressedKeys[x] != 0)

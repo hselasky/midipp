@@ -26,6 +26,7 @@
 #include <midipp_mainwindow.h>
 #include <midipp_scores.h>
 #include <midipp_mutemap.h>
+#include <midipp_looptab.h>
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -86,6 +87,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		scores_main[x] = new MppScoreMain(this);
 
 	currScoreMain = scores_main[0];
+	tab_loop = new MppLoopTab(this, this);
 
 	tab_file_wg = new QWidget();
 	tab_play_wg = new QWidget();
@@ -115,6 +117,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_tw->addTab(tab_config_wg, tr("Config"));
 	main_tw->addTab(tab_instr_wg, tr("Instrument"));
 	main_tw->addTab(tab_volume_wg, tr("Volume"));
+	main_tw->addTab(tab_loop, tr("Loop"));
 
 	/* <File> Tab */
 
@@ -921,6 +924,7 @@ MppMainWindow :: handle_base_key_changed(int key)
 	for (x = 0; x != MPP_MAX_VIEWS; x++)
 		scores_main[x]->baseKey = key;
 
+	baseKey = key;
 	pthread_mutex_unlock(&mtx);
 
 	lbl_base_key->setText(tr("Base Key (0..127) ") + QString(mid_key_str[key]));
@@ -1153,6 +1157,8 @@ MppMainWindow :: handle_watchdog()
 	}
 
 	currScoreMain->viewWidget->repaint();
+
+	tab_loop->watchdog();
 }
 
 
@@ -1516,7 +1522,7 @@ MppMainWindow :: handle_config_reload()
 	for (y = 0; y != MPP_MAX_DEVS; y++) {
 		/* set local on all channels */
 		for (x = 0; x != 16; x++) {
-			if (check_synth(y, x)) {
+			if (check_synth(y, x, 0)) {
 				uint8_t buf[4];
 				buf[0] = 0xB0 | x;
 				buf[1] = 0x7A;
@@ -1608,7 +1614,7 @@ MppMainWindow :: handle_config_fontsel()
 }
 
 uint8_t
-MppMainWindow :: check_synth(uint8_t device_no, uint8_t chan)
+MppMainWindow :: check_synth(uint8_t device_no, uint8_t chan, uint32_t off)
 {
 	struct mid_data *d = &mid_data;
 	uint32_t pos;
@@ -1622,7 +1628,7 @@ MppMainWindow :: check_synth(uint8_t device_no, uint8_t chan)
 
 		handle_midi_trigger();
 
-		pos = umidi20_get_curr_position() - startPosition + 1;
+		pos = umidi20_get_curr_position() - startPosition + 1 + off;
 
 		mid_set_channel(d, chan);
 		mid_set_position(d, pos);
@@ -1634,7 +1640,7 @@ MppMainWindow :: check_synth(uint8_t device_no, uint8_t chan)
 }
 
 uint8_t
-MppMainWindow :: check_record(uint8_t chan)
+MppMainWindow :: check_record(uint8_t chan, uint32_t off)
 {
 	struct mid_data *d = &mid_data;
 	uint32_t pos;
@@ -1646,7 +1652,7 @@ MppMainWindow :: check_record(uint8_t chan)
 
 	handle_midi_trigger();
 
-	pos = (umidi20_get_curr_position() - startPosition) % 0x40000000UL;
+	pos = (umidi20_get_curr_position() - startPosition + off) % 0x40000000UL;
 	if (pos < MPP_MIN_POS)
 		pos = MPP_MIN_POS;
 
@@ -1717,16 +1723,18 @@ MppMainWindow :: handle_stop(void)
 			*pkey = 0;
 
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
-				if (check_synth(y, chan)) {
+				if (check_synth(y, chan, 0)) {
 					mid_delay(d, delay);
 					do_key_press(out_key, 0, 0);
 				}
 			}
 
-			if (check_record(chan)) {
+			if (check_record(chan, 0)) {
 				mid_delay(d, delay);
 				do_key_press(out_key, 0, 0);
 			}
+
+			tab_loop->add_key(out_key, 0);
 		}
 	    }
 	}
@@ -1758,12 +1766,10 @@ MppMainWindow :: do_update_bpm(void)
 		bpmAvgPos = 0;
 }
 
-void
-MppMainWindow :: do_clock_stats(void)
+uint32_t
+MppMainWindow :: get_time_offset(void)
 {
 	uint32_t time_offset;
-
-	pthread_mutex_lock(&mtx);
 
 	if (midiTriggered == 0) {
 		if (midiPaused != 0)
@@ -1776,6 +1782,16 @@ MppMainWindow :: do_clock_stats(void)
 
 	time_offset %= 100000000UL;
 
+	return (time_offset);
+}
+
+void
+MppMainWindow :: do_clock_stats(void)
+{
+	uint32_t time_offset;
+
+	pthread_mutex_lock(&mtx);
+	time_offset = get_time_offset();
 	pthread_mutex_unlock(&mtx);
 
 	lbl_curr_time_val->display((int)time_offset);
@@ -1843,12 +1859,14 @@ MidiEventRxPedal(MppMainWindow *mw, uint8_t val)
 	chan = mw->currScoreMain->synthChannel;
 
 	for (y = 0; y != MPP_MAX_DEVS; y++) {
-		if (mw->check_synth(y, chan))
+		if (mw->check_synth(y, chan, 0))
 			mid_pedal(d, val);
 	}
 
-	if (mw->check_record(chan))
+	if (mw->check_record(chan, 0))
 		mid_pedal(d, val);
+
+	mw->tab_loop->add_pedal(val);
 }
 
 /* is called locked */
@@ -1884,7 +1902,10 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			}
 		}
 
-		if (mw->midiPassThruOff != 0) {
+		if (mw->tab_loop->handle_trigN(lbl, key - mw->baseKey, vel)) {
+
+		} else if (mw->midiPassThruOff != 0) {
+
 			if (mw->currScoreMain->checkLabelJump(lbl)) {
 				mw->handle_jump_locked(lbl);
 			} else {
@@ -1894,15 +1915,18 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 				mw->currScoreMain->handleKeyPress(key, vel);
 			}
 		} else if (mw->currScoreMain->setPressedKey(chan, key, 255, 0) == 0) {
+
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
-				if (mw->check_synth(y, chan)) {
+				if (mw->check_synth(y, chan, 0)) {
 					mw->do_key_press(key, vel, 0);
 				}
 			}
 
-			if (mw->check_record(chan)) {
+			if (mw->check_record(chan, 0)) {
 				mw->do_key_press(key, vel, 0);
 			}
+
+			mw->tab_loop->add_key(key, vel);
 
 			mw->do_update_bpm();
 		}
@@ -1911,7 +1935,9 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 		key = umidi20_event_get_key(event) & 0x7F;
 		lbl = key - mw->cmdKey;
 
-		if (mw->midiPassThruOff != 0) {
+		if (mw->tab_loop->checkLabelTrig(lbl)) {
+
+		} else if (mw->midiPassThruOff != 0) {
 
 			if (mw->currScoreMain->checkLabelJump(lbl) == 0) {
 				mw->currScoreMain->handleKeyRelease(key);
@@ -1920,14 +1946,16 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 		} else if (mw->currScoreMain->setPressedKey(chan, key, 0, 0) == 0) {
 
 			for (y = 0; y != MPP_MAX_DEVS; y++) {
-				if (mw->check_synth(y, chan)) {
+				if (mw->check_synth(y, chan, 0)) {
 					mw->do_key_press(key, 0, 0);
 				}
 			}
 
-			if (mw->check_record(chan)) {
+			if (mw->check_record(chan, 0)) {
 				mw->do_key_press(key, 0, 0);
 			}
+
+			mw->tab_loop->add_key(key, 0);
 		}
 	} else if (mw->do_instr_check(event, &chan)) {
 		/* found instrument */
@@ -2175,7 +2203,7 @@ MppMainWindow :: handle_instr_reload()
 
 		instr[x].updated = 0;
 		for (y = 0; y != MPP_MAX_DEVS; y++) {
-			if (check_synth(y, x)) {
+			if (check_synth(y, x, 0)) {
 				mid_delay(d, (4 * x));
 				mid_set_bank_program(d, x, 
 				    instr[x].bank,
