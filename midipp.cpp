@@ -25,6 +25,8 @@
 
 #include <midipp.h>
 
+#include <signal.h>
+
 #include <midipp_mainwindow.h>
 
 QColor color_black   (0x00, 0x00, 0x00, 0xff);
@@ -140,11 +142,17 @@ failure:
 	return;
 }
 
+static void
+mask_signal(int sig)
+{
+}
 
 int
 main(int argc, char **argv)
 {
 	QApplication app(argc, argv);
+
+	signal(SIGPIPE, mask_signal);
 
 	umidi20_init();
 

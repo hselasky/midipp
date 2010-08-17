@@ -1058,10 +1058,11 @@ void
 MppMainWindow :: handle_play_press()
 {
 	pthread_mutex_lock(&mtx);
-	if (tab_loop->handle_trigN(-1, playKey - baseKey, 127)) {
+	if (tab_loop->handle_trigN(-1, playKey - baseKey,
+	    synthVolume[currScoreMain->synthChannel])) {
 		/* ignore */
 	} else {
-		currScoreMain->handleKeyPress(playKey, 90);
+		currScoreMain->handleKeyPress(playKey, 127);
 	}
 	pthread_mutex_unlock(&mtx);
 }
