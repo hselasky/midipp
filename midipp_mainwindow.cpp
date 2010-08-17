@@ -1060,8 +1060,10 @@ MppMainWindow :: handle_play_press()
 	pthread_mutex_lock(&mtx);
 	if (tab_loop->handle_trigN(-1, playKey - baseKey, 90)) {
 		/* ignore */
-	} else {
+	} else if (midiPassThruOff != 0) {
 		currScoreMain->handleKeyPress(playKey, 90);
+	} else {
+		do_key_press(playKey, 90, 0);
 	}
 	pthread_mutex_unlock(&mtx);
 }
@@ -1072,8 +1074,10 @@ MppMainWindow :: handle_play_release()
 	pthread_mutex_lock(&mtx);
 	if (tab_loop->checkLabelTrig(-1)) {
 		/* ignore */
-	} else {
+	} else if (midiPassThruOff != 0) {
 		currScoreMain->handleKeyRelease(playKey);
+	} else {
+		do_key_press(playKey, 0, 0);
 	}
 	pthread_mutex_unlock(&mtx);
 }
