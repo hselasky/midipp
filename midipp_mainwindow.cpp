@@ -1058,7 +1058,11 @@ void
 MppMainWindow :: handle_play_press()
 {
 	pthread_mutex_lock(&mtx);
-	currScoreMain->handleKeyPress(playKey, 90);
+	if (tab_loop->handle_trigN(-1, playKey - baseKey, 127)) {
+		/* ignore */
+	} else {
+		currScoreMain->handleKeyPress(playKey, 90);
+	}
 	pthread_mutex_unlock(&mtx);
 }
 
@@ -1066,7 +1070,11 @@ void
 MppMainWindow :: handle_play_release()
 {
 	pthread_mutex_lock(&mtx);
-	currScoreMain->handleKeyRelease(playKey);
+	if (tab_loop->checkLabelTrig(-1)) {
+		/* ignore */
+	} else {
+		currScoreMain->handleKeyRelease(playKey);
+	}
 	pthread_mutex_unlock(&mtx);
 }
 
