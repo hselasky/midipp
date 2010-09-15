@@ -280,6 +280,7 @@ public:
 
 	QCheckBox *cbx_instr_mute[16];
 
+	QPushButton *but_instr_rem;
 	QPushButton *but_instr_program;
 	QPushButton *but_instr_apply;
 	QPushButton *but_instr_revert;
@@ -355,6 +356,7 @@ public slots:
 	void handle_instr_reload();
 	void handle_instr_program();
 	void handle_instr_channel_changed(int);
+	void handle_instr_rem();
 
 	void handle_volume_changed(int);
 	void handle_volume_apply();

@@ -625,6 +625,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_instr_revert = new QPushButton(tr("Revert"));
 	but_instr_program = new QPushButton(tr("Program"));
 	but_instr_reset = new QPushButton(tr("Reset"));
+	but_instr_rem = new QPushButton(tr("Delete muted"));
 
 	spn_instr_curr_chan = new QSpinBox();
 	connect(spn_instr_curr_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_instr_channel_changed(int)));
@@ -651,7 +652,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_instr_gl->addWidget(spn_instr_curr_chan, x, 0, 1, 1);
 	tab_instr_gl->addWidget(spn_instr_curr_bank, x, 1, 1, 1);
 	tab_instr_gl->addWidget(spn_instr_curr_prog, x, 2, 1, 1);
-	tab_instr_gl->addWidget(but_instr_program, x, 4, 1, 4);
+	tab_instr_gl->addWidget(but_instr_program, x, 3, 1, 5);
 
 	x++;
 
@@ -693,6 +694,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x++;
 
+	tab_instr_gl->addWidget(but_instr_rem, x, 0, 1, 2);
 	tab_instr_gl->addWidget(but_instr_reset, x, 2, 1, 2);
 	tab_instr_gl->addWidget(but_instr_revert, x, 4, 1, 2);
 	tab_instr_gl->addWidget(but_instr_apply, x, 6, 1, 2);
@@ -782,6 +784,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_config_revert, SIGNAL(pressed()), this, SLOT(handle_config_revert()));
 	connect(but_config_fontsel, SIGNAL(pressed()), this, SLOT(handle_config_fontsel()));
 
+	connect(but_instr_rem, SIGNAL(pressed()), this, SLOT(handle_instr_rem()));
 	connect(but_instr_program, SIGNAL(pressed()), this, SLOT(handle_instr_program()));
 	connect(but_instr_apply, SIGNAL(pressed()), this, SLOT(handle_instr_apply()));
 	connect(but_instr_revert, SIGNAL(pressed()), this, SLOT(handle_instr_revert()));
@@ -2653,4 +2656,29 @@ MppMainWindow :: handle_mute_map()
 				mm_diag->exec();
 		}
 	}
+}
+
+void
+MppMainWindow :: handle_instr_rem()
+{
+	struct umidi20_event *event;
+	struct umidi20_event *event_next;
+	uint8_t chan;
+
+	if (track == NULL)
+		return;
+
+	handle_instr_apply();
+
+	pthread_mutex_lock(&mtx);
+	UMIDI20_QUEUE_FOREACH_SAFE(event, &(track->queue), event_next) {
+		if (umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL) {
+			chan = umidi20_event_get_channel(event) & 0xF;
+			if (instr[chan].muted) {
+				UMIDI20_IF_REMOVE(&(track->queue), event);
+				umidi20_event_free(event);
+			}
+		}
+	}
+	pthread_mutex_unlock(&mtx);
 }
