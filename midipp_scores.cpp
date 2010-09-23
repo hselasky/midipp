@@ -58,6 +58,10 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	    " * Command syntax:\n"
 	    " * U<number> - specifies the duration of the following scores (0..255)\n"
 	    " * T<number> - specifies the track number of the following scores (0..31)\n"
+	    " * K<number> - defines a command (0..99)\n"
+	    " * K0 - no operation\n"
+	    " * K1 - lock play key until next label jump\n"
+	    " * K2 - unlock play key\n"
 	    " * L<number> - defines a label (0..31)\n"
 	    " * J<number> - jumps to the given label (0..31)\n"
 	    " * JP<number> - jumps to the given label (0..31) and starts a new page\n"
@@ -444,6 +448,7 @@ MppScoreMain :: viewMousePressEvent(QMouseEvent *e)
 	if (mousePressPos[yi] < max) {
 		currPos = mousePressPos[yi];
 		lastPos = mousePressPos[yi];
+		isPlayKeyLocked = 0;
 	}
 
 	mainWindow->handle_stop();
@@ -615,6 +620,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 	int y;
 	int label;
 	int channel;
+	int command;
 	int base_key;
 	int duration;
 	int flag;
@@ -640,6 +646,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 	memset(jumpTable, 0, sizeof(jumpTable));
 	memset(pageNext, 0, sizeof(pageNext));
 	memset(realLine, 0, sizeof(realLine));
+	memset(playCommand, 0, sizeof(playCommand));
 
 	if (pstr.isNull() || pstr.isEmpty())
 		goto done;
@@ -705,6 +712,11 @@ next_char:
 	case 'T':
 		if (y == 0) {
 			goto parse_channel;
+		}
+		goto next_char;
+	case 'K':
+		if (y == 0) {
+			goto parse_command;
 		}
 		goto next_char;
 	case 'L':
@@ -822,6 +834,26 @@ parse_channel:
 	}
 	goto next_char;
 
+parse_command:
+	c = pstr[ps.x+1].toAscii();
+	if (c >= '0' && c <= '9') {
+		d = pstr[ps.x+2].toAscii();
+		if (d >= '0' && d <= '9') {
+			command = (10 * (c - '0')) + (d - '0');
+			parseAdv(2);
+		} else {
+			command = (c - '0');
+			parseAdv(1);
+		}
+	} else {
+		command = MPP_CMD_NOP;		/* NOP */
+	}
+
+	if (ps.line < MPP_MAX_LINES)
+		playCommand[ps.line] = command;
+
+	goto next_char;
+
 parse_label:
 	c = pstr[ps.x+1].toAscii();
 	if (c >= '0' && c <= '9') {
@@ -840,7 +872,6 @@ parse_label:
 		jumpTable[label] = ps.line + 1;
 	}
 	goto next_char;
-
 
 parse_string:
 	c = pstr[ps.x+1].toAscii();
@@ -943,6 +974,7 @@ done:
 	linesMax = ps.line;
 	currPos = 0;
 	lastPos = 0;
+	isPlayKeyLocked = 0;
 
 	handleParseSub(NULL, QPoint(0,0), 1.0);
 }
@@ -1101,6 +1133,8 @@ MppScoreMain :: handleLabelJump(int pos)
 
 	lastPos = currPos = jumpTable[pos] - 1;
 
+	isPlayKeyLocked = 0;
+
 	mainWindow->cursorUpdate = 1;
 
 	mainWindow->handle_stop();
@@ -1120,8 +1154,28 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 	uint8_t delay;
 
 	pos = jumpNext[currPos];
-	if (pos != 0)
+	if (pos != 0) {
 		currPos = pos - 1;
+		isPlayKeyLocked = 0;
+	}
+
+	switch (playCommand[currPos]) {
+	case MPP_CMD_LOCK:
+		whatPlayKeyLocked = in_key;
+		isPlayKeyLocked = 1;
+		break;
+	case MPP_CMD_UNLOCK:
+		isPlayKeyLocked = 0;
+		break;
+	default:
+		break;
+	}
+
+	if (isPlayKeyLocked != 0) {
+		if (in_key != (int)whatPlayKeyLocked) {
+			return;
+		}
+	}
 
 	pn = &scores[currPos][0];
 
@@ -1161,8 +1215,10 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 	lastPos = currPos;
 	currPos++;
 
-	if (currPos >= linesMax)
+	if (currPos >= linesMax) {
 		currPos = 0;
+		isPlayKeyLocked = 0;
+	}
 
 	mainWindow->cursorUpdate = 1;
 
@@ -1180,6 +1236,12 @@ MppScoreMain :: handleKeyRelease(int in_key)
 	uint8_t delay;
 	uint8_t x;
 	uint8_t y;
+
+	if (isPlayKeyLocked != 0) {
+		if (in_key != (int)whatPlayKeyLocked) {
+			return;
+		}
+	}
 
 	for (x = 0; x != MPP_PRESSED_MAX; x++) {
 		if ((pressedKeys[x] & 0xFF) == 1) {

@@ -97,10 +97,15 @@ public:
 	uint16_t maxScoresWidth;
 
 	uint8_t pageNext[MPP_MAX_LINES];
+#define	MPP_CMD_NOP 0
+#define	MPP_CMD_LOCK 1
+#define	MPP_CMD_UNLOCK 2
+	uint8_t playCommand[MPP_MAX_LINES];
 	uint8_t synthChannel;
 	uint8_t baseKey;
 	uint8_t delayNoise;
-
+	uint8_t isPlayKeyLocked;
+	uint8_t whatPlayKeyLocked;
 
 protected:
 
