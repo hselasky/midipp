@@ -55,6 +55,8 @@ public:
 	void do_clock_stats(void);
 	void do_update_bpm(void);
 	void do_key_press(int key, int vel, int dur);
+	void output_key_sub(int chan, int key, int vel, int delay, int dur);
+	void output_key(int chan, int key, int vel, int delay, int dur);
 
 	uint32_t get_time_offset(void);
 
@@ -285,6 +287,8 @@ public:
 	QPushButton *but_instr_apply;
 	QPushButton *but_instr_revert;
 	QPushButton *but_instr_reset;
+	QPushButton *but_instr_mute_all;
+	QPushButton *but_instr_unmute_all;
 
 	/* tab <Volume> */
 
@@ -305,6 +309,10 @@ public:
 	/* tab <Loop> */
 
 	MppLoopTab *tab_loop;
+
+	/* tab <Echo> */
+
+	MppEchoTab *tab_echo;
 
 	/* MIDI stuff */
 	struct mid_data mid_data;
@@ -357,6 +365,8 @@ public slots:
 	void handle_instr_program();
 	void handle_instr_channel_changed(int);
 	void handle_instr_rem();
+	void handle_instr_mute_all();
+	void handle_instr_unmute_all();
 
 	void handle_volume_changed(int);
 	void handle_volume_apply();

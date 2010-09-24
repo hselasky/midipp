@@ -1144,12 +1144,10 @@ MppScoreMain :: handleLabelJump(int pos)
 void
 MppScoreMain :: handleKeyPress(int in_key, int vel)
 {
-	struct mid_data *d = &mainWindow->mid_data;
 	struct MppScoreEntry *pn;
 	uint16_t pos;
 	uint8_t chan;
 	uint8_t x;
-	uint8_t y;
 	uint8_t out_key;
 	uint8_t delay;
 
@@ -1192,23 +1190,7 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 			if (setPressedKey(chan, out_key, pn->dur, delay))
 				continue;
 
-			for (y = 0; y != MPP_MAX_DEVS; y++) {
-				if (mainWindow->check_synth(y, chan, 0)) {
-
-					mid_delay(d, delay);
-
-					mainWindow->do_key_press(out_key, vel, 0);
-				}
-			}
-
-			if (mainWindow->check_record(chan, 0)) {
-
-				mid_delay(d, delay);
-
-				mainWindow->do_key_press(out_key, vel, 0);
-			}
-
-			mainWindow->tab_loop->add_key(out_key, vel);
+			mainWindow->output_key(chan, out_key, vel, delay, 0);
 		}
 	}
 
@@ -1230,12 +1212,10 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 void
 MppScoreMain :: handleKeyRelease(int in_key)
 {
-	struct mid_data *d = &mainWindow->mid_data;
 	uint8_t out_key;
 	uint8_t chan;
 	uint8_t delay;
 	uint8_t x;
-	uint8_t y;
 
 	if (isPlayKeyLocked != 0) {
 		if (in_key != (int)whatPlayKeyLocked) {
@@ -1253,23 +1233,7 @@ MppScoreMain :: handleKeyRelease(int in_key)
 			/* clear entry */
 			pressedKeys[x] = 0;
 
-			for (y = 0; y != MPP_MAX_DEVS; y++) {
-				if (mainWindow->check_synth(y, chan, 0)) {
-
-					mid_delay(d, delay);
-
-					mainWindow->do_key_press(out_key, 0, 0);
-				}
-			}
-
-			if (mainWindow->check_record(chan, 0)) {
-
-				mid_delay(d, delay);
-
-				mainWindow->do_key_press(out_key, 0, 0);
-			}
-
-			mainWindow->tab_loop->add_key(out_key, 0);
+			mainWindow->output_key(chan, out_key, 0, delay, 0);
 		}
 
 		if (pressedKeys[x] != 0)

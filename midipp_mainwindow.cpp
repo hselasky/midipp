@@ -27,6 +27,7 @@
 #include <midipp_scores.h>
 #include <midipp_mutemap.h>
 #include <midipp_looptab.h>
+#include <midipp_echotab.h>
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -88,6 +89,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	currScoreMain = scores_main[0];
 	tab_loop = new MppLoopTab(this, this);
+	tab_echo = new MppEchoTab(this, this);
 
 	tab_file_wg = new QWidget();
 	tab_play_wg = new QWidget();
@@ -118,6 +120,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_tw->addTab(tab_instr_wg, tr("Instrument"));
 	main_tw->addTab(tab_volume_wg, tr("Volume"));
 	main_tw->addTab(tab_loop, tr("Loop"));
+	main_tw->addTab(tab_echo, tr("Echo"));
 
 	/* <File> Tab */
 
@@ -626,6 +629,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_instr_program = new QPushButton(tr("Program"));
 	but_instr_reset = new QPushButton(tr("Reset"));
 	but_instr_rem = new QPushButton(tr("Delete muted"));
+	but_instr_mute_all = new QPushButton(tr("Mute all"));
+	but_instr_unmute_all = new QPushButton(tr("Unmute all"));
 
 	spn_instr_curr_chan = new QSpinBox();
 	connect(spn_instr_curr_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_instr_channel_changed(int)));
@@ -690,7 +695,12 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x += 8;
 
-	tab_instr_gl->setRowStretch(x, 4);
+	tab_instr_gl->setRowStretch(x, 3);
+
+	x++;
+
+	tab_instr_gl->addWidget(but_instr_mute_all, x, 0, 1, 2);
+	tab_instr_gl->addWidget(but_instr_unmute_all, x, 2, 1, 2);
 
 	x++;
 
@@ -789,6 +799,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_instr_apply, SIGNAL(pressed()), this, SLOT(handle_instr_apply()));
 	connect(but_instr_revert, SIGNAL(pressed()), this, SLOT(handle_instr_revert()));
 	connect(but_instr_reset, SIGNAL(pressed()), this, SLOT(handle_instr_reset()));
+	connect(but_instr_mute_all, SIGNAL(pressed()), this, SLOT(handle_instr_mute_all()));
+	connect(but_instr_unmute_all, SIGNAL(pressed()), this, SLOT(handle_instr_unmute_all()));
 
 	connect(but_volume_apply, SIGNAL(pressed()), this, SLOT(handle_volume_apply()));
 	connect(but_volume_revert, SIGNAL(pressed()), this, SLOT(handle_volume_revert()));
@@ -1066,7 +1078,7 @@ MppMainWindow :: handle_play_press()
 	} else if (midiPassThruOff != 0) {
 		currScoreMain->handleKeyPress(playKey, 90);
 	} else {
-		do_key_press(playKey, 90, 0);
+		output_key(currScoreMain->synthChannel, playKey, 90, 0, 0);
 	}
 	pthread_mutex_unlock(&mtx);
 }
@@ -1080,7 +1092,7 @@ MppMainWindow :: handle_play_release()
 	} else if (midiPassThruOff != 0) {
 		currScoreMain->handleKeyRelease(playKey);
 	} else {
-		do_key_press(playKey, 0, 0);
+		output_key(currScoreMain->synthChannel, playKey, 0, 0, 0);
 	}
 	pthread_mutex_unlock(&mtx);
 }
@@ -1174,8 +1186,9 @@ MppMainWindow :: handle_watchdog()
 	currScoreMain->viewWidget->repaint();
 
 	tab_loop->watchdog();
-}
 
+	tab_echo->watchdog();
+}
 
 void
 MppMainWindow :: handle_midi_file_clear_name()
@@ -1711,13 +1724,11 @@ MppMainWindow :: do_key_press(int key, int vel, int dur)
 void
 MppMainWindow :: handle_stop(void)
 {
-	struct mid_data *d = &mid_data;
 	uint32_t *pkey;
 	uint8_t ScMidiTriggered;
 	uint8_t out_key;
 	uint8_t chan;
 	uint8_t x;
-	uint8_t y;
 	uint8_t z;
 	uint8_t delay;
 
@@ -1737,19 +1748,7 @@ MppMainWindow :: handle_stop(void)
 
 			*pkey = 0;
 
-			for (y = 0; y != MPP_MAX_DEVS; y++) {
-				if (check_synth(y, chan, 0)) {
-					mid_delay(d, delay);
-					do_key_press(out_key, 0, 0);
-				}
-			}
-
-			if (check_record(chan, 0)) {
-				mid_delay(d, delay);
-				do_key_press(out_key, 0, 0);
-			}
-
-			tab_loop->add_key(out_key, 0);
+			output_key(chan, out_key, 0, delay, 0);
 		}
 	    }
 	}
@@ -1889,7 +1888,6 @@ static void
 MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uint8_t *drop)
 {
 	MppMainWindow *mw = (MppMainWindow *)arg;
-	uint8_t y;
 	uint8_t chan;
 	int key;
 	int vel;
@@ -1919,6 +1917,8 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 		if (mw->tab_loop->handle_trigN(lbl, key - mw->baseKey, vel)) {
 
+			mw->do_update_bpm();
+
 		} else if (mw->midiPassThruOff != 0) {
 
 			if (mw->currScoreMain->checkLabelJump(lbl)) {
@@ -1931,17 +1931,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			}
 		} else if (mw->currScoreMain->setPressedKey(chan, key, 255, 0) == 0) {
 
-			for (y = 0; y != MPP_MAX_DEVS; y++) {
-				if (mw->check_synth(y, chan, 0)) {
-					mw->do_key_press(key, vel, 0);
-				}
-			}
-
-			if (mw->check_record(chan, 0)) {
-				mw->do_key_press(key, vel, 0);
-			}
-
-			mw->tab_loop->add_key(key, vel);
+			mw->output_key(chan, key, vel, 0, 0);
 
 			mw->do_update_bpm();
 		}
@@ -1960,17 +1950,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 		} else if (mw->currScoreMain->setPressedKey(chan, key, 0, 0) == 0) {
 
-			for (y = 0; y != MPP_MAX_DEVS; y++) {
-				if (mw->check_synth(y, chan, 0)) {
-					mw->do_key_press(key, 0, 0);
-				}
-			}
-
-			if (mw->check_record(chan, 0)) {
-				mw->do_key_press(key, 0, 0);
-			}
-
-			mw->tab_loop->add_key(key, 0);
+			mw->output_key(chan, key, 0, 0, 0);
 		}
 	} else if (mw->do_instr_check(event, &chan)) {
 		/* found instrument */
@@ -2001,7 +1981,7 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 			uint8_t x;
 
-			if ((vel != 0) && (vel != MPP_VOLUME_UNIT)) {
+			if (vel != 0) {
 
 				vel = (vel * mw->playVolume[chan]) / MPP_VOLUME_UNIT;
 
@@ -2681,4 +2661,91 @@ MppMainWindow :: handle_instr_rem()
 		}
 	}
 	pthread_mutex_unlock(&mtx);
+}
+
+void
+MppMainWindow :: handle_instr_mute_all()
+{
+	uint8_t n;
+
+	for (n = 0; n != 16; n++)
+		cbx_instr_mute[n]->setChecked(1);
+
+	handle_instr_apply();
+}
+
+void
+MppMainWindow :: handle_instr_unmute_all()
+{
+	uint8_t n;
+
+	for (n = 0; n != 16; n++)
+		cbx_instr_mute[n]->setChecked(0);
+
+	handle_instr_apply();
+}
+
+void
+MppMainWindow :: output_key_sub(int chan, int key, int vel, int delay, int dur)
+{
+	struct mid_data *d = &mid_data;
+	uint8_t y;
+
+	for (y = 0; y != MPP_MAX_DEVS; y++) {
+		if (check_synth(y, chan, 0)) {
+			mid_delay(d, delay);
+			do_key_press(key, vel, 0);
+		}
+	}
+
+	if (check_record(chan, 0)) {
+		mid_delay(d, delay);
+		do_key_press(key, vel, 0);
+	}
+
+	tab_loop->add_key(key, vel);
+}
+
+void
+MppMainWindow :: output_key(int chan, int key, int vel, int delay, int dur)
+{
+	MppEchoTab *et = tab_echo;
+
+	output_key_sub(chan, key, vel, delay, dur);
+
+	if (et->echo_enabled &&
+	    (et->echo_val.in_channel == chan)) {
+		int echo_amp = (vel * et->echo_val.amp_init);
+		int echo_key = key + et->echo_val.transpose;
+		uint32_t echo_delay = delay;
+		uint32_t n;
+
+		/* range check */
+		if (echo_key < 0)
+			echo_key = 0;
+		else if (echo_key > 127)
+			echo_key = 127;
+
+		echo_delay += et->echo_val.ival_init;
+
+		for (n = 0; n < et->echo_val.num_echo; n++) {
+
+			echo_delay += (et->echo_val.ival_rand * noise8(128)) / 128;
+
+			output_key_sub(et->echo_val.out_channel, echo_key, echo_amp / 128, echo_delay, 0);
+
+			echo_delay += et->echo_val.ival_repeat;
+
+			output_key_sub(et->echo_val.out_channel, echo_key, 0, echo_delay, 0);
+
+			echo_delay += et->echo_val.ival_repeat;
+
+			echo_amp = (echo_amp * et->echo_val.amp_fact) / 128;
+
+			echo_amp += (127 * noise8(et->echo_val.amp_rand));
+
+			if (echo_amp >= (128 * 128))
+				echo_amp = 127 * 128;
+		}
+	}
 }
