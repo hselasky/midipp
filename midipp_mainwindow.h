@@ -192,7 +192,7 @@ public:
 	QLabel	*lbl_midi_play;
 	QLabel	*lbl_midi_pass_thru;
 
-	QPushButton *but_jump[8];
+	QPushButton *but_jump[MPP_MAX_LBUTTON];
 	QPushButton *but_midi_pass_thru;
 	QPushButton *but_compile;
 	QPushButton *but_score_record;
@@ -312,7 +312,7 @@ public:
 
 	/* tab <Echo> */
 
-	MppEchoTab *tab_echo;
+	MppEchoTab *tab_echo[MPP_MAX_ETAB];
 
 	/* MIDI stuff */
 	struct mid_data mid_data;
@@ -328,15 +328,8 @@ public slots:
 	void handle_base_key_changed(int);
 	void handle_key_delay_changed(int);
 	void handle_config_local_changed(int);
-	void handle_jump_0();
-	void handle_jump_1();
-	void handle_jump_2();
-	void handle_jump_3();
-	void handle_jump_4();
-	void handle_jump_5();
-	void handle_jump_6();
-	void handle_jump_7();
 	void handle_jump_N(int index);
+	void handle_jump_common();
 	void handle_pass_thru();
 	void handle_compile();
 	void handle_score_record();

@@ -89,7 +89,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	currScoreMain = scores_main[0];
 	tab_loop = new MppLoopTab(this, this);
-	tab_echo = new MppEchoTab(this, this);
+
+	for (x = 0; x != MPP_MAX_ETAB; x++)
+		tab_echo[x] = new MppEchoTab(this, this);
 
 	tab_file_wg = new QWidget();
 	tab_play_wg = new QWidget();
@@ -120,7 +122,12 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_tw->addTab(tab_instr_wg, tr("Instrument"));
 	main_tw->addTab(tab_volume_wg, tr("Volume"));
 	main_tw->addTab(tab_loop, tr("Loop"));
-	main_tw->addTab(tab_echo, tr("Echo"));
+
+	for (n = 0; n != MPP_MAX_ETAB; n++) {
+		char buf[8];
+		snprintf(buf, sizeof(buf), "Echo%u", n);
+		main_tw->addTab(tab_echo[n], tr(buf));
+	}
 
 	/* <File> Tab */
 
@@ -256,14 +263,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_midi_pass_thru = new QLabel(QString());
 	lbl_midi_play = new QLabel(QString());
 
-	but_jump[0] = new QPushButton(tr("J0"));
-	but_jump[1] = new QPushButton(tr("J1"));
-	but_jump[2] = new QPushButton(tr("J2"));
-	but_jump[3] = new QPushButton(tr("J3"));
-	but_jump[4] = new QPushButton(tr("J4"));
-	but_jump[5] = new QPushButton(tr("J5"));
-	but_jump[6] = new QPushButton(tr("J6"));
-	but_jump[7] = new QPushButton(tr("J7"));
+	for (n = 0; n != MPP_MAX_LBUTTON; n++) {
+		char buf[8];
+		snprintf(buf, sizeof(buf), "J%u", n);
+		but_jump[n] = new QPushButton(tr(buf));
+	}
 
 	but_midi_pass_thru = new QPushButton(tr("Pass Thru"));
 	but_compile = new QPushButton(tr("Compile"));
@@ -374,25 +378,12 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n++;
 
-	tab_play_gl->addWidget(but_jump[4], n, 5, 1, 1);
-	tab_play_gl->addWidget(but_jump[0], n, 4, 1, 1);
+	for (x = 0; x != (MPP_MAX_LBUTTON / 2); x++) {
+		tab_play_gl->addWidget(but_jump[x + (MPP_MAX_LBUTTON / 2)], n + x, 5, 1, 1);
+		tab_play_gl->addWidget(but_jump[x], n + x, 4, 1, 1);
+	}
 
-	n++;
-
-	tab_play_gl->addWidget(but_jump[5], n, 5, 1, 1);
-	tab_play_gl->addWidget(but_jump[1], n, 4, 1, 1);
-
-	n++;
-
-	tab_play_gl->addWidget(but_jump[6], n, 5, 1, 1);
-	tab_play_gl->addWidget(but_jump[2], n, 4, 1, 1);
-
-	n++;
-
-	tab_play_gl->addWidget(but_jump[7], n, 5, 1, 1);
-	tab_play_gl->addWidget(but_jump[3], n, 4, 1, 1);
-
-	n++;
+	n += x;
 
 	tab_play_gl->addWidget(lbl_bpm_max, n, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	tab_play_gl->addWidget(lbl_bpm_avg, n, 5, 1, 2, Qt::AlignHCenter|Qt::AlignVCenter);
@@ -763,14 +754,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* Connect all */
 
-	connect(but_jump[0], SIGNAL(pressed()), this, SLOT(handle_jump_0()));
-	connect(but_jump[1], SIGNAL(pressed()), this, SLOT(handle_jump_1()));
-	connect(but_jump[2], SIGNAL(pressed()), this, SLOT(handle_jump_2()));
-	connect(but_jump[3], SIGNAL(pressed()), this, SLOT(handle_jump_3()));
-	connect(but_jump[4], SIGNAL(pressed()), this, SLOT(handle_jump_4()));
-	connect(but_jump[5], SIGNAL(pressed()), this, SLOT(handle_jump_5()));
-	connect(but_jump[6], SIGNAL(pressed()), this, SLOT(handle_jump_6()));
-	connect(but_jump[7], SIGNAL(pressed()), this, SLOT(handle_jump_7()));
+	for (n = 0; n != MPP_MAX_LBUTTON; n++)
+		connect(but_jump[n], SIGNAL(pressed()), this, SLOT(handle_jump_common()));
 
 	connect(but_midi_pass_thru, SIGNAL(pressed()), this, SLOT(handle_pass_thru()));
 	connect(but_compile, SIGNAL(pressed()), this, SLOT(handle_compile()));
@@ -841,58 +826,21 @@ void
 MppMainWindow :: handle_jump_N(int index)
 {
 	pthread_mutex_lock(&mtx);
-
 	handle_jump_locked(index);
-
 	pthread_mutex_unlock(&mtx);
 }
 
 void
-MppMainWindow :: handle_jump_0()
+MppMainWindow :: handle_jump_common()
 {
-	handle_jump_N(0);
-}
+	uint8_t n;
 
-void
-MppMainWindow :: handle_jump_1()
-{
-	handle_jump_N(1);
-}
-
-void
-MppMainWindow :: handle_jump_2()
-{
-	handle_jump_N(2);
-}
-
-void
-MppMainWindow :: handle_jump_3()
-{
-	handle_jump_N(3);
-}
-
-void
-MppMainWindow :: handle_jump_4()
-{
-	handle_jump_N(4);
-}
-
-void
-MppMainWindow :: handle_jump_5()
-{
-	handle_jump_N(5);
-}
-
-void
-MppMainWindow :: handle_jump_6()
-{
-	handle_jump_N(6);
-}
-
-void
-MppMainWindow :: handle_jump_7()
-{
-	handle_jump_N(7);
+	for (n = 0; n != MPP_MAX_LBUTTON; n++) {
+		if (but_jump[n]->isDown()) {
+			handle_jump_N(n);
+			break;
+		}
+	}
 }
 
 void
@@ -1187,7 +1135,8 @@ MppMainWindow :: handle_watchdog()
 
 	tab_loop->watchdog();
 
-	tab_echo->watchdog();
+	for (x = 0; x != MPP_MAX_ETAB; x++)
+		tab_echo[x]->watchdog();
 }
 
 void
@@ -2603,11 +2552,27 @@ void
 MppMainWindow :: keyPressEvent(QKeyEvent *event)
 {
 	/* fake pedal down event */
-	if (event->key() == Qt::Key_Shift) {
+	switch (event->key()) {
+	case Qt::Key_Shift:
 		pthread_mutex_lock(&mtx);
 		if (midiTriggered != 0)
 			MidiEventRxPedal(this, 127);
 		pthread_mutex_unlock(&mtx);
+		break;
+	case Qt::Key_0:
+	case Qt::Key_1:
+	case Qt::Key_2:
+	case Qt::Key_3:
+	case Qt::Key_4:
+	case Qt::Key_5:
+	case Qt::Key_6:
+	case Qt::Key_7:
+	case Qt::Key_8:
+	case Qt::Key_9:
+		handle_jump_N(event->key() - Qt::Key_0);
+		break;
+	default:
+		break;
 	}
 }
 
@@ -2709,12 +2674,15 @@ MppMainWindow :: output_key_sub(int chan, int key, int vel, int delay, int dur)
 void
 MppMainWindow :: output_key(int chan, int key, int vel, int delay, int dur)
 {
-	MppEchoTab *et = tab_echo;
+	uint8_t n;
 
 	output_key_sub(chan, key, vel, delay, dur);
 
-	if (et->echo_enabled &&
-	    (et->echo_val.in_channel == chan)) {
+	for (n = 0; n != MPP_MAX_ETAB; n++) {
+	  MppEchoTab *et = tab_echo[n];
+
+	  if (et->echo_enabled &&
+	      (et->echo_val.in_channel == chan)) {
 		int echo_amp = (vel * et->echo_val.amp_init);
 		int echo_key = key + et->echo_val.transpose;
 		uint32_t echo_delay = delay;
@@ -2747,5 +2715,6 @@ MppMainWindow :: output_key(int chan, int key, int vel, int delay, int dur)
 			if (echo_amp >= (128 * 128))
 				echo_amp = 127 * 128;
 		}
+	  }
 	}
 }
