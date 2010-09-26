@@ -1344,3 +1344,24 @@ MppScoreMain :: handleCompile()
 		viewWidget->setMinimumWidth(maxScoresWidth);
 	}
 }
+
+void
+MppScoreMain :: watchdog()
+{
+	QTextCursor cursor(editWidget->textCursor());
+
+	QTextEdit::ExtraSelection format;
+
+	/* Highlight the next line to be played */
+
+	cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor, 1);
+
+	format.cursor = cursor;
+	format.format.setForeground(color_black);
+	format.format.setBackground(color_grey);
+
+	QList<QTextEdit::ExtraSelection> extras;
+	extras << format;
+
+	editWidget->setExtraSelections(extras);
+}

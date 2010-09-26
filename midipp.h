@@ -87,6 +87,7 @@ class MppScoreView;
 class MppScoreMain;
 class MppLoopTab;
 class MppEchoTab;
+class MppScoreHighLighter;
 
 struct MppScoreEntry {
 	uint8_t key;
@@ -110,6 +111,7 @@ struct MppVisualScore {
 
 extern QColor color_black;
 extern QColor color_white;
+extern QColor color_grey;
 extern QColor color_logo;
 extern QColor color_green;
 

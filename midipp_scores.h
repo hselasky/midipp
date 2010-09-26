@@ -64,6 +64,7 @@ public:
 	void newLine();
 	void newVisual();
 	void updateTimer();
+	void watchdog();
 
 	int checkLabelJump(int label);
 	int setPressedKey(int chan, int out_key, int dur, int delay);

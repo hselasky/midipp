@@ -1129,6 +1129,7 @@ MppMainWindow :: handle_watchdog()
 		cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, play_line);
 		cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor, 1);
 		currScoreMain->editWidget->setTextCursor(cursor);
+		currScoreMain->watchdog();
 	}
 
 	currScoreMain->viewWidget->repaint();
