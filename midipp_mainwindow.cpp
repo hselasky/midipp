@@ -1671,10 +1671,12 @@ MppMainWindow :: do_key_press(int key, int vel, int dur)
 	mid_key_press(d, key, vel, dur);
 }
 
+/* must be called locked */
 void
 MppMainWindow :: handle_stop(void)
 {
 	uint32_t *pkey;
+	uint8_t *akey;
 	uint8_t ScMidiTriggered;
 	uint8_t out_key;
 	uint8_t chan;
@@ -1686,6 +1688,19 @@ MppMainWindow :: handle_stop(void)
 	midiTriggered = 1;
 
 	for (z = 0; z != MPP_MAX_VIEWS; z++) {
+
+	    scores_main[z]->handleStopPll();
+
+	    for (x = 0; x != 128; x++) {
+
+		akey = &scores_main[z]->pll_pressed[x];
+
+		if (*akey != 0) {
+			output_key(*akey - 1, x, 0, 128, 0);
+			*akey = 0;
+		}
+	    }
+
 	    for (x = 0; x != MPP_PRESSED_MAX; x++) {
 
 		pkey = &scores_main[z]->pressedKeys[x];
@@ -2660,13 +2675,13 @@ MppMainWindow :: output_key_sub(int chan, int key, int vel, int delay, int dur)
 	for (y = 0; y != MPP_MAX_DEVS; y++) {
 		if (check_synth(y, chan, 0)) {
 			mid_delay(d, delay);
-			do_key_press(key, vel, 0);
+			do_key_press(key, vel, dur);
 		}
 	}
 
 	if (check_record(chan, 0)) {
 		mid_delay(d, delay);
-		do_key_press(key, vel, 0);
+		do_key_press(key, vel, dur);
 	}
 
 	tab_loop->add_key(key, vel);

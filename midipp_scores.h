@@ -55,6 +55,9 @@ public:
 	void handleParse(const QString &ps);
 	void handleParseSub(QPrinter *pd, QPoint orig, float scale_f);
 	void handleAutoPlay(int bpm);
+	void handleStartPll();
+	void handleStopPll();
+	void handlePllPress();
 
 	void viewPaintEvent(QPaintEvent *event);
 	void viewMousePressEvent(QMouseEvent *e);
@@ -82,6 +85,7 @@ public:
 	QString *currScoreFileName;
 	QLabel *lblFileStatus;
 
+	struct MppScoreEntry pll_scores[MPP_MAX_LINES][MPP_MAX_SCORES];
 	struct MppScoreEntry scores[MPP_MAX_LINES][MPP_MAX_SCORES];
 	struct MppVisualScore visual[MPP_MAX_LINES];
 
@@ -89,24 +93,36 @@ public:
 	uint32_t pressedKeys[MPP_PRESSED_MAX];
 	uint32_t realLine[MPP_MAX_LINES];
 
+	uint16_t pll_jump[MPP_MAX_LINES];
+	uint16_t pll_start[MPP_MAX_LINES];
 	uint16_t jumpNext[MPP_MAX_LINES];
 	uint16_t jumpTable[MPP_MAX_LABELS];
 	uint16_t mousePressPos[MPP_MAX_LINES];
+	uint16_t pll_bpm[MPP_MAX_LINES];
 	uint16_t linesMax;
 	uint16_t currPos;
 	uint16_t lastPos;
 	uint16_t maxScoresWidth;
+	uint16_t pllPos;
+	uint16_t pllDuration;
+	uint16_t pllDutyMs;
+	uint16_t pllCycleMs;
 
 	uint8_t pageNext[MPP_MAX_LINES];
 #define	MPP_CMD_NOP 0
 #define	MPP_CMD_LOCK 1
 #define	MPP_CMD_UNLOCK 2
+	uint8_t pll_pressed[128];
 	uint8_t playCommand[MPP_MAX_LINES];
+	uint8_t pll_duty[MPP_MAX_LINES];
+	uint8_t pll_duration[MPP_MAX_LINES];
 	uint8_t synthChannel;
 	uint8_t baseKey;
 	uint8_t delayNoise;
 	uint8_t isPlayKeyLocked;
 	uint8_t whatPlayKeyLocked;
+	uint8_t last_key;
+	uint8_t last_vel;
 
 protected:
 
@@ -121,6 +137,11 @@ protected:
 		int realLine;
 		int channel;
 		int duration;
+		int pll_active;
+		int pll_bpm;
+		int pll_duty;
+		int pll_line;
+		int pll_index;
 	} ps;
 
 	/* parse buffer */
