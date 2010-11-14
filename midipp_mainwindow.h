@@ -192,6 +192,7 @@ public:
 	QLabel	*lbl_midi_play;
 	QLabel	*lbl_midi_pass_thru;
 
+	QPushButton *but_insert_chord;
 	QPushButton *but_jump[MPP_MAX_LBUTTON];
 	QPushButton *but_midi_pass_thru;
 	QPushButton *but_compile;
@@ -328,6 +329,7 @@ public slots:
 	void handle_base_key_changed(int);
 	void handle_key_delay_changed(int);
 	void handle_config_local_changed(int);
+	void handle_insert_chord();
 	void handle_jump_N(int index);
 	void handle_jump_common();
 	void handle_pass_thru();

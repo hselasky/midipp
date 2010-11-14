@@ -28,6 +28,7 @@
 #include <midipp_mutemap.h>
 #include <midipp_looptab.h>
 #include <midipp_echotab.h>
+#include <midipp_decode.h>
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -269,6 +270,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		but_jump[n] = new QPushButton(tr(buf));
 	}
 
+	but_insert_chord = new QPushButton(tr("Get Chord"));
 	but_midi_pass_thru = new QPushButton(tr("Pass Thru"));
 	but_compile = new QPushButton(tr("Compile"));
 	but_score_record = new QPushButton(tr("Scores"));
@@ -377,6 +379,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_play_gl->addWidget(spn_auto_play, n, 7, 1, 1);
 
 	n++;
+
+	tab_play_gl->addWidget(but_insert_chord, n, 6, 1, 2);
 
 	for (x = 0; x != (MPP_MAX_LBUTTON / 2); x++) {
 		tab_play_gl->addWidget(but_jump[x + (MPP_MAX_LBUTTON / 2)], n + x, 5, 1, 1);
@@ -754,6 +758,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* Connect all */
 
+	connect(but_insert_chord, SIGNAL(pressed()), this, SLOT(handle_insert_chord()));
+
 	for (n = 0; n != MPP_MAX_LBUTTON; n++)
 		connect(but_jump[n], SIGNAL(pressed()), this, SLOT(handle_jump_common()));
 
@@ -820,6 +826,21 @@ MppMainWindow :: handle_jump_locked(int index)
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++)
 		scores_main[x]->handleLabelJump(index);
+}
+
+void
+MppMainWindow :: handle_insert_chord()
+{
+	MppDecode dlg(this, this);
+
+        if(dlg.exec() == QDialog::Accepted) {
+		QTextCursor cursor(currScoreMain->editWidget->textCursor());
+		cursor.beginEditBlock();
+		cursor.insertText(led_config_insert->text());
+		cursor.insertText(dlg.getText());
+		cursor.insertText(QString("\n"));
+		cursor.endEditBlock();
+	}
 }
 
 void
