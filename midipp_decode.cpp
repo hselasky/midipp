@@ -60,6 +60,54 @@ static const struct score_variant score_variant[] = {
   { "13", {C5, H5B, D6, F6, A6} },
 };
 
+static uint8_t
+mpp_get_key(const char *ptr)
+{
+	uint8_t key;
+
+	switch (ptr[0]) {
+	case 'C':
+		key = C5;
+		break;
+	case 'D':
+		key = D5;
+		break;
+	case 'E':
+		key = E5;
+		break;
+	case 'F':
+		key = F5;
+		break;
+	case 'G':
+		key = G5;
+		break;
+	case 'A':
+		key = A5;
+		break;
+	case 'H':
+		key = H5;
+		break;
+	default:
+		key = 0;
+		break;
+	}
+	if (ptr[0])
+		ptr++;
+
+	switch (ptr[0]) {
+	case '#':
+		key ++;
+		break;
+	case 'b':
+		key --;
+		break;
+	default:
+		break;
+	}
+
+	return (key);
+}
+
 uint8_t
 mpp_parse_score(const char *input, uint8_t base,
     int8_t rol, uint8_t pout[MPP_MAX_VAR_OFF])
@@ -156,6 +204,7 @@ MppDecode :: MppDecode(QWidget *parent, MppMainWindow *_mw)
 	lbl_status = new QLabel(tr(""));
 	lbl_rol = new QLabel(tr("Rotate:"));
 	lbl_base = new QLabel(tr("Base (C5):"));
+	lbl_auto_base = new QLabel(tr("Add auto base:"));
 
 	spn_rol = new QSpinBox();
 	spn_rol->setMaximum(127);
@@ -166,6 +215,8 @@ MppDecode :: MppDecode(QWidget *parent, MppMainWindow *_mw)
 	spn_base->setMaximum(127);
 	spn_base->setMinimum(0);
 	spn_base->setValue(C5);
+
+	cbx_auto_base = new QCheckBox();
 
 	but_ok = new QPushButton(tr("Ok"));
 	but_cancel = new QPushButton(tr("Cancel"));
@@ -178,8 +229,10 @@ MppDecode :: MppDecode(QWidget *parent, MppMainWindow *_mw)
 	connect(lin_edit, SIGNAL(textChanged(const QString &)), this, SLOT(handle_parse_text(const QString &)));
 	connect(spn_rol, SIGNAL(valueChanged(int)), this, SLOT(handle_parse_int(int)));
 	connect(spn_base, SIGNAL(valueChanged(int)), this, SLOT(handle_parse_int(int)));
+	connect(cbx_auto_base, SIGNAL(stateChanged(int)), this, SLOT(handle_parse_int(int)));
 
-	current_score[0] = 0;
+	memset(current_score, 0, sizeof(current_score));
+	memset(auto_base, 0, sizeof(auto_base));
 
 	gl->addWidget(lbl_format, 0,0,1,4, Qt::AlignHCenter|Qt::AlignVCenter);
 
@@ -194,9 +247,12 @@ MppDecode :: MppDecode(QWidget *parent, MppMainWindow *_mw)
 
 	gl->addWidget(lin_out, 4,0,1,4, Qt::AlignHCenter|Qt::AlignVCenter);
 
-	gl->addWidget(but_play, 5, 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(but_ok, 5, 2, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(but_cancel, 5, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(lbl_auto_base, 5,0,1,2, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(cbx_auto_base, 5,2,1,2, Qt::AlignHCenter|Qt::AlignVCenter);
+
+	gl->addWidget(but_play, 6, 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(but_ok, 6, 2, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(but_cancel, 6, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	handle_parse();
 }
@@ -212,6 +268,10 @@ MppDecode :: handle_play_press()
 	uint8_t x;
 
 	pthread_mutex_lock(&mw->mtx);
+	for (x = 0; x != MPP_MAX_VAR_OFF; x++) {
+		if (auto_base[x] != 0)
+			mw->output_key(mw->currScoreMain->synthChannel, auto_base[x], 90, 0, 0);
+	}
 	for (x = 0; current_score[x]; x++) {
 		mw->output_key(mw->currScoreMain->synthChannel, current_score[x], 90, 0, 0);
 	}
@@ -224,6 +284,10 @@ MppDecode :: handle_play_release()
 	uint8_t x;
 
 	pthread_mutex_lock(&mw->mtx);
+	for (x = 0; x != MPP_MAX_VAR_OFF; x++) {
+		if (auto_base[x] != 0)
+			mw->output_key(mw->currScoreMain->synthChannel, auto_base[x], 0, 0, 0);
+	}
 	for (x = 0; current_score[x]; x++) {
 		mw->output_key(mw->currScoreMain->synthChannel, current_score[x], 0, 0, 0);
 	}
@@ -263,6 +327,7 @@ MppDecode :: handle_parse()
 
 	int error;
 	int base;
+	int b_auto;
 	int rol;
 	int x;
 
@@ -282,6 +347,28 @@ MppDecode :: handle_parse()
 
 	out += QString("U1 ");
 
+	b_auto = mpp_get_key(ptr);
+	if (b_auto != 0 && cbx_auto_base->isChecked()) {
+
+		b_auto = b_auto - C5 + base;
+
+		while (b_auto > (current_score[0] & 0x7F))
+			b_auto -= 12;
+
+		memset(auto_base, 0, sizeof(auto_base));
+
+		if (b_auto >= 24) {
+		  auto_base[0] = (b_auto - 24) & 0x7F;
+		  out += QString(mid_key_str[auto_base[0]]) +
+			  QString(" ");
+		}
+		if (b_auto >= 12) {
+		  auto_base[1] = (b_auto - 12) & 0x7F;
+		  out += QString(mid_key_str[auto_base[1]]) +
+			  QString(" ");
+		}
+	}
+
 	for (x = 0; current_score[x]; x++) {
 		out += QString(mid_key_str[current_score[x] & 0x7F]) +
 		  QString(" ");
@@ -300,4 +387,12 @@ QString
 MppDecode :: getText()
 {
 	return (lin_out->text());
+}
+
+void
+MppDecode :: setText(const char *ptr)
+{
+	lin_edit->setText(QString(ptr));
+
+	handle_parse();
 }

@@ -180,6 +180,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_file_gl->addWidget(scores_main[1]->butScoreFilePrint, n, 3, 1, 3);
 
 	n++;
+
+	tab_file_gl->addWidget(scores_main[0]->butScoreFileImport, n, 0, 1, 3);
+	tab_file_gl->addWidget(scores_main[1]->butScoreFileImport, n, 3, 1, 3);
+
 	n++;
 
 	tab_file_gl->addWidget(lbl_file_status, n, 0, 1, 8, Qt::AlignLeft|Qt::AlignVCenter);

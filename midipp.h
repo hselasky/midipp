@@ -84,6 +84,7 @@
 
 class MppMainWindow;
 class MppScoreView;
+class MppDecode;
 class MppScoreMain;
 class MppLoopTab;
 class MppEchoTab;

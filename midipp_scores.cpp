@@ -26,6 +26,7 @@
 #include <midipp_mainwindow.h>
 #include <midipp_scores.h>
 #include <midipp_looptab.h>
+#include <midipp_import.h>
 
 static void MppTimerCallback(void *arg);
 static void MppPllCallback(void *arg);
@@ -92,12 +93,14 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	butScoreFileSave = new QPushButton(tr("Save"));
 	butScoreFileSaveAs = new QPushButton(tr("Save As"));
 	butScoreFilePrint = new QPushButton(tr("Print"));
+	butScoreFileImport = new QPushButton(tr("Import"));
 
 	connect(butScoreFileNew, SIGNAL(pressed()), this, SLOT(handleScoreFileNew()));
 	connect(butScoreFileOpen, SIGNAL(pressed()), this, SLOT(handleScoreFileOpen()));
 	connect(butScoreFileSave, SIGNAL(pressed()), this, SLOT(handleScoreFileSave()));
 	connect(butScoreFileSaveAs, SIGNAL(pressed()), this, SLOT(handleScoreFileSaveAs()));
 	connect(butScoreFilePrint, SIGNAL(pressed()), this, SLOT(handleScorePrint()));
+	connect(butScoreFileImport, SIGNAL(pressed()), this, SLOT(handleScoreImport()));
 
 	/* Editor */
 
@@ -1624,4 +1627,33 @@ MppScoreMain :: handleStopPll()
 	umidi20_unset_timer(&MppPllCallback, this);
 	pllDuration = 0;
 	pllPos = 0;
+}
+
+void
+MppScoreMain :: handleScoreImport()
+{
+	QFileDialog *diag = 
+	  new QFileDialog(mainWindow, tr("Select Chord Tabular File"), 
+		QString(), QString("Chord Tabular File (*.txt; *.TXT)"));
+
+	diag->setAcceptMode(QFileDialog::AcceptOpen);
+	diag->setFileMode(QFileDialog::ExistingFile);
+
+	if (diag->exec()) {
+		struct midipp_import ps;
+		const char *ptr;
+
+		ptr = MppQStringToAscii(diag->selectedFiles()[0]);
+		if (ptr != NULL) {
+		  if (midipp_import(ptr, &ps, this)) {
+			mainWindow->lbl_file_status->setText(tr("Import failed!\n"));
+		  } else {
+			mainWindow->lbl_file_status->setText(QString(ptr) + tr(": Import successful!\n"));
+		  }
+		} else {
+			mainWindow->lbl_file_status->setText(tr("Out of memory"));
+		}
+	}
+
+	delete diag;
 }

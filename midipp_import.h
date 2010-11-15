@@ -23,65 +23,33 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _MIDIPP_DECODE_H_
-#define	_MIDIPP_DECODE_H_
+#ifndef _MIDIPP_IMPORT_H_
+#define	_MIDIPP_IMPORT_H_
 
 #include <midipp.h>
 
-#define	MPP_MAX_VAR_OFF 12
+#define	MIDIPP_IMPORT_LB	256
+#define	MIDIPP_IMPORT_MW	64
 
-struct score_variant {
-	const char *keyword;
-	uint8_t offset[MPP_MAX_VAR_OFF];
+struct midipp_word {
+	uint16_t off;
+	char name[32];
 };
 
-class MppDecode : public QDialog
-{
-	Q_OBJECT;
+struct midipp_import {
+	char line_buffer[MIDIPP_IMPORT_LB];
 
-public:
-	MppDecode(QWidget *parent, MppMainWindow *);
-	~MppDecode();
+	struct midipp_word d_word[2][MIDIPP_IMPORT_MW];
 
-	QString getText();
-	void setText(const char *ptr);
+	MppScoreMain *sm;
 
-	MppMainWindow *mw;
+	MppDecode *dlg;
 
-	QGridLayout *gl;
+	uint16_t n_word[2];
 
-	QLineEdit *lin_edit;
-	QLineEdit *lin_out;
-
-	QLabel *lbl_format;
-	QLabel *lbl_status;
-	QLabel *lbl_rol;
-	QLabel *lbl_base;
-	QLabel *lbl_auto_base;
-
-	QCheckBox *cbx_auto_base;
-
-	QSpinBox *spn_rol;
-	QSpinBox *spn_base;
-
-	QPushButton *but_play;
-	QPushButton *but_ok;
-	QPushButton *but_cancel;
-
-	uint8_t current_score[MPP_MAX_VAR_OFF];
-	uint8_t auto_base[MPP_MAX_VAR_OFF];
-
-public slots:
-
-	void handle_play_press();
-	void handle_play_release();
-	void handle_ok();
-	void handle_cancel();
-	void handle_parse_int(int x);
-	void handle_parse_text(const QString &x);
-	void handle_parse();
+	uint8_t index;
 };
 
-extern uint8_t mpp_parse_score(const char *input, uint8_t base, int8_t rol, uint8_t pout[MPP_MAX_VAR_OFF]);
+extern uint8_t midipp_import(const char *file, struct midipp_import *ps, MppScoreMain *sm);
 
-#endif		/* _MIDIPP_DECODE_H_ */
+#endif		/* _MIDIPP_IMPORT_H_ */
