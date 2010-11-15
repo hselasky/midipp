@@ -113,6 +113,8 @@ uint8_t
 mpp_parse_score(const char *input, uint8_t base,
     int8_t rol, uint8_t pout[MPP_MAX_VAR_OFF])
 {
+	char *ptr;
+	char buffer[16];
 	uint8_t error = 0;
 	uint8_t key;
 	uint8_t x;
@@ -167,9 +169,15 @@ mpp_parse_score(const char *input, uint8_t base,
 		break;
 	}
 
+	strlcpy(buffer, input, sizeof(buffer));
+
+	ptr = strstr(buffer, "/");
+	if (ptr)
+		*ptr = 0;
+
 	for (x = 0; x != (sizeof(score_variant)/sizeof(score_variant[0])); x++) {
 
-		if (strcasecmp(input, score_variant[x].keyword) == 0) {
+		if (strcasecmp(buffer, score_variant[x].keyword) == 0) {
 
 			for (y = 0; y != (MPP_MAX_VAR_OFF-1); y++) {
 				uint8_t z;
@@ -326,6 +334,7 @@ MppDecode :: handle_parse()
 	QString out;
 
 	char *ptr;
+	char *pba;
 
 	int error;
 	int base;
@@ -349,7 +358,12 @@ MppDecode :: handle_parse()
 
 	out += QString("U1 ");
 
-	b_auto = mpp_get_key(ptr);
+	pba = strstr(ptr, "/");
+	if (pba != NULL)
+		b_auto = mpp_get_key(pba + 1);
+	else
+		b_auto = mpp_get_key(ptr);
+
 	if (b_auto != 0 && cbx_auto_base->isChecked()) {
 
 		b_auto = b_auto - C5 + base;
