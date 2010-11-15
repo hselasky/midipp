@@ -96,6 +96,7 @@ public:
 
 	uint16_t pll_jump[MPP_MAX_LINES];
 	uint16_t pll_start[MPP_MAX_LINES];
+#define	MPP_JUMP_NOP	0xFFFFU
 	uint16_t jumpNext[MPP_MAX_LINES];
 	uint16_t jumpTable[MPP_MAX_LABELS];
 	uint16_t mousePressPos[MPP_MAX_LINES];
@@ -134,7 +135,6 @@ protected:
 		int line;
 		int index;
 		int bufIndex;
-		int bufLine;
 		int realLine;
 		int channel;
 		int duration;

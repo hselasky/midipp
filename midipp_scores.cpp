@@ -584,41 +584,41 @@ void
 MppScoreMain :: newLine()
 {
 	if (ps.pll_active) {
+		if (ps.pll_line >= MPP_MAX_LINES)
+			return;
 		if (ps.pll_index == 0)
 			return;
-		if (ps.pll_line < MPP_MAX_LINES) {
-			ps.pll_line++;
-			ps.pll_index = 0;
-		}
+
+		ps.pll_line++;
+		ps.pll_index = 0;
 	} else {
+		if (ps.line >= MPP_MAX_LINES)
+			return;
 		if (ps.index == 0)
 			return;
-		if (ps.line < MPP_MAX_LINES) {
-			realLine[ps.line] = ps.realLine;
-			ps.line++;
-			ps.index = 0;
-		}
+
+		realLine[ps.line] = ps.realLine;
+		ps.line++;
+		ps.index = 0;
 	}
 }
 
 void
 MppScoreMain :: newVisual()
 {
+	if (ps.line >= MPP_MAX_LINES)
+		goto done;
 	if (ps.pll_active)
-		return;
+		goto done;
 
-	if (ps.bufLine < MPP_MAX_LINES) {
+	bufData[ps.bufIndex] = 0;
 
-		bufData[ps.bufIndex] = 0;
+	if (visual[ps.line].pstr != NULL)
+		free(visual[ps.line].pstr);
 
-		if (visual[ps.bufLine].pstr != NULL)
-			free(visual[ps.bufLine].pstr);
-
-		visual[ps.bufLine].pstr = strdup(bufData);
-
-		ps.bufIndex = 0;
-		ps.bufLine = ps.line;
-	}
+	visual[ps.line].pstr = strdup(bufData);
+done:
+	ps.bufIndex = 0;
 }
 
 void
@@ -663,7 +663,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 	ps.realLine = 0;
 	ps.index = 0;
 	ps.bufIndex = 0;
-	ps.bufLine = 0;
 	ps.ps = &pstr;
 	ps.pll_active = 0;
 	ps.pll_bpm = 120;
@@ -1011,31 +1010,32 @@ parse_string:
 	if (c != '\"')
 		goto next_char;
 
-	if (ps.bufIndex == 0)
-		ps.bufLine = ps.line;
+	/* check if the current line already has a string */
+	if (ps.line < MPP_MAX_LINES && visual[ps.line].pstr != NULL) {
+		jumpNext[ps.line] = MPP_JUMP_NOP;
+		realLine[ps.line] = ps.realLine;
+		ps.line++;
+	}
 
 	while ((c = pstr[ps.x+2].toAscii()) != 0) {
-		if (c == '\"')
+		if (c == '\"') {
+			newVisual();
 			break;
-
-		if (c == '\r') {
+		}
+		if (c == '\r' || c == '\n') {
 			/* drop character */
 			parseAdv(1);
 			continue;
 		}
-		if (c == '\n' || c == ';') {
+		if (c == '\n') {
 			/* new line */
-			newVisual();
-			ps.bufIndex = 0;
 			parseAdv(1);
 			continue;
 		}
 		if (ps.bufIndex == (sizeof(bufData) - 1)) {
 			/* wrap long line */
 			newVisual();
-			ps.bufIndex = 0;
 		}
-
 		bufData[ps.bufIndex] = c;
 		ps.bufIndex++;
 		parseAdv(1);
@@ -1111,8 +1111,16 @@ done:
 
 	/* resolve all jumps */
 	for (z = 0; z != ps.line; z++) {
-		if (jumpNext[z] != 0)
-			jumpNext[z] = jumpTable[jumpNext[z] - 1];
+		if (jumpNext[z] != 0) {
+			if (jumpNext[z] == MPP_JUMP_NOP)
+				jumpNext[z] = z + 2;
+			else
+				jumpNext[z] = jumpTable[jumpNext[z] - 1];
+
+			/* clip */
+			if (jumpNext[z] > ps.line)
+				jumpNext[z] = 1;
+		}
 	}
 
 	linesMax = ps.line;
@@ -1311,10 +1319,18 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 	uint8_t out_key;
 	uint8_t delay;
 
-	pos = jumpNext[currPos];
-	if (pos != 0) {
-		currPos = pos - 1;
-		isPlayKeyLocked = 0;
+	for (x = 0; x != 128; x++) {
+		pos = jumpNext[currPos];
+		if (pos != 0) {
+			/* check for real jump */
+			if ((pos - 2) != currPos)
+				isPlayKeyLocked = 0;
+
+			/* set new position */
+			currPos = pos - 1;
+		} else {
+			break;
+		}
 	}
 
 	switch (playCommand[currPos]) {

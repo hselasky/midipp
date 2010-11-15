@@ -72,7 +72,7 @@ midipp_import_flush(struct midipp_import *ps)
 		    bi == ps->n_word[ps->index])
 			break;
 	}
-	out += QString(";\"\n\n");
+	out += QString("\"\n\n");
 
 	if (ps->index != 0) {
 		for (ai = 0; ai < ps->n_word[0]; ai++) {
@@ -180,7 +180,7 @@ midipp_import(const char *file, struct midipp_import *ps, MppScoreMain *sm)
 	ps->dlg = &dlg;
 
 	while (read(f, &ch, 1) == 1) {
-		if (ch == '\t' || ch == '\r')
+		if (ch == '\r')
 			continue;
 
 		/* remove formatting characters */
@@ -188,8 +188,20 @@ midipp_import(const char *file, struct midipp_import *ps, MppScoreMain *sm)
 			ch = '[';
 		if (ch == ')')
 			ch = ']';
-		if (ch == '"' || ch == ';' || ch == '.')
+		if (ch == '"' || ch == '.')
 			ch = ' ';
+
+		/* expand tabs to 8 spaces */
+		if (ch == '\t') {
+			int n;
+			ch = ' ';
+			for (n = 0; n != 7; n++) {
+				if (off != (MIDIPP_IMPORT_LB-1)) {
+					ps->line_buffer[off] = ch;
+					off++;
+				}
+			}
+		}
 
 		ps->line_buffer[off] = ch;
 		if (ch == '\n' || ch == '\0' || off == (MIDIPP_IMPORT_LB-1)) {
