@@ -84,6 +84,7 @@ mpp_get_key(const char *ptr)
 	case 'A':
 		key = A5;
 		break;
+	case 'B':
 	case 'H':
 		key = H5;
 		break;
@@ -142,6 +143,7 @@ mpp_parse_score(const char *input, uint8_t base,
 		key = A5;
 		input++;
 		break;
+	case 'B':
 	case 'H':
 		key = H5;
 		input++;
