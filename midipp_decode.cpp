@@ -36,6 +36,7 @@ static const struct score_variant score_variant[] = {
   { "maj7", {C5, E5, G5, H5} },
   { "maj9", {C5, E5, G5, A5, C6} },
   { "", {C5, E5, G5} },
+  { "M", {C5, E5, G5} },
   { "maj", {C5, E5, G5} },
   { "major", {C5, E5, G5} },
   { "7b5", {C5, E5, G5B, H5B} },
@@ -48,11 +49,13 @@ static const struct score_variant score_variant[] = {
   { "add9", {C5, E5, G5, D6} },
   { "sus2", {C5, D5, G5} },
   { "sus4", {C5, F5, G5} },
+  { "sus7", {C5, F5, G5, H5B} },
   { "dim", {C5, E5B, G5B} },
   { "aug", {C5, E5, A5B} },
   { "m", {C5, E5B, G5} },
   { "min", {C5, E5B, G5} },
   { "minor", {C5, E5B, G5} },
+  { "2", {C5, D5, E5, G5} },
   { "6", {C5, E5, G5, A5} },
   { "7", {C5, E5, G5, H5B} },
   { "9", {C5, E5, G5, H5B, D6} },
@@ -210,7 +213,7 @@ MppDecode :: MppDecode(QWidget *parent, MppMainWindow *_mw)
 	lin_edit->setText(QString("C"));
 
 	lin_out = new QLineEdit();
-	lbl_format = new QLabel(tr("[CDEFGAH][#b][...]"));
+	lbl_format = new QLabel(tr("[CDEFGABH][#b][...][/CDEFGABH[#b]]"));
 	lbl_status = new QLabel(tr(""));
 	lbl_rol = new QLabel(tr("Rotate:"));
 	lbl_base = new QLabel(tr("Base (C5):"));
