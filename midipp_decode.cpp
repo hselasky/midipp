@@ -180,7 +180,7 @@ mpp_parse_score(const char *input, uint8_t base,
 
 	for (x = 0; x != (sizeof(score_variant)/sizeof(score_variant[0])); x++) {
 
-		if (strcasecmp(buffer, score_variant[x].keyword) == 0) {
+		if (strcmp(buffer, score_variant[x].keyword) == 0) {
 
 			for (y = 0; y != (MPP_MAX_VAR_OFF-1); y++) {
 				uint8_t z;
