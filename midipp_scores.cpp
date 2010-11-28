@@ -58,7 +58,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	    "\n"
 	    "/*\n"
 	    " * Command syntax:\n"
-	    " * U<number> - specifies the duration of the following scores (0..255)\n"
+	    " * U<number>[.] - specifies the duration of the following scores (0..255)\n"
 	    " * T<number> - specifies the track number of the following scores (0..31)\n"
 	    " * K<number> - defines a command (0..99)\n"
 	    " * K0 - no operation\n"
@@ -682,6 +682,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 	memset(pll_start, 0, sizeof(pll_start));
 	memset(pll_duration, 0, sizeof(pll_duration));
 	memset(pll_jump, 0, sizeof(pll_jump));
+	active_channels = 1;
 
 	if (pstr.isNull() || pstr.isEmpty())
 		goto done;
@@ -943,6 +944,15 @@ parse_duration:
 	} else {
 		duration = 0;
 	}
+
+	duration *= 2;
+
+	c = pstr[ps.x+1].toAscii();
+	if (c == '.') {
+		parseAdv(1);
+	} else 	if (duration != 0)
+		duration --;
+
 	goto next_char;
 
 parse_channel:
@@ -959,6 +969,8 @@ parse_channel:
 	} else {
 		channel = 0;
 	}
+	if (channel < 16)
+		active_channels |= (1 << channel);
 	goto next_char;
 
 parse_command:
@@ -1294,8 +1306,12 @@ MppScoreMain :: checkLabelJump(int pos)
 int
 MppScoreMain :: checkHalfPassThru(int key)
 {
+	static const uint8_t is_black[12] = {0,1,0,1,0,0,1,0,1,0,1,0};
+
 	return ((key >= mid_next_key(baseKey, -1)) &&
-	    (key <= mid_next_key(baseKey, +1)));
+	    (key <= mid_next_key(baseKey, +1)) &&
+	    (is_black[((uint8_t)key) % 12U] ==
+	     is_black[((uint8_t)baseKey) % 12U]));
 }
 
 /* must be called locked */
@@ -1357,6 +1373,8 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 			return;
 		}
 	}
+
+	decrementDuration();
 
 	last_key = in_key;
 	last_vel = vel;
@@ -1436,7 +1454,8 @@ MppScoreMain :: handlePllPress()
 
 			pll_pressed[out_key] = chan + 1;
 
-			mainWindow->output_key(chan, out_key, vel, delay, (pllCycleMs * (pn->dur - 1)) + pllDutyMs);
+			mainWindow->output_key(chan, out_key, vel, delay,
+			    (pllCycleMs * (pn->dur - 1)) + pllDutyMs);
 		}
 	}
 
@@ -1448,18 +1467,12 @@ MppScoreMain :: handlePllPress()
 
 /* must be called locked */
 void
-MppScoreMain :: handleKeyRelease(int in_key)
+MppScoreMain :: decrementDuration()
 {
 	uint8_t out_key;
 	uint8_t chan;
 	uint8_t delay;
 	uint8_t x;
-
-	if (isPlayKeyLocked != 0) {
-		if (in_key != (int)whatPlayKeyLocked) {
-			return;
-		}
-	}
 
 	for (x = 0; x != MPP_PRESSED_MAX; x++) {
 		if ((pressedKeys[x] & 0xFF) == 1) {
@@ -1477,6 +1490,19 @@ MppScoreMain :: handleKeyRelease(int in_key)
 		if (pressedKeys[x] != 0)
 			pressedKeys[x] --;
 	}
+}
+
+/* must be called locked */
+void
+MppScoreMain :: handleKeyRelease(int in_key)
+{
+	if (isPlayKeyLocked != 0) {
+		if (in_key != (int)whatPlayKeyLocked) {
+			return;
+		}
+	}
+
+	decrementDuration();
 
 	lastPos = currPos;
 
