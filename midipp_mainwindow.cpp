@@ -59,6 +59,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	memset(auto_zero_start, 0, auto_zero_end - auto_zero_start);
 
+	midiPassThruOff = 2;
 	CurrMidiFileName = NULL;
 	song = NULL;
 	track = NULL;
@@ -937,11 +938,15 @@ void
 MppMainWindow :: handle_pass_thru()
 {
 	pthread_mutex_lock(&mtx);
-	midiPassThruOff = !midiPassThruOff;
+	midiPassThruOff++;
+	if (midiPassThruOff >= 3)
+		midiPassThruOff = 0;
 	pthread_mutex_unlock(&mtx);
 
 	if (midiPassThruOff == 0)
 		lbl_midi_pass_thru->setText(tr("ON"));
+	else if (midiPassThruOff == 1)
+		lbl_midi_pass_thru->setText(tr("HALF"));
 	else
 		lbl_midi_pass_thru->setText(tr("OFF"));
 }
@@ -1914,10 +1919,22 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			if (mw->currScoreMain->checkLabelJump(lbl)) {
 				mw->handle_jump_locked(lbl);
 			} else {
-				if (mw->playKeyFixed != 0)
-					key = mw->playKey;
+				if (mw->midiPassThruOff != 1) {
 
-				mw->currScoreMain->handleKeyPress(key, vel);
+					if (mw->playKeyFixed != 0)
+						key = mw->playKey;
+
+					mw->currScoreMain->handleKeyPress(key, vel);
+
+				} else if (mw->currScoreMain->checkHalfPassThru(key) != 0) {
+
+					if (key == mw->baseKey)
+						mw->currScoreMain->handleKeyPress(key, vel);
+
+				} else if (mw->currScoreMain->setPressedKey(chan, key, 255, 0) == 0) {
+					mw->output_key(chan, key, vel, 0, 0);
+					mw->do_update_bpm();
+				}
 			}
 		} else if (mw->currScoreMain->setPressedKey(chan, key, 255, 0) == 0) {
 
@@ -1935,7 +1952,18 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 		} else if (mw->midiPassThruOff != 0) {
 
 			if (mw->currScoreMain->checkLabelJump(lbl) == 0) {
-				mw->currScoreMain->handleKeyRelease(key);
+				if (mw->midiPassThruOff != 1) {
+
+					mw->currScoreMain->handleKeyRelease(key);
+
+				} else if (mw->currScoreMain->checkHalfPassThru(key) != 0) {
+
+					if (key == mw->baseKey)
+						mw->currScoreMain->handleKeyRelease(key);
+
+				} else if (mw->currScoreMain->setPressedKey(chan, key, 0, 0) == 0) {
+					mw->output_key(chan, key, 0, 0, 0);
+				}
 			}
 
 		} else if (mw->currScoreMain->setPressedKey(chan, key, 0, 0) == 0) {

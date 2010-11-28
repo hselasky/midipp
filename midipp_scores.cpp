@@ -1291,6 +1291,13 @@ MppScoreMain :: checkLabelJump(int pos)
 	return (1);
 }
 
+int
+MppScoreMain :: checkHalfPassThru(int key)
+{
+	return ((key >= mid_next_key(baseKey, -1)) &&
+	    (key <= mid_next_key(baseKey, +1)));
+}
+
 /* must be called locked */
 void
 MppScoreMain :: handleLabelJump(int pos)
@@ -1549,6 +1556,14 @@ MppScoreMain :: setPressedKey(int chan, int out_key, int dur, int delay)
 		}
 		return (0);
 	} else {
+		/* pre-press key */
+		for (y = 0; y != MPP_PRESSED_MAX; y++) {
+			if ((pressedKeys[y] & 0x00FFFF00U) == (temp & 0x00FFFF00U)) {
+				/* key already set */
+				return (1);
+			}
+		}
+
 		/* press key */
 		for (y = 0; y != MPP_PRESSED_MAX; y++) {
 			if (pressedKeys[y] != 0)

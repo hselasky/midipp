@@ -70,6 +70,8 @@ public:
 	void watchdog();
 
 	int checkLabelJump(int label);
+	int checkHalfPassThru(int key);
+
 	int setPressedKey(int chan, int out_key, int dur, int delay);
 
 	uint8_t auto_zero_start[0];
