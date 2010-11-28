@@ -49,6 +49,7 @@ public:
 	MppScoreMain(MppMainWindow *parent);
 	~MppScoreMain();
 
+	void decrementDuration();
 	void handleLabelJump(int label);
 	void handleKeyPress(int key, int vel);
 	void handleKeyRelease(int key);
@@ -111,6 +112,7 @@ public:
 	uint16_t pllDuration;
 	uint16_t pllDutyMs;
 	uint16_t pllCycleMs;
+	uint16_t active_channels;
 
 	uint8_t pageNext[MPP_MAX_LINES];
 #define	MPP_CMD_NOP 0

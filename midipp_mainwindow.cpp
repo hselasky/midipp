@@ -1862,18 +1862,31 @@ static void
 MidiEventRxPedal(MppMainWindow *mw, uint8_t val)
 {
 	struct mid_data *d = &mw->mid_data;
+	uint16_t mask;
 	uint8_t y;
 	uint8_t chan;
 
-	chan = mw->currScoreMain->synthChannel;
+	chan = mw->currScoreMain->synthChannel & 0xF;
 
-	for (y = 0; y != MPP_MAX_DEVS; y++) {
-		if (mw->check_synth(y, chan, 0))
-			mid_pedal(d, val);
+	if (mw->midiPassThruOff == 0)
+		mask = 1;
+	else
+		mask = mw->currScoreMain->active_channels;
+
+	/* the pedal event is distributed to all active channels */
+	while (mask) {
+		if (mask & 1) {
+			for (y = 0; y != MPP_MAX_DEVS; y++) {
+				if (mw->check_synth(y, chan, 0))
+					mid_pedal(d, val);
+			}
+			if (mw->check_record(chan, 0))
+				mid_pedal(d, val);
+		}
+		mask /= 2;
+		chan++;
+		chan &= 0xF;
 	}
-
-	if (mw->check_record(chan, 0))
-		mid_pedal(d, val);
 
 	mw->tab_loop->add_pedal(val);
 }
