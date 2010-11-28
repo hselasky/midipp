@@ -376,13 +376,13 @@ MppDecode :: handle_parse()
 
 		memset(auto_base, 0, sizeof(auto_base));
 
-		if (b_auto >= 24) {
-		  auto_base[0] = (b_auto - 24) & 0x7F;
+		if (b_auto >= 12) {
+		  auto_base[0] = (b_auto - 12) & 0x7F;
 		  out += QString(mid_key_str[auto_base[0]]) +
 			  QString(" ");
 		}
-		if (b_auto >= 12) {
-		  auto_base[1] = (b_auto - 12) & 0x7F;
+		if (b_auto >= 0) {
+		  auto_base[1] = (b_auto - 0) & 0x7F;
 		  out += QString(mid_key_str[auto_base[1]]) +
 			  QString(" ");
 		}
