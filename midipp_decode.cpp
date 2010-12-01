@@ -48,6 +48,7 @@ static const struct score_variant score_variant[] = {
   { "m11", {C5, E5B, G5, H5B, D6, F6} },
   { "add9", {C5, E5, G5, D6} },
   { "sus2", {C5, D5, G5} },
+  { "sus",  {C5, F5, G5} },
   { "sus4", {C5, F5, G5} },
   { "sus7", {C5, F5, G5, H5B} },
   { "dim", {C5, E5B, G5B} },
