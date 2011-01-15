@@ -942,13 +942,13 @@ MppMainWindow :: handle_pass_thru()
 		lbl_midi_mode->setText(tr("ALL"));
 		break;
 	case MM_PASS_NONE_FIXED:
-		lbl_midi_mode->setText(tr("NONE FIX"));
+		lbl_midi_mode->setText(tr("FIXED"));
 		break;
 	case MM_PASS_ONE_MIXED:
-		lbl_midi_mode->setText(tr("ONE MIX"));
+		lbl_midi_mode->setText(tr("MIXED"));
 		break;
 	case MM_PASS_NONE_TRANS:
-		lbl_midi_mode->setText(tr("NONE TRANS"));
+		lbl_midi_mode->setText(tr("TRANSP"));
 		break;
 	default:
 		lbl_midi_mode->setText(tr("UNKNOWN"));
