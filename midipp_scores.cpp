@@ -1397,7 +1397,7 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 			if (setPressedKey(chan, out_key, pn->dur, delay))
 				continue;
 
-			mainWindow->output_key(chan, out_key, vel, delay, 0);
+			mainWindow->output_key(chan, out_key, vel, delay, 0, x);
 		}
 	}
 
@@ -1455,7 +1455,7 @@ MppScoreMain :: handlePllPress()
 			pll_pressed[out_key] = chan + 1;
 
 			mainWindow->output_key(chan, out_key, vel, delay,
-			    (pllCycleMs * (pn->dur - 1)) + pllDutyMs);
+			    (pllCycleMs * (pn->dur - 1)) + pllDutyMs, x);
 		}
 	}
 
@@ -1484,7 +1484,7 @@ MppScoreMain :: decrementDuration()
 			/* clear entry */
 			pressedKeys[x] = 0;
 
-			mainWindow->output_key(chan, out_key, 0, delay, 0);
+			mainWindow->output_key(chan, out_key, 0, delay, 0, x);
 		}
 
 		if (pressedKeys[x] != 0)

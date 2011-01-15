@@ -81,6 +81,8 @@ MppEchoTab :: MppEchoTab(QWidget *parent, MppMainWindow *_mw)
 	spn_echo_out_channel->setMaximum(15);
 	spn_echo_out_channel->setMinimum(0);
 
+	lbl_echo_mode = new QLabel();
+
 	handle_echo_reset();
 
 	connect(spn_echo_ival_init, SIGNAL(valueChanged(int)), this, SLOT(handle_echo_generate(int)));
@@ -108,6 +110,9 @@ MppEchoTab :: MppEchoTab(QWidget *parent, MppMainWindow *_mw)
 	lbl_echo_in_channel = new QLabel(tr("Input channel number (0 .. 15)"));
 	lbl_echo_out_channel = new QLabel(tr("Output channel number (0 .. 15)"));
 
+	but_echo_mode = new QPushButton(tr("Mode"));
+	connect(but_echo_mode, SIGNAL(pressed()), this, SLOT(handle_echo_mode()));
+
 	but_echo_enable = new QPushButton(tr("Echo"));
 	connect(but_echo_enable, SIGNAL(pressed()), this, SLOT(handle_echo_enable()));
 
@@ -115,7 +120,6 @@ MppEchoTab :: MppEchoTab(QWidget *parent, MppMainWindow *_mw)
 	connect(but_echo_reset, SIGNAL(pressed()), this, SLOT(handle_echo_reset()));
 
 	gl->addWidget(lbl_echo_title, 0, 4, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
-
 
 	n = 1;
 
@@ -166,6 +170,8 @@ MppEchoTab :: MppEchoTab(QWidget *parent, MppMainWindow *_mw)
 
 	gl->addWidget(but_echo_enable, 1, 0, 1, 2);
 	gl->addWidget(lbl_echo_status, 1, 2, 1, 2);
+	gl->addWidget(but_echo_mode, 2, 0, 1, 2);
+	gl->addWidget(lbl_echo_mode, 2, 2, 1, 2);
 
 	handle_echo_generate(0);
 }
@@ -188,6 +194,10 @@ MppEchoTab :: handle_echo_reset()
 	spn_echo_transpose->setValue(0);
 	spn_echo_in_channel->setValue(0);
 	spn_echo_out_channel->setValue(15);
+
+	echo_mode = ME_MODE_MAX - 1;
+
+	handle_echo_mode();
 }
 
 void
@@ -217,6 +227,7 @@ MppEchoTab :: handle_echo_generate(int)
 	temp.transpose = spn_echo_transpose->value();
  	temp.in_channel = spn_echo_in_channel->value();
  	temp.out_channel = spn_echo_out_channel->value();
+	temp.mode = echo_mode;
 
 	pthread_mutex_lock(&mw->mtx);
 	echo_dirty = 1;
@@ -228,4 +239,29 @@ void
 MppEchoTab :: watchdog()
 {
 
+}
+
+void
+MppEchoTab :: handle_echo_mode()
+{
+	echo_mode++;
+	if (echo_mode >= ME_MODE_MAX)
+		echo_mode = 0;
+
+	switch (echo_mode) {
+	case ME_MODE_DEFAULT:
+		lbl_echo_mode->setText(tr("DEFAULT"));
+		break;
+	case ME_MODE_BASE_ONLY:
+		lbl_echo_mode->setText(tr("BASE ONLY"));
+		break;
+	case ME_MODE_SLIDE:
+		lbl_echo_mode->setText(tr("SLIDE"));
+		break;
+	default:
+		lbl_echo_mode->setText(tr("UNKNOWN"));
+		break;
+	}
+
+	handle_echo_generate(0);
 }

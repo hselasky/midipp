@@ -32,6 +32,13 @@
 #define	MPP_ECHO_UNIT	65536U
 #define	MPP_ECHO_AMP	128U
 
+enum {
+	ME_MODE_DEFAULT,
+	ME_MODE_BASE_ONLY,
+	ME_MODE_SLIDE,
+	ME_MODE_MAX,
+};
+
 struct MppEchoValues {
 	uint32_t ival_init;
 	uint32_t ival_repeat;
@@ -42,6 +49,8 @@ struct MppEchoValues {
 	uint32_t num_echo;
 	uint8_t in_channel;
 	uint8_t out_channel;
+	uint8_t last_key[2];
+	uint8_t mode;
 	int8_t transpose;
 };
 
@@ -72,6 +81,7 @@ public:
 	QSpinBox *spn_echo_in_channel;
 	QSpinBox *spn_echo_out_channel;
 
+	QLabel *lbl_echo_mode;
 	QLabel *lbl_echo_ival_init;
 	QLabel *lbl_echo_ival_repeat;
 	QLabel *lbl_echo_ival_rand;
@@ -86,6 +96,7 @@ public:
 	QLabel *lbl_echo_title;
 	QLabel *lbl_echo_status;
 
+	QPushButton *but_echo_mode;
 	QPushButton *but_echo_enable;
 	QPushButton *but_echo_reset;
 
@@ -93,6 +104,7 @@ public:
 
 	uint8_t echo_enabled;
 	uint8_t echo_dirty;
+	uint8_t echo_mode;
 
 	uint8_t auto_zero_end[0];
 
@@ -101,6 +113,7 @@ public slots:
 	void handle_echo_reset();
 	void handle_echo_enable();
 	void handle_echo_generate(int);
+	void handle_echo_mode();
 };
 
 #endif	/* _MIDIPP_ECHO_H_ */

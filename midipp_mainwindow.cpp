@@ -2760,7 +2760,7 @@ MppMainWindow :: output_key_sub(int chan, int key, int vel, int delay, int dur)
 }
 
 void
-MppMainWindow :: output_key(int chan, int key, int vel, int delay, int dur)
+MppMainWindow :: output_key(int chan, int key, int vel, int delay, int dur, int seq)
 {
 	uint8_t n;
 
@@ -2769,7 +2769,7 @@ MppMainWindow :: output_key(int chan, int key, int vel, int delay, int dur)
 	for (n = 0; n != MPP_MAX_ETAB; n++) {
 	  MppEchoTab *et = tab_echo[n];
 
-	  if (et->echo_enabled &&
+	  if (et->echo_enabled && (vel != 0) &&
 	      (et->echo_val.in_channel == chan)) {
 		int echo_amp = (vel * et->echo_val.amp_init);
 		int echo_key = key + et->echo_val.transpose;
@@ -2781,6 +2781,24 @@ MppMainWindow :: output_key(int chan, int key, int vel, int delay, int dur)
 			echo_key = 0;
 		else if (echo_key > 127)
 			echo_key = 127;
+
+		switch (et->echo_val.mode) {
+		case ME_MODE_BASE_ONLY:
+			if (seq < 2)
+				et->echo_val.last_key[seq] = echo_key;
+			if ((seq != 1) ||
+			    ((et->echo_val.last_key[0] % 12) !=
+			     (et->echo_val.last_key[1] % 12))) {
+				goto skip_echo;
+			}
+			echo_key = et->echo_val.last_key[0];
+			break;
+		case ME_MODE_SLIDE:
+			echo_delay += seq * et->echo_val.ival_repeat;
+			break;
+		default:
+			break;
+		}
 
 		echo_delay += et->echo_val.ival_init;
 
@@ -2805,4 +2823,5 @@ MppMainWindow :: output_key(int chan, int key, int vel, int delay, int dur)
 		}
 	  }
 	}
+skip_echo:;
 }

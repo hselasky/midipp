@@ -64,7 +64,7 @@ public:
 	void do_update_bpm(void);
 	void do_key_press(int key, int vel, int dur);
 	void output_key_sub(int chan, int key, int vel, int delay, int dur);
-	void output_key(int chan, int key, int vel, int delay, int dur);
+	void output_key(int chan, int key, int vel, int delay, int dur, int seq = 0);
 
 	uint32_t get_time_offset(void);
 
