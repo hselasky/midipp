@@ -28,6 +28,14 @@
 
 #include <midipp.h>
 
+enum {
+	MM_PASS_ALL,
+	MM_PASS_ONE_MIXED,
+	MM_PASS_NONE_FIXED,
+	MM_PASS_NONE_TRANS,
+	MM_PASS_MAX,
+};
+
 class MppMainWindow : public QWidget
 {
 	Q_OBJECT;
@@ -120,10 +128,9 @@ public:
 	uint8_t instrUpdated;
 	uint8_t midiRecordOff;
 	uint8_t midiPlayOff;
-	uint8_t midiPassThruOff;
+	uint8_t midiMode;
 	uint8_t midiTriggered;
 	uint8_t midiPaused;
-	uint8_t playKeyFixed;
 
 	char *deviceName[MPP_MAX_DEVS];
 
@@ -190,11 +197,11 @@ public:
 	QLabel	*lbl_score_record;
 	QLabel	*lbl_midi_record;
 	QLabel	*lbl_midi_play;
-	QLabel	*lbl_midi_pass_thru;
+	QLabel	*lbl_midi_mode;
 
 	QPushButton *but_insert_chord;
 	QPushButton *but_jump[MPP_MAX_LBUTTON];
-	QPushButton *but_midi_pass_thru;
+	QPushButton *but_midi_mode;
 	QPushButton *but_compile;
 	QPushButton *but_score_record;
 	QPushButton *but_play;
@@ -220,9 +227,6 @@ public:
 
 	QSpinBox *spn_bpm_length;
 	QSpinBox *spn_auto_play;
-
-	QLabel	*lbl_fixed_key;
-	QCheckBox *cbx_fixed_key;
 
 	QLabel	*lbl_key_delay;
 	QSpinBox *spn_key_delay;

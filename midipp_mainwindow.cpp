@@ -59,7 +59,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	memset(auto_zero_start, 0, auto_zero_end - auto_zero_start);
 
-	midiPassThruOff = 2;
+	midiMode = MM_PASS_MAX - 1;
 	CurrMidiFileName = NULL;
 	song = NULL;
 	track = NULL;
@@ -266,7 +266,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	lbl_score_record = new QLabel(QString());
 	lbl_midi_record = new QLabel(QString());
-	lbl_midi_pass_thru = new QLabel(QString());
+	lbl_midi_mode = new QLabel(QString());
 	lbl_midi_play = new QLabel(QString());
 
 	for (n = 0; n != MPP_MAX_LBUTTON; n++) {
@@ -275,8 +275,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		but_jump[n] = new QPushButton(tr(buf));
 	}
 
-	but_insert_chord = new QPushButton(tr("Get Chord"));
-	but_midi_pass_thru = new QPushButton(tr("Pass Thru"));
+	but_insert_chord = new QPushButton(tr("Get &Chord"));
+	but_midi_mode = new QPushButton(tr("Key Pass Mode"));
 	but_compile = new QPushButton(tr("Compile"));
 	but_score_record = new QPushButton(tr("Scores"));
 	but_midi_record = new QPushButton(tr("MIDI"));
@@ -351,8 +351,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_midi_pass_thru, n, 3, 1, 1);
-	tab_play_gl->addWidget(but_midi_pass_thru, n, 0, 1, 3);
+	tab_play_gl->addWidget(lbl_midi_mode, n, 3, 1, 1);
+	tab_play_gl->addWidget(but_midi_mode, n, 0, 1, 3);
 
 	n++;
 
@@ -456,9 +456,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_parse_thres->setValue(30);
 	spn_parse_thres->setSuffix(tr(" ms"));
 
-	lbl_fixed_key = new QLabel(tr("Fixed Play Key"));
-	cbx_fixed_key = new QCheckBox();
-
 	lbl_config_local = new QLabel(tr("Enable local MIDI on synth"));
 	cbx_config_local = new QCheckBox();
 	connect(cbx_config_local, SIGNAL(stateChanged(int)), this, SLOT(handle_config_local_changed(int)));
@@ -531,9 +528,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_config_gl->addWidget(lbl_parse_thres, x, 0, 1, 3, Qt::AlignLeft|Qt::AlignVCenter);
 	tab_config_gl->addWidget(spn_parse_thres, x, 3, 1, 1, Qt::AlignRight|Qt::AlignVCenter);
-
-	tab_config_gl->addWidget(lbl_fixed_key, x, 4, 1, 3, Qt::AlignLeft|Qt::AlignVCenter);
-	tab_config_gl->addWidget(cbx_fixed_key, x, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	x++;
 
@@ -768,7 +762,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	for (n = 0; n != MPP_MAX_LBUTTON; n++)
 		connect(but_jump[n], SIGNAL(pressed()), this, SLOT(handle_jump_common()));
 
-	connect(but_midi_pass_thru, SIGNAL(pressed()), this, SLOT(handle_pass_thru()));
+	connect(but_midi_mode, SIGNAL(pressed()), this, SLOT(handle_pass_thru()));
 	connect(but_compile, SIGNAL(pressed()), this, SLOT(handle_compile()));
 	connect(but_score_record, SIGNAL(pressed()), this, SLOT(handle_score_record()));
 	connect(but_midi_record, SIGNAL(pressed()), this, SLOT(handle_midi_record()));
@@ -938,17 +932,28 @@ void
 MppMainWindow :: handle_pass_thru()
 {
 	pthread_mutex_lock(&mtx);
-	midiPassThruOff++;
-	if (midiPassThruOff >= 3)
-		midiPassThruOff = 0;
+	midiMode++;
+	if (midiMode >= MM_PASS_MAX)
+		midiMode = 0;
 	pthread_mutex_unlock(&mtx);
 
-	if (midiPassThruOff == 0)
-		lbl_midi_pass_thru->setText(tr("ON"));
-	else if (midiPassThruOff == 1)
-		lbl_midi_pass_thru->setText(tr("HALF"));
-	else
-		lbl_midi_pass_thru->setText(tr("OFF"));
+	switch (midiMode) {
+	case MM_PASS_ALL:
+		lbl_midi_mode->setText(tr("ALL"));
+		break;
+	case MM_PASS_NONE_FIXED:
+		lbl_midi_mode->setText(tr("NONE FIX"));
+		break;
+	case MM_PASS_ONE_MIXED:
+		lbl_midi_mode->setText(tr("ONE MIX"));
+		break;
+	case MM_PASS_NONE_TRANS:
+		lbl_midi_mode->setText(tr("NONE TRANS"));
+		break;
+	default:
+		lbl_midi_mode->setText(tr("UNKNOWN"));
+		break;
+	}
 }
 
 void
@@ -1053,7 +1058,7 @@ MppMainWindow :: handle_play_press()
 	pthread_mutex_lock(&mtx);
 	if (tab_loop->handle_trigN(-1, playKey - baseKey, 90)) {
 		/* ignore */
-	} else if (midiPassThruOff != 0) {
+	} else if (midiMode != MM_PASS_ALL) {
 		currScoreMain->handleKeyPress(playKey, 90);
 	} else {
 		output_key(currScoreMain->synthChannel, playKey, 90, 0, 0);
@@ -1067,7 +1072,7 @@ MppMainWindow :: handle_play_release()
 	pthread_mutex_lock(&mtx);
 	if (tab_loop->checkLabelTrig(-1)) {
 		/* ignore */
-	} else if (midiPassThruOff != 0) {
+	} else if (midiMode != MM_PASS_ALL) {
 		currScoreMain->handleKeyRelease(playKey);
 	} else {
 		output_key(currScoreMain->synthChannel, playKey, 0, 0, 0);
@@ -1568,14 +1573,12 @@ MppMainWindow :: handle_config_revert()
 
 	spn_bpm_length->setValue(bpmAvgLength);
 	spn_auto_play->setValue(bpmAutoPlayOld);
-	cbx_fixed_key->setChecked(playKeyFixed ? 1 : 0);
 }
 
 void
 MppMainWindow :: handle_config_apply()
 {
 	int n;
-	int m;
 
 	deviceBits = 0;
 
@@ -1595,11 +1598,9 @@ MppMainWindow :: handle_config_apply()
 	}
 
 	n = spn_bpm_length->value();
-	m = cbx_fixed_key->isChecked();
 
 	pthread_mutex_lock(&mtx);
 	bpmAvgLength = n;
-	playKeyFixed = m;
 	pthread_mutex_unlock(&mtx);
 
 	handle_config_reload();
@@ -1868,7 +1869,7 @@ MidiEventRxPedal(MppMainWindow *mw, uint8_t val)
 
 	chan = mw->currScoreMain->synthChannel & 0xF;
 
-	if (mw->midiPassThruOff == 0)
+	if (mw->midiMode == MM_PASS_ALL)
 		mask = 1;
 	else
 		mask = mw->currScoreMain->active_channels;
@@ -1927,14 +1928,15 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 			mw->do_update_bpm();
 
-		} else if (mw->midiPassThruOff != 0) {
+		} else if (mw->midiMode != MM_PASS_ALL) {
 
 			if (mw->currScoreMain->checkLabelJump(lbl)) {
 				mw->handle_jump_locked(lbl);
 			} else {
-				if (mw->midiPassThruOff != 1) {
+				if ((mw->midiMode == MM_PASS_NONE_FIXED) ||
+				    (mw->midiMode == MM_PASS_NONE_TRANS)) {
 
-					if (mw->playKeyFixed != 0)
+					if (mw->midiMode == MM_PASS_NONE_FIXED)
 						key = mw->playKey;
 
 					mw->currScoreMain->handleKeyPress(key, vel);
@@ -1962,10 +1964,14 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 		if (mw->tab_loop->checkLabelTrig(lbl)) {
 
-		} else if (mw->midiPassThruOff != 0) {
+		} else if (mw->midiMode != MM_PASS_ALL) {
 
 			if (mw->currScoreMain->checkLabelJump(lbl) == 0) {
-				if (mw->midiPassThruOff != 1) {
+				if ((mw->midiMode == MM_PASS_NONE_FIXED) ||
+				    (mw->midiMode == MM_PASS_NONE_TRANS)) {
+
+					if (mw->midiMode == MM_PASS_NONE_FIXED)
+						key = mw->playKey;
 
 					mw->currScoreMain->handleKeyRelease(key);
 
