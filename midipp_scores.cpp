@@ -1297,7 +1297,8 @@ MppScoreMain :: handleScoreFileSaveAs()
 int
 MppScoreMain :: checkLabelJump(int pos)
 {
-	if ((pos < 0) || (pos > 7) || (jumpTable[pos] == 0))
+	if ((pos < 0) || (pos > 12) || (pos > MPP_MAX_LABELS) ||
+	    (jumpTable[pos] == 0))
 		return (0);
 
 	return (1);
