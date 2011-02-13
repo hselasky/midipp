@@ -156,7 +156,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_midi_file_merge = new QPushButton(tr("Merge"));
 	but_midi_file_save = new QPushButton(tr("Save"));
 	but_midi_file_save_as = new QPushButton(tr("Save As"));
-	but_midi_file_convert = new QPushButton(tr("ToScores"));
+	but_midi_file_convert_A = new QPushButton(tr("Import to A"));
+	but_midi_file_convert_B = new QPushButton(tr("Import to B"));
 
 	n = 0;
 
@@ -198,6 +199,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_file_gl->addWidget(lbl_file_status, n, 0, 1, 8, Qt::AlignLeft|Qt::AlignVCenter);
 
 	n++;
+	n++;
 
 	tab_file_gl->setRowStretch(n, 3);
 
@@ -231,7 +233,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n++;
 
-	tab_file_gl->addWidget(but_midi_file_convert, n, 6, 1, 2);
+	tab_file_gl->addWidget(but_midi_file_convert_A, n, 6, 1, 2);
+
+	n++;
+
+	tab_file_gl->addWidget(but_midi_file_convert_B, n, 6, 1, 2);
 
 	n++;
 
@@ -416,7 +422,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_play_gl->addWidget(but_play, n, 4, 3, 4);
 
-	n += 3;
+	n += 4;
 
 	tab_play_gl->setRowStretch(n, 4);
 
@@ -784,7 +790,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_midi_file_merge, SIGNAL(pressed()), this, SLOT(handle_midi_file_merge_open()));
 	connect(but_midi_file_save, SIGNAL(pressed()), this, SLOT(handle_midi_file_save()));
 	connect(but_midi_file_save_as, SIGNAL(pressed()), this, SLOT(handle_midi_file_save_as()));
-	connect(but_midi_file_convert, SIGNAL(pressed()), this, SLOT(handle_midi_file_convert()));
+	connect(but_midi_file_convert_A, SIGNAL(pressed()), this, SLOT(handle_midi_file_convert_A()));
+	connect(but_midi_file_convert_B, SIGNAL(pressed()), this, SLOT(handle_midi_file_convert_B()));
 
 	connect(but_midi_trigger, SIGNAL(pressed()), this, SLOT(handle_midi_trigger()));
 	connect(but_midi_rewind, SIGNAL(pressed()), this, SLOT(handle_rewind()));
@@ -2433,9 +2440,9 @@ MppMainWindow :: convert_midi_score_duration()
 }
 
 void
-MppMainWindow :: handle_midi_file_convert()
+MppMainWindow :: handle_midi_file_convert(MppScoreMain *sm)
 {
-	QTextCursor cursor(currScoreMain->editWidget->textCursor());
+	QTextCursor cursor(sm->editWidget->textCursor());
 
 	QString output;
 	QString out_block;
@@ -2561,6 +2568,20 @@ MppMainWindow :: handle_midi_file_convert()
 	cursor.insertText(output);
 
 	handle_compile();
+}
+
+void
+MppMainWindow :: handle_midi_file_convert_A()
+{
+	if (MPP_MAX_VIEWS > 0)
+		handle_midi_file_convert(scores_main[0]);
+}
+
+void
+MppMainWindow :: handle_midi_file_convert_B()
+{
+	if (MPP_MAX_VIEWS > 1)
+		handle_midi_file_convert(scores_main[1]);
 }
 
 void

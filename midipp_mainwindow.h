@@ -167,7 +167,8 @@ public:
 	QPushButton *but_midi_file_merge;
 	QPushButton *but_midi_file_save;
 	QPushButton *but_midi_file_save_as;
-	QPushButton *but_midi_file_convert;
+	QPushButton *but_midi_file_convert_A;
+	QPushButton *but_midi_file_convert_B;
 
 	/* tab <Play> */
 
@@ -383,7 +384,9 @@ public slots:
 	void handle_auto_play(int bpm);
 	void handle_tab_changed(int index);
 
-	void handle_midi_file_convert();
+	void handle_midi_file_convert(MppScoreMain *sm);
+	void handle_midi_file_convert_A();
+	void handle_midi_file_convert_B();
 
 	void handle_mute_map();
 
