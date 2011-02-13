@@ -422,7 +422,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_play_gl->addWidget(but_play, n, 4, 3, 4);
 
-	n += 4;
+	n += 3;
 
 	tab_play_gl->setRowStretch(n, 4);
 
