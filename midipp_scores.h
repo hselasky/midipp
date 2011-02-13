@@ -85,7 +85,6 @@ public:
 	QPushButton *butScoreFileSave;
 	QPushButton *butScoreFileSaveAs;
 	QPushButton *butScoreFilePrint;
-	QPushButton *butScoreFileImport;
 	QString *currScoreFileName;
 	QLabel *lblFileStatus;
 
@@ -163,7 +162,6 @@ public slots:
 	void handleScoreFileOpen();
 	void handleScoreFileSave();
 	void handleScoreFileSaveAs();
-	void handleScoreImport();
 	void handleScorePrint();
 	void handleChannelChanged(int chan);
 };

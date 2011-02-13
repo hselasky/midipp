@@ -50,6 +50,30 @@ struct midipp_import {
 	uint8_t index;
 };
 
-extern uint8_t midipp_import(const char *file, struct midipp_import *ps, MppScoreMain *sm);
+class MppImportTab : public QObject
+{
+	Q_OBJECT;
+public:
+
+	MppImportTab(MppMainWindow *parent);
+	~MppImportTab();
+
+	MppMainWindow *mainWindow;
+
+	QTextEdit *editWidget;
+	QPushButton *butImportFileNew;
+	QPushButton *butImportFileOpen;
+	QPushButton *butImportToA;
+	QPushButton *butImportToB;
+
+public slots:
+
+	void handleImportNew();
+	void handleImportOpen();
+	void handleImportToA();
+	void handleImportToB();
+};
+
+extern uint8_t midipp_import(QString str, struct midipp_import *ps, MppScoreMain *sm);
 
 #endif		/* _MIDIPP_IMPORT_H_ */

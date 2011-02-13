@@ -161,16 +161,19 @@ midipp_import_parse(struct midipp_import *ps)
 }
 
 uint8_t
-midipp_import(const char *file, struct midipp_import *ps, MppScoreMain *sm)
+midipp_import(QString str, struct midipp_import *ps, MppScoreMain *sm)
 {
 	MppDecode dlg(sm->mainWindow, sm->mainWindow);
 	char ch;
-	int f;
 	int off;
+	char *ptr;
+	char *ptr_curr;
 
-	f = open(file, O_RDONLY);
-	if (f < 0)
+	ptr = MppQStringToAscii(str);
+	if (ptr == NULL)
 		return (1);
+
+	ptr_curr = ptr;
 
 	off = 0;
 
@@ -179,7 +182,9 @@ midipp_import(const char *file, struct midipp_import *ps, MppScoreMain *sm)
 	ps->sm = sm;
 	ps->dlg = &dlg;
 
-	while (read(f, &ch, 1) == 1) {
+	while ((ch = *ptr_curr) != 0) {
+		ptr_curr++;
+
 		if (ch == '\r')
 			continue;
 
@@ -218,7 +223,83 @@ midipp_import(const char *file, struct midipp_import *ps, MppScoreMain *sm)
 	midipp_import_parse(ps);
 
  done:
-	close(f);
+	free(ptr);
 
 	return (0);
+}
+
+MppImportTab :: MppImportTab(MppMainWindow *parent)
+{
+	mainWindow = parent;
+
+	editWidget = new QTextEdit();
+	editWidget->setText(tr(
+	    "Example song:" "\n\n"
+	    "C  G  Am" "\n"
+	    "Welcome!" "\n"));
+
+	butImportFileNew = new QPushButton(tr("New"));
+	butImportFileOpen = new QPushButton(tr("Open"));
+	butImportToA = new QPushButton(tr("Import to A"));
+	butImportToB = new QPushButton(tr("Import to B"));
+
+	connect(butImportFileNew, SIGNAL(pressed()), this, SLOT(handleImportNew()));
+	connect(butImportFileOpen, SIGNAL(pressed()), this, SLOT(handleImportOpen()));
+	connect(butImportToA, SIGNAL(pressed()), this, SLOT(handleImportToA()));
+	connect(butImportToB, SIGNAL(pressed()), this, SLOT(handleImportToB()));
+}
+
+MppImportTab :: ~MppImportTab()
+{
+
+}
+
+void
+MppImportTab :: handleImportNew()
+{
+	editWidget->setText(QString());
+	mainWindow->lbl_file_status->setText(QString());
+}
+
+void
+MppImportTab :: handleImportOpen()
+{
+	QFileDialog *diag = 
+	  new QFileDialog(mainWindow, tr("Select Chord Tabular File"), 
+		QString(), QString("Chord Tabular File (*.txt; *.TXT)"));
+	QString scores;
+	QString status;
+
+	diag->setAcceptMode(QFileDialog::AcceptOpen);
+	diag->setFileMode(QFileDialog::ExistingFile);
+
+	if (diag->exec()) {
+
+		handleImportNew();
+
+		scores = MppReadFile(diag->selectedFiles()[0], &status);
+
+		editWidget->setText(scores);
+
+		mainWindow->lbl_file_status->setText(status);
+	}
+	delete diag;
+}
+
+void
+MppImportTab :: handleImportToA()
+{
+	struct midipp_import ps;
+
+	if (MPP_MAX_VIEWS > 0)
+		midipp_import(editWidget->toPlainText(), &ps, mainWindow->scores_main[0]);
+}
+
+void
+MppImportTab :: handleImportToB()
+{
+	struct midipp_import ps;
+
+	if (MPP_MAX_VIEWS > 1)
+		midipp_import(editWidget->toPlainText(), &ps, mainWindow->scores_main[1]);
 }

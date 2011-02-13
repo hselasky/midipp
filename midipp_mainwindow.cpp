@@ -29,6 +29,7 @@
 #include <midipp_looptab.h>
 #include <midipp_echotab.h>
 #include <midipp_decode.h>
+#include <midipp_import.h>
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -90,6 +91,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		scores_main[x] = new MppScoreMain(this);
 
 	currScoreMain = scores_main[0];
+
+	tab_import = new MppImportTab(this);
+
 	tab_loop = new MppLoopTab(this, this);
 
 	for (x = 0; x != MPP_MAX_ETAB; x++)
@@ -115,6 +119,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	scores_tw->addTab(scores_main[1]->viewWidget, tr("View B-Scores"));
 	scores_tw->addTab(scores_main[1]->editWidget, tr("Edit B-Scores"));
 
+	scores_tw->addTab(tab_import->editWidget, tr("Import Scores"));
+
 	main_tw->addTab(tab_file_wg, tr("File"));
 	main_tw->addTab(tab_play_wg, tr("Play"));
 #if 0
@@ -133,9 +139,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* <File> Tab */
 
-	lbl_score_Afile = new QLabel(tr("- A-Score File -"));
+	lbl_score_Afile = new QLabel(tr("- A-Scores -"));
 
-	lbl_score_Bfile = new QLabel(tr("- B-Score File -"));
+	lbl_score_Bfile = new QLabel(tr("- B-Scores -"));
+
+	lbl_import_file = new QLabel(tr("- Import -"));
 
 	lbl_midi_file = new QLabel(tr("- MIDI File -"));
 
@@ -152,38 +160,38 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n = 0;
 
-	tab_file_gl->addWidget(lbl_score_Afile, n, 0, 1, 3, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_file_gl->addWidget(lbl_score_Bfile, n, 3, 1, 3, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_file_gl->addWidget(lbl_score_Afile, n, 0, 1, 2, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_file_gl->addWidget(lbl_score_Bfile, n, 2, 1, 2, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_file_gl->addWidget(lbl_import_file, n, 4, 1, 2, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	n++;
 
-	tab_file_gl->addWidget(scores_main[0]->butScoreFileNew, n, 0, 1, 3);
-	tab_file_gl->addWidget(scores_main[1]->butScoreFileNew, n, 3, 1, 3);
+	tab_file_gl->addWidget(scores_main[0]->butScoreFileNew, n, 0, 1, 2);
+	tab_file_gl->addWidget(scores_main[1]->butScoreFileNew, n, 2, 1, 2);
+	tab_file_gl->addWidget(tab_import->butImportFileNew, n, 4, 1, 2);
 
 	n++;
 
-	tab_file_gl->addWidget(scores_main[0]->butScoreFileOpen, n, 0, 1, 3);
-	tab_file_gl->addWidget(scores_main[1]->butScoreFileOpen, n, 3, 1, 3);
+	tab_file_gl->addWidget(scores_main[0]->butScoreFileOpen, n, 0, 1, 2);
+	tab_file_gl->addWidget(scores_main[1]->butScoreFileOpen, n, 2, 1, 2);
+	tab_file_gl->addWidget(tab_import->butImportFileOpen, n, 4, 1, 2);
 
 	n++;
 
-	tab_file_gl->addWidget(scores_main[0]->butScoreFileSave, n, 0, 1, 3);
-	tab_file_gl->addWidget(scores_main[1]->butScoreFileSave, n, 3, 1, 3);
+	tab_file_gl->addWidget(scores_main[0]->butScoreFileSave, n, 0, 1, 2);
+	tab_file_gl->addWidget(scores_main[1]->butScoreFileSave, n, 2, 1, 2);
+	tab_file_gl->addWidget(tab_import->butImportToA, n, 4, 1, 2);
 
 	n++;
 
-	tab_file_gl->addWidget(scores_main[0]->butScoreFileSaveAs, n, 0, 1, 3);
-	tab_file_gl->addWidget(scores_main[1]->butScoreFileSaveAs, n, 3, 1, 3);
+	tab_file_gl->addWidget(scores_main[0]->butScoreFileSaveAs, n, 0, 1, 2);
+	tab_file_gl->addWidget(scores_main[1]->butScoreFileSaveAs, n, 2, 1, 2);
+	tab_file_gl->addWidget(tab_import->butImportToB, n, 4, 1, 2);
 
 	n++;
 
-	tab_file_gl->addWidget(scores_main[0]->butScoreFilePrint, n, 0, 1, 3);
-	tab_file_gl->addWidget(scores_main[1]->butScoreFilePrint, n, 3, 1, 3);
-
-	n++;
-
-	tab_file_gl->addWidget(scores_main[0]->butScoreFileImport, n, 0, 1, 3);
-	tab_file_gl->addWidget(scores_main[1]->butScoreFileImport, n, 3, 1, 3);
+	tab_file_gl->addWidget(scores_main[0]->butScoreFilePrint, n, 0, 1, 2);
+	tab_file_gl->addWidget(scores_main[1]->butScoreFilePrint, n, 2, 1, 2);
 
 	n++;
 

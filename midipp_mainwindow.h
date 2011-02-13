@@ -140,7 +140,13 @@ public:
 
 	QTabWidget *scores_tw;
 
+	/* tab <Scores> */
+
 	MppScoreMain *scores_main[MPP_MAX_VIEWS];
+
+	/* tab <Import> */
+
+	MppImportTab *tab_import;
 
 	QTimer *watchdog;
 
@@ -150,6 +156,7 @@ public:
 	QGridLayout *tab_file_gl;
 	QLabel *lbl_score_Afile;
 	QLabel *lbl_score_Bfile;
+	QLabel *lbl_import_file;
 	QLabel *lbl_midi_file;
 	QLabel *lbl_file_status;
 

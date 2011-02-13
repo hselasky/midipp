@@ -89,6 +89,7 @@ class MppScoreMain;
 class MppLoopTab;
 class MppEchoTab;
 class MppScoreHighLighter;
+class MppImportTab;
 
 struct MppScoreEntry {
 	uint8_t key;
