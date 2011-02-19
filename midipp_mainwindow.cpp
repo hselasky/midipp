@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2010 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2011 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,6 +30,7 @@
 #include <midipp_echotab.h>
 #include <midipp_decode.h>
 #include <midipp_import.h>
+#include <midipp_devices.h>
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -447,6 +448,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_config_rec = new QLabel(tr("Rec."));
 	lbl_config_synth = new QLabel(tr("Synth"));
 	lbl_config_mm = new QLabel(tr("MuteMap"));
+	lbl_config_dv = new QLabel(tr("DevSel"));
 	lbl_bpm_count = new QLabel(tr("BPM average length (0..32)"));
 
 	lbl_key_delay = new QLabel(tr("Random Key Delay (0..255)"));
@@ -455,7 +457,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(spn_key_delay, SIGNAL(valueChanged(int)), this, SLOT(handle_key_delay_changed(int)));
 	spn_key_delay->setMaximum(255);
 	spn_key_delay->setMinimum(0);
-	spn_key_delay->setValue(0);
+	spn_key_delay->setValue(25);
 	spn_key_delay->setSuffix(tr(" ms"));
 
 	spn_bpm_length = new QSpinBox();
@@ -484,11 +486,12 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x = 0;
 
-	tab_config_gl->addWidget(lbl_config_title, x, 0, 1, 5, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_config_gl->addWidget(lbl_config_play, x, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_config_gl->addWidget(lbl_config_rec, x, 5, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_config_gl->addWidget(lbl_config_synth, x, 6, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_config_gl->addWidget(lbl_config_mm, x, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_config_gl->addWidget(lbl_config_title, x, 0, 1, 3, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_config_gl->addWidget(lbl_config_play, x, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_config_gl->addWidget(lbl_config_rec, x, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_config_gl->addWidget(lbl_config_synth, x, 5, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_config_gl->addWidget(lbl_config_mm, x, 6, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_config_gl->addWidget(lbl_config_dv, x, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	x++;
 
@@ -496,8 +499,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		char buf[16];
 
 		but_config_mm[n] = new QPushButton(tr("MM"));
+		but_config_dev[n] = new QPushButton(tr("DEV"));
 
 		connect(but_config_mm[n], SIGNAL(pressed()), this, SLOT(handle_mute_map()));
+		connect(but_config_dev[n], SIGNAL(pressed()), this, SLOT(handle_config_dev()));
 
 		led_config_dev[n] = new QLineEdit(QString());
 
@@ -510,12 +515,13 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		lbl_config_dev[n] = new QLabel(tr(buf));
 
 		tab_config_gl->addWidget(lbl_config_dev[n], x, 0, 1, 1, Qt::AlignHCenter|Qt::AlignLeft);
-		tab_config_gl->addWidget(led_config_dev[n], x, 1, 1, 3, Qt::AlignHCenter|Qt::AlignLeft);
+		tab_config_gl->addWidget(led_config_dev[n], x, 1, 1, 2, Qt::AlignHCenter|Qt::AlignLeft);
 
-		tab_config_gl->addWidget(cbx_config_dev[(3*n)+0], x, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		tab_config_gl->addWidget(cbx_config_dev[(3*n)+1], x, 5, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		tab_config_gl->addWidget(cbx_config_dev[(3*n)+2], x, 6, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		tab_config_gl->addWidget(but_config_mm[n], x, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		tab_config_gl->addWidget(cbx_config_dev[(3*n)+0], x, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		tab_config_gl->addWidget(cbx_config_dev[(3*n)+1], x, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		tab_config_gl->addWidget(cbx_config_dev[(3*n)+2], x, 5, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		tab_config_gl->addWidget(but_config_mm[n], x, 6, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		tab_config_gl->addWidget(but_config_dev[n], x, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 		x++;
 	}
@@ -541,7 +547,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	x++;
 
 	tab_config_gl->addWidget(lbl_parse_thres, x, 0, 1, 3, Qt::AlignLeft|Qt::AlignVCenter);
-	tab_config_gl->addWidget(spn_parse_thres, x, 3, 1, 1, Qt::AlignRight|Qt::AlignVCenter);
+	tab_config_gl->addWidget(spn_parse_thres, x, 3, 1, 2, Qt::AlignRight|Qt::AlignVCenter);
 
 	x++;
 
@@ -1498,6 +1504,8 @@ MppMainWindow :: handle_config_reload()
 {
 	struct umidi20_config cfg;
 	uint8_t ScMidiTriggered;
+	char *p_play;
+	char *p_rec;
 	int n;
 	int x;
 	int y;
@@ -1508,25 +1516,69 @@ MppMainWindow :: handle_config_reload()
 
 	for (n = 0; n != MPP_MAX_DEVS; n++) {
 
-		if ((deviceBits & (MPP_DEV0_RECORD << (3 * n))) && 
-		    (deviceName[n] != NULL) && 
-		    (deviceName[n][0] != 0))  {
-			strlcpy(cfg.cfg_dev[n].rec_fname, deviceName[n],
-			    sizeof(cfg.cfg_dev[n].rec_fname));
-			cfg.cfg_dev[n].rec_enabled_cfg = 1;
+		if (deviceName[n] != NULL &&
+		    deviceName[n][0] != 0) {
+			char *pa;
+			pa = strstr(deviceName[n], "|");
+			if (pa != NULL)
+				*pa = 0;
+			p_play = strdup(deviceName[n]);   
+			if (pa != NULL)
+				p_rec = strdup(pa + 1);
+			else
+				p_rec = strdup(deviceName[n]);   
+			if (pa != NULL)
+				*pa = '|';
 		} else {
-			cfg.cfg_dev[n].rec_enabled_cfg = 0;
+			p_play = NULL;
+			p_rec = NULL;
+		}
+		if ((deviceBits & (MPP_DEV0_RECORD << (3 * n))) && 
+		    (p_rec != NULL) && (p_rec[0] != 0) &&
+		    (p_rec[1] == ':') && (p_rec[2] != 0))  {
+			switch (p_rec[0]) {
+			case 'A':
+				strlcpy(cfg.cfg_dev[n].rec_fname, p_rec + 2,
+				    sizeof(cfg.cfg_dev[n].rec_fname));
+				cfg.cfg_dev[n].rec_enabled_cfg = UMIDI20_ENABLED_CFG_JACK;
+				break;
+			case 'D':
+				strlcpy(cfg.cfg_dev[n].rec_fname, p_rec + 2,
+				    sizeof(cfg.cfg_dev[n].rec_fname));
+				cfg.cfg_dev[n].rec_enabled_cfg = UMIDI20_ENABLED_CFG_DEV;
+				break;
+			default:
+				cfg.cfg_dev[n].rec_enabled_cfg = UMIDI20_DISABLE_CFG;
+				break;
+			}
+		} else {
+			cfg.cfg_dev[n].rec_enabled_cfg = UMIDI20_DISABLE_CFG;
 		}
 
 		if ((deviceBits & ((MPP_DEV0_SYNTH | MPP_DEV0_PLAY) << (3 * n))) && 
-		    (deviceName[n] != NULL) && 
-		    (deviceName[n][0] != 0))  {
-			strlcpy(cfg.cfg_dev[n].play_fname, deviceName[n],
-			    sizeof(cfg.cfg_dev[n].play_fname));
-			cfg.cfg_dev[n].play_enabled_cfg = 1;
+		    (p_play != NULL) && (p_play[0] != 0) &&
+		    (p_play[1] == ':') && (p_play[2] != 0))  {
+			switch (p_play[0]) {
+			case 'A':
+				strlcpy(cfg.cfg_dev[n].play_fname, p_play + 2,
+				    sizeof(cfg.cfg_dev[n].play_fname));
+				cfg.cfg_dev[n].play_enabled_cfg = UMIDI20_ENABLED_CFG_JACK;
+				break;
+			case 'D':
+				strlcpy(cfg.cfg_dev[n].play_fname, p_play + 2,
+				    sizeof(cfg.cfg_dev[n].play_fname));
+				cfg.cfg_dev[n].play_enabled_cfg = UMIDI20_ENABLED_CFG_DEV;
+				break;
+			default:
+				cfg.cfg_dev[n].play_enabled_cfg = UMIDI20_DISABLE_CFG;
+				break;
+			}
 		} else {
-			cfg.cfg_dev[n].play_enabled_cfg = 0;
+			cfg.cfg_dev[n].play_enabled_cfg = UMIDI20_DISABLE_CFG;
 		}
+
+		free(p_play);
+		free(p_rec);
 	}
 
 	/* enable magic device */
@@ -2591,10 +2643,10 @@ MppMainWindow :: MidiInit(void)
 
 	deviceBits = MPP_DEV0_SYNTH | MPP_DEV0_PLAY | 
 	  MPP_DEV1_RECORD | MPP_DEV2_RECORD | MPP_DEV3_RECORD;
-	deviceName[0] = strdup("/midi");
-	deviceName[1] = strdup("/dev/umidi0.0");
-	deviceName[2] = strdup("/dev/umidi1.0");
-	deviceName[3] = strdup("/dev/umidi2.0");
+	deviceName[0] = strdup("D:/midi");
+	deviceName[1] = strdup("D:/dev/umidi0.0");
+	deviceName[2] = strdup("D:/dev/umidi1.0");
+	deviceName[3] = strdup("D:/dev/umidi2.0");
 	bpmAvgLength = 4;
 
 	handle_midi_record();
@@ -2659,7 +2711,7 @@ MppMainWindow :: MidiUnInit(void)
 
 	for (n = 0; n != MPP_MAX_DEVS; n++) {
 		if (deviceName[n] != NULL) {
-			free (deviceName[n]);
+			free(deviceName[n]);
 			deviceName[n] = NULL;
 		}
 	}
@@ -2714,8 +2766,29 @@ MppMainWindow :: handle_mute_map()
 	for (n = 0; n != MPP_MAX_DEVS; n++) {
 		if (but_config_mm[n]->isDown()) {
 			mm_diag = new MppMuteMap(this, this, n);
-			if (mm_diag != NULL)
+			if (mm_diag != NULL) {
 				mm_diag->exec();
+				delete mm_diag;
+			}
+		}
+	}
+}
+
+void
+MppMainWindow :: handle_config_dev()
+{
+	MppDevices *dev_diag;
+	int n;
+
+	for (n = 0; n != MPP_MAX_DEVS; n++) {
+		if (but_config_dev[n]->isDown()) {
+			dev_diag = new MppDevices(this);
+			if (dev_diag != NULL) {
+				if (dev_diag->exec() == QDialog::Accepted) {
+					led_config_dev[n]->setText(dev_diag->result_dev);
+				}
+				delete dev_diag;
+			}
 		}
 	}
 }

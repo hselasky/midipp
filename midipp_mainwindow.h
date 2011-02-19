@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2010 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2011 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -230,6 +230,7 @@ public:
 	QLabel *lbl_config_rec;
 	QLabel *lbl_config_synth;
 	QLabel *lbl_config_mm;
+	QLabel *lbl_config_dv;
 	QLabel *lbl_config_dev[MPP_MAX_DEVS];
 	QLabel *lbl_bpm_count;
 
@@ -242,6 +243,7 @@ public:
 	QLabel	*lbl_parse_thres;
 	QSpinBox *spn_parse_thres;
 
+	QPushButton *but_config_dev[MPP_MAX_DEVS];
 	QPushButton *but_config_mm[MPP_MAX_DEVS];
 	QLineEdit *led_config_dev[MPP_MAX_DEVS];
 	QCheckBox *cbx_config_dev[3 * MPP_MAX_DEVS];
@@ -389,6 +391,7 @@ public slots:
 	void handle_midi_file_convert_B();
 
 	void handle_mute_map();
+	void handle_config_dev();
 
 protected:
 	void keyPressEvent(QKeyEvent *event);

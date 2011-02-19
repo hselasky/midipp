@@ -60,6 +60,7 @@
 #include <QPixmap>
 #include <QMouseEvent>
 #include <QSizePolicy>
+#include <QListWidget>
 
 #include <umidi20.h>
 
@@ -90,6 +91,7 @@ class MppLoopTab;
 class MppEchoTab;
 class MppScoreHighLighter;
 class MppImportTab;
+class MppDevices;
 
 struct MppScoreEntry {
 	uint8_t key;

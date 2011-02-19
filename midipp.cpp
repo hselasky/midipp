@@ -157,6 +157,8 @@ main(int argc, char **argv)
 
 	umidi20_init();
 
+	umidi20_jack_init("midipp");
+
 	MppMainWindow main;
 
 	main.show();
