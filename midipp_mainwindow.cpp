@@ -931,7 +931,11 @@ MppMainWindow :: handle_base_key_changed(int key)
 	baseKey = key;
 	pthread_mutex_unlock(&mtx);
 
-	lbl_base_key->setText(tr("Base Key (0..127) ") + QString(mid_key_str[key]));
+	lbl_base_key->setText(tr("Base Key (0..127) ") +
+	    QString(mid_key_str[key]));
+
+	if (spn_play_key != NULL)
+		spn_play_key->setValue(key);
 }
 
 void
