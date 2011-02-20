@@ -102,11 +102,12 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 
 	/* Editor */
 
-	editWidget = new QTextEdit();
+	editWidget = new QPlainTextEdit();
 
-	editWidget->setText(defaultText);
+	editWidget->setFont(font_fixed);
+	editWidget->setPlainText(defaultText);
 	editWidget->setCursorWidth(4);
-	editWidget->setLineWrapMode(QTextEdit::NoWrap);
+	editWidget->setLineWrapMode(QPlainTextEdit::NoWrap);
 
 	/* Visual */
 
@@ -1214,7 +1215,7 @@ MppScoreMain :: handleChannelChanged(int chan)
 void
 MppScoreMain :: handleScoreFileNew()
 {
-	editWidget->setText(QString());
+	editWidget->setPlainText(QString());
 	mainWindow->lbl_file_status->setText(QString());
 
 	handleCompile();
@@ -1244,7 +1245,7 @@ MppScoreMain :: handleScoreFileOpen()
 
 		scores = MppReadFile(*currScoreFileName, &status);
 
-		editWidget->setText(scores);
+		editWidget->setPlainText(scores);
 
 		handleCompile();
 

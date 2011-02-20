@@ -60,7 +60,7 @@ public:
 
 	MppMainWindow *mainWindow;
 
-	QTextEdit *editWidget;
+	QPlainTextEdit *editWidget;
 	QPushButton *butImportFileNew;
 	QPushButton *butImportFileOpen;
 	QPushButton *butImportToA;

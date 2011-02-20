@@ -44,7 +44,9 @@ midipp_import_flush(struct midipp_import *ps)
 	for (ai = bi = x = 0; x != MIDIPP_IMPORT_LB; x++) {
 		if (ai < ps->n_word[0] && ps->index != 0) {
 			if (ps->d_word[0][ai].off == x) {
-				out += QString(".(") + QString(ps->d_word[0][ai].name) + QString(")");
+				out += QString(".(") +
+				    QString(ps->d_word[0][ai].name) +
+				    QString(")");
 				ai++;
 			}
 		}
@@ -82,7 +84,8 @@ midipp_import_flush(struct midipp_import *ps)
 			if(ps->dlg->exec() != QDialog::Accepted)
 				return (1);
 
-			out += ps->sm->mainWindow->led_config_insert->text() + ps->dlg->getText() + QString("\n");
+			out += ps->sm->mainWindow->led_config_insert->text() +
+			    ps->dlg->getText() + QString("\n");
 		}
 	}
 
@@ -232,8 +235,9 @@ MppImportTab :: MppImportTab(MppMainWindow *parent)
 {
 	mainWindow = parent;
 
-	editWidget = new QTextEdit();
-	editWidget->setText(tr(
+	editWidget = new QPlainTextEdit();
+	editWidget->setFont(font_fixed);
+	editWidget->setPlainText(tr(
 	    "Example song:" "\n\n"
 	    "C  G  Am" "\n"
 	    "Welcome!" "\n"));
@@ -257,7 +261,7 @@ MppImportTab :: ~MppImportTab()
 void
 MppImportTab :: handleImportNew()
 {
-	editWidget->setText(QString());
+	editWidget->setPlainText(QString());
 	mainWindow->lbl_file_status->setText(QString());
 }
 
@@ -279,7 +283,7 @@ MppImportTab :: handleImportOpen()
 
 		scores = MppReadFile(diag->selectedFiles()[0], &status);
 
-		editWidget->setText(scores);
+		editWidget->setPlainText(scores);
 
 		mainWindow->lbl_file_status->setText(status);
 	}

@@ -36,6 +36,7 @@
 #include <QPushButton>
 #include <QGridLayout>
 #include <QTextEdit>
+#include <QPlainTextEdit>
 #include <QTabWidget>
 #include <QLabel>
 #include <QSpinBox>
@@ -118,6 +119,8 @@ extern QColor color_white;
 extern QColor color_grey;
 extern QColor color_logo;
 extern QColor color_green;
+
+extern QFont font_fixed;
 
 extern QString MppBaseName(QString fname);
 extern char *MppQStringToAscii(QString s);

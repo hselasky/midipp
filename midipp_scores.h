@@ -79,7 +79,7 @@ public:
 
 	MppScoreView *viewWidget;
 	MppMainWindow *mainWindow;
-	QTextEdit *editWidget;
+	QPlainTextEdit *editWidget;
 	QPushButton *butScoreFileNew;
 	QPushButton *butScoreFileOpen;
 	QPushButton *butScoreFileSave;

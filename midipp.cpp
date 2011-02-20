@@ -35,6 +35,8 @@ QColor color_grey    (0xc0, 0xc0, 0xc0, 0xff);
 QColor color_logo    (0xc4, 0x40, 0x20, 0xff);
 QColor color_green   (0x40, 0xc4, 0x20, 0xff);
 
+QFont font_fixed (QString("Courier New"));
+
 QString
 MppBaseName(QString fname)
 {
@@ -120,7 +122,8 @@ MppWriteFile(QString fname, QString text, QString *perr)
 {
 	QFile file(fname);
 
-	if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
+	if (!file.open(QIODevice::WriteOnly | QIODevice::Text |
+	    QIODevice::Truncate))
 		goto failure;
 
 	file.write(text.toAscii());
@@ -132,14 +135,18 @@ MppWriteFile(QString fname, QString text, QString *perr)
 
 	file.close();
 
-	if (perr != NULL)
-		*perr = MppBaseName(fname) + QString(": Scores written to disk");
+	if (perr != NULL) {
+		*perr = MppBaseName(fname) +
+		    QString(": Scores written to disk");
+	}
 	return;
 
 failure:
 
-	if (perr)
-		*perr = MppBaseName(fname) + QString(": Could not write scores to disk");
+	if (perr) {
+		*perr = MppBaseName(fname) +
+		    QString(": Could not write scores to disk");
+	}
 	return;
 }
 
