@@ -31,7 +31,7 @@
 MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
   : QWidget(parent)
 {
-	char buf[16];
+	char buf[32];
 	uint8_t n;
 
 	/* set memory default */
@@ -46,9 +46,9 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 		spn_chan[n] = new QSpinBox();
 		spn_chan[n]->setMaximum(15);
 		spn_chan[n]->setMinimum(0);
-		spn_chan[n]->setValue(n);
+		spn_chan[n]->setValue(0);
 
-		snprintf(buf, sizeof(buf), "Loop%X", n);
+		snprintf(buf, sizeof(buf), "Loop%X+%u", n, n * 12);
 
 		lbl_rem[n] = new QLabel(tr("00.00"));
 		lbl_dur[n] = new QLabel(tr("00.00"));
@@ -106,6 +106,14 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 
 	gl->addWidget(but_pedal_rec, 1, 0, 1, 1);
 	gl->addWidget(lbl_pedal_rec, 1, 1, 1, 1);
+
+	but_loop_multi = new QPushButton(tr("Multi"));
+	lbl_loop_multi = new QLabel(tr("OFF"));
+
+	gl->addWidget(but_loop_multi, 0, 2, 1, 1);
+	gl->addWidget(lbl_loop_multi, 0, 3, 1, 1);
+
+	connect(but_loop_multi, SIGNAL(pressed()), this, SLOT(handle_multi()));
 
 	pthread_mutex_lock(&mw->mtx);
 
@@ -202,28 +210,6 @@ MppLoopTab :: add_pedal(uint8_t val)
 	}
 }
 
-/* Must be called locked */
-int
-MppLoopTab :: checkLabelTrig(int n)
-{
-	if (loop_on == 0)
-		return (0);
-
-	if ((n < 0) || (n >= (int)MIDIPP_LOOP_MAX)) {
-
-		n = last_loop;
-
-		switch (state[n]) {
-		case ST_IDLE:
-		case ST_REC:
-			return (0);
-		default:
-			break;
-		}
-	}
-	return (1);
-}
-
 void
 MppLoopTab :: handle_trig()
 {
@@ -232,7 +218,20 @@ MppLoopTab :: handle_trig()
 	for (n = 0; n != MIDIPP_LOOP_MAX; n++) {
 		if (but_trig[n]->isDown()) {
 			pthread_mutex_lock(&mw->mtx);
-			handle_trigN(n, 0, 127);
+			switch (state[n]) {
+			case ST_IDLE:
+				state[n] = ST_REC;
+				needs_update = 1;
+				break;
+			case ST_REC:
+				state[n] = ST_DONE;
+				needs_update = 1;
+				break;
+			case ST_DONE:
+				break;
+			default:
+				break;
+			}
 			pthread_mutex_unlock(&mw->mtx);
 		}
 	}
@@ -311,43 +310,41 @@ MppLoopTab :: fill_loop_data(int n, int vel, int key_off)
 int
 MppLoopTab :: handle_trigN(int n, int key_off, int vel)
 {
+	enum { ADJUST = 1 };
+
 	if (loop_on == 0)
 		return (0);
+	if (state[last_loop] == ST_REC)
+		return (0);
 
-	if ((n < 0) || (n >= (int)MIDIPP_LOOP_MAX)) {
-
+	if (is_multi == 0) {
 		n = last_loop;
-
-		switch (state[n]) {
-		case ST_IDLE:
-		case ST_REC:
-			return (0);
-		default:
-			break;
-		}
-
-		fill_loop_data(n, vel, key_off);
-
 	} else {
-
-		last_loop = n;
-
-		switch (state[n]) {
-		case ST_IDLE:
-			state[n] = ST_REC;
-			needs_update = 1;
-			break;
-		case ST_REC:
-			state[n] = ST_DONE;
-			needs_update = 1;
-			break;
-		case ST_DONE:
-			break;
-		default:
-			break;
+		/* compute correct key offset */
+		key_off = n % 12;
+		if (key_off >= (12 - ADJUST))
+			key_off -= 12;
+		if (key_off < -ADJUST)
+			key_off += 12;
+		/* compute which loop to execute */
+		if (n < 0) {
+			n = 0;
+		} else {
+			n = (n + ADJUST) / 12;
+			if (n > (int)(MIDIPP_LOOP_MAX - 1))
+				n = (int)(MIDIPP_LOOP_MAX - 1);
 		}
-		return (1);
 	}
+
+	switch (state[n]) {
+	case ST_IDLE:
+	case ST_REC:
+		return (0);
+	default:
+		break;
+	}
+
+	fill_loop_data(n, vel, key_off);
 
 	return (1);
 }
@@ -424,6 +421,16 @@ MppLoopTab :: handle_loop()
 	pthread_mutex_unlock(&mw->mtx);
 
 	lbl_loop_on->setText(tr(loop_on ? "ON" : "OFF"));
+}
+
+void
+MppLoopTab :: handle_multi()
+{
+	pthread_mutex_lock(&mw->mtx);
+	is_multi ^= 1;
+	pthread_mutex_unlock(&mw->mtx);
+
+	lbl_loop_multi->setText(tr(is_multi ? "ON" : "OFF"));
 }
 
 void

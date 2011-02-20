@@ -46,7 +46,6 @@ public:
 
 	void add_key(uint8_t key, uint8_t vel);
 	void add_pedal(uint8_t val);
-	int checkLabelTrig(int off);
 	int handle_trigN(int n, int key_off, int amp);
 	void handle_clearN(int n);
 	void fill_loop_data(int n, int vel, int key_off);
@@ -66,11 +65,13 @@ public:
 
 	QPushButton *but_loop_on;
 	QPushButton *but_pedal_rec;
+	QPushButton *but_loop_multi;
 	QPushButton *but_clear[MIDIPP_LOOP_MAX];
 	QPushButton *but_trig[MIDIPP_LOOP_MAX];
 
 	QLabel *lbl_pedal_rec;
 	QLabel *lbl_loop_on;
+	QLabel *lbl_loop_multi;
 	QLabel *lbl_chn_title;
 	QLabel *lbl_rem_title;
 	QLabel *lbl_dur_title;
@@ -91,6 +92,7 @@ public:
 	uint8_t loop_on;
 	uint8_t needs_update;
 	uint8_t last_loop;
+	uint8_t is_multi;
 
 	uint8_t auto_zero_end[0];
 
@@ -102,6 +104,7 @@ public slots:
 	void handle_reset();
 	void handle_clear();
 	void handle_trig();
+	void handle_multi();
 	void handle_value_changed(int);
 };
 

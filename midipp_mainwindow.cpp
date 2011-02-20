@@ -1091,9 +1091,7 @@ void
 MppMainWindow :: handle_play_release()
 {
 	pthread_mutex_lock(&mtx);
-	if (tab_loop->checkLabelTrig(-1)) {
-		/* ignore */
-	} else if (midiMode != MM_PASS_ALL) {
+	if (midiMode != MM_PASS_ALL) {
 		currScoreMain->handleKeyRelease(playKey);
 	} else {
 		output_key(currScoreMain->synthChannel, playKey, 0, 0, 0);
@@ -2029,9 +2027,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 		key = umidi20_event_get_key(event) & 0x7F;
 		lbl = key - mw->cmdKey;
 
-		if (mw->tab_loop->checkLabelTrig(lbl)) {
-
-		} else if (mw->midiMode != MM_PASS_ALL) {
+		if (mw->midiMode != MM_PASS_ALL) {
 
 			if (mw->currScoreMain->checkLabelJump(lbl) == 0) {
 				if ((mw->midiMode == MM_PASS_NONE_FIXED) ||
