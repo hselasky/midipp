@@ -56,11 +56,11 @@ MppQStringToAscii(QString s)
 	if (ch == NULL)
 		return (NULL);
 
-	len = 1;
+	len = 1;		/* reserve space for NUL character */
 
 	while (1) {
 		c = ch->toAscii();
-		if (c == 0)
+		if (ch->isNull())
 			break;
 		len++;
 		ch++;
@@ -75,12 +75,15 @@ MppQStringToAscii(QString s)
 
 	while (1) {
 		c = ch->toAscii();
-		ptr[len] = c;
-		if (c == 0)
+		if (ch->isNull())
 			break;
+		if (c == 0)
+			c = ' ';
+		ptr[len] = c;
 		len++;
 		ch++;
 	}
+	ptr[len] = 0;		/* NUL terminate */
 	return (ptr);
 }
 
