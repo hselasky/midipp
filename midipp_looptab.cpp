@@ -221,17 +221,15 @@ MppLoopTab :: handle_trig()
 			switch (state[n]) {
 			case ST_IDLE:
 				state[n] = ST_REC;
-				needs_update = 1;
 				break;
 			case ST_REC:
-				state[n] = ST_DONE;
-				needs_update = 1;
-				break;
-			case ST_DONE:
-				break;
+				/* FALLTHROUGH */
 			default:
+				state[n] = ST_DONE;
+				last_loop = n;
 				break;
 			}
+			needs_update = 1;
 			pthread_mutex_unlock(&mw->mtx);
 		}
 	}
@@ -440,6 +438,7 @@ MppLoopTab :: watchdog()
 	uint32_t dur;
 	char buf_dur[16];
 	char buf_state[16];
+	const char *pbuf;
 	uint8_t new_chan;
 
 	pthread_mutex_lock(&mw->mtx);
@@ -458,20 +457,26 @@ MppLoopTab :: watchdog()
 
 		dur = (last_pos[n] - first_pos[n]) / 10;
 
-		snprintf(buf_dur, sizeof(buf_dur), "%02u.%02u", (dur / 100) % 100, (dur % 100));
+		snprintf(buf_dur, sizeof(buf_dur),
+		    "%02u.%02u", (dur / 100) % 100, (dur % 100));
 
 		switch(state[n]) {
 		case ST_IDLE:
-			strlcpy(buf_state, "<IDLE>", sizeof(buf_state));
+			pbuf = "IDLE";
 			break;
 		case ST_REC:
 			new_chan = chan_val[n];
-			strlcpy(buf_state, "<REC>", sizeof(buf_state));
+			pbuf = "REC";
 			break;
 		default:
-			strlcpy(buf_state, "<READY>", sizeof(buf_state));
+			pbuf = "READY";
 			break;
 		}
+
+		if (n == last_loop)
+			snprintf(buf_state, sizeof(buf_state), ">%s<", pbuf);
+		else
+			snprintf(buf_state, sizeof(buf_state), "<%s>", pbuf);
 
 		pthread_mutex_unlock(&mw->mtx);
 
