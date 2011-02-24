@@ -36,6 +36,7 @@
 #include <QPushButton>
 #include <QGridLayout>
 #include <QTextEdit>
+#include <QScrollBar>
 #include <QPlainTextEdit>
 #include <QTabWidget>
 #include <QLabel>

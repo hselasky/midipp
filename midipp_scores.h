@@ -75,9 +75,14 @@ public:
 
 	int setPressedKey(int chan, int out_key, int dur, int delay);
 
+	QWidget viewWidget;
+
 	uint8_t auto_zero_start[0];
 
-	MppScoreView *viewWidget;
+	QGridLayout *viewGrid;
+	QScrollBar *viewScroll;
+	MppScoreView *viewWidgetSub;
+
 	MppMainWindow *mainWindow;
 	QPlainTextEdit *editWidget;
 	QPushButton *butScoreFileNew;
@@ -103,9 +108,11 @@ public:
 	uint16_t jumpTable[MPP_MAX_LABELS];
 	uint16_t mousePressPos[MPP_MAX_LINES];
 	uint16_t pll_bpm[MPP_MAX_LINES];
+	uint16_t picMax;
 	uint16_t linesMax;
 	uint16_t currPos;
 	uint16_t lastPos;
+	uint16_t picScroll;
 	uint16_t maxScoresWidth;
 	uint16_t pllPos;
 	uint16_t pllDuration;
@@ -164,6 +171,7 @@ public slots:
 	void handleScoreFileSaveAs();
 	void handleScorePrint();
 	void handleChannelChanged(int chan);
+	void handleScrollChanged(int value);
 };
 
 #endif		/* _MIDIPP_SCORES_H_ */

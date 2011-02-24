@@ -114,10 +114,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_instr_gl = new QGridLayout(tab_instr_wg);
 	tab_volume_gl = new QGridLayout(tab_volume_wg);
 
-	scores_tw->addTab(scores_main[0]->viewWidget, tr("View A-Scores"));
+	scores_tw->addTab(&scores_main[0]->viewWidget, tr("View A-Scores"));
 	scores_tw->addTab(scores_main[0]->editWidget, tr("Edit A-Scores"));
 
-	scores_tw->addTab(scores_main[1]->viewWidget, tr("View B-Scores"));
+	scores_tw->addTab(&scores_main[1]->viewWidget, tr("View B-Scores"));
 	scores_tw->addTab(scores_main[1]->editWidget, tr("Edit B-Scores"));
 
 	scores_tw->addTab(tab_import->editWidget, tr("Import Scores"));
@@ -1190,7 +1190,7 @@ MppMainWindow :: handle_watchdog()
 		currScoreMain->watchdog();
 	}
 
-	currScoreMain->viewWidget->repaint();
+	currScoreMain->viewWidgetSub->repaint();
 
 	tab_loop->watchdog();
 
@@ -2396,7 +2396,7 @@ MppMainWindow :: handle_tab_changed(int index)
 	pw = scores_tw->widget(index);
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
-		if (pw == scores_main[x]->viewWidget) {
+		if (pw == &scores_main[x]->viewWidget) {
 			compile = 1;
 			break;
 		}

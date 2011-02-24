@@ -100,6 +100,10 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	connect(butScoreFileSaveAs, SIGNAL(pressed()), this, SLOT(handleScoreFileSaveAs()));
 	connect(butScoreFilePrint, SIGNAL(pressed()), this, SLOT(handleScorePrint()));
 
+	/* Widget */
+
+	viewWidget.setContentsMargins(0,0,0,0);
+
 	/* Editor */
 
 	editWidget = new QPlainTextEdit();
@@ -109,9 +113,26 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	editWidget->setCursorWidth(4);
 	editWidget->setLineWrapMode(QPlainTextEdit::NoWrap);
 
+	/* GridLayout */
+
+	viewGrid = new QGridLayout(&viewWidget);
+	viewGrid->setSpacing(0);
+	viewGrid->setContentsMargins(1,1,1,1);
+
+	viewScroll = new QScrollBar(Qt::Vertical);
+	viewScroll->setValue(0);
+	viewScroll->setMinimum(0);
+	viewScroll->setMaximum(0);
+	viewScroll->setPageStep(1);
+
+	connect(viewScroll, SIGNAL(valueChanged(int)), this, SLOT(handleScrollChanged(int)));
+
 	/* Visual */
 
-	viewWidget = new MppScoreView(this);
+	viewWidgetSub = new MppScoreView(this);
+
+	viewGrid->addWidget(viewWidgetSub, 0, 0, 1, 1);
+	viewGrid->addWidget(viewScroll, 0, 1, 1, 1);
 
 	/* Initial compile */
 
@@ -469,13 +490,16 @@ MppScoreMain :: viewMousePressEvent(QMouseEvent *e)
 void
 MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 {
-	QPainter paint(viewWidget);
+	QPainter paint(viewWidgetSub);
 	uint16_t max;
 	uint16_t pos;
 	uint16_t opos;
+	uint16_t scroll;
 	uint16_t y_blocks;
 	uint16_t y_div;
 	uint16_t y_rem;
+	uint16_t yc_div;
+	uint16_t yc_rem;
 	uint16_t yo_div;
 	uint16_t yo_rem;
 	uint16_t x;
@@ -488,46 +512,83 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 	pos = currPos;
 	opos = lastPos;
 	max = linesMax;
+	scroll = picScroll;
 	pthread_mutex_unlock(&mainWindow->mtx);
 
-	y_blocks = (viewWidget->height() / MPP_VISUAL_Y_MAX);
+	y_blocks = (viewWidgetSub->height() / MPP_VISUAL_Y_MAX);
 	if (y_blocks == 0)
 		y_blocks = 1;
 	y_div = 0;
 	y_rem = 0;
+	yc_div = 0;
+	yc_rem = 0;
 	yo_div = 0;
 	yo_rem = 0;
 
-	/* locate */
+	/* locate current scroll position */
 
 	for (x = y = 0; x != max; x++) {
 
-		if (visual[x].pic != NULL) {
+		if (visual[x].pic != NULL)
 			y++;
-		}
 
-		if (x >= pos) {
-			if (y != 0) {
-				y_div = (y-1) / y_blocks;
-				y_rem = (y-1) % y_blocks;
-				break;
-			}
+		if ((y != 0) && ((y - 1) >= scroll)) {
+			y_rem = (y - 1);
+			break;
 		}
 	}
 
+	/* locate current play position */
+
 	for (x = y = 0; x != max; x++) {
 
-		if (visual[x].pic != NULL) {
+		if (visual[x].pic != NULL)
 			y++;
-		}
 
-		if (x >= opos) {
-			if (y != 0) {
-				yo_div = (y-1) / y_blocks;
-				yo_rem = (y-1) % y_blocks;
-				break;
-			}
+		if ((y != 0) && (x >= pos)) {
+			yc_rem = (y - 1);
+			break;
 		}
+	}
+
+	/* locate last play position */
+
+	for (x = y = 0; x != max; x++) {
+
+		if (visual[x].pic != NULL)
+			y++;
+
+		if ((y != 0) && (x >= opos)) {
+			yo_rem = (y - 1);
+			break;
+		}
+	}
+
+	/* compute scrollbar */
+
+	y_div = y_rem / y_blocks;
+	y_rem = y_rem % y_blocks;
+
+	/* align current position with scroll bar */
+
+	if (yc_rem < y_rem) {
+		yc_rem = 0;
+		yc_div = picMax;
+	} else {
+		yc_rem -= y_rem;
+		yc_div = yc_rem / y_blocks;
+		yc_rem = yc_rem % y_blocks;
+	}
+
+	/* align last position with scroll bar */
+
+	if (yo_rem < y_rem) {
+		yo_rem = 0;
+		yo_div = picMax;
+	} else {
+		yo_rem -= y_rem;
+		yo_div = yo_rem / y_blocks;
+		yo_rem = yo_rem % y_blocks;
 	}
 
 	/* paint */
@@ -535,14 +596,15 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 	for (x = y = z = 0; x != max; x++) {
 
 		if (visual[x].pic != NULL) {
-			if (y_div == (y / y_blocks)) {
+			if ((y >= y_rem) &&
+			    (y_div == ((y - y_rem) / y_blocks))) {
 				/* compute mouse press jump positions */
 				if (z < MPP_MAX_LINES) {
 					mousePressPos[z] = x;
 					z++;
 				}
 				paint.drawPixmap(
-				    QPoint(0, (y % y_blocks) * MPP_VISUAL_Y_MAX),
+				     QPoint(0, ((y - y_rem) % y_blocks) * MPP_VISUAL_Y_MAX),
 				    *(visual[x].pic));
 			}
 			y++;
@@ -550,6 +612,7 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 	}
 
 	/* fill out rest of mousePressPos[] */
+
 	while ((z < MPP_MAX_LINES) && (z <= y_blocks)) {
 			mousePressPos[z] = 65535;
 			z++;
@@ -559,7 +622,6 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 
 	if ((pos != opos) && (yo_div == y_div) &&
 	    (visual[opos].x_off != 0)) {
-
 		paint.setPen(QPen(color_green, 4));
 		paint.setBrush(QColor(color_green));
 		paint.drawEllipse(QRect(visual[opos].x_off,
@@ -570,11 +632,11 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 
 	/* overlay (current) */
 
-	if (visual[pos].x_off != 0) {
+	if ((yc_div == y_div) && (visual[pos].x_off != 0)) {
 		paint.setPen(QPen(color_logo, 4));
 		paint.setBrush(QColor(color_logo));
 		paint.drawEllipse(QRect(visual[pos].x_off,
-		    visual[pos].y_off + (y_rem * MPP_VISUAL_Y_MAX),
+		    visual[pos].y_off + (yc_rem * MPP_VISUAL_Y_MAX),
 		    MPP_VISUAL_R_MAX, MPP_VISUAL_R_MAX));
 	}
 }
@@ -1139,9 +1201,24 @@ done:
 	pllPos = 0;
 	pllDuration = 0;
 	lastPos = 0;
+
 	isPlayKeyLocked = 0;
 
 	handleParseSub(NULL, QPoint(0,0), 1.0);
+
+	picMax = 0;
+	for (z = 0; z != linesMax; z++) {
+		if (visual[z].pic != NULL)
+			picMax++;
+	}
+
+	if (picMax == 0) {
+		viewScroll->setValue(0);
+		viewScroll->setMaximum(0);
+	} else {
+		viewScroll->setValue(0);
+		viewScroll->setMaximum(picMax - 1);
+	}
 }
 
 static void
@@ -1619,13 +1696,19 @@ MppScoreMain :: handleCompile()
 
 		pthread_mutex_unlock(&mainWindow->mtx);
 
-		viewWidget->setMinimumWidth(maxScoresWidth);
+		viewWidgetSub->setMinimumWidth(maxScoresWidth);
 	}
 }
 
 void
 MppScoreMain :: watchdog()
 {
+	uint16_t x;
+	uint16_t y;
+	uint16_t max;
+	uint16_t pos;
+	uint16_t y_blocks;
+
 	QTextCursor cursor(editWidget->textCursor());
 
 	QTextEdit::ExtraSelection format;
@@ -1642,6 +1725,36 @@ MppScoreMain :: watchdog()
 	extras << format;
 
 	editWidget->setExtraSelections(extras);
+
+	/* Compute scrollbar */
+
+	pthread_mutex_lock(&mainWindow->mtx);
+	pos = currPos;
+	max = linesMax;
+	pthread_mutex_unlock(&mainWindow->mtx);
+
+	/* Compute alignment factor */
+
+	y_blocks = (viewWidgetSub->height() / MPP_VISUAL_Y_MAX);
+	if (y_blocks == 0)
+		y_blocks = 1;
+
+	/* Compute picture index */
+
+	for (x = y = 0; x != max; x++) {
+
+		if (visual[x].pic != NULL)
+			y++;
+
+		if (x >= pos) {
+			if (y != 0)
+				break;
+		}
+	}
+	if (y == 0 || y > picMax)
+		viewScroll->setValue(0);
+	else
+		viewScroll->setValue((y - 1) - ((y - 1) % y_blocks));
 }
 
 void
@@ -1684,4 +1797,14 @@ MppScoreMain :: handleStopPll()
 	umidi20_unset_timer(&MppPllCallback, this);
 	pllDuration = 0;
 	pllPos = 0;
+}
+
+void
+MppScoreMain :: handleScrollChanged(int value)
+{
+	pthread_mutex_lock(&mainWindow->mtx);
+	picScroll = value;
+	pthread_mutex_unlock(&mainWindow->mtx);
+
+	viewWidgetSub->repaint();
 }
