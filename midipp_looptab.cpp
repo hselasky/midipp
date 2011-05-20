@@ -27,6 +27,7 @@
 
 #include <midipp_mainwindow.h>
 #include <midipp_looptab.h>
+#include <midipp_spinbox.h>
 
 MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
   : QWidget(parent)
@@ -44,13 +45,15 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 
 	for (n = 0; n != MIDIPP_LOOP_MAX; n++) {
 		spn_chan[n] = new QSpinBox();
-		spn_chan[n]->setMaximum(15);
-		spn_chan[n]->setMinimum(0);
+		spn_chan[n]->setRange(0, 15);
 		spn_chan[n]->setValue(0);
 
-		snprintf(buf, sizeof(buf), "Loop%X+%u", n, n * 12);
+		spn_key[n] = new MppSpinBox();
+		spn_key[n]->setRange(0, 127);
+		spn_key[n]->setValue(12 * n);
 
-		lbl_rem[n] = new QLabel(tr("00.00"));
+		snprintf(buf, sizeof(buf), "Loop%X", n);
+
 		lbl_dur[n] = new QLabel(tr("00.00"));
 		lbl_loop[n] = new QLabel(tr(buf));
 		lbl_state[n] = new QLabel();
@@ -63,27 +66,27 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 
 		gl->addWidget(lbl_state[n], (MIDIPP_LOOP_MAX-n-1) + 2, 6, 1, 1);
 		gl->addWidget(spn_chan[n], (MIDIPP_LOOP_MAX-n-1) + 2, 5, 1, 1);
-		gl->addWidget(lbl_loop[n], (MIDIPP_LOOP_MAX-n-1) + 2, 0, 1, 1);
-
 		gl->addWidget(lbl_dur[n], (MIDIPP_LOOP_MAX-n-1) + 2, 4, 1, 1);
-		gl->addWidget(lbl_rem[n], (MIDIPP_LOOP_MAX-n-1) + 2, 3, 1, 1);
 		gl->addWidget(but_clear[n], (MIDIPP_LOOP_MAX-n-1) + 2, 2, 1, 1);
 		gl->addWidget(but_trig[n], (MIDIPP_LOOP_MAX-n-1) + 2, 1, 1, 1);
+		gl->addWidget(lbl_loop[n], (MIDIPP_LOOP_MAX-n-1) + 2, 0, 1, 1);
+		gl->addWidget(spn_key[n], (MIDIPP_LOOP_MAX-n-1) + 2, 3, 1, 1);
 
 		connect(spn_chan[n], SIGNAL(valueChanged(int)), this, SLOT(handle_value_changed(int)));
+		connect(spn_key[n], SIGNAL(valueChanged(int)), this, SLOT(handle_value_changed(int)));
 		connect(but_clear[n], SIGNAL(pressed()), this, SLOT(handle_clear()));
 		connect(but_trig[n], SIGNAL(pressed()), this, SLOT(handle_trig()));
 	}
 
 	lbl_chn_title = new QLabel(tr("Chan."));
-	lbl_rem_title = new QLabel(tr("Rem-s"));
 	lbl_dur_title = new QLabel(tr("Dur-s"));
 	lbl_state_title = new QLabel(tr("State"));
+	lbl_mkey_title = new QLabel(tr("Key-m"));
 
 	gl->addWidget(lbl_state_title, 1, 6, 1, 1);
 	gl->addWidget(lbl_chn_title, 1, 5, 1, 1);
 	gl->addWidget(lbl_dur_title, 1, 4, 1, 1);
-	gl->addWidget(lbl_rem_title, 1, 3, 1, 1);
+	gl->addWidget(lbl_mkey_title, 1, 3, 1, 1);
 
 	but_reset = new QPushButton(tr("Reset"));
 
@@ -226,9 +229,9 @@ MppLoopTab :: handle_trig()
 				/* FALLTHROUGH */
 			default:
 				state[n] = ST_DONE;
-				last_loop = n;
 				break;
 			}
+			last_loop = n;
 			needs_update = 1;
 			pthread_mutex_unlock(&mw->mtx);
 		}
@@ -306,9 +309,10 @@ MppLoopTab :: fill_loop_data(int n, int vel, int key_off)
 
 /* Must be called locked */
 int
-MppLoopTab :: handle_trigN(int n, int key_off, int vel)
+MppLoopTab :: handle_trigN(int key, int vel)
 {
-	enum { ADJUST = 1 };
+	int n;
+	int found = 0;
 
 	if (loop_on == 0)
 		return (0);
@@ -317,34 +321,34 @@ MppLoopTab :: handle_trigN(int n, int key_off, int vel)
 
 	if (is_multi == 0) {
 		n = last_loop;
+		key -= mw->baseKey;
+
+		switch (state[n]) {
+		case ST_IDLE:
+		case ST_REC:
+			break;
+		default:
+			fill_loop_data(n, vel, key);
+			found = 1;
+			break;
+		}
 	} else {
-		/* compute correct key offset */
-		key_off = n % 12;
-		if (key_off >= (12 - ADJUST))
-			key_off -= 12;
-		if (key_off < -ADJUST)
-			key_off += 12;
-		/* compute which loop to execute */
-		if (n < 0) {
-			n = 0;
-		} else {
-			n = (n + ADJUST) / 12;
-			if (n > (int)(MIDIPP_LOOP_MAX - 1))
-				n = (int)(MIDIPP_LOOP_MAX - 1);
+		for (n = 0; n != MIDIPP_LOOP_MAX; n++) {
+			if (key_val[n] != key)
+				continue;
+
+			switch (state[n]) {
+			case ST_IDLE:
+			case ST_REC:
+				break;
+			default:
+				fill_loop_data(n, vel, 0);
+				found = 1;
+				break;
+			}
 		}
 	}
-
-	switch (state[n]) {
-	case ST_IDLE:
-	case ST_REC:
-		return (0);
-	default:
-		break;
-	}
-
-	fill_loop_data(n, vel, key_off);
-
-	return (1);
+	return (found);
 }
 
 void
@@ -397,7 +401,15 @@ MppLoopTab :: handle_value_changed(int dummy)
 
 	pthread_mutex_lock(&mw->mtx);
 	for (x = 0; x != MIDIPP_LOOP_MAX; x++)
-		chan_val[x] = temp[x];	  
+		chan_val[x] = temp[x];
+	pthread_mutex_unlock(&mw->mtx);
+
+	for (x = 0; x != MIDIPP_LOOP_MAX; x++)
+		temp[x] = spn_key[x]->value();
+
+	pthread_mutex_lock(&mw->mtx);
+	for (x = 0; x != MIDIPP_LOOP_MAX; x++)
+		key_val[x] = temp[x];
 	pthread_mutex_unlock(&mw->mtx);
 }
 

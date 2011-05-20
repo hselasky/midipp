@@ -194,13 +194,13 @@ public:
 	QSpinBox *spn_volume;
 
 	QLabel	*lbl_play_key;
-	QSpinBox *spn_play_key;
+	MppSpinBox *spn_play_key;
 
 	QLabel	*lbl_cmd_key;
-	QSpinBox *spn_cmd_key;
+	MppSpinBox *spn_cmd_key;
 
 	QLabel	*lbl_base_key;
-	QSpinBox *spn_base_key;
+	MppSpinBox *spn_base_key;
 
 	QLabel	*lbl_score_record;
 	QLabel	*lbl_midi_record;

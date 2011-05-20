@@ -31,6 +31,7 @@
 #include <midipp_decode.h>
 #include <midipp_import.h>
 #include <midipp_devices.h>
+#include <midipp_spinbox.h>
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -246,8 +247,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	lbl_auto_play = new QLabel(tr("Auto Play BPM (0..6000)"));
 	spn_auto_play = new QSpinBox();
-	spn_auto_play->setMaximum(6000);
-	spn_auto_play->setMinimum(0);
+	spn_auto_play->setRange(0, 6000);
 	connect(spn_auto_play, SIGNAL(valueChanged(int)), this, SLOT(handle_auto_play(int)));
 	spn_auto_play->setValue(0);
 
@@ -307,14 +307,12 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_volume = new QLabel(tr("Volume (0..127..511)"));
 	spn_volume = new QSpinBox();
 	connect(spn_volume, SIGNAL(valueChanged(int)), this, SLOT(handle_volume_changed(int)));
-	spn_volume->setMaximum(511);
-	spn_volume->setMinimum(0);
+	spn_volume->setRange(0, 511);
 
-	lbl_play_key = new QLabel(QString());
-	spn_play_key = new QSpinBox();
+	lbl_play_key = new QLabel(tr("Play Key"));
+	spn_play_key = new MppSpinBox();
 	connect(spn_play_key, SIGNAL(valueChanged(int)), this, SLOT(handle_play_key_changed(int)));
-	spn_play_key->setMaximum(127);
-	spn_play_key->setMinimum(0);
+	spn_play_key->setRange(0, 127);
 	spn_play_key->setValue(C4);
 
 	lbl_time_counter = new QLabel(tr(" - Time Counter -"));
@@ -429,18 +427,16 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* <Configuration> Tab */
 
-	lbl_cmd_key = new QLabel(QString());
-	spn_cmd_key = new QSpinBox();
+	lbl_cmd_key = new QLabel(tr("Command Key"));
+	spn_cmd_key = new MppSpinBox();
 	connect(spn_cmd_key, SIGNAL(valueChanged(int)), this, SLOT(handle_cmd_key_changed(int)));
-	spn_cmd_key->setMaximum(127);
-	spn_cmd_key->setMinimum(0);
+	spn_cmd_key->setRange(0, 127);
 	spn_cmd_key->setValue(C3);
 
-	lbl_base_key = new QLabel(QString());
-	spn_base_key = new QSpinBox();
+	lbl_base_key = new QLabel(tr("Base Key"));
+	spn_base_key = new MppSpinBox();
 	connect(spn_base_key, SIGNAL(valueChanged(int)), this, SLOT(handle_base_key_changed(int)));
-	spn_base_key->setMaximum(127);
-	spn_base_key->setMinimum(0);
+	spn_base_key->setRange(0, 127);
 	spn_base_key->setValue(C4);
 
 	lbl_config_title = new QLabel(tr("- Device configuration -"));
@@ -455,20 +451,17 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_key_delay = new QSpinBox();
 
 	connect(spn_key_delay, SIGNAL(valueChanged(int)), this, SLOT(handle_key_delay_changed(int)));
-	spn_key_delay->setMaximum(255);
-	spn_key_delay->setMinimum(0);
+	spn_key_delay->setRange(0, 255);
 	spn_key_delay->setValue(25);
 	spn_key_delay->setSuffix(tr(" ms"));
 
 	spn_bpm_length = new QSpinBox();
-	spn_bpm_length->setMaximum(MPP_MAX_BPM);
-	spn_bpm_length->setMinimum(0);
+	spn_bpm_length->setRange(0, MPP_MAX_BPM);
 	spn_bpm_length->setValue(0);
 
 	lbl_parse_thres = new QLabel(tr("MIDI To Scores Threshold (0..255)"));
 	spn_parse_thres = new QSpinBox();
-	spn_parse_thres->setMaximum(255);
-	spn_parse_thres->setMinimum(0);
+	spn_parse_thres->setRange(0, 255);
 	spn_parse_thres->setValue(30);
 	spn_parse_thres->setSuffix(tr(" ms"));
 
@@ -577,18 +570,15 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_edit_volume = new QLabel(tr("Average Volume (1..127):"));
 
 	spn_edit_channel = new QSpinBox();
-	spn_edit_channel->setMaximum(15);
-	spn_edit_channel->setMinimum(0);
+	spn_edit_channel->setRange(0, 15);
 	spn_edit_channel->setValue(0);
 
 	spn_edit_transpose = new QSpinBox();
-	spn_edit_transpose->setMaximum(127);
-	spn_edit_transpose->setMinimum(-128);
+	spn_edit_transpose->setRange(-128, 128);
 	spn_edit_transpose->setValue(0);
 
 	spn_edit_volume = new QSpinBox();
-	spn_edit_volume->setMaximum(127);
-	spn_edit_volume->setMinimum(1);
+	spn_edit_volume->setRange(1, 127);
 	spn_edit_volume->setValue(80);
 
 	but_edit_apply_transpose = new QPushButton(tr("Apply Channel Key Transpose"));
@@ -648,18 +638,15 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	spn_instr_curr_chan = new QSpinBox();
 	connect(spn_instr_curr_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_instr_channel_changed(int)));
-	spn_instr_curr_chan->setMaximum(15);
-	spn_instr_curr_chan->setMinimum(0);
+	spn_instr_curr_chan->setRange(0, 15);
 	spn_instr_curr_chan->setValue(0);
 
 	spn_instr_curr_bank = new QSpinBox();
-	spn_instr_curr_bank->setMaximum(16383);
-	spn_instr_curr_bank->setMinimum(0);
+	spn_instr_curr_bank->setRange(0, 16383);
 	spn_instr_curr_bank->setValue(0);
 
 	spn_instr_curr_prog = new QSpinBox();
-	spn_instr_curr_prog->setMaximum(127);
-	spn_instr_curr_prog->setMinimum(0);
+	spn_instr_curr_prog->setRange(0, 127);
 	spn_instr_curr_prog->setValue(0);
 
 	x = 0;
@@ -690,13 +677,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		lbl_instr_desc[n] = new QLabel(tr(buf));
 
 		spn_instr_bank[n] = new QSpinBox();
-		spn_instr_bank[n]->setMaximum(16383);
-		spn_instr_bank[n]->setMinimum(0);
+		spn_instr_bank[n]->setRange(0, 16383);
 		spn_instr_bank[n]->setValue(0);
 
 		spn_instr_prog[n] = new QSpinBox();
-		spn_instr_prog[n]->setMaximum(127);
-		spn_instr_prog[n]->setMinimum(0);
+		spn_instr_prog[n]->setRange(0, 127);
 		spn_instr_prog[n]->setValue(0);
 
 		cbx_instr_mute[n] = new QCheckBox();
@@ -750,13 +735,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		lbl_volume_synth[n] = new QLabel(tr(buf));
 
 		spn_volume_synth[n] = new QSpinBox();
-		spn_volume_synth[n]->setMaximum(511);
-		spn_volume_synth[n]->setMinimum(0);
+		spn_volume_synth[n]->setRange(0, 511);
 		spn_volume_synth[n]->setValue(MPP_VOLUME_UNIT);
 
 		spn_volume_play[n] = new QSpinBox();
-		spn_volume_play[n]->setMaximum(511);
-		spn_volume_play[n]->setMinimum(0);
+		spn_volume_play[n]->setRange(0, 511);
 		spn_volume_play[n]->setValue(MPP_VOLUME_UNIT);
 
 		tab_volume_gl->addWidget(lbl_volume_play[n], (n & 7) + x, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
@@ -895,25 +878,17 @@ MppMainWindow :: handle_config_local_changed(int state)
 void
 MppMainWindow :: handle_play_key_changed(int key)
 {
-	key &= 0x7F;
-
-	lbl_play_key->setText(tr("Play Key (0..127) ") + QString(mid_key_str[key]));
-
 	pthread_mutex_lock(&mtx);
-	playKey = key;
+	playKey = key & 0x7F;
 	pthread_mutex_unlock(&mtx);
 }
 
 void
 MppMainWindow :: handle_cmd_key_changed(int key)
 {
-	key &= 0x7F;
-
 	pthread_mutex_lock(&mtx);
-	cmdKey = key;
+	cmdKey = key & 0x7F;
 	pthread_mutex_unlock(&mtx);
-
-	lbl_cmd_key->setText(tr("Cmd Key (0..127) ") + QString(mid_key_str[key]));
 }
 
 void
@@ -930,9 +905,6 @@ MppMainWindow :: handle_base_key_changed(int key)
 
 	baseKey = key;
 	pthread_mutex_unlock(&mtx);
-
-	lbl_base_key->setText(tr("Base Key (0..127) ") +
-	    QString(mid_key_str[key]));
 
 	if (spn_play_key != NULL)
 		spn_play_key->setValue(key);
@@ -1081,7 +1053,7 @@ void
 MppMainWindow :: handle_play_press()
 {
 	pthread_mutex_lock(&mtx);
-	if (tab_loop->handle_trigN(-1, playKey - baseKey, 90)) {
+	if (tab_loop->handle_trigN(playKey, 90)) {
 		/* ignore */
 	} else if (midiMode != MM_PASS_ALL) {
 		currScoreMain->handleKeyPress(playKey, 90);
@@ -1993,7 +1965,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			}
 		}
 
-		if (mw->tab_loop->handle_trigN(lbl, key - mw->baseKey, vel)) {
+		if (mw->tab_loop->handle_trigN(key, vel)) {
 
 			mw->do_update_bpm();
 

@@ -46,7 +46,7 @@ public:
 
 	void add_key(uint8_t key, uint8_t vel);
 	void add_pedal(uint8_t val);
-	int handle_trigN(int n, int key_off, int amp);
+	int handle_trigN(int key, int amp);
 	void handle_clearN(int n);
 	void fill_loop_data(int n, int vel, int key_off);
 
@@ -57,8 +57,8 @@ public:
 	QGridLayout *gl;
 
 	QSpinBox *spn_chan[MIDIPP_LOOP_MAX];
+	MppSpinBox *spn_key[MIDIPP_LOOP_MAX];
 
-	QLabel *lbl_rem[MIDIPP_LOOP_MAX];
 	QLabel *lbl_dur[MIDIPP_LOOP_MAX];
 	QLabel *lbl_loop[MIDIPP_LOOP_MAX];
 	QLabel *lbl_state[MIDIPP_LOOP_MAX];
@@ -73,9 +73,9 @@ public:
 	QLabel *lbl_loop_on;
 	QLabel *lbl_loop_multi;
 	QLabel *lbl_chn_title;
-	QLabel *lbl_rem_title;
 	QLabel *lbl_dur_title;
 	QLabel *lbl_state_title;
+	QLabel *lbl_mkey_title;
 
 	QPushButton *but_reset;
 
@@ -88,6 +88,7 @@ public:
 	struct umidi20_track *track[MIDIPP_LOOP_MAX];
 
 	uint8_t chan_val[MIDIPP_LOOP_MAX];
+	uint8_t key_val[MIDIPP_LOOP_MAX];
 	uint8_t pedal_rec;
 	uint8_t loop_on;
 	uint8_t needs_update;
