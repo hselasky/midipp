@@ -316,8 +316,10 @@ MppLoopTab :: handle_trigN(int key, int vel)
 
 	if (loop_on == 0)
 		return (0);
-	if (state[last_loop] == ST_REC)
-		return (0);
+	for (n = 0; n != MIDIPP_LOOP_MAX; n++) {
+		if (state[n] == ST_REC)
+			return (0);
+	}
 
 	if (is_multi == 0) {
 		n = last_loop;
