@@ -94,6 +94,7 @@ class MppEchoTab;
 class MppScoreHighLighter;
 class MppImportTab;
 class MppDevices;
+class MppSpinBox;
 
 struct MppScoreEntry {
 	uint8_t key;
