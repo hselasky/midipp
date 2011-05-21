@@ -89,8 +89,10 @@ MppSpinBox :: valueFromText(const QString &n) const
 		ch++;
 		break;
 	case 0:
-		rem = 0;
-		break;
+		if (ch->isNull()) {
+			rem = 0;
+			break;
+		}
 	default:
 		return (error);
 	}
@@ -143,7 +145,8 @@ MppSpinBox :: valueFromText(const QString &n) const
 		ch++;
 		break;
 	case 0:
-		break;
+		if (ch->isNull())
+			break;
 	default:
 		return (error);
 	}
