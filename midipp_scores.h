@@ -49,16 +49,13 @@ public:
 	MppScoreMain(MppMainWindow *parent);
 	~MppScoreMain();
 
-	void decrementDuration();
+	void decrementDuration(uint32_t timeout = 0);
 	void handleLabelJump(int label);
 	void handleKeyPress(int key, int vel);
 	void handleKeyRelease(int key);
 	void handleParse(const QString &ps);
 	void handleParseSub(QPrinter *pd, QPoint orig, float scale_f);
 	void handleAutoPlay(int bpm);
-	void handleStartTimer(uint32_t ticks_ms);
-	void handleStopTimer(void);
-	void handleTimerPress();
 
 	void viewPaintEvent(QPaintEvent *event);
 	void viewMousePressEvent(QMouseEvent *e);
@@ -100,7 +97,8 @@ public:
 	uint32_t bpmAutoPlay;
 	uint32_t pressedKeys[MPP_PRESSED_MAX];
 	uint32_t realLine[MPP_MAX_LINES];
-	uint32_t timer_ticks[MPP_MAX_LINES];
+	uint32_t timer_ticks_pre[MPP_MAX_LINES];
+	uint32_t timer_ticks_post[MPP_MAX_LINES];
 
 	uint16_t jumpTable[MPP_MAX_LABELS];
 	uint16_t mousePressPos[MPP_MAX_LINES];
@@ -126,6 +124,7 @@ public:
 	uint8_t whatPlayKeyLocked;
 	uint8_t last_key;
 	uint8_t last_vel;
+	uint8_t timer_was_active;
 
 protected:
 

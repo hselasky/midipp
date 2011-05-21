@@ -29,7 +29,6 @@
 #include <midipp_import.h>
 
 static void MppTimerCallback(void *arg);
-static void MppWaitCallback(void *arg);
 
 MppScoreView :: MppScoreView(MppScoreMain *parent)
 {
@@ -61,7 +60,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	    " * U<number>[.] - specifies the duration of the following scores (0..255)\n"
 	    " * T<number> - specifies the track number of the following scores (0..31)\n"
 	    " * K<number> - defines a command (0..99)\n"
-	    " * W<number> - defines a timer (1..9999ms)\n"
+	    " * W<number>.<number> - defines an automatic timeout (1..9999ms)\n"
 	    " * K0 - no operation\n"
 	    " * K1 - lock play key until next label jump\n"
 	    " * K2 - unlock play key\n"
@@ -142,8 +141,6 @@ MppScoreMain :: ~MppScoreMain()
 	handleScoreFileNew();
 
 	umidi20_unset_timer(&MppTimerCallback, this);
-
-	umidi20_unset_timer(&MppWaitCallback, this);
 }
 
 void
@@ -642,7 +639,9 @@ MppScoreMain :: newLine()
 {
 	if (ps.line >= MPP_MAX_LINES)
 		return;
-	if (ps.index == 0 && timer_ticks[ps.line] == 0)
+	if (ps.index == 0 &&
+	    timer_ticks_pre[ps.line] == 0 &&
+	    timer_ticks_post[ps.line] == 0)
 		return;
 
 	realLine[ps.line] = ps.realLine;
@@ -741,7 +740,8 @@ MppScoreMain :: handleParse(const QString &pstr)
 	memset(pageNext, 0, sizeof(pageNext));
 	memset(realLine, 0, sizeof(realLine));
 	memset(playCommand, 0, sizeof(playCommand));
-	memset(timer_ticks, 0, sizeof(timer_ticks));
+	memset(timer_ticks_pre, 0, sizeof(timer_ticks_pre));
+	memset(timer_ticks_post, 0, sizeof(timer_ticks_post));
 	active_channels = 1;
 
 	if (pstr.isNull() || pstr.isEmpty())
@@ -964,7 +964,49 @@ parse_timer:
 	}
 
 	if (ps.line < MPP_MAX_LINES)
-		timer_ticks[ps.line] = timer;
+		timer_ticks_pre[ps.line] = timer;
+
+	c = pstr[ps.x+1].toAscii();
+	if (c == '.') {
+
+		c = pstr[ps.x+2].toAscii();
+		if (c >= '0' && c <= '9') {
+			timer = (c - '0');
+
+			d = pstr[ps.x+3].toAscii();
+			if (d >= '0' && d <= '9') {
+				timer *= 10;
+				timer += (d - '0');
+
+				d = pstr[ps.x+4].toAscii();
+				if (d >= '0' && d <= '9') {
+					timer *= 10;
+					timer += (d - '0');
+
+					d = pstr[ps.x+5].toAscii();
+					if (d >= '0' && d <= '9') {
+						timer *= 10;
+						timer += (d - '0');
+						parseAdv(5);
+					} else {
+						parseAdv(4);
+					}
+				} else {
+					parseAdv(3);
+				}
+			} else {
+				parseAdv(2);
+			}
+		} else {
+			parseAdv(1);
+			timer = 0;
+		}
+	} else {
+		timer = 0;
+	}
+
+	if (ps.line < MPP_MAX_LINES)
+		timer_ticks_post[ps.line] = timer;
 
 	goto next_char;
 
@@ -1156,19 +1198,6 @@ MppTimerCallback(void *arg)
 	pthread_mutex_unlock(&mw->mtx);
 }
 
-static void
-MppWaitCallback(void *arg)
-{
-	MppScoreMain *sm = (MppScoreMain *)arg;
-	MppMainWindow *mw = sm->mainWindow;
-
-	pthread_mutex_lock(&mw->mtx);
-	if (mw->midiTriggered) {
-		sm->handleTimerPress();
-	}
-	pthread_mutex_unlock(&mw->mtx);
-}
-
 /* must be called locked */
 void
 MppScoreMain :: updateTimer()
@@ -1185,9 +1214,6 @@ MppScoreMain :: updateTimer()
 	}
 
 	umidi20_set_timer(&MppTimerCallback, this, i);
-
-	if (timer_ticks[currPos] != 0)
-		handleStartTimer(timer_ticks[currPos]);
 }
 
 void
@@ -1333,15 +1359,22 @@ void
 MppScoreMain :: handleKeyPress(int in_key, int vel)
 {
 	struct MppScoreEntry *pn;
+	uint32_t timeout = 0;
+	uint32_t t_pre;
+	uint32_t t_post;
 	uint16_t pos;
 	uint8_t chan;
 	uint8_t x;
 	uint8_t out_key;
 	uint8_t delay;
 
+ repeat:
 	for (x = 0; x != 128; x++) {
 		pos = resolveJump(currPos);
 		if (pos != 0) {
+			/* avoid infinite loops */
+			if (timeout != 0)
+				return;
 			/* check for real jump */
 			if ((pos - 2) != currPos)
 				isPlayKeyLocked = 0;
@@ -1371,13 +1404,18 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 		}
 	}
 
+	t_pre = timer_ticks_pre[currPos];
+	t_post = timer_ticks_pre[currPos];
+
+	if (timer_was_active && t_pre == 0 && t_post == 0)
+		return;
+
+	timer_was_active = 0;
+
 	decrementDuration();
 
 	last_key = in_key;
 	last_vel = vel;
-
-	if (timer_ticks[currPos] != 0)
-		handleStartTimer(timer_ticks[currPos]);
 
 	pn = &scores[currPos][0];
 
@@ -1394,7 +1432,7 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 			if (setPressedKey(chan, out_key, pn->dur, delay))
 				continue;
 
-			mainWindow->output_key(chan, out_key, vel, delay, 0, x);
+			mainWindow->output_key(chan, out_key, vel, timeout + delay, 0, x);
 		}
 	}
 
@@ -1406,6 +1444,17 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 		isPlayKeyLocked = 0;
 	}
 
+	if (t_pre || t_post) {
+		timeout += t_pre;
+		decrementDuration(timeout);
+		timeout += t_post;
+		timer_was_active = 1;
+
+		/* avoid infinite loops */
+		if (currPos != 0)
+			goto repeat;
+	}
+
 	mainWindow->cursorUpdate = 1;
 
 	if (mainWindow->currScoreMain == this)
@@ -1414,15 +1463,7 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 
 /* must be called locked */
 void
-MppScoreMain :: handleTimerPress()
-{
-	handleKeyRelease(last_key);
-	handleKeyPress(last_key, last_vel);
-}
-
-/* must be called locked */
-void
-MppScoreMain :: decrementDuration()
+MppScoreMain :: decrementDuration(uint32_t timeout)
 {
 	uint8_t out_key;
 	uint8_t chan;
@@ -1439,7 +1480,7 @@ MppScoreMain :: decrementDuration()
 			/* clear entry */
 			pressedKeys[x] = 0;
 
-			mainWindow->output_key(chan, out_key, 0, delay, 0, x);
+			mainWindow->output_key(chan, out_key, 0, timeout + delay, 0, x);
 		}
 
 		if (pressedKeys[x] != 0)
@@ -1455,6 +1496,11 @@ MppScoreMain :: handleKeyRelease(int in_key)
 		if (in_key != (int)whatPlayKeyLocked) {
 			return;
 		}
+	}
+
+	if (timer_was_active) {
+		timer_was_active = 0;
+		return;
 	}
 
 	decrementDuration();
@@ -1627,18 +1673,6 @@ MppScoreMain :: watchdog()
 		viewScroll->setValue(0);
 	else
 		viewScroll->setValue((y - 1) - ((y - 1) % y_blocks));
-}
-
-void
-MppScoreMain :: handleStartTimer(uint32_t tick_ms)
-{
-	umidi20_set_timer(&MppWaitCallback, this, tick_ms);
-}
-
-void
-MppScoreMain :: handleStopTimer()
-{
-	umidi20_unset_timer(&MppWaitCallback, this);
 }
 
 void

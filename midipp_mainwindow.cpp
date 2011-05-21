@@ -33,6 +33,8 @@
 #include <midipp_devices.h>
 #include <midipp_spinbox.h>
 
+static void MidiEventRxPedal(MppMainWindow *mw, uint8_t val);
+
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
 {
@@ -1760,8 +1762,6 @@ MppMainWindow :: handle_stop(void)
 
 	for (z = 0; z != MPP_MAX_VIEWS; z++) {
 
-	    scores_main[z]->handleStopTimer();
-
 	    for (x = 0; x != MPP_PRESSED_MAX; x++) {
 
 		pkey = &scores_main[z]->pressedKeys[x];
@@ -1778,6 +1778,8 @@ MppMainWindow :: handle_stop(void)
 		}
 	    }
 	}
+
+	MidiEventRxPedal(this, 0);
 
 	midiTriggered = ScMidiTriggered;
 }
