@@ -47,7 +47,7 @@ public:
 	void MidiInit(void);
 	void MidiUnInit(void);
 
-	void handle_stop(void);
+	void handle_stop(int flag = 0);
 	void handle_midi_file_open(int merge);
 	void handle_midi_file_clear_name(void);
 	void handle_midi_file_instr_prepend(void);

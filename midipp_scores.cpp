@@ -1351,7 +1351,7 @@ MppScoreMain :: handleLabelJump(int pos)
 
 	mainWindow->cursorUpdate = 1;
 
-	mainWindow->handle_stop();
+	mainWindow->handle_stop(1);
 }
 
 /* must be called locked */

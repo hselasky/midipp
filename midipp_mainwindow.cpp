@@ -1741,7 +1741,7 @@ MppMainWindow :: do_key_press(int key, int vel, int dur)
 
 /* must be called locked */
 void
-MppMainWindow :: handle_stop(void)
+MppMainWindow :: handle_stop(int flag)
 {
 	uint32_t *pkey;
 	uint8_t ScMidiTriggered;
@@ -1773,7 +1773,9 @@ MppMainWindow :: handle_stop(void)
 	    }
 	}
 
-	MidiEventRxPedal(this, 0);
+	/* check if we should kill the pedal */
+	if (!(flag & 1))
+		MidiEventRxPedal(this, 0);
 
 	midiTriggered = ScMidiTriggered;
 }
