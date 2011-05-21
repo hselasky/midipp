@@ -60,22 +60,25 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 
 		but_clear[n] = new QPushButton(tr("Clear"));
 		but_trig[n] = new QPushButton(tr("Trigger"));
+		but_import[n] = new QPushButton(tr("Import"));
 	}
 
 	for (n = 0; n != MIDIPP_LOOP_MAX; n++) {
 
-		gl->addWidget(lbl_state[n], (MIDIPP_LOOP_MAX-n-1) + 2, 6, 1, 1);
-		gl->addWidget(spn_chan[n], (MIDIPP_LOOP_MAX-n-1) + 2, 5, 1, 1);
-		gl->addWidget(lbl_dur[n], (MIDIPP_LOOP_MAX-n-1) + 2, 4, 1, 1);
-		gl->addWidget(but_clear[n], (MIDIPP_LOOP_MAX-n-1) + 2, 2, 1, 1);
-		gl->addWidget(but_trig[n], (MIDIPP_LOOP_MAX-n-1) + 2, 1, 1, 1);
+		gl->addWidget(lbl_state[n], (MIDIPP_LOOP_MAX-n-1) + 2, 7, 1, 1);
+		gl->addWidget(spn_chan[n], (MIDIPP_LOOP_MAX-n-1) + 2, 6, 1, 1);
+		gl->addWidget(lbl_dur[n], (MIDIPP_LOOP_MAX-n-1) + 2, 5, 1, 1);
+		gl->addWidget(but_clear[n], (MIDIPP_LOOP_MAX-n-1) + 2, 3, 1, 1);
+		gl->addWidget(but_trig[n], (MIDIPP_LOOP_MAX-n-1) + 2, 2, 1, 1);
 		gl->addWidget(lbl_loop[n], (MIDIPP_LOOP_MAX-n-1) + 2, 0, 1, 1);
-		gl->addWidget(spn_key[n], (MIDIPP_LOOP_MAX-n-1) + 2, 3, 1, 1);
+		gl->addWidget(but_import[n], (MIDIPP_LOOP_MAX-n-1) + 2, 1, 1, 1);
+		gl->addWidget(spn_key[n], (MIDIPP_LOOP_MAX-n-1) + 2, 4, 1, 1);
 
 		connect(spn_chan[n], SIGNAL(valueChanged(int)), this, SLOT(handle_value_changed(int)));
 		connect(spn_key[n], SIGNAL(valueChanged(int)), this, SLOT(handle_value_changed(int)));
 		connect(but_clear[n], SIGNAL(pressed()), this, SLOT(handle_clear()));
 		connect(but_trig[n], SIGNAL(pressed()), this, SLOT(handle_trig()));
+		connect(but_import[n], SIGNAL(pressed()), this, SLOT(handle_import()));
 	}
 
 	lbl_chn_title = new QLabel(tr("Chan."));
@@ -83,22 +86,22 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 	lbl_state_title = new QLabel(tr("State"));
 	lbl_mkey_title = new QLabel(tr("Key-m"));
 
-	gl->addWidget(lbl_state_title, 1, 6, 1, 1);
-	gl->addWidget(lbl_chn_title, 1, 5, 1, 1);
-	gl->addWidget(lbl_dur_title, 1, 4, 1, 1);
-	gl->addWidget(lbl_mkey_title, 1, 3, 1, 1);
+	gl->addWidget(lbl_state_title, 1, 7, 1, 1);
+	gl->addWidget(lbl_chn_title, 1, 6, 1, 1);
+	gl->addWidget(lbl_dur_title, 1, 5, 1, 1);
+	gl->addWidget(lbl_mkey_title, 1, 4, 1, 1);
 
 	but_reset = new QPushButton(tr("Reset"));
 
 	connect(but_reset, SIGNAL(pressed()), this, SLOT(handle_reset()));
 
-	gl->addWidget(but_reset, 0, 5, 1, 2);
+	gl->addWidget(but_reset, 0, 6, 1, 2);
 
 	but_loop_on = new QPushButton(tr("Loop"));
 	lbl_loop_on = new QLabel(tr("OFF"));
 
-	gl->addWidget(but_loop_on, 0, 0, 1, 1);
-	gl->addWidget(lbl_loop_on, 0, 1, 1, 1);
+	gl->addWidget(but_loop_on, 0, 0, 1, 2);
+	gl->addWidget(lbl_loop_on, 0, 2, 1, 1);
 
 	connect(but_loop_on, SIGNAL(pressed()), this, SLOT(handle_loop()));
 
@@ -107,14 +110,14 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 
 	connect(but_pedal_rec, SIGNAL(pressed()), this, SLOT(handle_pedal()));
 
-	gl->addWidget(but_pedal_rec, 1, 0, 1, 1);
-	gl->addWidget(lbl_pedal_rec, 1, 1, 1, 1);
+	gl->addWidget(but_pedal_rec, 1, 0, 1, 2);
+	gl->addWidget(lbl_pedal_rec, 1, 2, 1, 1);
 
 	but_loop_multi = new QPushButton(tr("Multi"));
 	lbl_loop_multi = new QLabel(tr("OFF"));
 
-	gl->addWidget(but_loop_multi, 0, 2, 1, 1);
-	gl->addWidget(lbl_loop_multi, 0, 3, 1, 1);
+	gl->addWidget(but_loop_multi, 0, 3, 1, 1);
+	gl->addWidget(lbl_loop_multi, 0, 4, 1, 1);
 
 	connect(but_loop_multi, SIGNAL(pressed()), this, SLOT(handle_multi()));
 
@@ -122,9 +125,8 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 
 	needs_update = 1;
 
-	for (n = 0; n != MIDIPP_LOOP_MAX; n++) {
+	for (n = 0; n != MIDIPP_LOOP_MAX; n++)
 		track[n] = umidi20_track_alloc();
-	}
 
 	pthread_mutex_unlock(&mw->mtx);
 
@@ -238,6 +240,18 @@ MppLoopTab :: handle_trig()
 	}
 }
 
+void
+MppLoopTab :: handle_import()
+{
+	uint8_t n;
+
+	for (n = 0; n != MIDIPP_LOOP_MAX; n++) {
+		if (but_import[n]->isDown()) {
+			mw->import_midi_track(track[n], IMPORT_HAVE_DURATION);
+		}
+	}
+}
+
 /* Must be called locked */
 void
 MppLoopTab :: fill_loop_data(int n, int vel, int key_off)
@@ -294,15 +308,15 @@ MppLoopTab :: fill_loop_data(int n, int vel, int key_off)
 
 		} else if (umidi20_event_is_key_end(event)) {
 
-		  for (y = 0; y != MPP_MAX_DEVS; y++) {
-			if (mw->check_synth(y, chan, pos)) {
+			for (y = 0; y != MPP_MAX_DEVS; y++) {
+				if (mw->check_synth(y, chan, pos)) {
+					mw->do_key_press(key, 0, 0);
+				}
+			}
+
+			if (mw->check_record(chan, pos)) {
 				mw->do_key_press(key, 0, 0);
 			}
-		  }
-
-		  if (mw->check_record(chan, pos)) {
-			mw->do_key_press(key, 0, 0);
-		  }
 		}
 	}
 }

@@ -54,8 +54,12 @@ public:
 	void handle_midi_file_instr_delete(void);
 	void handle_jump_locked(int index);
 
-	int convert_midi_duration(uint32_t thres);
-	int convert_midi_score_duration();
+	QString get_midi_score_duration();
+	int log_midi_score_duration();
+	int convert_midi_duration(struct umidi20_track *, uint32_t thres);
+	void import_midi_track(struct umidi20_track *, int flags = 0);
+#define	IMPORT_HAVE_STRING 0x01
+#define	IMPORT_HAVE_DURATION 0x02
 
 	void update_play_device_no(void);
 
@@ -167,8 +171,7 @@ public:
 	QPushButton *but_midi_file_merge;
 	QPushButton *but_midi_file_save;
 	QPushButton *but_midi_file_save_as;
-	QPushButton *but_midi_file_convert_A;
-	QPushButton *but_midi_file_convert_B;
+	QPushButton *but_midi_file_convert;
 
 	/* tab <Play> */
 
@@ -386,9 +389,7 @@ public slots:
 	void handle_auto_play(int bpm);
 	void handle_tab_changed(int index);
 
-	void handle_midi_file_convert(MppScoreMain *sm);
-	void handle_midi_file_convert_A();
-	void handle_midi_file_convert_B();
+	void handle_midi_file_convert();
 
 	void handle_mute_map();
 	void handle_config_dev();

@@ -160,8 +160,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_midi_file_merge = new QPushButton(tr("Merge"));
 	but_midi_file_save = new QPushButton(tr("Save"));
 	but_midi_file_save_as = new QPushButton(tr("Save As"));
-	but_midi_file_convert_A = new QPushButton(tr("Import to A"));
-	but_midi_file_convert_B = new QPushButton(tr("Import to B"));
+	but_midi_file_convert = new QPushButton(tr("Import"));
 
 	n = 0;
 
@@ -237,11 +236,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n++;
 
-	tab_file_gl->addWidget(but_midi_file_convert_A, n, 6, 1, 2);
-
-	n++;
-
-	tab_file_gl->addWidget(but_midi_file_convert_B, n, 6, 1, 2);
+	tab_file_gl->addWidget(but_midi_file_convert, n, 6, 1, 2);
 
 	n++;
 
@@ -781,8 +776,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_midi_file_merge, SIGNAL(pressed()), this, SLOT(handle_midi_file_merge_open()));
 	connect(but_midi_file_save, SIGNAL(pressed()), this, SLOT(handle_midi_file_save()));
 	connect(but_midi_file_save_as, SIGNAL(pressed()), this, SLOT(handle_midi_file_save_as()));
-	connect(but_midi_file_convert_A, SIGNAL(pressed()), this, SLOT(handle_midi_file_convert_A()));
-	connect(but_midi_file_convert_B, SIGNAL(pressed()), this, SLOT(handle_midi_file_convert_B()));
+	connect(but_midi_file_convert, SIGNAL(pressed()), this, SLOT(handle_midi_file_convert()));
 
 	connect(but_midi_trigger, SIGNAL(pressed()), this, SLOT(handle_midi_trigger()));
 	connect(but_midi_rewind, SIGNAL(pressed()), this, SLOT(handle_rewind()));
@@ -989,7 +983,7 @@ MppMainWindow :: handle_midi_pause()
 	uint8_t paused;
 
 	pthread_mutex_lock(&mtx);
-	pos = (umidi20_get_curr_position() - startPosition) % 0x40000000UL;
+	pos = (umidi20_get_curr_position() - startPosition) & 0x3FFFFFFFU;
 	triggered = midiTriggered;
 	paused = midiPaused;
 	pthread_mutex_unlock(&mtx);
@@ -1704,7 +1698,7 @@ MppMainWindow :: check_record(uint8_t chan, uint32_t off)
 
 	handle_midi_trigger();
 
-	pos = (umidi20_get_curr_position() - startPosition + off) % 0x40000000UL;
+	pos = (umidi20_get_curr_position() - startPosition + off) & 0x3FFFFFFFU;
 	if (pos < MPP_MIN_POS)
 		pos = MPP_MIN_POS;
 
@@ -1819,7 +1813,7 @@ MppMainWindow :: get_time_offset(void)
 		else
 			time_offset = 0;
 	} else {
-		time_offset = (umidi20_get_curr_position() - startPosition) % 0x40000000UL;
+		time_offset = (umidi20_get_curr_position() - startPosition) & 0x3FFFFFFFU;
 	}
 
 	time_offset %= 100000000UL;
@@ -2402,22 +2396,29 @@ MppMainWindow :: handle_volume_reload()
 }
 
 int
-MppMainWindow :: convert_midi_duration(uint32_t thres)
+MppMainWindow :: convert_midi_duration(struct umidi20_track *im_track, uint32_t thres)
 {
 	struct umidi20_event *event;
 
 	uint32_t last_pos;
 	uint32_t delta;
 	uint32_t index;
+	uint32_t curr_pos;
+	uint32_t duration;
 
 	last_pos = -thres;	/* make sure we get the first score */
 	index = 0;
+	curr_pos = 0;
+	duration = 0;
 
 	memset(convLineStart, 0, sizeof(convLineStart));
 
-	UMIDI20_QUEUE_FOREACH(event, &(track->queue)) {
+	UMIDI20_QUEUE_FOREACH(event, &(im_track->queue)) {
 
-		delta = event->position - last_pos;
+		curr_pos = (event->position & 0x3FFFFFFF);
+		duration = event->duration;
+
+		delta = (curr_pos - last_pos);
 
 		if (!(umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL))
 			continue;
@@ -2426,7 +2427,7 @@ MppMainWindow :: convert_midi_duration(uint32_t thres)
 
 		if (umidi20_event_is_key_start(event)) {
 			if (delta >= thres) {
-				last_pos = event->position;
+				last_pos = curr_pos;
 				if (index < MPP_MAX_LINES) {
 					convLineStart[index] = last_pos;
 					index++;
@@ -2434,11 +2435,31 @@ MppMainWindow :: convert_midi_duration(uint32_t thres)
 			}
 		}
 	}
+	if ((curr_pos + duration) > last_pos && index < MPP_MAX_LINES) {
+		convLineStart[index] = curr_pos + duration;
+		index++;
+	}
 	return (index);
 }
 
+QString
+MppMainWindow :: get_midi_score_duration(void)
+{
+	uint32_t retval;
+	char buf[16];
+
+	retval = convLineStart[convIndex] - 
+	    convLineStart[convIndex - 1];
+
+	retval = (retval + 1) / 2;
+
+	snprintf(buf, sizeof(buf), "W%u.%u ", retval, retval);
+
+	return (QString(buf));
+}
+
 int
-MppMainWindow :: convert_midi_score_duration()
+MppMainWindow :: log_midi_score_duration(void)
 {
 	uint32_t retval;
 	uint8_t j;
@@ -2455,9 +2476,9 @@ MppMainWindow :: convert_midi_score_duration()
 }
 
 void
-MppMainWindow :: handle_midi_file_convert(MppScoreMain *sm)
+MppMainWindow :: import_midi_track(struct umidi20_track *im_track, int flags)
 {
-	QTextCursor cursor(sm->editWidget->textCursor());
+	QTextCursor cursor(tab_import->editWidget->textCursor());
 
 	QString output;
 	QString out_block;
@@ -2478,11 +2499,11 @@ MppMainWindow :: handle_midi_file_convert(MppScoreMain *sm)
 
 	pthread_mutex_lock(&mtx);
 
-	umidi20_track_compute_max_min(track);
+	umidi20_track_compute_max_min(im_track);
 
-	max_index = convert_midi_duration(thres);
+	max_index = convert_midi_duration(im_track, thres);
 
-	UMIDI20_QUEUE_FOREACH(event, &(track->queue)) {
+	UMIDI20_QUEUE_FOREACH(event, &(im_track->queue)) {
 
 		if (!(umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL))
 			continue;
@@ -2490,7 +2511,7 @@ MppMainWindow :: handle_midi_file_convert(MppScoreMain *sm)
 			continue;
 
 		while ((convIndex < max_index) &&
-		       (event->position >= (convLineStart[convIndex] + thres))) {
+		       ((event->position & 0x3FFFFFFFU) >= (convLineStart[convIndex] + thres))) {
 
 			uint8_t do_flush;
 			uint8_t new_page;
@@ -2499,7 +2520,7 @@ MppMainWindow :: handle_midi_file_convert(MppScoreMain *sm)
 			convIndex++;
 
 			if (convIndex < max_index)
-				duration = convert_midi_score_duration();
+				duration = log_midi_score_duration();
 			else
 				duration = 0;
 
@@ -2512,19 +2533,27 @@ MppMainWindow :: handle_midi_file_convert(MppScoreMain *sm)
 				snprintf(buf, sizeof(buf), ".   ");
 
 			out_desc += buf;
+			if (flags & IMPORT_HAVE_DURATION) {
+				if (convIndex < max_index)
+					out_block += get_midi_score_duration();
+			}
 			out_block += "\n";
 
 			if (do_flush) {
 
-				snprintf(buf, sizeof(buf), "%5u", convIndex / 16);
+				if (flags & IMPORT_HAVE_STRING) {
+					snprintf(buf, sizeof(buf), "%5u", convIndex / 16);
 
-				output += "\nS\"";
-				output += buf;
-				output += out_desc;
-				output += ";\"\n";
+					output += "\nS\"";
+					output += buf;
+					output += out_desc;
+					output += "\"\n";
+				}
 				output += out_block;
-				if (new_page)
-					output += "\nJP\n";
+				if (flags & IMPORT_HAVE_STRING) {
+					if (new_page)
+						output += "\nJP\n";
+				}
 				output += "\n";
 
 				out_desc = "";
@@ -2534,7 +2563,7 @@ MppMainWindow :: handle_midi_file_convert(MppScoreMain *sm)
 			last_u = MPP_MAX_DURATION + 1;
 		}
 
-		end = event->position + event->duration;
+		end = (event->position & 0x3FFFFFFFU) + event->duration;
 
 		if (umidi20_event_is_key_start(event)) {
 
@@ -2571,12 +2600,14 @@ MppMainWindow :: handle_midi_file_convert(MppScoreMain *sm)
 
 	pthread_mutex_unlock(&mtx);
 
-	snprintf(buf, sizeof(buf), "%5u", (convIndex + 15) / 16);
+	if (flags & IMPORT_HAVE_STRING) {
+		snprintf(buf, sizeof(buf), "%5u", (convIndex + 15) / 16);
 
-	output += "\nS\"";
-	output += buf;
-	output += out_desc;
-	output += ";\"\n";
+		output += "\nS\"";
+		output += buf;
+		output += out_desc;
+		output += "\"\n";
+	}
 	output += out_block;
 	output += "\n";
 
@@ -2586,17 +2617,9 @@ MppMainWindow :: handle_midi_file_convert(MppScoreMain *sm)
 }
 
 void
-MppMainWindow :: handle_midi_file_convert_A()
+MppMainWindow :: handle_midi_file_convert()
 {
-	if (MPP_MAX_VIEWS > 0)
-		handle_midi_file_convert(scores_main[0]);
-}
-
-void
-MppMainWindow :: handle_midi_file_convert_B()
-{
-	if (MPP_MAX_VIEWS > 1)
-		handle_midi_file_convert(scores_main[1]);
+	import_midi_track(track, IMPORT_HAVE_STRING);
 }
 
 void
