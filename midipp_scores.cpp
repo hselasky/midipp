@@ -29,7 +29,7 @@
 #include <midipp_import.h>
 
 static void MppTimerCallback(void *arg);
-static void MppPllCallback(void *arg);
+static void MppWaitCallback(void *arg);
 
 MppScoreView :: MppScoreView(MppScoreMain *parent)
 {
@@ -61,17 +61,15 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	    " * U<number>[.] - specifies the duration of the following scores (0..255)\n"
 	    " * T<number> - specifies the track number of the following scores (0..31)\n"
 	    " * K<number> - defines a command (0..99)\n"
+	    " * W<number> - defines a timer (1..9999ms)\n"
 	    " * K0 - no operation\n"
 	    " * K1 - lock play key until next label jump\n"
 	    " * K2 - unlock play key\n"
 	    " * L<number> - defines a label (0..31)\n"
-	    " * M<bpm 0..60000>[.<duty 0..99>] - configure auto PLL\n"
 	    " * J<number> - jumps to the given label (0..31)\n"
 	    " * JP<number> - jumps to the given label (0..31) and starts a new page\n"
 	    " * S\"<string>\" - creates a visual string\n"
 	    " * CDEFGAH<number><B> - defines a score in the given octave (0..10)\n"
-	    " * { - start PLL program\n"
-	    " * } - stop PLL program\n"
 	    " */\n"
 	    "\n"
 	    "S\"(L0:) .Welcom.e!\"\n"
@@ -143,9 +141,9 @@ MppScoreMain :: ~MppScoreMain()
 {
 	handleScoreFileNew();
 
-	umidi20_unset_timer(&MppPllCallback, this);
-
 	umidi20_unset_timer(&MppTimerCallback, this);
+
+	umidi20_unset_timer(&MppWaitCallback, this);
 }
 
 void
@@ -211,7 +209,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 					y_max = y;
 				y = 0;
 				last_jump = 0;
-			} else if (jumpNext[x] != 0) {
+			} else if (jumpLabel[x] != 0) {
 				y++;
 				last_jump = 1;
 			}
@@ -262,7 +260,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 				while (y_max--)
 					paint.translate(QPoint(0, -MPP_VISUAL_Y_MAX));
 				y_max = 0;
-			} else if (jumpNext[x] != 0) {
+			} else if (jumpLabel[x] != 0) {
 				paint.translate(QPoint(0,MPP_VISUAL_Y_MAX));
 				y_max++;
 			}
@@ -475,8 +473,6 @@ MppScoreMain :: viewMousePressEvent(QMouseEvent *e)
 	max = linesMax;
 
 	if (mousePressPos[yi] < max) {
-		pllPos = 0;
-		pllDuration = 0;
 		currPos = mousePressPos[yi];
 		lastPos = mousePressPos[yi];
 		isPlayKeyLocked = 0;
@@ -644,32 +640,20 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 void
 MppScoreMain :: newLine()
 {
-	if (ps.pll_active) {
-		if (ps.pll_line >= MPP_MAX_LINES)
-			return;
-		if (ps.pll_index == 0)
-			return;
+	if (ps.line >= MPP_MAX_LINES)
+		return;
+	if (ps.index == 0 && timer_ticks[ps.line] == 0)
+		return;
 
-		ps.pll_line++;
-		ps.pll_index = 0;
-	} else {
-		if (ps.line >= MPP_MAX_LINES)
-			return;
-		if (ps.index == 0)
-			return;
-
-		realLine[ps.line] = ps.realLine;
-		ps.line++;
-		ps.index = 0;
-	}
+	realLine[ps.line] = ps.realLine;
+	ps.line++;
+	ps.index = 0;
 }
 
 void
 MppScoreMain :: newVisual()
 {
 	if (ps.line >= MPP_MAX_LINES)
-		goto done;
-	if (ps.pll_active)
 		goto done;
 
 	bufData[ps.bufIndex] = 0;
@@ -696,6 +680,30 @@ MppScoreMain :: parseAdv(uint8_t delta)
 	}
 }
 
+uint32_t
+MppScoreMain :: resolveJump(uint32_t line)
+{
+	uint32_t jump;
+
+	if (line >= MPP_MAX_LINES) {
+		jump = 1;	/* jump to next */
+	} else {
+		uint8_t lbl;
+
+		lbl = jumpLabel[line];
+		if (lbl == MPP_JUMP_NOP)
+			jump = line + 2;
+		else if (lbl > 0 && lbl <= MPP_MAX_LABELS)
+			jump = jumpTable[lbl - 1];
+		else
+			jump = 0;
+	}
+	/* clip */
+	if (jump != 0 && jump > (uint32_t)ps.line)
+		jump = 1;
+	return (jump);
+}
+
 void
 MppScoreMain :: handleParse(const QString &pstr)
 {
@@ -709,6 +717,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 	int base_key;
 	int duration;
 	int flag;
+	int timer;
 
 	/* cleanup all scores */
 
@@ -725,24 +734,14 @@ MppScoreMain :: handleParse(const QString &pstr)
 	ps.index = 0;
 	ps.bufIndex = 0;
 	ps.ps = &pstr;
-	ps.pll_active = 0;
-	ps.pll_bpm = 120;
-	ps.pll_duty = 50;	/* per cent */
-	ps.pll_line = 0;
-	ps.pll_index = 0;
 
 	memset(scores, 0, sizeof(scores));
-	memset(jumpNext, 0, sizeof(jumpNext));
+	memset(jumpLabel, 0, sizeof(jumpLabel));
 	memset(jumpTable, 0, sizeof(jumpTable));
 	memset(pageNext, 0, sizeof(pageNext));
 	memset(realLine, 0, sizeof(realLine));
 	memset(playCommand, 0, sizeof(playCommand));
-	memset(pll_scores, 0, sizeof(pll_scores));
-	memset(pll_bpm, 0, sizeof(pll_bpm));
-	memset(pll_duty, 0, sizeof(pll_duty));
-	memset(pll_start, 0, sizeof(pll_start));
-	memset(pll_duration, 0, sizeof(pll_duration));
-	memset(pll_jump, 0, sizeof(pll_jump));
+	memset(timer_ticks, 0, sizeof(timer_ticks));
 	active_channels = 1;
 
 	if (pstr.isNull() || pstr.isEmpty())
@@ -762,21 +761,6 @@ next_char:
 	c = pstr[ps.x].toUpper().toAscii();
 
 	switch (c) {
-	case 'M':
-		if (y == 0) {
-			goto parse_pll_bpm;
-		}
-		goto next_char;
-	case '{':
-		if (y == 0) {
-			goto pll_start;
-		}
-		goto next_char;
-	case '}':
-		if (y == 0) {
-			goto pll_stop;
-		}
-		goto next_char;
 	case 'C':
 		if (y == 0) {
 			base_key = C0;
@@ -850,6 +834,11 @@ next_char:
 			goto parse_string;
 		}
 		goto next_char;
+	case 'W':
+		if (y == 0) {
+			goto parse_timer;
+		}
+		goto next_char;
 	case 0:
 		goto done;
 	case '\n':
@@ -890,72 +879,6 @@ next_char:
 		goto next_char;
 	}
 
-parse_pll_bpm:
-	ps.pll_bpm = 0;
-	ps.pll_duty = 0;
-	while (1) {
-		c = pstr[ps.x+1].toAscii();
-		if (c >= '0' && c <= '9') {
-			ps.pll_bpm *= 10;
-			ps.pll_bpm += c - '0';
-			parseAdv(1);
-		} else {
-			break;
-		}
-	}
-	if (c == '.') {
-		parseAdv(1);
-
-		while (1) {
-			c = pstr[ps.x+1].toAscii();
-			if (c >= '0' && c <= '9') {
-				ps.pll_duty *= 10;
-				ps.pll_duty += c - '0';
-				parseAdv(1);
-			} else {
-				break;
-			}
-		}
-	}
-
-	if (ps.pll_bpm < 0)
-		ps.pll_bpm = 0;
-	else if (ps.pll_bpm > 60000)
-		ps.pll_bpm = 60000;
-
-	if (ps.pll_duty < 0)
-		ps.pll_duty = 0;
-	else if (ps.pll_duty > 99)
-		ps.pll_duty = 99;
-
-	goto next_char;
-
-pll_start:
-	if (ps.pll_active == 0) {
-		newLine();
-		if ((ps.line > 0) && (ps.line < MPP_MAX_LINES) &&
-		    (ps.pll_line < MPP_MAX_LINES)) {
-			pll_start[ps.line - 1] = ps.pll_line + 1;
-			pll_duration[ps.line - 1] = duration & 255;
-			pll_bpm[ps.line - 1] = ps.pll_bpm;
-			pll_duty[ps.line - 1] = ps.pll_duty;
-		}
-		ps.pll_active = 1;
-	}
-	goto next_char;
-
-pll_stop:
-	if (ps.pll_active) {
-		newLine();
-		if ((ps.line > 0) && (ps.line < MPP_MAX_LINES) &&
-		    (ps.pll_line < MPP_MAX_LINES)) {
-			pll_jump[ps.pll_line] = ps.line;
-			ps.pll_line++;
-		}
-		ps.pll_active = 0;
-	}
-	goto next_char;
-
 parse_score:
 	c = pstr[ps.x+1].toAscii();
 	if (c >= '0' && c <= '9') {
@@ -973,20 +896,11 @@ parse_score:
 			base_key -= 1;
 			parseAdv(1);
 		}
-		if (ps.pll_active) {
-			if ((ps.pll_line < MPP_MAX_LINES) && (ps.pll_index < MPP_MAX_SCORES)) {
-				pll_scores[ps.pll_line][ps.pll_index].key = base_key & 127;
-				pll_scores[ps.pll_line][ps.pll_index].dur = duration & 255;
-				pll_scores[ps.pll_line][ps.pll_index].channel = channel & 15;
-				ps.pll_index++;
-			}
-		} else {
-			if ((ps.line < MPP_MAX_LINES) && (ps.index < MPP_MAX_SCORES)) {
-				scores[ps.line][ps.index].key = base_key & 127;
-				scores[ps.line][ps.index].dur = duration & 255;
-				scores[ps.line][ps.index].channel = channel & 15;
-				ps.index++;
-			}
+		if ((ps.line < MPP_MAX_LINES) && (ps.index < MPP_MAX_SCORES)) {
+			scores[ps.line][ps.index].key = base_key & 127;
+			scores[ps.line][ps.index].dur = duration & 255;
+			scores[ps.line][ps.index].channel = channel & 15;
+			ps.index++;
 		}
 	}
 	goto next_char;
@@ -1013,6 +927,44 @@ parse_duration:
 		parseAdv(1);
 	} else 	if (duration != 0)
 		duration --;
+
+	goto next_char;
+
+parse_timer:
+	c = pstr[ps.x+1].toAscii();
+	if (c >= '0' && c <= '9') {
+		timer = (c - '0');
+
+		d = pstr[ps.x+2].toAscii();
+		if (d >= '0' && d <= '9') {
+			timer *= 10;
+			timer += (d - '0');
+
+			d = pstr[ps.x+3].toAscii();
+			if (d >= '0' && d <= '9') {
+				timer *= 10;
+				timer += (d - '0');
+
+				d = pstr[ps.x+4].toAscii();
+				if (d >= '0' && d <= '9') {
+					timer *= 10;
+					timer += (d - '0');
+					parseAdv(4);
+				} else {
+					parseAdv(3);
+				}
+			} else {
+				parseAdv(2);
+			}
+		} else {
+			parseAdv(1);
+		}
+	} else {
+		timer = 0;
+	}
+
+	if (ps.line < MPP_MAX_LINES)
+		timer_ticks[ps.line] = timer;
 
 	goto next_char;
 
@@ -1048,16 +1000,15 @@ parse_command:
 	} else {
 		command = MPP_CMD_NOP;		/* NOP */
 	}
-	if (ps.pll_active == 0 && ps.line < MPP_MAX_LINES)
+	if (ps.line < MPP_MAX_LINES)
 		playCommand[ps.line] = command;
 
 	goto next_char;
 
 parse_label:
-	if (ps.pll_active)
-		goto next_char;
 
 	c = pstr[ps.x+1].toAscii();
+
 	if (c >= '0' && c <= '9') {
 		d = pstr[ps.x+2].toAscii();
 		if (d >= '0' && d <= '9') {
@@ -1076,16 +1027,13 @@ parse_label:
 	goto next_char;
 
 parse_string:
-	if (ps.pll_active)
-		goto next_char;
-
 	c = pstr[ps.x+1].toAscii();
 	if (c != '\"')
 		goto next_char;
 
 	/* check if the current line already has a string */
 	if (ps.line < MPP_MAX_LINES && visual[ps.line].pstr != NULL) {
-		jumpNext[ps.line] = MPP_JUMP_NOP;
+		jumpLabel[ps.line] = MPP_JUMP_NOP;
 		realLine[ps.line] = ps.realLine;
 		ps.line++;
 	}
@@ -1117,9 +1065,6 @@ parse_string:
 	goto next_char;
 
 parse_jump:
-	if (ps.pll_active)
-		goto next_char;
-
 	c = pstr[ps.x+1].toAscii();
 
 	flag = 0;
@@ -1160,46 +1105,20 @@ parse_jump:
 	if ((label >= 0) && 
 	    (label < MPP_MAX_LABELS) && 
 	    (ps.line < MPP_MAX_LINES)) {
-		jumpNext[ps.line] = label + 1;
+		jumpLabel[ps.line] = label + 1;
 		realLine[ps.line] = ps.realLine;
 		ps.line++;
 	}
 	goto next_char;
 
 done:
-	if (ps.pll_active) {
-		newLine();
-		if ((ps.line > 0) &&
-		    (ps.line < MPP_MAX_LINES) && (ps.pll_line < MPP_MAX_LINES)) {
-			pll_jump[ps.pll_line] = ps.line;
-			ps.pll_line++;
-		}
-		ps.pll_active = 0;
-	}
-
 	newLine();
 
 	if (ps.bufIndex != 0)
 		newVisual();
 
-	/* resolve all jumps */
-	for (z = 0; z != ps.line; z++) {
-		if (jumpNext[z] != 0) {
-			if (jumpNext[z] == MPP_JUMP_NOP)
-				jumpNext[z] = z + 2;
-			else
-				jumpNext[z] = jumpTable[jumpNext[z] - 1];
-
-			/* clip */
-			if (jumpNext[z] > ps.line)
-				jumpNext[z] = 1;
-		}
-	}
-
 	linesMax = ps.line;
 	currPos = 0;
-	pllPos = 0;
-	pllDuration = 0;
 	lastPos = 0;
 
 	isPlayKeyLocked = 0;
@@ -1238,14 +1157,14 @@ MppTimerCallback(void *arg)
 }
 
 static void
-MppPllCallback(void *arg)
+MppWaitCallback(void *arg)
 {
 	MppScoreMain *sm = (MppScoreMain *)arg;
 	MppMainWindow *mw = sm->mainWindow;
 
 	pthread_mutex_lock(&mw->mtx);
 	if (mw->midiTriggered) {
-		sm->handlePllPress();
+		sm->handleTimerPress();
 	}
 	pthread_mutex_unlock(&mw->mtx);
 }
@@ -1266,6 +1185,9 @@ MppScoreMain :: updateTimer()
 	}
 
 	umidi20_set_timer(&MppTimerCallback, this, i);
+
+	if (timer_ticks[currPos] != 0)
+		handleStartTimer(timer_ticks[currPos]);
 }
 
 void
@@ -1399,8 +1321,6 @@ MppScoreMain :: handleLabelJump(int pos)
 		return;
 
 	lastPos = currPos = jumpTable[pos] - 1;
-	pllDuration = 0;
-	pllPos = 0;
 	isPlayKeyLocked = 0;
 
 	mainWindow->cursorUpdate = 1;
@@ -1420,7 +1340,7 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 	uint8_t delay;
 
 	for (x = 0; x != 128; x++) {
-		pos = jumpNext[currPos];
+		pos = resolveJump(currPos);
 		if (pos != 0) {
 			/* check for real jump */
 			if ((pos - 2) != currPos)
@@ -1456,8 +1376,8 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 	last_key = in_key;
 	last_vel = vel;
 
-	if (pll_duration[currPos] != 0)
-		handleStartPll();
+	if (timer_ticks[currPos] != 0)
+		handleStartTimer(timer_ticks[currPos]);
 
 	pn = &scores[currPos][0];
 
@@ -1494,52 +1414,10 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 
 /* must be called locked */
 void
-MppScoreMain :: handlePllPress()
+MppScoreMain :: handleTimerPress()
 {
-	struct MppScoreEntry *pn;
-	int in_key;
-	int vel;
-	uint16_t pos;
-	uint8_t chan;
-	uint8_t x;
-	uint8_t out_key;
-	uint8_t delay;
-
-	pos = pll_jump[pllPos];
-	if (pos != 0) {
-		/* indirect lookup */
-		pllPos = pos - 1;
-		pllPos = pll_start[pllPos];
-		if (pllPos != 0)
-			pllPos --;
-	}
-
-	in_key = last_key;
-	vel = last_vel;
-
-	pn = &pll_scores[pllPos][0];
-
-	for (x = 0; x != MPP_MAX_SCORES; x++, pn++) {
-
-		if (pn->dur != 0) {
-			out_key = pn->key + (in_key - baseKey);
-			out_key &= 127;
-
-			chan = (synthChannel + pn->channel) & 0xF;
-
-			delay = mainWindow->noise8(delayNoise);
-
-			pll_pressed[out_key] = chan + 1;
-
-			mainWindow->output_key(chan, out_key, vel, delay,
-			    (pllCycleMs * (pn->dur - 1)) + pllDutyMs, x);
-		}
-	}
-
-	pllPos++;
-
-	if (pllPos >= MPP_MAX_LINES)
-		pllPos = 0;
+	handleKeyRelease(last_key);
+	handleKeyPress(last_key, last_vel);
 }
 
 /* must be called locked */
@@ -1582,12 +1460,6 @@ MppScoreMain :: handleKeyRelease(int in_key)
 	decrementDuration();
 
 	lastPos = currPos;
-
-	if (pllDuration > 0) {
-		pllDuration--;
-		if (pllDuration == 0)
-			handleStopPll();
-	}
 }
 
 void
@@ -1758,45 +1630,15 @@ MppScoreMain :: watchdog()
 }
 
 void
-MppScoreMain :: handleStartPll()
+MppScoreMain :: handleStartTimer(uint32_t tick_ms)
 {
-	int bpm;
-	int i;
-	int duty;
-
-	bpm = pll_bpm[currPos];
-	duty = pll_duty[currPos];
-	pllDuration = pll_duration[currPos];
-	pllPos = pll_start[currPos];
-
-	if (bpm > 0) {
-		i = 60000 / bpm;
-		if (i == 0)
-			i = 1;
-	} else {
-		i = 0;
-	}
-
-	if (pllPos != 0)
-		pllPos--;
-
-	pllCycleMs = i;
-	if (pllCycleMs == 0)
-		pllCycleMs = 1;
-
-	pllDutyMs = (duty * i) / 100;
-	if (pllDutyMs == 0)
-		pllDutyMs = 1;
-
-	umidi20_set_timer(&MppPllCallback, this, i);
+	umidi20_set_timer(&MppWaitCallback, this, tick_ms);
 }
 
 void
-MppScoreMain :: handleStopPll()
+MppScoreMain :: handleStopTimer()
 {
-	umidi20_unset_timer(&MppPllCallback, this);
-	pllDuration = 0;
-	pllPos = 0;
+	umidi20_unset_timer(&MppWaitCallback, this);
 }
 
 void

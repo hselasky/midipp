@@ -1748,7 +1748,6 @@ void
 MppMainWindow :: handle_stop(void)
 {
 	uint32_t *pkey;
-	uint8_t *akey;
 	uint8_t ScMidiTriggered;
 	uint8_t out_key;
 	uint8_t chan;
@@ -1761,17 +1760,7 @@ MppMainWindow :: handle_stop(void)
 
 	for (z = 0; z != MPP_MAX_VIEWS; z++) {
 
-	    scores_main[z]->handleStopPll();
-
-	    for (x = 0; x != 128; x++) {
-
-		akey = &scores_main[z]->pll_pressed[x];
-
-		if (*akey != 0) {
-			output_key(*akey - 1, x, 0, 128, 0);
-			*akey = 0;
-		}
-	    }
+	    scores_main[z]->handleStopTimer();
 
 	    for (x = 0; x != MPP_PRESSED_MAX; x++) {
 
