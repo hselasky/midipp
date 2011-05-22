@@ -1386,7 +1386,7 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 		if (pos != 0) {
 			/* avoid infinite loops */
 			if (timeout != 0)
-				return;
+				goto done;
 			/* check for real jump */
 			if ((pos - 2) != currPos)
 				isPlayKeyLocked = 0;
@@ -1420,7 +1420,7 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 	t_post = timer_ticks_pre[currPos];
 
 	if (timer_was_active && t_pre == 0 && t_post == 0)
-		return;
+		goto done;
 
 	timer_was_active = 0;
 
@@ -1467,6 +1467,7 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 			goto repeat;
 	}
 
+done:
 	mainWindow->cursorUpdate = 1;
 
 	if (mainWindow->currScoreMain == this)

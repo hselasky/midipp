@@ -1086,6 +1086,7 @@ MppMainWindow :: handle_watchdog()
 	uint8_t instr_update;
 	uint8_t cursor_update;
 	uint32_t play_line;
+	uint32_t play_pos;
 
 	pthread_mutex_lock(&mtx);
 	cursor_update = cursorUpdate;
@@ -1093,7 +1094,19 @@ MppMainWindow :: handle_watchdog()
 	instr_update = instrUpdated;
 	instrUpdated = 0;
 	num_events = numInputEvents;
-	play_line = currScoreMain->realLine[currScoreMain->currPos];
+	play_pos = currScoreMain->currPos;
+
+	/* skip any jumps */
+	for (x = 0; x != 128; x++) {
+		uint32_t jump_pos;
+		jump_pos = currScoreMain->resolveJump(play_pos);
+		if (jump_pos != 0)
+			play_pos = jump_pos - 1;
+		else
+			break;
+	}
+
+	play_line = currScoreMain->realLine[play_pos];
 	if (num_events != 0) {
 		delta =  umidi20_get_curr_position() - lastInputEvent;
 		if (delta >= ((UMIDI20_BPM + 60 - 1) / 60)) {
