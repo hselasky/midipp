@@ -57,18 +57,18 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	    "\n"
 	    "/*\n"
 	    " * Command syntax:\n"
-	    " * U<number>[.] - specifies the duration of the following scores (0..255)\n"
-	    " * T<number> - specifies the track number of the following scores (0..31)\n"
-	    " * K<number> - defines a command (0..99)\n"
-	    " * W<number>.<number> - defines an automatic timeout (1..9999ms)\n"
-	    " * K0 - no operation\n"
-	    " * K1 - lock play key until next label jump\n"
-	    " * K2 - unlock play key\n"
-	    " * L<number> - defines a label (0..31)\n"
-	    " * J<number> - jumps to the given label (0..31)\n"
-	    " * JP<number> - jumps to the given label (0..31) and starts a new page\n"
-	    " * S\"<string>\" - creates a visual string\n"
-	    " * CDEFGAH<number><B> - defines a score in the given octave (0..10)\n"
+	    " * U<number>[.] - specifies the duration of the following scores (0..255).\n"
+	    " * T<number> - specifies the track number of the following scores (0..31).\n"
+	    " * K<number> - defines a command (0..99).\n"
+	    " * W<number>.<number> - defines an autoplay timeout (1..9999ms).\n"
+	    " * K0 - no operation.\n"
+	    " * K1 - lock play key until next label jump.\n"
+	    " * K2 - unlock play key.\n"
+	    " * L<number> - defines a label (0..31).\n"
+	    " * J<R><P><number> - jumps to the given label (0..31) or \n"
+	    " *     Relative(R) line (0..31) and starts a new page(P).\n"
+	    " * S\"<string>\" - creates a visual string.\n"
+	    " * CDEFGAH<number><B> - defines a score in the given octave (0..10).\n"
 	    " */\n"
 	    "\n"
 	    "S\"(L0:) .Welcom.e!\"\n"
@@ -690,8 +690,8 @@ MppScoreMain :: resolveJump(uint32_t line)
 		uint8_t lbl;
 
 		lbl = jumpLabel[line];
-		if (lbl == MPP_JUMP_NOP)
-			jump = line + 2;
+		if (lbl >= MPP_JUMP_REL)
+			jump = line + 2 + (lbl - MPP_JUMP_REL);
 		else if (lbl > 0 && lbl <= MPP_MAX_LABELS)
 			jump = jumpTable[lbl - 1];
 		else
@@ -1075,7 +1075,7 @@ parse_string:
 
 	/* check if the current line already has a string */
 	if (ps.line < MPP_MAX_LINES && visual[ps.line].pstr != NULL) {
-		jumpLabel[ps.line] = MPP_JUMP_NOP;
+		jumpLabel[ps.line] = MPP_JUMP_REL;
 		realLine[ps.line] = ps.realLine;
 		ps.line++;
 	}
@@ -1107,46 +1107,58 @@ parse_string:
 	goto next_char;
 
 parse_jump:
+	flag = 0;
+
+parse_jump_sub:
+
 	c = pstr[ps.x+1].toAscii();
 
-	flag = 0;
+	if (c == 'R') {
+		c = pstr[ps.x+2].toAscii();
+		parseAdv(1);
+		flag |= 2;
+		goto parse_jump_sub;
+	}
 
 	if (c == 'P') {
 		c = pstr[ps.x+2].toAscii();
 		parseAdv(1);
 		flag |= 1;
+		goto parse_jump_sub;
 	}
 
 	if (c >= '0' && c <= '9') {
-		d = pstr[ps.x+2].toAscii();
-		if (d >= '0' && d <= '9') {
-			label = (10 * (c - '0')) + (d - '0');
+		label = (c - '0');
+
+		c = pstr[ps.x+2].toAscii();
+		if (c >= '0' && c <= '9') {
+			label *= 10;
+			label += (c - '0');
 			parseAdv(2);
 		} else {
-			label = (c - '0');
 			parseAdv(1);
 		}
-	} else {
-		label = 0;
 
-		flag |= 2;
+		if (label < 0 || label >= MPP_MAX_LABELS)
+			goto next_char;
+
+		/* check for relative jump */
+
+		if (flag & 2)
+			label += MPP_JUMP_REL - 1;
+
+	} else {
+		/* no jump */
+
+		label = MPP_JUMP_REL - 1;
 	}
 
 	newLine();
 
-	if (flag & 1) {
-		if (ps.line < MPP_MAX_LINES)
+	if (ps.line < MPP_MAX_LINES) {
+		if (flag & 1)
 			pageNext[ps.line] = 1;
-	}
 
-	/* no jump number - ignore */
-
-	if (flag & 2)
-		goto next_char;
-
-	if ((label >= 0) && 
-	    (label < MPP_MAX_LABELS) && 
-	    (ps.line < MPP_MAX_LINES)) {
 		jumpLabel[ps.line] = label + 1;
 		realLine[ps.line] = ps.realLine;
 		ps.line++;

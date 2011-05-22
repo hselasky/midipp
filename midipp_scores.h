@@ -111,7 +111,7 @@ public:
 	uint16_t active_channels;
 
 	uint8_t jumpLabel[MPP_MAX_LINES];
-#define	MPP_JUMP_NOP	0xFFU
+#define	MPP_JUMP_REL	0x80U
 	uint8_t pageNext[MPP_MAX_LINES];
 #define	MPP_CMD_NOP 0
 #define	MPP_CMD_LOCK 1
