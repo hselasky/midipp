@@ -36,6 +36,22 @@ enum {
 	MM_PASS_MAX,
 };
 
+class MppPlayWidget : public QWidget
+{
+	Q_OBJECT;
+
+	MppMainWindow *mw;
+
+public:
+	MppPlayWidget(MppMainWindow *parent = 0);
+	~MppPlayWidget();
+
+
+protected:
+	void keyPressEvent(QKeyEvent *event);
+	void keyReleaseEvent(QKeyEvent *event);
+};
+
 class MppMainWindow : public QWidget
 {
 	Q_OBJECT;
@@ -263,26 +279,6 @@ public:
 
 	QString *CurrMidiFileName;
 
-	/* tab <Edit> */
-
-	QGridLayout *tab_edit_gl;
-	QWidget *tab_edit_wg;
-
-	QLabel *lbl_edit_title;
-	QLabel *lbl_edit_channel;
-	QLabel *lbl_edit_transpose;
-	QLabel *lbl_edit_volume;
-
-	QSpinBox *spn_edit_channel;
-	QSpinBox *spn_edit_transpose;
-	QSpinBox *spn_edit_volume;
-
-	QPushButton *but_edit_apply_transpose;
-	QPushButton *but_edit_change_volume;
-	QPushButton *but_edit_remove_pedal;
-	QPushButton *but_edit_remove_keys;
-	QPushButton *but_edit_remove_all;
-
 	/* tab <Instrument> */
 
 	QGridLayout *tab_instr_gl;
@@ -393,10 +389,6 @@ public slots:
 
 	void handle_mute_map();
 	void handle_config_dev();
-
-protected:
-	void keyPressEvent(QKeyEvent *event);
-	void keyReleaseEvent(QKeyEvent *event);
 };
 
 #endif		/* _MIDIPP_MAINWINDOW_H_ */

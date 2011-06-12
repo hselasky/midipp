@@ -104,15 +104,13 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		tab_echo[x] = new MppEchoTab(this, this);
 
 	tab_file_wg = new QWidget();
-	tab_play_wg = new QWidget();
-	tab_edit_wg = new QWidget();
+	tab_play_wg = new MppPlayWidget(this);
 	tab_config_wg = new QWidget();
 	tab_instr_wg = new QWidget();
 	tab_volume_wg = new QWidget();
 
 	tab_file_gl = new QGridLayout(tab_file_wg);
 	tab_play_gl = new QGridLayout(tab_play_wg);
-	tab_edit_gl = new QGridLayout(tab_edit_wg);
 	tab_config_gl = new QGridLayout(tab_config_wg);
 	tab_instr_gl = new QGridLayout(tab_instr_wg);
 	tab_volume_gl = new QGridLayout(tab_volume_wg);
@@ -127,9 +125,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	main_tw->addTab(tab_file_wg, tr("File"));
 	main_tw->addTab(tab_play_wg, tr("Play"));
-#if 0
-	main_tw->addTab(tab_edit_wg, tr("Edit"));
-#endif
 	main_tw->addTab(tab_config_wg, tr("Config"));
 	main_tw->addTab(tab_instr_wg, tr("Instrument"));
 	main_tw->addTab(tab_volume_wg, tr("Volume"));
@@ -558,65 +553,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_config_gl->addWidget(but_config_fontsel, x, 0, 1, 2, Qt::AlignLeft|Qt::AlignVCenter);
 	tab_config_gl->addWidget(but_config_apply, x, 4, 1, 2);
 	tab_config_gl->addWidget(but_config_revert, x, 6, 1, 2);
-
-	/* <Edit> Tab */
-
-	lbl_edit_title = new QLabel(tr("- MIDI File Edit -"));
-	lbl_edit_channel = new QLabel(tr("Selected Channel (0..15):"));
-	lbl_edit_transpose = new QLabel(tr("Transpose Steps (-128..127):"));
-	lbl_edit_volume = new QLabel(tr("Average Volume (1..127):"));
-
-	spn_edit_channel = new QSpinBox();
-	spn_edit_channel->setRange(0, 15);
-	spn_edit_channel->setValue(0);
-
-	spn_edit_transpose = new QSpinBox();
-	spn_edit_transpose->setRange(-128, 128);
-	spn_edit_transpose->setValue(0);
-
-	spn_edit_volume = new QSpinBox();
-	spn_edit_volume->setRange(1, 127);
-	spn_edit_volume->setValue(80);
-
-	but_edit_apply_transpose = new QPushButton(tr("Apply Channel Key Transpose"));
-	but_edit_change_volume = new QPushButton(tr("Change Channel Event Volume"));
-	but_edit_remove_pedal = new QPushButton(tr("Remove Channel Pedal Events"));
-	but_edit_remove_keys = new QPushButton(tr("Remove Channel Key Events"));
-	but_edit_remove_all = new QPushButton(tr("Remove All Channel Events"));
-
-	n = 0;
-
-	tab_edit_gl->addWidget(lbl_edit_title, n, 0, 1, 8, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	n++;
-
-	tab_edit_gl->addWidget(lbl_edit_channel, n, 0, 1, 7);
-	tab_edit_gl->addWidget(spn_edit_channel, n, 7, 1, 1);
-
-	n++;
-
-	tab_edit_gl->addWidget(lbl_edit_transpose, n, 0, 1, 7);
-	tab_edit_gl->addWidget(spn_edit_transpose, n, 7, 1, 1);
-
-	n++;
-
-	tab_edit_gl->addWidget(lbl_edit_volume, n, 0, 1, 7);
-	tab_edit_gl->addWidget(spn_edit_volume, n, 7, 1, 1);
-
-	n++;
-
-	tab_edit_gl->addWidget(but_edit_apply_transpose, n, 0, 1, 8);
-	n++;
-	tab_edit_gl->addWidget(but_edit_change_volume, n, 0, 1, 8);
-	n++;
-	tab_edit_gl->addWidget(but_edit_remove_pedal, n, 0, 1, 8);
-	n++;
-	tab_edit_gl->addWidget(but_edit_remove_keys, n, 0, 1, 8);
-	n++;
-	tab_edit_gl->addWidget(but_edit_remove_all, n, 0, 1, 8);
-	n++;
-
-	tab_edit_gl->setRowStretch(n, 4);
 
 	/* <Instrument> tab */
 
@@ -2718,16 +2654,26 @@ MppMainWindow :: MidiUnInit(void)
 	}
 }
 
+MppPlayWidget :: MppPlayWidget(MppMainWindow *parent)
+  : QWidget(parent)
+{
+	mw = parent;
+}
+
+MppPlayWidget :: ~MppPlayWidget()
+{
+}
+
 void
-MppMainWindow :: keyPressEvent(QKeyEvent *event)
+MppPlayWidget :: keyPressEvent(QKeyEvent *event)
 {
 	/* fake pedal down event */
 	switch (event->key()) {
 	case Qt::Key_Shift:
-		pthread_mutex_lock(&mtx);
-		if (midiTriggered != 0)
-			MidiEventRxPedal(this, 127);
-		pthread_mutex_unlock(&mtx);
+		pthread_mutex_lock(&mw->mtx);
+		if (mw->midiTriggered != 0)
+			MidiEventRxPedal(mw, 127);
+		pthread_mutex_unlock(&mw->mtx);
 		break;
 	case Qt::Key_0:
 	case Qt::Key_1:
@@ -2739,7 +2685,7 @@ MppMainWindow :: keyPressEvent(QKeyEvent *event)
 	case Qt::Key_7:
 	case Qt::Key_8:
 	case Qt::Key_9:
-		handle_jump_N(event->key() - Qt::Key_0);
+		mw->handle_jump_N(event->key() - Qt::Key_0);
 		break;
 	default:
 		break;
@@ -2747,14 +2693,14 @@ MppMainWindow :: keyPressEvent(QKeyEvent *event)
 }
 
 void
-MppMainWindow :: keyReleaseEvent(QKeyEvent *event)
+MppPlayWidget :: keyReleaseEvent(QKeyEvent *event)
 {
 	/* fake pedal up event */
 	if (event->key() == Qt::Key_Shift) {
-		pthread_mutex_lock(&mtx);
-		if (midiTriggered != 0)
-			MidiEventRxPedal(this, 0);
-		pthread_mutex_unlock(&mtx);
+		pthread_mutex_lock(&mw->mtx);
+		if (mw->midiTriggered != 0)
+			MidiEventRxPedal(mw, 0);
+		pthread_mutex_unlock(&mw->mtx);
 	}
 }
 
