@@ -32,6 +32,7 @@
 #include <midipp_import.h>
 #include <midipp_devices.h>
 #include <midipp_spinbox.h>
+#include <midipp_pattern.h>
 
 static void MidiEventRxPedal(MppMainWindow *mw, uint8_t val);
 
@@ -243,6 +244,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(spn_auto_play, SIGNAL(valueChanged(int)), this, SLOT(handle_auto_play(int)));
 	spn_auto_play->setValue(0);
 
+	led_bpm_pattern = new MppPattern();
+	lbl_bpm_pattern = new QLabel(tr("BPM pattern: a+b"));
+
 	lbl_bpm_max = new QLabel(tr("Max"));
 	lbl_bpm_min = new QLabel(tr("Min"));
 	lbl_bpm_avg = new QLabel(tr("Average BPM"));
@@ -391,6 +395,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	n++;
 
 	tab_play_gl->addWidget(but_insert_chord, n, 6, 1, 2);
+	tab_play_gl->addWidget(lbl_bpm_pattern, n + 1, 6, 1, 2);
+	tab_play_gl->addWidget(led_bpm_pattern, n + 2, 6, 1, 2);
 
 	for (x = 0; x != (MPP_MAX_LBUTTON / 2); x++) {
 		tab_play_gl->addWidget(but_jump[x + (MPP_MAX_LBUTTON / 2)], n + x, 5, 1, 1);

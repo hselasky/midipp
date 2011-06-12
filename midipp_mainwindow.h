@@ -225,6 +225,7 @@ public:
 	QLabel	*lbl_midi_record;
 	QLabel	*lbl_midi_play;
 	QLabel	*lbl_midi_mode;
+	QLabel  *lbl_bpm_pattern;
 
 	QPushButton *but_insert_chord;
 	QPushButton *but_jump[MPP_MAX_LBUTTON];
@@ -237,6 +238,8 @@ public:
 	QPushButton *but_midi_play;
 	QPushButton *but_midi_trigger;
 	QPushButton *but_midi_rewind;
+
+	MppPattern *led_bpm_pattern;
 
 	/* tab <Configuration> */
 

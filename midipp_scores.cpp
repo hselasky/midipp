@@ -27,6 +27,7 @@
 #include <midipp_scores.h>
 #include <midipp_looptab.h>
 #include <midipp_import.h>
+#include <midipp_pattern.h>
 
 static void MppTimerCallback(void *arg);
 
@@ -1203,9 +1204,11 @@ MppTimerCallback(void *arg)
 
 	pthread_mutex_lock(&mw->mtx);
 	if (mw->midiTriggered) {
-		key = mw->playKey;
-		sm->handleKeyPress(key, 127);
-		sm->handleKeyRelease(key);
+		if (mw->led_bpm_pattern->incTime()) {
+			key = mw->playKey;
+			sm->handleKeyPress(key, 127);
+			sm->handleKeyRelease(key);
+		}
 	}
 	pthread_mutex_unlock(&mw->mtx);
 }
@@ -1224,6 +1227,8 @@ MppScoreMain :: updateTimer()
 	} else {
 		i = 0;
 	}
+
+	mainWindow->led_bpm_pattern->rstTime();
 
 	umidi20_set_timer(&MppTimerCallback, this, i);
 }
