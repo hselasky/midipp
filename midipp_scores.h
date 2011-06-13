@@ -51,11 +51,10 @@ public:
 
 	void decrementDuration(uint32_t timeout = 0);
 	void handleLabelJump(int label);
-	void handleKeyPress(int key, int vel);
-	void handleKeyRelease(int key);
+	void handleKeyPress(int key, int vel, uint32_t key_delay = 0);
+	void handleKeyRelease(int key, uint32_t key_delay = 0);
 	void handleParse(const QString &ps);
 	void handleParseSub(QPrinter *pd, QPoint orig, float scale_f);
-	void handleAutoPlay(int bpm);
 
 	void viewPaintEvent(QPaintEvent *event);
 	void viewMousePressEvent(QMouseEvent *e);
@@ -64,7 +63,6 @@ public:
 	void parseMax(uint16_t *pmax, float value);
 	void newLine();
 	void newVisual();
-	void updateTimer();
 	void watchdog();
 	uint32_t resolveJump(uint32_t line);
 
@@ -94,7 +92,6 @@ public:
 	struct MppScoreEntry scores[MPP_MAX_LINES][MPP_MAX_SCORES];
 	struct MppVisualScore visual[MPP_MAX_LINES];
 
-	uint32_t bpmAutoPlay;
 	uint32_t pressedKeys[MPP_PRESSED_MAX];
 	uint32_t realLine[MPP_MAX_LINES];
 	uint32_t timer_ticks_pre[MPP_MAX_LINES];

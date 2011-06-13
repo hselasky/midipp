@@ -35,15 +35,15 @@ class MppPattern : public QLineEdit
 {
 	Q_OBJECT;
 
+	pthread_mutex_t mtx;
+
 public:
 	MppPattern(QWidget *parent = 0);
 	~MppPattern();
 
-	volatile uint32_t pattern[MPP_PATTERN_MAX];
-	volatile uint32_t time;
+	uint32_t pattern[MPP_PATTERN_MAX];
 
-	int incTime();
-	void rstTime();
+	int matchPattern(uint32_t time);
 
 public slots:
 	void handleChanged(const QString &);

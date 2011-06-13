@@ -96,6 +96,7 @@ class MppImportTab;
 class MppDevices;
 class MppSpinBox;
 class MppPattern;
+class MppBpm;
 
 struct MppScoreEntry {
 	uint8_t key;

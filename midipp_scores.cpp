@@ -29,8 +29,6 @@
 #include <midipp_import.h>
 #include <midipp_pattern.h>
 
-static void MppTimerCallback(void *arg);
-
 MppScoreView :: MppScoreView(MppScoreMain *parent)
 {
 	pScores = parent;
@@ -140,8 +138,6 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 MppScoreMain :: ~MppScoreMain()
 {
 	handleScoreFileNew();
-
-	umidi20_unset_timer(&MppTimerCallback, this);
 }
 
 void
@@ -1195,57 +1191,6 @@ done:
 	}
 }
 
-static void
-MppTimerCallback(void *arg)
-{
-	MppScoreMain *sm = (MppScoreMain *)arg;
-	MppMainWindow *mw = sm->mainWindow;
-	int key;
-
-	pthread_mutex_lock(&mw->mtx);
-	if (mw->midiTriggered) {
-		if (mw->led_bpm_pattern->incTime()) {
-			key = mw->playKey;
-			sm->handleKeyPress(key, 127);
-			sm->handleKeyRelease(key);
-		}
-	}
-	pthread_mutex_unlock(&mw->mtx);
-}
-
-/* must be called locked */
-void
-MppScoreMain :: updateTimer()
-{
-	int bpm = bpmAutoPlay;
-	int i;
-
-	if (bpm > 0) {
-		i = 60000 / bpm;
-		if (i == 0)
-			i = 1;
-	} else {
-		i = 0;
-	}
-
-	mainWindow->led_bpm_pattern->rstTime();
-
-	umidi20_set_timer(&MppTimerCallback, this, i);
-}
-
-void
-MppScoreMain :: handleAutoPlay(int bpm)
-{
-	pthread_mutex_lock(&mainWindow->mtx);
-
-	if (bpmAutoPlay != (uint32_t)bpm) {
-		bpmAutoPlay = bpm;
-		updateTimer();
-	}
-
-	pthread_mutex_unlock(&mainWindow->mtx);
-}
-
 void
 MppScoreMain :: handleChannelChanged(int chan)
 {
@@ -1373,7 +1318,7 @@ MppScoreMain :: handleLabelJump(int pos)
 
 /* must be called locked */
 void
-MppScoreMain :: handleKeyPress(int in_key, int vel)
+MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 {
 	struct MppScoreEntry *pn;
 	uint32_t timeout = 0;
@@ -1449,7 +1394,7 @@ MppScoreMain :: handleKeyPress(int in_key, int vel)
 			if (setPressedKey(chan, out_key, pn->dur, delay))
 				continue;
 
-			mainWindow->output_key(chan, out_key, vel, timeout + delay, 0, x);
+			mainWindow->output_key(chan, out_key, vel, key_delay + timeout + delay, 0, x);
 		}
 	}
 
@@ -1508,7 +1453,7 @@ MppScoreMain :: decrementDuration(uint32_t timeout)
 
 /* must be called locked */
 void
-MppScoreMain :: handleKeyRelease(int in_key)
+MppScoreMain :: handleKeyRelease(int in_key, uint32_t key_delay)
 {
 	if (isPlayKeyLocked != 0) {
 		if (in_key != (int)whatPlayKeyLocked) {
@@ -1521,7 +1466,7 @@ MppScoreMain :: handleKeyRelease(int in_key)
 		return;
 	}
 
-	decrementDuration();
+	decrementDuration(key_delay);
 
 	lastPos = currPos;
 }

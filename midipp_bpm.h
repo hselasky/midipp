@@ -23,79 +23,53 @@
  * SUCH DAMAGE.
  */
 
-#include <midipp_pattern.h>
+#ifndef _MIDIPP_BPM_H_
+#define	_MIDIPP_BPM_H_
 
-MppPattern :: MppPattern(QWidget *parent)
-  : QLineEdit(parent)
+#include <midipp.h>
+
+class MppBpm : public QDialog
 {
-	pthread_mutex_init(&mtx, NULL);
+	Q_OBJECT;
 
-	handleChanged(QString());
+public:
+	MppBpm(MppMainWindow *parent);
+	~MppBpm();
 
-	connect(this, SIGNAL(textChanged(const QString &)), this, SLOT(handleChanged(const QString &)));
-}
+	void handle_update();
 
-MppPattern :: ~MppPattern()
-{
-	pthread_mutex_destroy(&mtx);
-}
+	MppMainWindow *mw;
 
-int
-MppPattern :: matchPattern(uint32_t time)
-{
-	uint32_t temp;
-	uint8_t n = 0;
-	uint8_t i;
+	QGridLayout *gl;
 
-	time &= 0x7FFFFFFFU;
+	QLabel *lbl_bpm_pattern;
+	QLabel *lbl_bpm_value;
+	QLabel *lbl_bpm_duty;
+	QLabel *lbl_view[MPP_MAX_VIEWS];
 
-	pthread_mutex_lock(&mtx);
+	MppPattern *led_bpm_pattern;
+	QSpinBox *spn_bpm_value;
+	QSpinBox *spn_bpm_duty;
+	QCheckBox *cbx_view[MPP_MAX_VIEWS];
 
-	for (i = 0; i != MPP_PATTERN_MAX; i++) {
-		temp = pattern[i];
+	QPushButton *but_bpm_enable;
+	QPushButton *but_reset_all;
+	QPushButton *but_done_all;
 
-		if ((time & temp) == temp)
-			n ^= 1;
-	}
+	uint32_t time;
+	uint32_t enabled;
+	uint32_t bpm;
+	uint32_t duty;
+	uint32_t duty_ticks;
+	uint8_t view[MPP_MAX_VIEWS];
 
-	pthread_mutex_unlock(&mtx);
+public slots:
+	void handle_view_all(int);
+	void handle_bpm_enable();
+	void handle_reset_all();
+	void handle_done_all();
+	void handle_bpm_value(int);
+	void handle_bpm_duty(int);
+};
 
-	return (n);
-}
-
-void
-MppPattern :: handleChanged(const QString &text)
-{
-	const QChar *ch;
-	int c;
-	uint32_t temp = 0;
-	uint8_t i;
-
-	ch = text.data();
-
-	pthread_mutex_lock(&mtx);
-
-	for (i = 0; i != MPP_PATTERN_MAX; i++)
-		pattern[i] = 0x80000000U;
-
-	i = 0;
-
-	while (ch->isNull() == 0) {
-		c = ch->toAscii();
-		if (c >= 'a' && c <= 'z')
-			temp |= 1 << (c - 'a');
-		if (c == '+') {
-			if (i < MPP_PATTERN_MAX) {
-				pattern[i] = temp;
-				temp = 0;
-				i++;
-			}
-		}
-		ch++;
-	}
-
-	if (i < MPP_PATTERN_MAX)
-		pattern[i] = temp;
-
-	pthread_mutex_unlock(&mtx);
-}
+#endif		/* _MIDIPP_BPM_H_ */

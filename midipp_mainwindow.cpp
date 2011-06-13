@@ -32,7 +32,7 @@
 #include <midipp_import.h>
 #include <midipp_devices.h>
 #include <midipp_spinbox.h>
-#include <midipp_pattern.h>
+#include <midipp_bpm.h>
 
 static void MidiEventRxPedal(MppMainWindow *mw, uint8_t val);
 
@@ -238,14 +238,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* <Play> Tab */
 
-	lbl_auto_play = new QLabel(tr("Auto Play BPM (0..6000)"));
-	spn_auto_play = new QSpinBox();
-	spn_auto_play->setRange(0, 6000);
-	connect(spn_auto_play, SIGNAL(valueChanged(int)), this, SLOT(handle_auto_play(int)));
-	spn_auto_play->setValue(0);
+	but_bpm = new QPushButton(tr("BPM"));
+	connect(but_bpm, SIGNAL(pressed()), this, SLOT(handle_bpm()));
 
-	led_bpm_pattern = new MppPattern();
-	lbl_bpm_pattern = new QLabel(tr("BPM pattern: a+b"));
+	dlg_bpm = new MppBpm(this);
 
 	lbl_bpm_max = new QLabel(tr("Max"));
 	lbl_bpm_min = new QLabel(tr("Min"));
@@ -389,14 +385,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_auto_play, n, 4, 1, 3);
-	tab_play_gl->addWidget(spn_auto_play, n, 7, 1, 1);
+	tab_play_gl->addWidget(but_bpm, n, 7, 1, 1);
 
 	n++;
 
 	tab_play_gl->addWidget(but_insert_chord, n, 6, 1, 2);
-	tab_play_gl->addWidget(lbl_bpm_pattern, n + 1, 6, 1, 2);
-	tab_play_gl->addWidget(led_bpm_pattern, n + 2, 6, 1, 2);
 
 	for (x = 0; x != (MPP_MAX_LBUTTON / 2); x++) {
 		tab_play_gl->addWidget(but_jump[x + (MPP_MAX_LBUTTON / 2)], n + x, 5, 1, 1);
@@ -1417,8 +1410,7 @@ MppMainWindow :: handle_midi_trigger()
 		midiPaused = 0;
 		pausePosition = 0;
 
-		for (x = 0; x != MPP_MAX_VIEWS; x++)
-			scores_main[x]->updateTimer();
+		dlg_bpm->handle_update();
 	}
 
 	pthread_mutex_unlock(&mtx);
@@ -1516,8 +1508,6 @@ MppMainWindow :: handle_config_reload()
 
 	handle_compile();
 
-	bpmAutoPlayOld = spn_auto_play->value();
-
 	handle_config_revert();
 
 	pthread_mutex_lock(&mtx);
@@ -1564,7 +1554,6 @@ MppMainWindow :: handle_config_revert()
 	}
 
 	spn_bpm_length->setValue(bpmAvgLength);
-	spn_auto_play->setValue(bpmAutoPlayOld);
 }
 
 void
@@ -2295,12 +2284,6 @@ MppMainWindow :: handle_volume_revert()
 }
 
 void
-MppMainWindow :: handle_auto_play(int bpm)
-{
-	currScoreMain->handleAutoPlay(bpm);
-}
-
-void
 MppMainWindow :: handle_tab_changed(int index)
 {
 	QWidget *pw;
@@ -2324,8 +2307,6 @@ MppMainWindow :: handle_tab_changed(int index)
 		currScoreMain = scores_main[x];
 
 	handle_instr_channel_changed(currScoreMain->synthChannel);
-
-	spn_auto_play->setValue(currScoreMain->bpmAutoPlay);
 
 	if (compile)
 		handle_compile();
@@ -2879,4 +2860,10 @@ MppMainWindow :: output_key(int chan, int key, int vel, int delay, int dur, int 
 	  }
 	}
 skip_echo:;
+}
+
+void
+MppMainWindow :: handle_bpm()
+{
+	dlg_bpm->exec();
 }

@@ -108,7 +108,6 @@ public:
 
 	uint32_t bpmData[MPP_MAX_BPM];
 	uint32_t lastKeyPress;
-	uint32_t bpmAutoPlayOld;
 	uint32_t lastInputEvent;
 	uint32_t noiseRem;
 
@@ -141,7 +140,6 @@ public:
 	uint8_t bpmAvgLength;
 	uint8_t bpmAvgPos;
 	uint8_t synthIsLocal;
-	uint8_t restartBpm;
 	uint8_t cursorUpdate;
 
 	uint8_t scoreRecordOff;
@@ -225,7 +223,6 @@ public:
 	QLabel	*lbl_midi_record;
 	QLabel	*lbl_midi_play;
 	QLabel	*lbl_midi_mode;
-	QLabel  *lbl_bpm_pattern;
 
 	QPushButton *but_insert_chord;
 	QPushButton *but_jump[MPP_MAX_LBUTTON];
@@ -238,15 +235,15 @@ public:
 	QPushButton *but_midi_play;
 	QPushButton *but_midi_trigger;
 	QPushButton *but_midi_rewind;
+	QPushButton *but_bpm;
 
-	MppPattern *led_bpm_pattern;
+	MppBpm *dlg_bpm;
 
 	/* tab <Configuration> */
 
 	QGridLayout *tab_config_gl;
 	QWidget *tab_config_wg;
 
-	QLabel *lbl_auto_play;
 	QLabel *lbl_config_title;
 	QLabel *lbl_config_play;
 	QLabel *lbl_config_rec;
@@ -257,7 +254,6 @@ public:
 	QLabel *lbl_bpm_count;
 
 	QSpinBox *spn_bpm_length;
-	QSpinBox *spn_auto_play;
 
 	QLabel	*lbl_key_delay;
 	QSpinBox *spn_key_delay;
@@ -385,13 +381,14 @@ public slots:
 	void handle_volume_reset();
 	void handle_volume_reload();
 
-	void handle_auto_play(int bpm);
 	void handle_tab_changed(int index);
 
 	void handle_midi_file_convert();
 
 	void handle_mute_map();
 	void handle_config_dev();
+
+	void handle_bpm();
 };
 
 #endif		/* _MIDIPP_MAINWINDOW_H_ */
