@@ -1388,8 +1388,6 @@ MppMainWindow :: handle_rewind()
 void
 MppMainWindow :: handle_midi_trigger()
 {
-	int x;
-
 	pthread_mutex_lock(&mtx);
 
 	if (midiTriggered == 0) {
