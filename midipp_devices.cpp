@@ -44,8 +44,8 @@ MppDevices :: MppDevices(QWidget *parent)
 	lbl_rec = new QLabel(tr("- Recording devices -"));
 	lbl_play = new QLabel(tr("- Playback devices -"));
 
-	connect(but_ok, SIGNAL(pressed()), this, SLOT(accept()));
-	connect(but_cancel, SIGNAL(pressed()), this, SLOT(reject()));
+	connect(but_ok, SIGNAL(released()), this, SLOT(accept()));
+	connect(but_cancel, SIGNAL(released()), this, SLOT(reject()));
 
 	gl->addWidget(lbl_play, 0,0,1,2, Qt::AlignHCenter|Qt::AlignVCenter);
 	gl->addWidget(lbl_rec, 0,2,1,2, Qt::AlignHCenter|Qt::AlignVCenter);

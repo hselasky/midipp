@@ -97,7 +97,7 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 
 	connect(but_bpm_enable, SIGNAL(pressed()), this, SLOT(handle_bpm_enable()));
 	connect(but_reset_all, SIGNAL(pressed()), this, SLOT(handle_reset_all()));
-	connect(but_done_all, SIGNAL(pressed()), this, SLOT(handle_done_all()));
+	connect(but_done_all, SIGNAL(released()), this, SLOT(handle_done_all()));
 
 	setWindowTitle(tr("BPM settings"));
 

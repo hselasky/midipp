@@ -65,8 +65,8 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 	connect(but_set_all, SIGNAL(pressed()), this, SLOT(handle_set_all()));
 	connect(but_clear_all, SIGNAL(pressed()), this, SLOT(handle_clear_all()));
 	connect(but_revert_all, SIGNAL(pressed()), this, SLOT(handle_revert_all()));
-	connect(but_apply_all, SIGNAL(pressed()), this, SLOT(handle_apply_all()));
-	connect(but_cancel_all, SIGNAL(pressed()), this, SLOT(handle_cancel_all()));
+	connect(but_apply_all, SIGNAL(released()), this, SLOT(handle_apply_all()));
+	connect(but_cancel_all, SIGNAL(released()), this, SLOT(handle_cancel_all()));
 
 	for (n = 0; n != 16; n++) {
 

@@ -238,8 +238,8 @@ MppDecode :: MppDecode(QWidget *parent, MppMainWindow *_mw)
 	but_cancel = new QPushButton(tr("Cancel"));
 	but_play = new QPushButton(tr("&Play"));
 
-	connect(but_ok, SIGNAL(pressed()), this, SLOT(handle_ok()));
-	connect(but_cancel, SIGNAL(pressed()), this, SLOT(handle_cancel()));
+	connect(but_ok, SIGNAL(released()), this, SLOT(handle_ok()));
+	connect(but_cancel, SIGNAL(released()), this, SLOT(handle_cancel()));
 	connect(but_play, SIGNAL(pressed()), this, SLOT(handle_play_press()));
 	connect(but_play, SIGNAL(released()), this, SLOT(handle_play_release()));
 	connect(lin_edit, SIGNAL(textChanged(const QString &)), this, SLOT(handle_parse_text(const QString &)));
