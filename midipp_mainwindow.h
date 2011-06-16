@@ -52,6 +52,23 @@ protected:
 	void keyReleaseEvent(QKeyEvent *event);
 };
 
+class MppButWidget : public QPushButton
+{
+	Q_OBJECT;
+
+public:
+	MppButWidget(const QString &, int _id);
+	~MppButWidget();
+
+	int id;
+
+signals:
+	void released(int _id);
+
+public slots:
+	void handle_released();
+};
+
 class MppMainWindow : public QWidget
 {
 	Q_OBJECT;
@@ -207,9 +224,6 @@ public:
 	QWidget *tab_play_wg;
 	QGridLayout *tab_play_gl;
 
-	QLabel	*lbl_volume;
-	QSpinBox *spn_volume;
-
 	QLabel	*lbl_play_key;
 	MppSpinBox *spn_play_key;
 
@@ -261,8 +275,8 @@ public:
 	QLabel	*lbl_parse_thres;
 	QSpinBox *spn_parse_thres;
 
-	QPushButton *but_config_dev[MPP_MAX_DEVS];
-	QPushButton *but_config_mm[MPP_MAX_DEVS];
+	MppButWidget *but_config_dev[MPP_MAX_DEVS];
+	MppButWidget *but_config_mm[MPP_MAX_DEVS];
 	QLineEdit *led_config_dev[MPP_MAX_DEVS];
 	QCheckBox *cbx_config_dev[3 * MPP_MAX_DEVS];
 
@@ -297,8 +311,7 @@ public:
 
 	QPushButton *but_instr_rem;
 	QPushButton *but_instr_program;
-	QPushButton *but_instr_apply;
-	QPushButton *but_instr_revert;
+	QPushButton *but_instr_program_all;
 	QPushButton *but_instr_reset;
 	QPushButton *but_instr_mute_all;
 	QPushButton *but_instr_unmute_all;
@@ -315,8 +328,6 @@ public:
 	QLabel *lbl_volume_play[16];
 	QLabel *lbl_volume_synth[16];
 
-	QPushButton *but_volume_apply;
-	QPushButton *but_volume_revert;
 	QPushButton *but_volume_reset;
 
 	/* tab <Loop> */
@@ -342,8 +353,7 @@ public slots:
 	void handle_key_delay_changed(int);
 	void handle_config_local_changed(int);
 	void handle_insert_chord();
-	void handle_jump_N(int index);
-	void handle_jump_common();
+	void handle_jump(int index);
 	void handle_pass_thru();
 	void handle_compile();
 	void handle_score_record();
@@ -365,28 +375,24 @@ public slots:
 	void handle_config_reload();
 	void handle_config_fontsel();
 
-	void handle_instr_apply();
-	void handle_instr_revert();
+	void handle_instr_changed(int);
 	void handle_instr_reset();
-	void handle_instr_reload();
 	void handle_instr_program();
+	void handle_instr_program_all();
 	void handle_instr_channel_changed(int);
 	void handle_instr_rem();
 	void handle_instr_mute_all();
 	void handle_instr_unmute_all();
 
 	void handle_volume_changed(int);
-	void handle_volume_apply();
-	void handle_volume_revert();
 	void handle_volume_reset();
-	void handle_volume_reload();
 
 	void handle_tab_changed(int index);
 
 	void handle_midi_file_convert();
 
-	void handle_mute_map();
-	void handle_config_dev();
+	void handle_mute_map(int);
+	void handle_config_dev(int);
 
 	void handle_bpm();
 };

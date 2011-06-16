@@ -36,6 +36,24 @@
 
 static void MidiEventRxPedal(MppMainWindow *mw, uint8_t val);
 
+MppButWidget :: MppButWidget(const QString &txt, int _id) :
+    QPushButton(txt)
+{
+	id = _id;
+	connect(this, SIGNAL(released()), this, SLOT(handle_released()));
+}
+
+MppButWidget :: ~MppButWidget()
+{
+
+}
+
+void
+MppButWidget :: handle_released()
+{
+	released(id);
+}
+
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
 {
@@ -239,7 +257,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	/* <Play> Tab */
 
 	but_bpm = new QPushButton(tr("BPM"));
-	connect(but_bpm, SIGNAL(pressed()), this, SLOT(handle_bpm()));
+	connect(but_bpm, SIGNAL(released()), this, SLOT(handle_bpm()));
 
 	dlg_bpm = new MppBpm(this);
 
@@ -279,7 +297,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	for (n = 0; n != MPP_MAX_LBUTTON; n++) {
 		char buf[8];
 		snprintf(buf, sizeof(buf), "J%u", n);
-		but_jump[n] = new QPushButton(tr(buf));
+		but_jump[n] = new MppButWidget(tr(buf), n);
 	}
 
 	but_insert_chord = new QPushButton(tr("Get &Chord"));
@@ -295,11 +313,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	but_play = new QPushButton(tr("Shift+Play"));
 	but_play->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-
-	lbl_volume = new QLabel(tr("Volume (0..127..511)"));
-	spn_volume = new QSpinBox();
-	connect(spn_volume, SIGNAL(valueChanged(int)), this, SLOT(handle_volume_changed(int)));
-	spn_volume->setRange(0, 511);
 
 	lbl_play_key = new QLabel(tr("Play Key"));
 	spn_play_key = new MppSpinBox();
@@ -375,21 +388,18 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_volume, n, 4, 1, 3);
-	tab_play_gl->addWidget(spn_volume, n, 7, 1, 1);
+	tab_play_gl->addWidget(lbl_play_key, n, 4, 1, 1);
+	tab_play_gl->addWidget(spn_play_key, n, 5, 1, 1);
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_play_key, n, 4, 1, 3);
-	tab_play_gl->addWidget(spn_play_key, n, 7, 1, 1);
+	tab_play_gl->addWidget(but_bpm, n, 4, 1, 2);
 
 	n++;
 
-	tab_play_gl->addWidget(but_bpm, n, 7, 1, 1);
+	tab_play_gl->addWidget(but_insert_chord, n, 4, 1, 2);
 
 	n++;
-
-	tab_play_gl->addWidget(but_insert_chord, n, 6, 1, 2);
 
 	for (x = 0; x != (MPP_MAX_LBUTTON / 2); x++) {
 		tab_play_gl->addWidget(but_jump[x + (MPP_MAX_LBUTTON / 2)], n + x, 5, 1, 1);
@@ -482,11 +492,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	for (n = 0; n != MPP_MAX_DEVS; n++) {
 		char buf[16];
 
-		but_config_mm[n] = new QPushButton(tr("MM"));
-		but_config_dev[n] = new QPushButton(tr("DEV"));
+		but_config_mm[n] = new MppButWidget(tr("MM"), n);
+		but_config_dev[n] = new MppButWidget(tr("DEV"), n);
 
-		connect(but_config_mm[n], SIGNAL(pressed()), this, SLOT(handle_mute_map()));
-		connect(but_config_dev[n], SIGNAL(pressed()), this, SLOT(handle_config_dev()));
+		connect(but_config_mm[n], SIGNAL(released(int)), this, SLOT(handle_mute_map(int)));
+		connect(but_config_dev[n], SIGNAL(released(int)), this, SLOT(handle_config_dev(int)));
 
 		led_config_dev[n] = new QLineEdit(QString());
 
@@ -560,9 +570,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	lbl_instr_prog = new QLabel(tr("- Synth/Record Channel and Selected Bank/Program -"));
 
-	but_instr_apply = new QPushButton(tr("Apply"));
-	but_instr_revert = new QPushButton(tr("Revert"));
-	but_instr_program = new QPushButton(tr("Program"));
+	but_instr_program = new QPushButton(tr("Program One"));
+	but_instr_program_all = new QPushButton(tr("Program All"));
 	but_instr_reset = new QPushButton(tr("Reset"));
 	but_instr_rem = new QPushButton(tr("Delete muted"));
 	but_instr_mute_all = new QPushButton(tr("Mute all"));
@@ -590,7 +599,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_instr_gl->addWidget(spn_instr_curr_chan, x, 0, 1, 1);
 	tab_instr_gl->addWidget(spn_instr_curr_bank, x, 1, 1, 1);
 	tab_instr_gl->addWidget(spn_instr_curr_prog, x, 2, 1, 1);
-	tab_instr_gl->addWidget(but_instr_program, x, 3, 1, 5);
+	tab_instr_gl->addWidget(but_instr_program, x, 3, 1, 3);
+	tab_instr_gl->addWidget(but_instr_program_all, x, 6, 1, 2);
 
 	x++;
 
@@ -610,13 +620,14 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 		spn_instr_bank[n] = new QSpinBox();
 		spn_instr_bank[n]->setRange(0, 16383);
-		spn_instr_bank[n]->setValue(0);
+		connect(spn_instr_bank[n], SIGNAL(valueChanged(int)), this, SLOT(handle_instr_changed(int)));
 
 		spn_instr_prog[n] = new QSpinBox();
 		spn_instr_prog[n]->setRange(0, 127);
-		spn_instr_prog[n]->setValue(0);
+		connect(spn_instr_prog[n], SIGNAL(valueChanged(int)), this, SLOT(handle_instr_changed(int)));
 
 		cbx_instr_mute[n] = new QCheckBox();
+		connect(cbx_instr_mute[n], SIGNAL(stateChanged(int)), this, SLOT(handle_instr_changed(int)));
 
 		tab_instr_gl->addWidget(lbl_instr_desc[n], (n & 7) + x, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
 		tab_instr_gl->addWidget(spn_instr_bank[n], (n & 7) + x, 1 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
@@ -632,21 +643,14 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_instr_gl->addWidget(but_instr_mute_all, x, 0, 1, 2);
 	tab_instr_gl->addWidget(but_instr_unmute_all, x, 2, 1, 2);
-
-	x++;
-
-	tab_instr_gl->addWidget(but_instr_rem, x, 0, 1, 2);
-	tab_instr_gl->addWidget(but_instr_reset, x, 2, 1, 2);
-	tab_instr_gl->addWidget(but_instr_revert, x, 4, 1, 2);
-	tab_instr_gl->addWidget(but_instr_apply, x, 6, 1, 2);
+ 	tab_instr_gl->addWidget(but_instr_rem, x, 4, 1, 2);
+	tab_instr_gl->addWidget(but_instr_reset, x, 6, 1, 2);
 
 	/* <Volume> tab */
 
 	lbl_volume_title[0] = new QLabel(tr("- Playback -"));
 	lbl_volume_title[1] = new QLabel(tr("- Synth/Record -"));
 
-	but_volume_apply = new QPushButton(tr("Apply"));
-	but_volume_revert = new QPushButton(tr("Revert"));
 	but_volume_reset = new QPushButton(tr("Reset"));
 
 	x = 0;
@@ -668,11 +672,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 		spn_volume_synth[n] = new QSpinBox();
 		spn_volume_synth[n]->setRange(0, 511);
-		spn_volume_synth[n]->setValue(MPP_VOLUME_UNIT);
+		connect(spn_volume_synth[n], SIGNAL(valueChanged(int)), this, SLOT(handle_volume_changed(int)));
 
 		spn_volume_play[n] = new QSpinBox();
 		spn_volume_play[n]->setRange(0, 511);
-		spn_volume_play[n]->setValue(MPP_VOLUME_UNIT);
+		connect(spn_volume_play[n], SIGNAL(valueChanged(int)), this, SLOT(handle_volume_changed(int)));
 
 		tab_volume_gl->addWidget(lbl_volume_play[n], (n & 7) + x, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
 		tab_volume_gl->addWidget(spn_volume_play[n], (n & 7) + x, 1 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
@@ -686,16 +690,14 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x++;
 
-	tab_volume_gl->addWidget(but_volume_reset, x, 2, 1, 2);
-	tab_volume_gl->addWidget(but_volume_revert, x, 4, 1, 2);
-	tab_volume_gl->addWidget(but_volume_apply, x, 6, 1, 2);
+	tab_volume_gl->addWidget(but_volume_reset, x, 6, 1, 2);
 
 	/* Connect all */
 
-	connect(but_insert_chord, SIGNAL(pressed()), this, SLOT(handle_insert_chord()));
+	connect(but_insert_chord, SIGNAL(released()), this, SLOT(handle_insert_chord()));
 
 	for (n = 0; n != MPP_MAX_LBUTTON; n++)
-		connect(but_jump[n], SIGNAL(pressed()), this, SLOT(handle_jump_common()));
+		connect(but_jump[n], SIGNAL(released(int)), this, SLOT(handle_jump(int)));
 
 	connect(but_midi_mode, SIGNAL(pressed()), this, SLOT(handle_pass_thru()));
 	connect(but_compile, SIGNAL(pressed()), this, SLOT(handle_compile()));
@@ -721,14 +723,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	connect(but_instr_rem, SIGNAL(pressed()), this, SLOT(handle_instr_rem()));
 	connect(but_instr_program, SIGNAL(pressed()), this, SLOT(handle_instr_program()));
-	connect(but_instr_apply, SIGNAL(pressed()), this, SLOT(handle_instr_apply()));
-	connect(but_instr_revert, SIGNAL(pressed()), this, SLOT(handle_instr_revert()));
+	connect(but_instr_program_all, SIGNAL(pressed()), this, SLOT(handle_instr_program_all()));
 	connect(but_instr_reset, SIGNAL(pressed()), this, SLOT(handle_instr_reset()));
 	connect(but_instr_mute_all, SIGNAL(pressed()), this, SLOT(handle_instr_mute_all()));
 	connect(but_instr_unmute_all, SIGNAL(pressed()), this, SLOT(handle_instr_unmute_all()));
 
-	connect(but_volume_apply, SIGNAL(pressed()), this, SLOT(handle_volume_apply()));
-	connect(but_volume_revert, SIGNAL(pressed()), this, SLOT(handle_volume_revert()));
 	connect(but_volume_reset, SIGNAL(pressed()), this, SLOT(handle_volume_reset()));
 
 	connect(but_midi_pause, SIGNAL(pressed()), this, SLOT(handle_midi_pause()));
@@ -778,24 +777,11 @@ MppMainWindow :: handle_insert_chord()
 }
 
 void
-MppMainWindow :: handle_jump_N(int index)
+MppMainWindow :: handle_jump(int index)
 {
 	pthread_mutex_lock(&mtx);
 	handle_jump_locked(index);
 	pthread_mutex_unlock(&mtx);
-}
-
-void
-MppMainWindow :: handle_jump_common()
-{
-	uint8_t n;
-
-	for (n = 0; n != MPP_MAX_LBUTTON; n++) {
-		if (but_jump[n]->isDown()) {
-			handle_jump_N(n);
-			break;
-		}
-	}
 }
 
 void
@@ -1092,7 +1078,7 @@ MppMainWindow :: handle_watchdog()
 	}
 
 	if (instr_update)
-		handle_instr_revert();
+		handle_instr_changed(0);
 
 	do_bpm_stats();
 
@@ -1127,8 +1113,6 @@ MppMainWindow :: handle_midi_file_clear_name()
 void
 MppMainWindow :: handle_midi_file_new()
 {
-	uint8_t x;
-
 	handle_midi_file_clear_name();
 
 	handle_rewind();
@@ -1136,16 +1120,10 @@ MppMainWindow :: handle_midi_file_new()
 	if (track != NULL) {
 		pthread_mutex_lock(&mtx);
 		umidi20_event_queue_drain(&(track->queue));
-		for (x = 0; x != 16; x++) {
-			instr[x].bank = 0;
-			instr[x].prog = 0;
-			instr[x].updated = 1;
-			instr[x].muted = 0;
-		}
-		instrUpdated = 1;
 		chanUsageMask = 0;
 		pthread_mutex_unlock(&mtx);
 
+		handle_instr_reset();
 		handle_instr_channel_changed(0);
 	}
 }
@@ -1960,6 +1938,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 	} else if (mw->do_instr_check(event, &chan)) {
 		/* found instrument */
 		mw->currScoreMain->synthChannel = chan;
+		mw->instrUpdated = 1;
 	}
 }
 
@@ -2037,7 +2016,7 @@ MppMainWindow :: do_instr_check(struct umidi20_event *event, uint8_t *pchan)
 		if (addr == 0x00) {
 			instr[chan].bank &= 0x007F;
 			instr[chan].bank |= (val << 7);
-			instr[chan].updated = 1;
+			instr[chan].updated |= 2;
 			instr[chan].muted = 0;
 			instrUpdated = 1;
 			if (pchan != NULL)
@@ -2046,7 +2025,7 @@ MppMainWindow :: do_instr_check(struct umidi20_event *event, uint8_t *pchan)
 		} else if (addr == 0x20) {
 			instr[chan].bank &= 0xFF80;
 			instr[chan].bank |= (val & 0x7F);
-			instr[chan].updated = 1;
+			instr[chan].updated |= 2;
 			instr[chan].muted = 0;
 			instrUpdated = 1;
 			if (pchan != NULL)
@@ -2061,7 +2040,7 @@ MppMainWindow :: do_instr_check(struct umidi20_event *event, uint8_t *pchan)
 		chan = umidi20_event_get_channel(event) & 0xF;
 
 		instr[chan].prog = val;
-		instr[chan].updated = 1;
+		instr[chan].updated |= 2;
 		instr[chan].muted = 0;
 		instrUpdated = 1;
 		if (pchan != NULL)
@@ -2074,21 +2053,17 @@ MppMainWindow :: do_instr_check(struct umidi20_event *event, uint8_t *pchan)
 void
 MppMainWindow :: handle_instr_channel_changed(int chan)
 {
-	int temp[3];
+	int temp[2];
 
-	pthread_mutex_lock(&mtx);
-	currScoreMain->synthChannel = chan;
-	temp[0] = instr[chan].bank;
-	temp[1] = instr[chan].prog;
-	temp[2] = synthVolume[chan];
-	pthread_mutex_unlock(&mtx);
+	temp[0] = spn_instr_bank[chan]->value();
+	temp[1] = spn_instr_prog[chan]->value();
 
 	spn_instr_curr_bank->setValue(temp[0]);
 	spn_instr_curr_prog->setValue(temp[1]);
-	spn_volume->setValue(temp[2]);
 
-	if (spn_instr_curr_chan->value() != chan)
-		spn_instr_curr_chan->setValue(chan);
+	spn_instr_curr_chan->blockSignals(1);
+	spn_instr_curr_chan->setValue(chan);
+	spn_instr_curr_chan->blockSignals(0);
 }
 
 void
@@ -2098,22 +2073,51 @@ MppMainWindow :: handle_instr_program()
 	int bank = spn_instr_curr_bank->value();
 	int prog = spn_instr_curr_prog->value();
 
+	spn_instr_bank[chan]->blockSignals(1);
+	spn_instr_prog[chan]->blockSignals(1);
+	cbx_instr_mute[chan]->blockSignals(1);
+
+	spn_instr_bank[chan]->setValue(bank);
+	spn_instr_prog[chan]->setValue(prog);
+	cbx_instr_mute[chan]->setChecked(0);
+
+	spn_instr_bank[chan]->blockSignals(0);
+	spn_instr_prog[chan]->blockSignals(0);
+	cbx_instr_mute[chan]->blockSignals(0);
+
 	pthread_mutex_lock(&mtx);
-	instr[chan].bank = bank;
-	instr[chan].prog = prog;
-	instr[chan].muted = 0;
-	instr[chan].updated = 1;
+	instr[chan].updated |= 1;
+	currScoreMain->synthChannel = chan;
 	pthread_mutex_unlock(&mtx);
 
-	handle_instr_revert();
+	handle_instr_changed(0);
+}
+
+void
+MppMainWindow :: handle_instr_program_all()
+{
+	uint8_t x;
+
+	pthread_mutex_lock(&mtx);
+	for (x = 0; x != 16; x++)
+		instr[x].updated |= 1;
+	pthread_mutex_unlock(&mtx);
+
+	handle_instr_changed(0);
 }
 
 void 
-MppMainWindow :: handle_instr_apply()
+MppMainWindow :: handle_instr_changed(int dummy)
 {
+	struct mid_data *d = &mid_data;
 	int temp[3];
+	uint8_t curr_chan;
 	uint8_t x;
+	uint8_t y;
 	uint8_t update_curr;
+	uint8_t trig;
+
+	curr_chan = spn_instr_curr_chan->value();
 
 	for (x = 0; x != 16; x++) {
 
@@ -2122,76 +2126,76 @@ MppMainWindow :: handle_instr_apply()
 		temp[2] = cbx_instr_mute[x]->isChecked();
 
 		pthread_mutex_lock(&mtx);
-		instr[x].bank = temp[0];
-		instr[x].prog = temp[1];
-		instr[x].muted = temp[2];
-		instr[x].updated = 1;
-		update_curr = (currScoreMain->synthChannel == x);
+
+		update_curr = 0;
+
+		if (instr[x].bank != temp[0]) {
+			if (instr[x].updated & 2) {
+				temp[0] = instr[x].bank;
+			} else {
+				instr[x].bank = temp[0];
+				instr[x].updated |= 1;
+			}
+			update_curr = 1;
+		}
+		if (instr[x].prog != temp[1]) {
+			if (instr[x].updated & 2) {
+				temp[1] = instr[x].prog;
+			} else {
+				instr[x].prog = temp[1];
+				instr[x].updated |= 1;
+			}
+			update_curr = 1;
+		}
+		if (instr[x].muted != temp[2]) {
+			if (instr[x].updated & 2) {
+				temp[2] = instr[x].muted;
+			} else {
+				instr[x].muted = temp[2];
+				instr[x].updated |= 1;
+			}
+			update_curr = 1;
+		}
+		if (currScoreMain->synthChannel == x &&
+		    curr_chan != x) {
+			update_curr = 1;
+		}
 		pthread_mutex_unlock(&mtx);
 
 		if (update_curr) {
-			spn_instr_curr_chan->setValue(x);
-			spn_instr_curr_bank->setValue(temp[0]);
-			spn_instr_curr_prog->setValue(temp[1]);
+			spn_instr_bank[x]->blockSignals(1);
+			spn_instr_prog[x]->blockSignals(1);
+			cbx_instr_mute[x]->blockSignals(1);
+
+			spn_instr_bank[x]->setValue(temp[0]);
+			spn_instr_prog[x]->setValue(temp[1]);
+			cbx_instr_mute[x]->setChecked(temp[2]);
+
+			spn_instr_bank[x]->blockSignals(0);
+			spn_instr_prog[x]->blockSignals(0);
+			cbx_instr_mute[x]->blockSignals(0);
+
+			pthread_mutex_lock(&mtx);
+			update_curr = (currScoreMain->synthChannel == x);
+			pthread_mutex_unlock(&mtx);
 		}
-	}
-	handle_instr_reload();
-}
-
-void 
-MppMainWindow :: handle_instr_revert()
-{
-	int temp[3];
-	uint8_t x;
-	uint8_t update_curr;
-
-	for (x = 0; x != 16; x++) {
-
-		pthread_mutex_lock(&mtx);
-		temp[0] = instr[x].bank;
-		temp[1] = instr[x].prog;
-		temp[2] = instr[x].muted;
-		update_curr = (currScoreMain->synthChannel == x);
-		pthread_mutex_unlock(&mtx);
-
-		spn_instr_bank[x]->setValue(temp[0]);
-		spn_instr_prog[x]->setValue(temp[1]);
-		cbx_instr_mute[x]->setChecked(temp[2]);
 
 		if (update_curr) {
+			spn_instr_curr_chan->blockSignals(1);
+			spn_instr_curr_bank->blockSignals(1);
+			spn_instr_curr_prog->blockSignals(1);
+
 			spn_instr_curr_chan->setValue(x);
 			spn_instr_curr_bank->setValue(temp[0]);
 			spn_instr_curr_prog->setValue(temp[1]);
+
+			spn_instr_curr_chan->blockSignals(0);
+			spn_instr_curr_bank->blockSignals(0);
+			spn_instr_curr_prog->blockSignals(0);
 		}
 	}
-	handle_instr_reload();
-}
 
-void 
-MppMainWindow :: handle_instr_reset()
-{
-	uint8_t x;
-
-	for (x = 0; x != 16; x++) {
-		spn_instr_bank[x]->setValue(0);
-		spn_instr_prog[x]->setValue(0);
-		cbx_instr_mute[x]->setChecked(0);
-	}
-
-	spn_instr_curr_chan->setValue(0);
-	spn_instr_curr_bank->setValue(0);
-	spn_instr_curr_prog->setValue(0);
-
-	handle_instr_reload();
-}
-
-void
-MppMainWindow :: handle_instr_reload()
-{
-	struct mid_data *d = &mid_data;
-	uint8_t x;
-	uint8_t y;
-	uint8_t trig;
+	/* Do the real programming */
 
 	pthread_mutex_lock(&mtx);
 	trig = midiTriggered;
@@ -2216,69 +2220,62 @@ MppMainWindow :: handle_instr_reload()
 	pthread_mutex_unlock(&mtx);
 }
 
-void
-MppMainWindow :: handle_volume_changed(int vol)
+void 
+MppMainWindow :: handle_instr_reset()
 {
+	uint8_t x;
+
+	for (x = 0; x != 16; x++) {
+		spn_instr_bank[x]->blockSignals(1);
+		spn_instr_prog[x]->blockSignals(1);
+		cbx_instr_mute[x]->blockSignals(1);
+
+		spn_instr_bank[x]->setValue(0);
+		spn_instr_prog[x]->setValue(0);
+		cbx_instr_mute[x]->setChecked(0);
+
+		spn_instr_bank[x]->blockSignals(0);
+		spn_instr_prog[x]->blockSignals(0);
+		cbx_instr_mute[x]->blockSignals(0);
+
+		pthread_mutex_lock(&mtx);
+		instr[x].updated = 1;
+		pthread_mutex_unlock(&mtx);
+	}
+
+	spn_instr_curr_chan->blockSignals(1);
+	spn_instr_curr_bank->blockSignals(1);
+	spn_instr_curr_prog->blockSignals(1);
+
+	spn_instr_curr_chan->setValue(0);
+	spn_instr_curr_bank->setValue(0);
+	spn_instr_curr_prog->setValue(0);
+
+	spn_instr_curr_chan->blockSignals(0);
+	spn_instr_curr_bank->blockSignals(0);
+	spn_instr_curr_prog->blockSignals(0);
+
+	handle_instr_changed(0);
+}
+
+void
+MppMainWindow :: handle_volume_changed(int dummy)
+{
+	int play_temp[16];
+	int synth_temp[16];
 	int x;
 
+	for (x = 0; x != 16; x++) {
+		play_temp[x] = spn_volume_play[x]->value();
+		synth_temp[x] = spn_volume_synth[x]->value();
+	}
+
 	pthread_mutex_lock(&mtx);
-	x = currScoreMain->synthChannel;
-	synthVolume[x] = vol;
+	for (x = 0; x != 16; x++) {
+		playVolume[x] = play_temp[x];
+		synthVolume[x] = synth_temp[x];
+	}
 	pthread_mutex_unlock(&mtx);
-
-	spn_volume_synth[x]->setValue(vol);
-}
-
-void 
-MppMainWindow :: handle_volume_apply()
-{
-	int temp[2];
-
-	uint8_t x;
-	uint8_t update_curr;
-
-	for (x = 0; x != 16; x++) {
-
-		temp[0] = spn_volume_play[x]->value();
-		temp[1] = spn_volume_synth[x]->value();
-
-		pthread_mutex_lock(&mtx);
-		playVolume[x] = temp[0];
-		synthVolume[x] = temp[1];
-		update_curr = (currScoreMain->synthChannel == x);
-		pthread_mutex_unlock(&mtx);
-
-		if (update_curr)
-			spn_volume->setValue(temp[1]);
-	}
-
-	handle_volume_reload();
-}
-
-void 
-MppMainWindow :: handle_volume_revert()
-{
-	int temp[2];
-
-	uint8_t x;
-	uint8_t update_curr;
-
-	for (x = 0; x != 16; x++) {
-
-		pthread_mutex_lock(&mtx);
-		temp[0] = playVolume[x];
-		temp[1] = synthVolume[x];
-		update_curr = (currScoreMain->synthChannel == x);
-		pthread_mutex_unlock(&mtx);
-
-		spn_volume_play[x]->setValue(temp[0]);
-		spn_volume_synth[x]->setValue(temp[1]);
-
-		if (update_curr)
-			spn_volume->setValue(temp[1]);
-	}
-
-	handle_volume_reload();
 }
 
 void
@@ -2316,19 +2313,17 @@ MppMainWindow :: handle_volume_reset()
 	uint8_t x;
 
 	for (x = 0; x != 16; x++) {
+		spn_volume_play[x]->blockSignals(1);
+		spn_volume_synth[x]->blockSignals(1);
+
 		spn_volume_play[x]->setValue(MPP_VOLUME_UNIT);
 		spn_volume_synth[x]->setValue(MPP_VOLUME_UNIT);
+
+		spn_volume_play[x]->blockSignals(0);
+		spn_volume_synth[x]->blockSignals(0);
 	}
 
-	spn_volume->setValue(MPP_VOLUME_UNIT);
-
-	handle_volume_reload();
-}
-
-void
-MppMainWindow :: handle_volume_reload()
-{
-
+	handle_volume_changed(0);
 }
 
 int
@@ -2575,8 +2570,8 @@ MppMainWindow :: MidiInit(void)
 	handle_midi_play();
 	handle_score_record();
 	handle_pass_thru();
-	handle_instr_apply();
-	handle_volume_apply();
+	handle_instr_reset();
+	handle_volume_reset();
 
 	for (n = 0; n != UMIDI20_N_DEVICES; n++) {
 		umidi20_set_record_event_callback(n, &MidiEventRxCallback, this);
@@ -2670,7 +2665,7 @@ MppPlayWidget :: keyPressEvent(QKeyEvent *event)
 	case Qt::Key_7:
 	case Qt::Key_8:
 	case Qt::Key_9:
-		mw->handle_jump_N(event->key() - Qt::Key_0);
+		mw->handle_jump(event->key() - Qt::Key_0);
 		break;
 	default:
 		break;
@@ -2690,38 +2685,18 @@ MppPlayWidget :: keyReleaseEvent(QKeyEvent *event)
 }
 
 void
-MppMainWindow :: handle_mute_map()
+MppMainWindow :: handle_mute_map(int n)
 {
-	MppMuteMap *mm_diag;
-	int n;
-
-	for (n = 0; n != MPP_MAX_DEVS; n++) {
-		if (but_config_mm[n]->isDown()) {
-			mm_diag = new MppMuteMap(this, this, n);
-			if (mm_diag != NULL) {
-				mm_diag->exec();
-				delete mm_diag;
-			}
-		}
-	}
+	MppMuteMap diag(this, this, n);
+	diag.exec();
 }
 
 void
-MppMainWindow :: handle_config_dev()
+MppMainWindow :: handle_config_dev(int n)
 {
-	MppDevices *dev_diag;
-	int n;
-
-	for (n = 0; n != MPP_MAX_DEVS; n++) {
-		if (but_config_dev[n]->isDown()) {
-			dev_diag = new MppDevices(this);
-			if (dev_diag != NULL) {
-				if (dev_diag->exec() == QDialog::Accepted) {
-					led_config_dev[n]->setText(dev_diag->result_dev);
-				}
-				delete dev_diag;
-			}
-		}
+	MppDevices diag(this);
+	if (diag.exec() == QDialog::Accepted) {
+		led_config_dev[n]->setText(diag.result_dev);
 	}
 }
 
@@ -2735,7 +2710,7 @@ MppMainWindow :: handle_instr_rem()
 	if (track == NULL)
 		return;
 
-	handle_instr_apply();
+	handle_instr_changed(0);
 
 	pthread_mutex_lock(&mtx);
 	UMIDI20_QUEUE_FOREACH_SAFE(event, &(track->queue), event_next) {
@@ -2755,10 +2730,13 @@ MppMainWindow :: handle_instr_mute_all()
 {
 	uint8_t n;
 
-	for (n = 0; n != 16; n++)
+	for (n = 0; n != 16; n++) {
+		cbx_instr_mute[n]->blockSignals(1);
 		cbx_instr_mute[n]->setChecked(1);
+		cbx_instr_mute[n]->blockSignals(0);
+	}
 
-	handle_instr_apply();
+	handle_instr_changed(0);
 }
 
 void
@@ -2766,10 +2744,13 @@ MppMainWindow :: handle_instr_unmute_all()
 {
 	uint8_t n;
 
-	for (n = 0; n != 16; n++)
+	for (n = 0; n != 16; n++) {
+		cbx_instr_mute[n]->blockSignals(1);
 		cbx_instr_mute[n]->setChecked(0);
+		cbx_instr_mute[n]->blockSignals(0);
+	}
 
-	handle_instr_apply();
+	handle_instr_changed(0);
 }
 
 void
