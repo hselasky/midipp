@@ -63,12 +63,12 @@ public:
 	QLabel *lbl_loop[MIDIPP_LOOP_MAX];
 	QLabel *lbl_state[MIDIPP_LOOP_MAX];
 
-	QPushButton *but_import[MIDIPP_LOOP_MAX];
+	MppButton *but_import[MIDIPP_LOOP_MAX];
+	MppButton *but_clear[MIDIPP_LOOP_MAX];
+	MppButton *but_trig[MIDIPP_LOOP_MAX];
 	QPushButton *but_loop_on;
 	QPushButton *but_pedal_rec;
 	QPushButton *but_loop_multi;
-	QPushButton *but_clear[MIDIPP_LOOP_MAX];
-	QPushButton *but_trig[MIDIPP_LOOP_MAX];
 
 	QLabel *lbl_pedal_rec;
 	QLabel *lbl_loop_on;
@@ -104,10 +104,10 @@ public slots:
 	void handle_pedal();
 	void handle_loop();
 	void handle_reset();
-	void handle_clear();
-	void handle_trig();
+	void handle_clear(int);
+	void handle_trig(int);
 	void handle_multi();
-	void handle_import();
+	void handle_import(int);
 	void handle_value_changed(int);
 };
 

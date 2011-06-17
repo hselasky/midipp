@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,55 +23,29 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _MIDIPP_IMPORT_H_
-#define	_MIDIPP_IMPORT_H_
+#include <midipp_button.h>
 
-#include <midipp.h>
-
-#define	MIDIPP_IMPORT_LB	256
-#define	MIDIPP_IMPORT_MW	64
-
-struct midipp_word {
-	uint16_t off;
-	char name[32];
-};
-
-struct midipp_import {
-	char line_buffer[MIDIPP_IMPORT_LB];
-
-	struct midipp_word d_word[2][MIDIPP_IMPORT_MW];
-
-	MppScoreMain *sm;
-
-	MppDecode *dlg;
-
-	uint16_t n_word[2];
-
-	uint8_t index;
-};
-
-class MppImportTab : public QObject
+MppButton :: MppButton(const QString &txt, int _id) :
+    QPushButton(txt)
 {
-	Q_OBJECT;
-public:
+	id = _id;
+	connect(this, SIGNAL(pressed()), this, SLOT(handle_pressed()));
+	connect(this, SIGNAL(released()), this, SLOT(handle_released()));
+}
 
-	MppImportTab(MppMainWindow *parent);
-	~MppImportTab();
+MppButton :: ~MppButton()
+{
 
-	MppMainWindow *mainWindow;
+}
 
-	QPlainTextEdit *editWidget;
-	QPushButton *butImportFileNew;
-	QPushButton *butImportFileOpen;
-	QPushButton *butImport;
+void
+MppButton :: handle_released()
+{
+	released(id);
+}
 
-public slots:
-
-	void handleImportNew();
-	void handleImportOpen();
-	void handleImport();
-};
-
-extern uint8_t midipp_import(QString str, struct midipp_import *ps, MppScoreMain *sm);
-
-#endif		/* _MIDIPP_IMPORT_H_ */
+void
+MppButton :: handle_pressed()
+{
+	pressed(id);
+}

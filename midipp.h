@@ -97,6 +97,7 @@ class MppDevices;
 class MppSpinBox;
 class MppPattern;
 class MppBpm;
+class MppButton;
 
 struct MppScoreEntry {
 	uint8_t key;

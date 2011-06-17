@@ -52,23 +52,6 @@ protected:
 	void keyReleaseEvent(QKeyEvent *event);
 };
 
-class MppButWidget : public QPushButton
-{
-	Q_OBJECT;
-
-public:
-	MppButWidget(const QString &, int _id);
-	~MppButWidget();
-
-	int id;
-
-signals:
-	void released(int _id);
-
-public slots:
-	void handle_released();
-};
-
 class MppMainWindow : public QWidget
 {
 	Q_OBJECT;
@@ -202,7 +185,7 @@ public:
 	QPushButton *but_midi_file_merge;
 	QPushButton *but_midi_file_save;
 	QPushButton *but_midi_file_save_as;
-	QPushButton *but_midi_file_convert;
+	QPushButton *but_midi_file_import;
 
 	/* tab <Play> */
 
@@ -275,8 +258,8 @@ public:
 	QLabel	*lbl_parse_thres;
 	QSpinBox *spn_parse_thres;
 
-	MppButWidget *but_config_dev[MPP_MAX_DEVS];
-	MppButWidget *but_config_mm[MPP_MAX_DEVS];
+	MppButton *but_config_dev[MPP_MAX_DEVS];
+	MppButton *but_config_mm[MPP_MAX_DEVS];
 	QLineEdit *led_config_dev[MPP_MAX_DEVS];
 	QCheckBox *cbx_config_dev[3 * MPP_MAX_DEVS];
 
@@ -389,7 +372,7 @@ public slots:
 
 	void handle_tab_changed(int index);
 
-	void handle_midi_file_convert();
+	void handle_midi_file_import();
 
 	void handle_mute_map(int);
 	void handle_config_dev(int);

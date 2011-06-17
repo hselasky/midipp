@@ -28,6 +28,7 @@
 #include <midipp_mainwindow.h>
 #include <midipp_looptab.h>
 #include <midipp_spinbox.h>
+#include <midipp_button.h>
 
 MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
   : QWidget(parent)
@@ -58,9 +59,9 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 		lbl_loop[n] = new QLabel(tr(buf));
 		lbl_state[n] = new QLabel();
 
-		but_clear[n] = new QPushButton(tr("Clear"));
-		but_trig[n] = new QPushButton(tr("Trigger"));
-		but_import[n] = new QPushButton(tr("Import"));
+		but_clear[n] = new MppButton(tr("Clear"), n);
+		but_trig[n] = new MppButton(tr("Trigger"), n);
+		but_import[n] = new MppButton(tr("Import"), n);
 	}
 
 	for (n = 0; n != MIDIPP_LOOP_MAX; n++) {
@@ -76,9 +77,9 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 
 		connect(spn_chan[n], SIGNAL(valueChanged(int)), this, SLOT(handle_value_changed(int)));
 		connect(spn_key[n], SIGNAL(valueChanged(int)), this, SLOT(handle_value_changed(int)));
-		connect(but_clear[n], SIGNAL(pressed()), this, SLOT(handle_clear()));
-		connect(but_trig[n], SIGNAL(pressed()), this, SLOT(handle_trig()));
-		connect(but_import[n], SIGNAL(pressed()), this, SLOT(handle_import()));
+		connect(but_clear[n], SIGNAL(pressed(int)), this, SLOT(handle_clear(int)));
+		connect(but_trig[n], SIGNAL(pressed(int)), this, SLOT(handle_trig(int)));
+		connect(but_import[n], SIGNAL(pressed(int)), this, SLOT(handle_import(int)));
 	}
 
 	gl->setRowStretch(2 + MIDIPP_LOOP_MAX, 3);
@@ -218,40 +219,28 @@ MppLoopTab :: add_pedal(uint8_t val)
 }
 
 void
-MppLoopTab :: handle_trig()
+MppLoopTab :: handle_trig(int n)
 {
-	uint8_t n;
-
-	for (n = 0; n != MIDIPP_LOOP_MAX; n++) {
-		if (but_trig[n]->isDown()) {
-			pthread_mutex_lock(&mw->mtx);
-			switch (state[n]) {
-			case ST_IDLE:
-				state[n] = ST_REC;
-				break;
-			case ST_REC:
-				/* FALLTHROUGH */
-			default:
-				state[n] = ST_DONE;
-				break;
-			}
-			last_loop = n;
-			needs_update = 1;
-			pthread_mutex_unlock(&mw->mtx);
-		}
+	pthread_mutex_lock(&mw->mtx);
+	switch (state[n]) {
+	case ST_IDLE:
+		state[n] = ST_REC;
+		break;
+	case ST_REC:
+		/* FALLTHROUGH */
+	default:
+		state[n] = ST_DONE;
+		break;
 	}
+	last_loop = n;
+	needs_update = 1;
+	pthread_mutex_unlock(&mw->mtx);
 }
 
 void
-MppLoopTab :: handle_import()
+MppLoopTab :: handle_import(int n)
 {
-	uint8_t n;
-
-	for (n = 0; n != MIDIPP_LOOP_MAX; n++) {
-		if (but_import[n]->isDown()) {
-			mw->import_midi_track(track[n], IMPORT_HAVE_DURATION);
-		}
-	}
+	mw->import_midi_track(track[n], IMPORT_HAVE_DURATION);
 }
 
 /* Must be called locked */
@@ -370,17 +359,11 @@ MppLoopTab :: handle_trigN(int key, int vel)
 }
 
 void
-MppLoopTab :: handle_clear()
+MppLoopTab :: handle_clear(int n)
 {
-	uint8_t n;
-
-	for (n = 0; n != MIDIPP_LOOP_MAX; n++) {
-		if (but_clear[n]->isDown()) {
-			pthread_mutex_lock(&mw->mtx);
-			handle_clearN(n);
-			pthread_mutex_unlock(&mw->mtx);
-		}
-	}
+	pthread_mutex_lock(&mw->mtx);
+	handle_clearN(n);
+	pthread_mutex_unlock(&mw->mtx);
 }
 
 /* Must be called locked */

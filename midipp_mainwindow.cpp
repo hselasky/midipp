@@ -33,26 +33,9 @@
 #include <midipp_devices.h>
 #include <midipp_spinbox.h>
 #include <midipp_bpm.h>
+#include <midipp_button.h>
 
 static void MidiEventRxPedal(MppMainWindow *mw, uint8_t val);
-
-MppButWidget :: MppButWidget(const QString &txt, int _id) :
-    QPushButton(txt)
-{
-	id = _id;
-	connect(this, SIGNAL(released()), this, SLOT(handle_released()));
-}
-
-MppButWidget :: ~MppButWidget()
-{
-
-}
-
-void
-MppButWidget :: handle_released()
-{
-	released(id);
-}
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -174,7 +157,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_midi_file_merge = new QPushButton(tr("Merge"));
 	but_midi_file_save = new QPushButton(tr("Save"));
 	but_midi_file_save_as = new QPushButton(tr("Save As"));
-	but_midi_file_convert = new QPushButton(tr("Import"));
+	but_midi_file_import = new QPushButton(tr("Import"));
 
 	n = 0;
 
@@ -198,13 +181,12 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_file_gl->addWidget(scores_main[0]->butScoreFileSave, n, 0, 1, 2);
 	tab_file_gl->addWidget(scores_main[1]->butScoreFileSave, n, 2, 1, 2);
-	tab_file_gl->addWidget(tab_import->butImportToA, n, 4, 1, 2);
+	tab_file_gl->addWidget(tab_import->butImport, n, 4, 1, 2);
 
 	n++;
 
 	tab_file_gl->addWidget(scores_main[0]->butScoreFileSaveAs, n, 0, 1, 2);
 	tab_file_gl->addWidget(scores_main[1]->butScoreFileSaveAs, n, 2, 1, 2);
-	tab_file_gl->addWidget(tab_import->butImportToB, n, 4, 1, 2);
 
 	n++;
 
@@ -250,7 +232,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n++;
 
-	tab_file_gl->addWidget(but_midi_file_convert, n, 6, 1, 2);
+	tab_file_gl->addWidget(but_midi_file_import, n, 6, 1, 2);
 
 	n++;
 
@@ -297,7 +279,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	for (n = 0; n != MPP_MAX_LBUTTON; n++) {
 		char buf[8];
 		snprintf(buf, sizeof(buf), "J%u", n);
-		but_jump[n] = new MppButWidget(tr(buf), n);
+		but_jump[n] = new MppButton(tr(buf), n);
 	}
 
 	but_insert_chord = new QPushButton(tr("Get &Chord"));
@@ -492,8 +474,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	for (n = 0; n != MPP_MAX_DEVS; n++) {
 		char buf[16];
 
-		but_config_mm[n] = new MppButWidget(tr("MM"), n);
-		but_config_dev[n] = new MppButWidget(tr("DEV"), n);
+		but_config_mm[n] = new MppButton(tr("MM"), n);
+		but_config_dev[n] = new MppButton(tr("DEV"), n);
 
 		connect(but_config_mm[n], SIGNAL(released(int)), this, SLOT(handle_mute_map(int)));
 		connect(but_config_dev[n], SIGNAL(released(int)), this, SLOT(handle_config_dev(int)));
@@ -697,7 +679,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_insert_chord, SIGNAL(released()), this, SLOT(handle_insert_chord()));
 
 	for (n = 0; n != MPP_MAX_LBUTTON; n++)
-		connect(but_jump[n], SIGNAL(released(int)), this, SLOT(handle_jump(int)));
+		connect(but_jump[n], SIGNAL(pressed(int)), this, SLOT(handle_jump(int)));
 
 	connect(but_midi_mode, SIGNAL(pressed()), this, SLOT(handle_pass_thru()));
 	connect(but_compile, SIGNAL(pressed()), this, SLOT(handle_compile()));
@@ -713,7 +695,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_midi_file_merge, SIGNAL(pressed()), this, SLOT(handle_midi_file_merge_open()));
 	connect(but_midi_file_save, SIGNAL(pressed()), this, SLOT(handle_midi_file_save()));
 	connect(but_midi_file_save_as, SIGNAL(pressed()), this, SLOT(handle_midi_file_save_as()));
-	connect(but_midi_file_convert, SIGNAL(pressed()), this, SLOT(handle_midi_file_convert()));
+	connect(but_midi_file_import, SIGNAL(pressed()), this, SLOT(handle_midi_file_import()));
 
 	connect(but_midi_trigger, SIGNAL(pressed()), this, SLOT(handle_midi_trigger()));
 	connect(but_midi_rewind, SIGNAL(pressed()), this, SLOT(handle_rewind()));
@@ -2409,7 +2391,7 @@ MppMainWindow :: log_midi_score_duration(void)
 void
 MppMainWindow :: import_midi_track(struct umidi20_track *im_track, int flags)
 {
-	QTextCursor cursor(tab_import->editWidget->textCursor());
+	QTextCursor cursor(currScoreMain->editWidget->textCursor());
 
 	QString output;
 	QString out_block;
@@ -2543,12 +2525,12 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, int flags)
 	output += "\n";
 
 	cursor.insertText(output);
-
+	
 	handle_compile();
 }
 
 void
-MppMainWindow :: handle_midi_file_convert()
+MppMainWindow :: handle_midi_file_import()
 {
 	import_midi_track(track, IMPORT_HAVE_STRING);
 }

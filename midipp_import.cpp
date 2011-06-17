@@ -245,13 +245,11 @@ MppImportTab :: MppImportTab(MppMainWindow *parent)
 
 	butImportFileNew = new QPushButton(tr("New"));
 	butImportFileOpen = new QPushButton(tr("Open"));
-	butImportToA = new QPushButton(tr("Import to A"));
-	butImportToB = new QPushButton(tr("Import to B"));
+	butImport = new QPushButton(tr("Import"));
 
 	connect(butImportFileNew, SIGNAL(pressed()), this, SLOT(handleImportNew()));
 	connect(butImportFileOpen, SIGNAL(pressed()), this, SLOT(handleImportOpen()));
-	connect(butImportToA, SIGNAL(pressed()), this, SLOT(handleImportToA()));
-	connect(butImportToB, SIGNAL(pressed()), this, SLOT(handleImportToB()));
+	connect(butImport, SIGNAL(pressed()), this, SLOT(handleImport()));
 }
 
 MppImportTab :: ~MppImportTab()
@@ -292,19 +290,9 @@ MppImportTab :: handleImportOpen()
 }
 
 void
-MppImportTab :: handleImportToA()
+MppImportTab :: handleImport()
 {
 	struct midipp_import ps;
 
-	if (MPP_MAX_VIEWS > 0)
-		midipp_import(editWidget->toPlainText(), &ps, mainWindow->scores_main[0]);
-}
-
-void
-MppImportTab :: handleImportToB()
-{
-	struct midipp_import ps;
-
-	if (MPP_MAX_VIEWS > 1)
-		midipp_import(editWidget->toPlainText(), &ps, mainWindow->scores_main[1]);
+	midipp_import(editWidget->toPlainText(), &ps, mainWindow->currScoreMain);
 }
