@@ -1218,7 +1218,7 @@ MppScoreMain :: handleScoreFileOpen()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(mainWindow, tr("Select Score File"), 
-		QString(), QString("Score File (*.txt; *.TXT)"));
+		QString(), QString("Score File (*.txt *.TXT)"));
 	QString scores;
 	QString status;
 
@@ -1262,7 +1262,7 @@ MppScoreMain :: handleScoreFileSaveAs()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(mainWindow, tr("Select Score File"), 
-		QString(), QString("Score File (*.txt; *.TXT)"));
+		QString(), QString("Score File (*.txt *.TXT)"));
 
 	diag->setAcceptMode(QFileDialog::AcceptSave);
 	diag->setFileMode(QFileDialog::AnyFile);
