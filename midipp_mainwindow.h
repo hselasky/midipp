@@ -187,6 +187,9 @@ public:
 	QPushButton *but_midi_file_save_as;
 	QPushButton *but_midi_file_import;
 
+	QLabel *lbl_gpro_title;
+	QPushButton *but_gpro_file_import;
+
 	/* tab <Play> */
 
 	QLabel *lbl_bpm_min;
@@ -373,6 +376,8 @@ public slots:
 	void handle_tab_changed(int index);
 
 	void handle_midi_file_import();
+
+	void handle_gpro_file_import();
 
 	void handle_mute_map(int);
 	void handle_config_dev(int);

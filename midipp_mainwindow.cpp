@@ -34,6 +34,10 @@
 #include <midipp_spinbox.h>
 #include <midipp_bpm.h>
 #include <midipp_button.h>
+#include <midipp_gpro.h>
+
+#include <fcntl.h>
+#include <stdio.h>
 
 static void MidiEventRxPedal(MppMainWindow *mw, uint8_t val);
 
@@ -159,6 +163,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_midi_file_save_as = new QPushButton(tr("Save As"));
 	but_midi_file_import = new QPushButton(tr("Import"));
 
+	lbl_gpro_title = new QLabel(tr("- GPro -"));
+	but_gpro_file_import = new QPushButton(tr("Import"));
+
 	n = 0;
 
 	tab_file_gl->addWidget(lbl_score_Afile, n, 0, 1, 2, Qt::AlignHCenter|Qt::AlignVCenter);
@@ -187,11 +194,13 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_file_gl->addWidget(scores_main[0]->butScoreFileSaveAs, n, 0, 1, 2);
 	tab_file_gl->addWidget(scores_main[1]->butScoreFileSaveAs, n, 2, 1, 2);
+	tab_file_gl->addWidget(lbl_gpro_title, n, 4, 1, 2, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	n++;
 
 	tab_file_gl->addWidget(scores_main[0]->butScoreFilePrint, n, 0, 1, 2);
 	tab_file_gl->addWidget(scores_main[1]->butScoreFilePrint, n, 2, 1, 2);
+	tab_file_gl->addWidget(but_gpro_file_import, n, 4, 1, 2);
 
 	n++;
 
@@ -697,6 +706,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_midi_file_save_as, SIGNAL(pressed()), this, SLOT(handle_midi_file_save_as()));
 	connect(but_midi_file_import, SIGNAL(pressed()), this, SLOT(handle_midi_file_import()));
 
+	connect(but_gpro_file_import, SIGNAL(pressed()), this, SLOT(handle_gpro_file_import()));
+
 	connect(but_midi_trigger, SIGNAL(pressed()), this, SLOT(handle_midi_trigger()));
 	connect(but_midi_rewind, SIGNAL(pressed()), this, SLOT(handle_rewind()));
 	connect(but_config_apply, SIGNAL(pressed()), this, SLOT(handle_config_apply()));
@@ -1139,7 +1150,7 @@ MppMainWindow :: handle_midi_file_open(int merge)
 {
 	QFileDialog *diag = 
 	  new QFileDialog(this, tr("Select MIDI File"), 
-		QString(), QString("MIDI File (*.mid; *.MID)"));
+		QString(), QString("MIDI File (*.mid *.MID)"));
 	struct umidi20_song *song_copy;
 	struct umidi20_track *track_copy;
 	struct umidi20_event *event;
@@ -1305,7 +1316,7 @@ MppMainWindow :: handle_midi_file_save_as()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(this, tr("Select MIDI File"), 
-		QString(), QString("MIDI File (*.mid; *.MID)"));
+		QString(), QString("MIDI File (*.mid *.MID)"));
 
 	diag->setAcceptMode(QFileDialog::AcceptSave);
 	diag->setFileMode(QFileDialog::AnyFile);
@@ -2533,6 +2544,72 @@ void
 MppMainWindow :: handle_midi_file_import()
 {
 	import_midi_track(track, IMPORT_HAVE_STRING);
+}
+
+void
+MppMainWindow :: handle_gpro_file_import()
+{
+	QFileDialog *diag = 
+	  new QFileDialog(this, tr("Select GPro v3 or v4 File"), 
+		QString(), QString("GPro File (*.gp *.gp3 *.gp4 *.GP *.GP3 *.GP4)"));
+	uint8_t *ptr = NULL;
+	int f = -1;
+	off_t off;
+
+	diag->setAcceptMode(QFileDialog::AcceptOpen);
+	diag->setFileMode(QFileDialog::ExistingFile);
+
+	if (diag->exec()) {
+
+		QString fname(diag->selectedFiles()[0]);
+		const char *filename;
+
+		filename = MppQStringToAscii(fname);
+
+		if (filename != NULL) {
+
+			f = ::open(filename, O_RDONLY);
+			if (f > -1) {
+				lbl_file_status->setText(MppBaseName(fname) +
+				    tr(": GPro file opened"));
+				goto load_file;
+			} else {
+				lbl_file_status->setText(MppBaseName(fname) +
+				    tr(": Could not open GPro file"));
+			}
+		}
+	}
+
+	goto done;
+
+load_file:
+
+	off = ::lseek(f, 0, SEEK_END);
+	if (off <= 0)
+		goto done;
+	if (off > (16 * 1024 * 1024))
+		goto done;
+
+	ptr = (uint8_t *)malloc(off);
+	if (ptr == NULL)
+		goto done;
+
+	if (::lseek(f, 0, SEEK_SET) < 0)
+		goto done;
+
+	if (::read(f, ptr, off) != off)
+		goto done;
+
+	MppGPro(ptr, off);
+
+done:
+
+	if (f > -1)
+		::close(f);
+
+	free(ptr);
+
+	delete diag;
 }
 
 void

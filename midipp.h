@@ -98,6 +98,7 @@ class MppSpinBox;
 class MppPattern;
 class MppBpm;
 class MppButton;
+class MppGPro;
 
 struct MppScoreEntry {
 	uint8_t key;
