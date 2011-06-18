@@ -250,7 +250,7 @@ MppDecode :: MppDecode(QWidget *parent, MppMainWindow *_mw)
 	memset(current_score, 0, sizeof(current_score));
 	memset(auto_base, 0, sizeof(auto_base));
 
-	gl->addWidget(lbl_format, 0,0,1,4, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(lbl_format, 0,0,1,5, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	gl->addWidget(lbl_rol, 2,0,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
 	gl->addWidget(spn_rol, 2,1,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
@@ -258,17 +258,17 @@ MppDecode :: MppDecode(QWidget *parent, MppMainWindow *_mw)
 	gl->addWidget(lbl_base, 2,2,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
 	gl->addWidget(spn_base, 2,3,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
 
-	gl->addWidget(lin_edit, 3,0,1,3, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(lbl_status, 3,3,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(lin_edit, 3,0,1,5);
+	gl->addWidget(lbl_status, 2,4,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
 
-	gl->addWidget(lin_out, 4,0,1,4, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(lin_out, 4,0,1,5);
 
-	gl->addWidget(lbl_auto_base, 5,0,1,2, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(cbx_auto_base, 5,2,1,2, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(lbl_auto_base, 5,0,1,4, Qt::AlignRight|Qt::AlignVCenter);
+	gl->addWidget(cbx_auto_base, 5,4,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	gl->addWidget(but_play, 6, 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(but_ok, 6, 2, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(but_cancel, 6, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(but_ok, 6, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(but_cancel, 6, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	handle_parse();
 }

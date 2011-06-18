@@ -35,6 +35,7 @@
 #include <midipp_bpm.h>
 #include <midipp_button.h>
 #include <midipp_gpro.h>
+#include <midipp_midi.h>
 
 static void MidiEventRxPedal(MppMainWindow *mw, uint8_t val);
 
@@ -2322,7 +2323,7 @@ MppMainWindow :: handle_volume_reset()
 }
 
 int
-MppMainWindow :: convert_midi_duration(struct umidi20_track *im_track, uint32_t thres)
+MppMainWindow :: convert_midi_duration(struct umidi20_track *im_track, uint32_t thres, uint32_t chan_mask)
 {
 	struct umidi20_event *event;
 
@@ -2348,7 +2349,7 @@ MppMainWindow :: convert_midi_duration(struct umidi20_track *im_track, uint32_t 
 
 		if (!(umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL))
 			continue;
-		if (instr[umidi20_event_get_channel(event) & 0xF].muted)
+		if (!(chan_mask & (1 << (umidi20_event_get_channel(event) & 0xF))))
 			continue;
 
 		if (umidi20_event_is_key_start(event)) {
@@ -2420,20 +2421,59 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, int flags)
 	uint32_t max_index;
 	uint32_t x;
 	uint32_t last_u = MPP_MAX_DURATION + 1;
+	uint32_t chan_mask = 0;
+	uint8_t last_chan = 0;
+	uint8_t chan;
 
 	convIndex = 0;
 
 	pthread_mutex_lock(&mtx);
 
+	UMIDI20_QUEUE_FOREACH(event, &(im_track->queue)) {
+
+		if (!(umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL))
+			continue;
+		chan = umidi20_event_get_channel(event) & 0xF;
+
+		chan_mask |= (1 << chan);
+	}
+
+	pthread_mutex_unlock(&mtx);
+
+	if (flags & IMPORT_HAVE_DIALOG) {
+
+		MppMidi *diag;
+
+		diag = new MppMidi(chan_mask);
+
+		if (diag->chan_merge)
+			flags &= ~IMPORT_HAVE_MULTI_CHAN;
+		else
+			flags |= IMPORT_HAVE_MULTI_CHAN;
+
+		if (diag->have_strings)
+			flags |= IMPORT_HAVE_STRING;
+		else
+			flags &= ~IMPORT_HAVE_STRING;
+
+		chan_mask = diag->chan_mask;
+
+		delete diag;
+	}
+
+	pthread_mutex_lock(&mtx);
+
 	umidi20_track_compute_max_min(im_track);
 
-	max_index = convert_midi_duration(im_track, thres);
+	max_index = convert_midi_duration(im_track, thres, chan_mask);
 
 	UMIDI20_QUEUE_FOREACH(event, &(im_track->queue)) {
 
 		if (!(umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL))
 			continue;
-		if (instr[umidi20_event_get_channel(event) & 0xF].muted)
+		chan = umidi20_event_get_channel(event) & 0xF;
+
+		if (!(chan_mask & (1 << chan)))
 			continue;
 
 		while ((convIndex < max_index) &&
@@ -2487,6 +2527,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, int flags)
 			}
 
 			last_u = MPP_MAX_DURATION + 1;
+			last_chan = 0;
 		}
 
 		end = (event->position & 0x3FFFFFFFU) + event->duration;
@@ -2511,6 +2552,14 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, int flags)
 				else
 					end = 0;	/* should not happen */
 
+			}
+
+			if (chan != last_chan) {
+				last_chan = chan;
+				if (flags & IMPORT_HAVE_MULTI_CHAN) {
+					snprintf(buf, sizeof(buf), "T%u ", chan);
+					out_block += buf;
+				}
 			}
 
 			if (x != last_u) {
@@ -2545,7 +2594,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, int flags)
 void
 MppMainWindow :: handle_midi_file_import()
 {
-	import_midi_track(track, IMPORT_HAVE_STRING);
+	import_midi_track(track, IMPORT_HAVE_DIALOG);
 }
 
 void

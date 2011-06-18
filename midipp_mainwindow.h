@@ -72,10 +72,12 @@ public:
 
 	QString get_midi_score_duration();
 	int log_midi_score_duration();
-	int convert_midi_duration(struct umidi20_track *, uint32_t thres);
+	int convert_midi_duration(struct umidi20_track *, uint32_t thres, uint32_t chan_mask);
 	void import_midi_track(struct umidi20_track *, int flags = 0);
 #define	IMPORT_HAVE_STRING 0x01
 #define	IMPORT_HAVE_DURATION 0x02
+#define	IMPORT_HAVE_DIALOG 0x04
+#define	IMPORT_HAVE_MULTI_CHAN 0x08
 
 	void update_play_device_no(void);
 
