@@ -160,7 +160,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_midi_file_save_as = new QPushButton(tr("Save As"));
 	but_midi_file_import = new QPushButton(tr("Import"));
 
-	lbl_gpro_title = new QLabel(tr("- GPro -"));
+	lbl_gpro_title = new QLabel(tr("- GPro v3/4 -"));
 	but_gpro_file_import = new QPushButton(tr("Import"));
 
 	n = 0;

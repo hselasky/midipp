@@ -23,7 +23,12 @@
  * SUCH DAMAGE.
  */
 
-/* GuitarPro format documentation: http://dguitar.sourceforge.net */
+/*
+ * GuitarPro format documentation: http://dguitar.sourceforge.net
+ *
+ * Mauricio Gracia Gutierrez
+ * Matthieu Wipliez
+ */
 
 #include <midipp_gpro.h>
 
@@ -36,27 +41,38 @@
 
 struct gpro_event;
 typedef TAILQ_ENTRY(gpro_event) gpro_event_entry_t;
-typedef TAILQ_HEAD(,gpro_event) gpro_event_head_t;
+typedef TAILQ_HEAD(gpro_event_head,gpro_event) gpro_event_head_t;
 
-#if 1
-#define	DPRINTF(...) do { } while (0)
-#else
+#ifdef HAVE_DEBUG
 #define	DPRINTF(fmt, ...) do { \
 	printf("%s:%d: " fmt, __FUNCTION__, __LINE__,## __VA_ARGS__); \
 } while (0)
+#else
+#define	DPRINTF(...) do { } while (0)
 #endif
+
+struct gpro_measure {
+	gpro_event_head_t head;
+	uint32_t start_time;
+	uint8_t start_repeat;
+	uint8_t end_repeat;
+};
 
 struct gpro_file {
 	gpro_event_head_t head;
-	gpro_event_head_t head_sub;
+	gpro_event_head_t temp;
 	QString *out;
 	const uint8_t *ptr;
 	char *track_str[GPRO_MAX_TRACKS];
+	struct gpro_measure *pmeas;
 	uint32_t rem;
 	uint32_t str_len;
-	uint32_t ticks;
 	uint32_t ticks_sub;
-	uint32_t ticks_max;
+	uint32_t imeas;
+	uint32_t nmeas;
+	uint8_t dur_num;
+	uint8_t dur_div;
+	uint8_t string_max[GPRO_MAX_TRACKS];
 	uint8_t track;
 	uint8_t is_v4;
 	uint8_t track_dump[GPRO_MAX_TRACKS];
@@ -260,6 +276,9 @@ gpro_new_event(gpro_event_head_t *phead, uint32_t time,
 	pev->time = time;
 	pev->dur = dur;
 
+	DPRINTF("key=%s chan=%d time=%d dur=%d\n",
+	    mid_key_str[key & 0x7F], chan, time, dur);
+
 	TAILQ_FOREACH(pin, phead, entry) {
 		if (pin->time > time)
 			break;
@@ -271,12 +290,56 @@ gpro_new_event(gpro_event_head_t *phead, uint32_t time,
 		TAILQ_INSERT_BEFORE(pin, pev, entry);
 }
 
+static void
+gpro_copy_merge_head(gpro_event_head_t *phead1, gpro_event_head_t *phead2, uint32_t time_offset)
+{
+	struct gpro_event *pev;
+	struct gpro_event *pin;
+	struct gpro_event *pxv;
+	struct gpro_event *plv;
+
+	pin = TAILQ_FIRST(phead1);
+	if (pin != NULL) {
+		pev = TAILQ_FIRST(phead2);
+		if (pev != NULL) {
+			plv = TAILQ_LAST(phead1, gpro_event_head);
+			if ((pev->time + time_offset) > plv->time)
+				pin = NULL;
+		}
+	}
+
+	TAILQ_FOREACH(pev, phead2, entry) {
+
+		while ((pin != NULL) && ((pev->time + time_offset) > pin->time))
+			pin = TAILQ_NEXT(pin, entry);
+
+		pxv = (struct gpro_event *)malloc(sizeof(*pxv));
+		if (pxv == NULL)
+			continue;
+
+		pxv->key = pev->key;
+		pxv->chan = pev->chan;
+		pxv->time = pev->time + time_offset;
+		pxv->dur = pev->dur;
+
+		if (pin == NULL)
+			TAILQ_INSERT_TAIL(phead1, pxv, entry);
+		else
+			TAILQ_INSERT_BEFORE(pin, pxv, entry);
+	}
+}
+
 static uint32_t
 gpro_event_duration(struct gpro_file *pgf, struct gpro_event *pev)
 {
 	uint32_t tim = pev->time;
 	uint32_t end = tim + pev->dur;
 	uint32_t dur = 1;
+	uint8_t chan;
+	uint8_t key;
+
+	chan = pev->chan;
+	key = pev->key;
 
 	while ((pev = TAILQ_NEXT(pev, entry))) {
 
@@ -285,6 +348,8 @@ gpro_event_duration(struct gpro_file *pgf, struct gpro_event *pev)
 		if (pgf->track_dump[pev->chan] == 0)
 			continue;
 		if (pev->time > end)
+			break;
+		if (pev->chan == chan && pev->key == key)
 			break;
 		if (pev->time != tim) {
 			tim = pev->time;
@@ -369,7 +434,7 @@ gpro_get_chord_diagram(struct gpro_file *pgf)
 			gpro_get_1(pgf);
 
 			/* base fret */
-			gpro_get_4(pgf);
+			base = gpro_get_4(pgf);
 
 			/* frets */
 			for (x = 0; x != 7; x++)
@@ -440,10 +505,10 @@ gpro_get_chord_diagram(struct gpro_file *pgf)
 			gpro_pad_string(pgf, 34);
 
 			/* base fret */
-			gpro_get_4(pgf);
+			base = gpro_get_4(pgf);
 
+			/* frets */
 			for (x = 0; x != 6; x++) {
-				/* read fret */
 				gpro_get_4(pgf);
 			}
 
@@ -540,10 +605,10 @@ gpro_get_beat_effect_v4(struct gpro_file *pgf)
 	uint8_t hdr1;
 	uint8_t hdr2;
 
-	DPRINTF("\n");
-
 	hdr1 = gpro_get_1(pgf);
 	hdr2 = gpro_get_1(pgf);
+
+	DPRINTF("hdr1 = 0x%x hdr2 = 0x%x\n", hdr1, hdr2);
 
 	/* tapping/slapping/popping */
 	if (hdr1 & (1 << 5)) {
@@ -606,32 +671,35 @@ gpro_get_grace(struct gpro_file *pgf)
 	gpro_get_1(pgf);
 }
 
-static void
+static uint8_t
 gpro_get_note_effect_v3(struct gpro_file *pgf)
 {
 	uint8_t hdr;
 
-	DPRINTF("\n");
-
 	hdr = gpro_get_1(pgf);
+
+	DPRINTF("hdr=0x%x\n", hdr);
 
 	if (hdr & (1 << 0))
 		gpro_get_bend(pgf);
 
 	if (hdr & (1 << 4))
 		gpro_get_grace(pgf);
+
+	return ((hdr & 0x08) ? 2 : 0);
 }
 
-static void
+static uint8_t
 gpro_get_note_effect_v4(struct gpro_file *pgf)
 {
 	uint8_t hdr1;
 	uint8_t hdr2;
-
-	DPRINTF("\n");
+	uint8_t flags = 0;
 
 	hdr1 = gpro_get_1(pgf);
 	hdr2 = gpro_get_1(pgf);
+
+	DPRINTF("hdr1=0x%x hdr2=0x%x\n", hdr1, hdr2);
 
 	if (hdr1 & (1 << 0))
 		gpro_get_bend(pgf);
@@ -656,6 +724,11 @@ gpro_get_note_effect_v4(struct gpro_file *pgf)
 		gpro_get_1(pgf);
 		gpro_get_1(pgf);
 	}
+
+	if (hdr1 & (1 << 5))
+		flags |= 2;
+
+	return (flags);
 }
 
 static uint32_t
@@ -664,29 +737,38 @@ gpro_get_note(struct gpro_file *pgf)
 	uint8_t hdr;
 	uint8_t fret = 0;
 	uint8_t dur;
+	uint8_t ntup;
+	uint8_t flags;
+	uint8_t type = 0;
 
 	hdr = gpro_get_1(pgf);
 
-	DPRINTF("hdr = 0x%x\n", hdr);
+	flags = (hdr & (1 << 1)) ? 1 : 0;
 
 	/* note type */
-	if (hdr & (1 << 5))
-		gpro_get_1(pgf);
+	if (hdr & (1 << 5)) {
+		type = gpro_get_1(pgf);
+
+		/* check for tie note */
+		if (type == 0x02)
+			flags |= 4;
+	}
+
+	DPRINTF("hdr = 0x%x type = 0x%x\n", hdr, type);
 
 	/* duration */
 	if (hdr & (1 << 0)) {
 		dur = gpro_get_1(pgf);
-		gpro_get_1(pgf);
+		ntup = gpro_get_1(pgf);
+		DPRINTF("dur = %d, ntup = %d\n", dur, ntup);
 	} else {
 		dur = 0x80;
+		ntup = 0;
 	}
-
-	DPRINTF("dur=%d\n", dur);
 
 	/* note dynamic */
-	if (hdr & (1 << 4)) {
+	if (hdr & (1 << 4))
 		gpro_get_1(pgf);
-	}
 
 	/* fret number */
 	if (hdr & (1 << 5)) {
@@ -703,33 +785,53 @@ gpro_get_note(struct gpro_file *pgf)
 	/* effect on note */
 	if (hdr & (1 << 3)) {
 		if (pgf->is_v4)
-			gpro_get_note_effect_v4(pgf);
+			flags |= gpro_get_note_effect_v4(pgf);
 		else
-			gpro_get_note_effect_v3(pgf);
+			flags |= gpro_get_note_effect_v3(pgf);
 	}
-	return (fret | (dur << 8));
+	return (fret | (dur << 8) | (ntup << 16) | (flags << 24));
 }
 
 static void
 gpro_get_measure(struct gpro_file *pgf)
 {
 	uint8_t hdr;
+	uint8_t x;
+
+	memset(&pgf->pmeas[pgf->imeas], 0, sizeof(pgf->pmeas[0]));
+
+	TAILQ_INIT(&pgf->pmeas[pgf->imeas].head);
 
 	hdr = gpro_get_1(pgf);
 
 	DPRINTF("hdr = 0x%x\n", hdr);
 
+	/* start of repeat */
+	if (hdr & (1 << 2)) {
+		DPRINTF("Start repeat\n");
+		pgf->pmeas[pgf->imeas].start_repeat = 1;
+	}
+
 	/* numerator key signature */
-	if (hdr & (1 << 0))
-		gpro_get_1(pgf);
+	if (hdr & (1 << 0)) {
+		x = gpro_get_1(pgf);
+		DPRINTF("Num = %d\n", x);
+		pgf->dur_num = x;
+	}
 
 	/* denominator key signature */
-	if (hdr & (1 << 1))
-		gpro_get_1(pgf);
+	if (hdr & (1 << 1)) {
+		x = gpro_get_1(pgf);
+		DPRINTF("DeNum = %d\n", x);
+		pgf->dur_div = x;
+	}
 
 	/* end of repeat */
-	if (hdr & (1 << 3))
-		gpro_get_1(pgf);
+	if (hdr & (1 << 3)) {
+		x = gpro_get_1(pgf);
+		DPRINTF("End repeat %d\n", x);
+		pgf->pmeas[pgf->imeas].end_repeat = x;
+	}
 
 	/* number of alternate ending */
 	if (hdr & (1 << 4))
@@ -752,13 +854,16 @@ gpro_get_beat(struct gpro_file *pgf)
 	char *ptr;
 	uint32_t beat_dur;
 	uint32_t note_dur;
-	uint32_t tuplet;
+	uint32_t beat_tup;
+	uint32_t note_tup;
+	uint8_t note_key;
 	uint8_t hdr;
 	uint8_t str;
 	uint8_t n;
 	uint8_t dur;
 	uint8_t dotted;
 	uint8_t status;
+	uint8_t smax;
 
 	hdr = gpro_get_1(pgf);	/* header */
 
@@ -782,13 +887,13 @@ gpro_get_beat(struct gpro_file *pgf)
 
 	/* get ntuplet */
 	if (hdr & (1 << 5)) {
-		tuplet = gpro_get_4(pgf);
+		beat_tup = gpro_get_4(pgf);
 	} else {
-		tuplet = 0;
+		beat_tup = 0;
 	}
 
-	DPRINTF("dur = %d, dotted = %d, tuplet = %d\n",
-	    dur, dotted, tuplet);
+	DPRINTF("dur = %d, dotted = %d, tuplet = %d, status = %d\n",
+	    dur, dotted, beat_tup, status);
 
 	/* get chord diagram */
 	if (hdr & (1 << 1))
@@ -813,34 +918,61 @@ gpro_get_beat(struct gpro_file *pgf)
 	/* strings played */
 	str = ~gpro_get_1(pgf);
 
-	DPRINTF("str = 0x%x\n", str);
+	DPRINTF("str = 0x%x\n", 0xFF ^ str);
 
 	/* convert beat duration */
 	beat_dur = gpro_duration_to_ticks(dur);
 
-	for (n = 0; n != 7; n++) {
+	/* maximum number of strings */
+	smax = pgf->string_max[pgf->track];
 
-		uint32_t info;
+	/* check for dotted */
+	if (dotted)
+		beat_dur += beat_dur >> 1;
+
+	/* check for tuplet */
+	if (beat_tup != 0) {
+		uint32_t msb = beat_tup;
+
+		/* compute msb */
+		while (msb != ((-msb) & msb))
+			msb &= msb - 1;
+
+		/* scale */
+		beat_dur *= msb;
+		beat_dur /= beat_tup;
+	}
+
+	for (n = 1; n != 7; n++) {
+
+		uint32_t flags;
 
 		if (str & (1 << n))
 			continue;
 
-		info = gpro_get_note(pgf);
+		flags = gpro_get_note(pgf);
 
-		if ((info & 0xff00) == 0x8000) {
+		if (n > smax)
+			continue;
+
+		if (flags & (1U << 25)) {
+			/* ring */
+			note_dur = -1U;
+		} else if ((flags & 0xff00) == 0x8000) {
 			/* use beat duration */
-			note_dur = gpro_duration_to_ticks(dur) - 1;
+			note_dur = beat_dur - 1;
 		} else {
 			/* use note duration */
-			note_dur = gpro_duration_to_ticks((info >> 8) & 0xFF);
+			note_dur = gpro_duration_to_ticks((flags >> 8) & 0xFF);
+			note_tup = (flags >> 16) & 0xFF;
 
 			/* check for dotted */
-			if (dotted)
+			if (flags & (1U << 24))
 				note_dur += note_dur >> 1;
 
 			/* check for tuplet */
-			if (tuplet != 0) {
-				uint32_t msb = tuplet;
+			if (note_tup != 0) {
+				uint32_t msb = note_tup;
 
 				/* compute msb */
 				while (msb != ((-msb) & msb))
@@ -848,24 +980,41 @@ gpro_get_beat(struct gpro_file *pgf)
 
 				/* scale */
 				note_dur *= msb;
-				note_dur /= tuplet;
+				note_dur /= note_tup;
 			}
 
 			note_dur -= 1;
 		}
 
-		if (status == 0x00 || /* empty beat */
-		    status == 0x02 /* rest beat */)
-			continue;
+		/* get key */
+		note_key = (flags & 0xFF) + pgf->capo[pgf->track] +
+		    pgf->tuning[pgf->track][smax - n];
 
-		/* check that the notes doesn't endure the beat */
-		if (note_dur >= beat_dur)
-			note_dur = beat_dur - 1;
+		/* special grip */
+		if (0 && (n == 5)) {
+			DPRINTF("Special\n");
+			note_key --;
+		}
+
+		/* check for tie to previous measure */
+		if ((flags & (1U << 26)) && (pgf->imeas != 0)) {
+			struct gpro_event *pev;
+			struct gpro_event *pev_last = NULL;
+
+			TAILQ_FOREACH(pev, &pgf->pmeas[pgf->imeas - 1].head, entry) {
+				if (pev->key == note_key && pev->chan == pgf->track) {
+					pev_last = pev;
+				}
+			}
+			if (pev_last != NULL) {
+			    pev_last->dur += note_dur + 1;
+			    continue;
+			}
+		}
 
 		/* insert note into list of notes */
-		gpro_new_event(&pgf->head_sub, pgf->ticks + pgf->ticks_sub,
-		    note_dur, (info & 0xFF) + pgf->capo[pgf->track] +
-		    pgf->tuning[pgf->track][6 - n], pgf->track);
+		gpro_new_event(&pgf->pmeas[pgf->imeas].head, pgf->ticks_sub,
+		    note_dur, note_key, pgf->track);
 	}
 
 	pgf->ticks_sub += beat_dur;
@@ -874,7 +1023,12 @@ gpro_get_beat(struct gpro_file *pgf)
 static void
 gpro_get_midi_info(struct gpro_file *pgf)
 {
-	gpro_get_4(pgf);	/* instrument */
+	uint32_t x;
+	x = gpro_get_4(pgf);	/* instrument */
+
+	if (x)
+		DPRINTF("Instrument: 0x%08x\n", x);
+
 	gpro_get_1(pgf);	/* volume */
 	gpro_get_1(pgf);	/* balance */
 	gpro_get_1(pgf);	/* chorus */
@@ -911,6 +1065,11 @@ gpro_get_track(struct gpro_file *pgf)
 
 	/* number of strings */
 	x = gpro_get_4(pgf);
+
+	if (x > 7)
+		x = 7;
+
+	pgf->string_max[pgf->track] = x;
 
 	DPRINTF("Number of strings %d\n", x);
 
@@ -971,6 +1130,10 @@ gpro_dump_events(struct gpro_file *pgf, QString &out, uint8_t single_track)
 			chan_last = 0;
 			dur_last = -1U;
 			out += "\n";
+#ifdef HAVE_DEBUG
+			snprintf(buf, sizeof(buf), "/* %d */ ", pev->time);
+			out += buf;
+#endif
 		}
 
 		if (pev->chan != chan_last) {
@@ -1005,14 +1168,19 @@ gpro_parse(struct gpro_file *pgf, QString *out)
 	uint32_t value;
 	uint32_t nbeat;
 	uint32_t nscore;
+	uint32_t y_repeat;
 	uint32_t x;
 	uint32_t y;
 	uint32_t z;
+	uint32_t acc_time;
 
 	pgf->out = out;
 
+	pgf->pmeas = 0;
+	pgf->nmeas = 0;
+
 	TAILQ_INIT(&pgf->head);
-	TAILQ_INIT(&pgf->head_sub);
+	TAILQ_INIT(&pgf->temp);
 
 	memset(pgf->track_str, 0, sizeof(pgf->track_str));
 	memset(pgf->track_dump, 0, sizeof(pgf->track_dump));
@@ -1175,12 +1343,37 @@ gpro_parse(struct gpro_file *pgf, QString *out)
 
 	DPRINTF("nmeas = %d, ntrack = %d\n", nmeas, ntrack);
 
-	for (x = 0; (x != nmeas) && (gpro_eof(pgf) == 0); x++) {
+	if (nmeas > (1024 * 1024))
+		return;
+
+	pgf->nmeas = nmeas;
+	pgf->pmeas = (struct gpro_measure *)malloc(sizeof(pgf->pmeas[0]) * nmeas);
+
+	if (pgf->pmeas == 0)
+		return;
+
+	/* compute ticks */
+
+	for (acc_time = x = 0; (x != nmeas); x++) {
+
+		pgf->imeas = x;
+
 		gpro_get_measure(pgf);
+
+		pgf->pmeas[pgf->imeas].start_time = acc_time;
+
+		if (pgf->dur_num == 0)
+			pgf->dur_num = 1;
+
+		if (pgf->dur_div == 0)
+			pgf->dur_div = 1;
+
+		acc_time += (((uint32_t)pgf->dur_num * GPRO_HZ) / (uint32_t)pgf->dur_div);
 	}
 
 	memset(pgf->capo, 0, sizeof(pgf->capo));
 	memset(pgf->tuning, 0, sizeof(pgf->tuning));
+	memset(pgf->string_max, 0, sizeof(pgf->string_max));
 
 	for (x = 0; (x != ntrack) && (gpro_eof(pgf) == 0); x++) {
 
@@ -1189,11 +1382,11 @@ gpro_parse(struct gpro_file *pgf, QString *out)
 		gpro_get_track(pgf);
 	}
 
-	pgf->ticks = 0;
-	
 	for (y = 0; (y != nmeas) && (gpro_eof(pgf) == 0); y++) {
 
-		pgf->ticks_max = 0;
+		struct gpro_event *pev;
+
+		pgf->imeas = y;
 
 		for (x = 0; (x != ntrack) && (gpro_eof(pgf) == 0); x++) {
 
@@ -1204,17 +1397,59 @@ gpro_parse(struct gpro_file *pgf, QString *out)
 
 			DPRINTF("nbeat = %d\n", nbeat);
 
-			for (z = 0; (z != nbeat) && (gpro_eof(pgf) == 0); z++) {
+			for (z = 0; (z != nbeat) && (gpro_eof(pgf) == 0); z++)
 				gpro_get_beat(pgf);
+
+			/* fixup all ringing strings */
+			TAILQ_FOREACH(pev, &pgf->pmeas[pgf->imeas].head, entry) {
+				if ((pev->dur == (uint32_t)-1) && (pev->chan == x)) {
+					pev->dur = pgf->ticks_sub - 1;
+				}
+			}
+		}
+	}
+
+	/* resolve repeat */
+
+	acc_time = 0;
+
+	for (y_repeat = y = 0; y != nmeas; y++) {
+
+		if (pgf->pmeas[y].start_repeat || pgf->pmeas[y].end_repeat) {
+
+			uint32_t n_repeat;
+
+			if (pgf->pmeas[y].end_repeat) {
+				/* end is inclusive */
+				n_repeat = pgf->pmeas[y].end_repeat + 1U;
+				y++;
+			} else {
+				/* start is inclusive */
+				n_repeat = 1U;
 			}
 
-			if (pgf->ticks_max < pgf->ticks_sub)
-				pgf->ticks_max = pgf->ticks_sub;
+			value = (pgf->pmeas[y].start_time - pgf->pmeas[y_repeat].start_time);
+
+			for (x = 0; x != n_repeat; x++) {
+				for (z = y_repeat; z != y; z++) {
+					gpro_copy_merge_head(&pgf->temp, &pgf->pmeas[z].head,
+					    (x * value) + pgf->pmeas[z].start_time + acc_time);
+				}
+			}
+
+			gpro_copy_merge_head(&pgf->head, &pgf->temp, 0);
+			gpro_clean_events(&pgf->temp);
+
+			acc_time += value * (n_repeat - 1);
+			y_repeat = y;
 		}
+	}
 
-		pgf->ticks += pgf->ticks_max;
+	/* resolve the remainder of the measures */
 
-		TAILQ_CONCAT(&pgf->head, &pgf->head_sub, entry);
+	for (z = y_repeat; z != nmeas; z++) {
+		gpro_copy_merge_head(&pgf->head, &pgf->pmeas[z].head,
+		    pgf->pmeas[z].start_time + acc_time);
 	}
 
 	if (gpro_eof(pgf) == 0) {
@@ -1228,6 +1463,12 @@ gpro_cleanup(struct gpro_file *pgf)
 	uint32_t x;
 
 	gpro_clean_events(&pgf->head);
+	gpro_clean_events(&pgf->temp);
+
+	for (x = 0; x != pgf->nmeas; x++)
+		gpro_clean_events(&pgf->pmeas[x].head);
+
+	free(pgf->pmeas);
 
 	for (x = 0; x != GPRO_MAX_TRACKS; x++) {
 		free(pgf->track_str[x]);
