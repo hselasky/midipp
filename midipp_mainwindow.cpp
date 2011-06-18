@@ -2555,6 +2555,8 @@ MppMainWindow :: handle_gpro_file_import()
 	uint8_t *ptr = NULL;
 	int f = -1;
 	off_t off;
+	MppGPro *gpro;
+	QTextCursor *cursor;
 
 	diag->setAcceptMode(QFileDialog::AcceptOpen);
 	diag->setFileMode(QFileDialog::ExistingFile);
@@ -2600,8 +2602,17 @@ load_file:
 	if (::read(f, ptr, off) != off)
 		goto done;
 
-	MppGPro(ptr, off);
+	gpro = new MppGPro(ptr, off);
 
+	cursor = new QTextCursor(currScoreMain->editWidget->textCursor());
+	cursor->beginEditBlock();
+	cursor->insertText(gpro->output);
+	cursor->endEditBlock();
+
+	delete gpro;
+	delete cursor;
+
+	handle_compile();
 done:
 
 	if (f > -1)

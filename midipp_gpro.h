@@ -28,7 +28,8 @@
 
 #include <midipp.h>
 
-#define	GPRO_HZ 1024
+#define	GPRO_LHZ 10
+#define	GPRO_HZ (1U << GPRO_LHZ)
 #define	GPRO_MAX_DURATION 255
 #define	GPRO_MAX_TRACKS 16
 
@@ -40,12 +41,17 @@ public:
 	MppGPro(const uint8_t *, uint32_t);
 	~MppGPro();
 
+	QString output;
+
+private:
 	QGridLayout *gl;
 
 	QLabel *lbl_import;
 	QLabel *lbl_info[GPRO_MAX_TRACKS];
+	QLabel *lbl_single_track;
 
 	QCheckBox *cbx_import[GPRO_MAX_TRACKS];
+	QCheckBox *cbx_single_track;
 
 	QPushButton *but_done;
 

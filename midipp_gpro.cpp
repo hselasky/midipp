@@ -38,7 +38,7 @@ struct gpro_event;
 typedef TAILQ_ENTRY(gpro_event) gpro_event_entry_t;
 typedef TAILQ_HEAD(,gpro_event) gpro_event_head_t;
 
-#if 0
+#if 1
 #define	DPRINTF(...) do { } while (0)
 #else
 #define	DPRINTF(fmt, ...) do { \
@@ -47,17 +47,21 @@ typedef TAILQ_HEAD(,gpro_event) gpro_event_head_t;
 #endif
 
 struct gpro_file {
+	gpro_event_head_t head;
+	gpro_event_head_t head_sub;
+	QString *out;
 	const uint8_t *ptr;
 	char *track_str[GPRO_MAX_TRACKS];
 	uint32_t rem;
 	uint32_t str_len;
-	uint32_t ticks[GPRO_MAX_TRACKS];
-	uint32_t capo[GPRO_MAX_TRACKS];
-	uint32_t tuning[GPRO_MAX_TRACKS][8];
-	gpro_event_head_t head;
+	uint32_t ticks;
+	uint32_t ticks_sub;
+	uint32_t ticks_max;
 	uint8_t track;
 	uint8_t is_v4;
 	uint8_t track_dump[GPRO_MAX_TRACKS];
+	uint8_t capo[GPRO_MAX_TRACKS];
+	uint8_t tuning[GPRO_MAX_TRACKS][8];
 };
 
 struct gpro_event {
@@ -73,7 +77,7 @@ gpro_duration_to_ticks(uint8_t dur)
 {
 	dur += 2;
 
-	if (dur <= 10)
+	if (dur < GPRO_LHZ)
 		return (GPRO_HZ >> dur);
 	else
 		return (1);
@@ -270,8 +274,6 @@ gpro_new_event(gpro_event_head_t *phead, uint32_t time,
 static uint32_t
 gpro_event_duration(struct gpro_file *pgf, struct gpro_event *pev)
 {
-  return (1);
-
 	uint32_t tim = pev->time;
 	uint32_t end = tim + pev->dur;
 	uint32_t dur = 1;
@@ -282,10 +284,9 @@ gpro_event_duration(struct gpro_file *pgf, struct gpro_event *pev)
 			continue;
 		if (pgf->track_dump[pev->chan] == 0)
 			continue;
+		if (pev->time > end)
+			break;
 		if (pev->time != tim) {
-			if (pev->time >= end)
-				break;
-
 			tim = pev->time;
 			dur++;
 			if (dur == GPRO_MAX_DURATION)
@@ -662,7 +663,7 @@ gpro_get_note(struct gpro_file *pgf)
 {
 	uint8_t hdr;
 	uint8_t fret = 0;
-	uint8_t dur = 0;
+	uint8_t dur;
 
 	hdr = gpro_get_1(pgf);
 
@@ -675,9 +676,12 @@ gpro_get_note(struct gpro_file *pgf)
 	/* duration */
 	if (hdr & (1 << 0)) {
 		dur = gpro_get_1(pgf);
-		DPRINTF("dur=%d\n", dur);
 		gpro_get_1(pgf);
+	} else {
+		dur = 0x80;
 	}
+
+	DPRINTF("dur=%d\n", dur);
 
 	/* note dynamic */
 	if (hdr & (1 << 4)) {
@@ -746,10 +750,15 @@ static void
 gpro_get_beat(struct gpro_file *pgf)
 {
 	char *ptr;
+	uint32_t beat_dur;
+	uint32_t note_dur;
+	uint32_t tuplet;
 	uint8_t hdr;
 	uint8_t str;
 	uint8_t n;
 	uint8_t dur;
+	uint8_t dotted;
+	uint8_t status;
 
 	hdr = gpro_get_1(pgf);	/* header */
 
@@ -759,22 +768,31 @@ gpro_get_beat(struct gpro_file *pgf)
 		hdr &= 0x3f;
 
 	/* beat status */
-	if (hdr & (1 << 6))
-		gpro_get_1(pgf);
+	if (hdr & (1 << 6)) {
+		status = gpro_get_1(pgf);
+	} else {
+		status = 255;
+	}
 
 	/* beat duration */
 	dur = gpro_get_1(pgf);
 
-	DPRINTF("dur = %d\n", dur);
+	/* dotted notes */
+	dotted = (hdr & (1 << 0)) ? 1 : 0;
 
+	/* get ntuplet */
 	if (hdr & (1 << 5)) {
-		/* N-tuplet */
-		gpro_get_4(pgf);
+		tuplet = gpro_get_4(pgf);
+	} else {
+		tuplet = 0;
 	}
 
-	if (hdr & (1 << 1)) {
+	DPRINTF("dur = %d, dotted = %d, tuplet = %d\n",
+	    dur, dotted, tuplet);
+
+	/* get chord diagram */
+	if (hdr & (1 << 1))
 		gpro_get_chord_diagram(pgf);
-	}
 
 	if (hdr & (1 << 2)) {
 		/* text */
@@ -793,25 +811,64 @@ gpro_get_beat(struct gpro_file *pgf)
 		gpro_get_mix_table(pgf);
 
 	/* strings played */
-	str = gpro_get_1(pgf);
+	str = ~gpro_get_1(pgf);
 
 	DPRINTF("str = 0x%x\n", str);
+
+	/* convert beat duration */
+	beat_dur = gpro_duration_to_ticks(dur);
 
 	for (n = 0; n != 7; n++) {
 
 		uint32_t info;
 
-		if (str & (1 << n)) {
-			info = gpro_get_note(pgf);
+		if (str & (1 << n))
+			continue;
 
-			gpro_new_event(&pgf->head, pgf->ticks[pgf->track],
-			    gpro_duration_to_ticks((info >> 8) & 0xFF),
-			    (info & 0xFF) + pgf->capo[pgf->track] +
-			    pgf->tuning[pgf->track][6 - n], pgf->track);
+		info = gpro_get_note(pgf);
+
+		if ((info & 0xff00) == 0x8000) {
+			/* use beat duration */
+			note_dur = gpro_duration_to_ticks(dur) - 1;
+		} else {
+			/* use note duration */
+			note_dur = gpro_duration_to_ticks((info >> 8) & 0xFF);
+
+			/* check for dotted */
+			if (dotted)
+				note_dur += note_dur >> 1;
+
+			/* check for tuplet */
+			if (tuplet != 0) {
+				uint32_t msb = tuplet;
+
+				/* compute msb */
+				while (msb != ((-msb) & msb))
+					msb &= msb - 1;
+
+				/* scale */
+				note_dur *= msb;
+				note_dur /= tuplet;
+			}
+
+			note_dur -= 1;
 		}
+
+		if (status == 0x00 || /* empty beat */
+		    status == 0x02 /* rest beat */)
+			continue;
+
+		/* check that the notes doesn't endure the beat */
+		if (note_dur >= beat_dur)
+			note_dur = beat_dur - 1;
+
+		/* insert note into list of notes */
+		gpro_new_event(&pgf->head_sub, pgf->ticks + pgf->ticks_sub,
+		    note_dur, (info & 0xFF) + pgf->capo[pgf->track] +
+		    pgf->tuning[pgf->track][6 - n], pgf->track);
 	}
 
-	pgf->ticks[pgf->track] += gpro_duration_to_ticks(dur);
+	pgf->ticks_sub += beat_dur;
 }
 
 static void
@@ -887,9 +944,10 @@ gpro_get_track(struct gpro_file *pgf)
 }
 
 static void
-gpro_dump_events(struct gpro_file *pgf)
+gpro_dump_events(struct gpro_file *pgf, QString &out, uint8_t single_track)
 {
 	struct gpro_event *pev;
+	char buf[64];
 	uint32_t chan_last = 0;
 	uint32_t dur_last = -1U;
 	uint32_t dur;
@@ -912,29 +970,34 @@ gpro_dump_events(struct gpro_file *pgf)
 			time_last = pev->time;
 			chan_last = 0;
 			dur_last = -1U;
-			printf("\n");
+			out += "\n";
 		}
 
 		if (pev->chan != chan_last) {
 			chan_last = pev->chan;
-			printf("T%u ", chan_last);
+			if (single_track == 0) {
+				snprintf(buf, sizeof(buf), "T%u ", chan_last);
+				out += buf;
+			}
 		}
 
 		dur = gpro_event_duration(pgf, pev);
 
 		if (dur != dur_last) {
 			dur_last = dur;
-			printf("U%u ", dur_last);
+			snprintf(buf, sizeof(buf), "U%u ", dur_last);
+			out += buf;
 		}
 
-		printf("%s ", mid_key_str[pev->key & 0x7F]);
+		out += mid_key_str[pev->key & 0x7F];
+		out += " ";
 	}
 
-	printf("\n");
+	out += "\n";
 }
 
 static void
-gpro_parse(struct gpro_file *pgf)
+gpro_parse(struct gpro_file *pgf, QString *out)
 {
 	char *ptr;
 	uint32_t nmeas;
@@ -946,7 +1009,10 @@ gpro_parse(struct gpro_file *pgf)
 	uint32_t y;
 	uint32_t z;
 
+	pgf->out = out;
+
 	TAILQ_INIT(&pgf->head);
+	TAILQ_INIT(&pgf->head_sub);
 
 	memset(pgf->track_str, 0, sizeof(pgf->track_str));
 	memset(pgf->track_dump, 0, sizeof(pgf->track_dump));
@@ -974,34 +1040,74 @@ gpro_parse(struct gpro_file *pgf)
 
 	/* title */
 	ptr = gpro_get_string_4_wrap(pgf);
+	if (out && ptr && ptr[0]) {
+		*out += "/* Title: ";
+		*out += ptr;
+		*out += " */\n";
+	}
 	free(ptr);
 
 	/* subtitle */
 	ptr = gpro_get_string_4_wrap(pgf);
+	if (out && ptr && ptr[0]) {
+		*out += "/* Subtitle: ";
+		*out += ptr;
+		*out += " */\n";
+	}
 	free(ptr);
 
 	/* interpret */
 	ptr = gpro_get_string_4_wrap(pgf);
+	if (out && ptr && ptr[0]) {
+		*out += "/* Interpret: ";
+		*out += ptr;
+		*out += " */\n";
+	}
 	free(ptr);
 
 	/* album */
 	ptr = gpro_get_string_4_wrap(pgf);
+	if (out && ptr && ptr[0]) {
+		*out += "/* Album: ";
+		*out += ptr;
+		*out += " */\n";
+	}
 	free(ptr);
 
 	/* author of the song */
 	ptr = gpro_get_string_4_wrap(pgf);
+	if (out && ptr && ptr[0]) {
+		*out += "/* Song author: ";
+		*out += ptr;
+		*out += " */\n";
+	}
 	free(ptr);
 
 	/* copyright */
 	ptr = gpro_get_string_4_wrap(pgf);
+	if (out && ptr && ptr[0]) {
+		*out += "/* Copyright: ";
+		*out += ptr;
+		*out += " */\n";
+	}
 	free(ptr);
 
 	/* author of the tablature */
 	ptr = gpro_get_string_4_wrap(pgf);
+	if (out && ptr && ptr[0]) {
+		*out += "/* Author of tablature: ";
+		*out += ptr;
+		*out += " */\n";
+	}
 	free(ptr);
 
 	/* instructional */
 	ptr = gpro_get_string_4_wrap(pgf);
+	if (out && ptr && ptr[0]) {
+		*out += "/* Instructional: ";
+		*out += ptr;
+		*out += " */\n";
+	}
 	free(ptr);
 
 	nscore = gpro_get_4(pgf);
@@ -1018,14 +1124,25 @@ gpro_parse(struct gpro_file *pgf)
 	if (pgf->is_v4) {
 
 		/* lyrics */
-		gpro_get_4(pgf);
+		x = gpro_get_4(pgf);
+
+		DPRINTF("Lyrics measure = %d\n", x);
+
+		*out += "/* Lyrics: \n\n";
 
 		for (x = 0; x != 5; x++) {
 			gpro_get_4(pgf);
 			ptr = gpro_get_string_4(pgf);
+
+			*out += ptr;
+
 			free(ptr);
 		}
+
+		*out += "\n*/\n";
 	}
+
+	*out += "\nL0:\n";
 
 	/* tempo */
 	value = gpro_get_4(pgf);
@@ -1072,13 +1189,16 @@ gpro_parse(struct gpro_file *pgf)
 		gpro_get_track(pgf);
 	}
 
-	memset(pgf->ticks, 0, sizeof(pgf->ticks));
+	pgf->ticks = 0;
 	
 	for (y = 0; (y != nmeas) && (gpro_eof(pgf) == 0); y++) {
+
+		pgf->ticks_max = 0;
 
 		for (x = 0; (x != ntrack) && (gpro_eof(pgf) == 0); x++) {
 
 			pgf->track = x;
+			pgf->ticks_sub = 0;
 
 			nbeat = gpro_get_4(pgf);
 
@@ -1087,7 +1207,14 @@ gpro_parse(struct gpro_file *pgf)
 			for (z = 0; (z != nbeat) && (gpro_eof(pgf) == 0); z++) {
 				gpro_get_beat(pgf);
 			}
+
+			if (pgf->ticks_max < pgf->ticks_sub)
+				pgf->ticks_max = pgf->ticks_sub;
 		}
+
+		pgf->ticks += pgf->ticks_max;
+
+		TAILQ_CONCAT(&pgf->head, &pgf->head_sub, entry);
 	}
 
 	if (gpro_eof(pgf) == 0) {
@@ -1127,11 +1254,18 @@ MppGPro :: MppGPro(const uint8_t *ptr, uint32_t len)
 	but_done = new QPushButton(tr("Done"));
 	connect(but_done, SIGNAL(released()), this, SLOT(handle_done()));
 
-	gl->addWidget(lbl_import,0,1,1,1);
+	y = 0;
 
-	gpro_parse(&gpf);
+	gl->addWidget(lbl_import,y,1,1,1);
 
-	for (x = y = 0; x != GPRO_MAX_TRACKS; x++) {
+	y++;
+
+	gpro_parse(&gpf, &output);
+
+	cbx_single_track = new QCheckBox();
+	lbl_single_track = new QLabel(tr("Output like single track"));
+
+	for (x = 0; x != GPRO_MAX_TRACKS; x++) {
 		if (gpf.track_str[x] != 0) {
 			snprintf(line_buf, sizeof(line_buf),
 			    "Track%d: %s", (int)x, gpf.track_str[x]);
@@ -1141,14 +1275,19 @@ MppGPro :: MppGPro(const uint8_t *ptr, uint32_t len)
 
 			lbl_info[x] = new QLabel(tr(line_buf));
 
-			gl->addWidget(cbx_import[x],y+1,1,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
-			gl->addWidget(lbl_info[x],y+1,0,1,1);
+			gl->addWidget(cbx_import[x],y,1,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
+			gl->addWidget(lbl_info[x],y,0,1,1);
 
 			y++;
 		}
 	}
 
-	gl->addWidget(but_done,y+1,1,1,1);
+	gl->addWidget(cbx_single_track,y,1,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(lbl_single_track,y,0,1,1);
+
+	y++;
+
+	gl->addWidget(but_done,y,1,1,1);
 
 	exec();
 
@@ -1160,7 +1299,7 @@ MppGPro :: MppGPro(const uint8_t *ptr, uint32_t len)
 		}
 	}
 
-	gpro_dump_events(&gpf);
+	gpro_dump_events(&gpf, output, cbx_single_track->isChecked());
 
 	gpro_cleanup(&gpf);
 }
