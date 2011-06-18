@@ -1354,7 +1354,7 @@ gpro_parse(struct gpro_file *pgf, QString *out)
 
 	/* compute ticks */
 
-	for (acc_time = x = 0; (x != nmeas); x++) {
+	for (acc_time = x = 0; x != nmeas; x++) {
 
 		pgf->imeas = x;
 
@@ -1382,7 +1382,7 @@ gpro_parse(struct gpro_file *pgf, QString *out)
 		gpro_get_track(pgf);
 	}
 
-	for (y = 0; (y != nmeas) && (gpro_eof(pgf) == 0); y++) {
+	for (y = 0; y != nmeas; y++) {
 
 		struct gpro_event *pev;
 
@@ -1413,7 +1413,7 @@ gpro_parse(struct gpro_file *pgf, QString *out)
 
 	acc_time = 0;
 
-	for (y_repeat = y = 0; y != nmeas; y++) {
+	for (y_repeat = y = 0; y < nmeas; y++) {
 
 		if (pgf->pmeas[y].start_repeat || pgf->pmeas[y].end_repeat) {
 
@@ -1447,7 +1447,7 @@ gpro_parse(struct gpro_file *pgf, QString *out)
 
 	/* resolve the remainder of the measures */
 
-	for (z = y_repeat; z != nmeas; z++) {
+	for (z = y_repeat; z < nmeas; z++) {
 		gpro_copy_merge_head(&pgf->head, &pgf->pmeas[z].head,
 		    pgf->pmeas[z].start_time + acc_time);
 	}
