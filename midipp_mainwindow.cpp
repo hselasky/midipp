@@ -2458,6 +2458,8 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, int flags)
 
 		chan_mask = diag->chan_mask;
 
+		output += "L0:\n\n";
+
 		delete diag;
 	}
 
