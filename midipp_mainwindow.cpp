@@ -36,9 +36,6 @@
 #include <midipp_button.h>
 #include <midipp_gpro.h>
 
-#include <fcntl.h>
-#include <stdio.h>
-
 static void MidiEventRxPedal(MppMainWindow *mw, uint8_t val);
 
 uint8_t
@@ -1155,7 +1152,7 @@ MppMainWindow :: handle_midi_file_open(int merge)
 	struct umidi20_track *track_copy;
 	struct umidi20_event *event;
 	struct umidi20_event *event_copy;
-	const char *filename;
+	QByteArray data;
 
 	diag->setAcceptMode(QFileDialog::AcceptOpen);
 	diag->setFileMode(QFileDialog::ExistingFile);
@@ -1171,23 +1168,23 @@ MppMainWindow :: handle_midi_file_open(int merge)
 
 		CurrMidiFileName = new QString(diag->selectedFiles()[0]);
 
-		filename = MppQStringToAscii(*CurrMidiFileName);
-
-		if (filename != NULL) {
+		if (MppReadRawFile(*CurrMidiFileName, &data) == 0) {
+		
 			pthread_mutex_lock(&mtx);
-			song_copy = umidi20_load_file(&mtx, filename);
+			song_copy = umidi20_load_file(&mtx,
+			    (const uint8_t *)data.data(), data.size());
 			pthread_mutex_unlock(&mtx);
+		} else {
+			song_copy = NULL;
+		}
 
-			free((void *)filename);
-
-			if (song_copy != NULL) {
-				lbl_file_status->setText(MppBaseName(*CurrMidiFileName) +
-				    tr(": MIDI file opened"));
-				goto load_file;
-			} else {
-				lbl_file_status->setText(MppBaseName(*CurrMidiFileName) +
-				    tr(": Could not open MIDI file"));
-			}
+		if (song_copy != NULL) {
+			lbl_file_status->setText(MppBaseName(*CurrMidiFileName) +
+			    tr(": MIDI file opened"));
+			goto load_file;
+		} else {
+			lbl_file_status->setText(MppBaseName(*CurrMidiFileName) +
+			    tr(": Could not open MIDI file"));
 		}
 	}
 
@@ -1283,28 +1280,33 @@ MppMainWindow :: handle_midi_file_instr_delete()
 void
 MppMainWindow :: handle_midi_file_save()
 {
-	const char *filename;
+	uint8_t *data;
+	uint32_t len;
 	uint8_t status;
 
 	if (CurrMidiFileName != NULL) {
 
-		filename = MppQStringToAscii(*CurrMidiFileName);
+		pthread_mutex_lock(&mtx);
+		handle_midi_file_instr_prepend();
+		status = umidi20_save_file(song, &data, &len);
+		handle_midi_file_instr_delete();
+		pthread_mutex_unlock(&mtx);
 
-		if (filename != NULL) {
-			pthread_mutex_lock(&mtx);
-			handle_midi_file_instr_prepend();
-			status = umidi20_save_file(song, filename);
-			handle_midi_file_instr_delete();
-			pthread_mutex_unlock(&mtx);
-			free((void *)filename);
+		if (status == 0) {
+			QByteArray qdata = QByteArray::
+			    fromRawData((const char *)data, len);
 
-			if (status) {
-				lbl_file_status->setText(MppBaseName(*CurrMidiFileName) + 
-				    tr(": Could not save MIDI file"));
-			} else {
-				lbl_file_status->setText(MppBaseName(*CurrMidiFileName) + 
-				    tr(": MIDI file saved"));
-			}
+			status = MppWriteRawFile(*CurrMidiFileName, &qdata);
+
+			free(data);
+		}
+
+		if (status) {
+			lbl_file_status->setText(MppBaseName(*CurrMidiFileName) + 
+			    tr(": Could not save MIDI file"));
+		} else {
+			lbl_file_status->setText(MppBaseName(*CurrMidiFileName) + 
+			    tr(": MIDI file saved"));
 		}
 	} else {
 		handle_midi_file_save_as();
@@ -2552,9 +2554,7 @@ MppMainWindow :: handle_gpro_file_import()
 	QFileDialog *diag = 
 	  new QFileDialog(this, tr("Select GPro v3 or v4 File"), 
 		QString(), QString("GPro File (*.gp *.gp3 *.gp4 *.GP *.GP3 *.GP4)"));
-	uint8_t *ptr = NULL;
-	int f = -1;
-	off_t off;
+	QByteArray data;
 	MppGPro *gpro;
 	QTextCursor *cursor;
 
@@ -2564,21 +2564,14 @@ MppMainWindow :: handle_gpro_file_import()
 	if (diag->exec()) {
 
 		QString fname(diag->selectedFiles()[0]);
-		const char *filename;
 
-		filename = MppQStringToAscii(fname);
-
-		if (filename != NULL) {
-
-			f = ::open(filename, O_RDONLY);
-			if (f > -1) {
-				lbl_file_status->setText(MppBaseName(fname) +
-				    tr(": GPro file opened"));
-				goto load_file;
-			} else {
-				lbl_file_status->setText(MppBaseName(fname) +
-				    tr(": Could not open GPro file"));
-			}
+		if (MppReadRawFile(fname, &data) == 0) {
+			lbl_file_status->setText(MppBaseName(fname) +
+			    tr(": GPro file opened"));
+			goto load_file;
+		} else {
+			lbl_file_status->setText(MppBaseName(fname) +
+			    tr(": Could not open GPro file"));
 		}
 	}
 
@@ -2586,23 +2579,7 @@ MppMainWindow :: handle_gpro_file_import()
 
 load_file:
 
-	off = ::lseek(f, 0, SEEK_END);
-	if (off <= 0)
-		goto done;
-	if (off > (16 * 1024 * 1024))
-		goto done;
-
-	ptr = (uint8_t *)malloc(off);
-	if (ptr == NULL)
-		goto done;
-
-	if (::lseek(f, 0, SEEK_SET) < 0)
-		goto done;
-
-	if (::read(f, ptr, off) != off)
-		goto done;
-
-	gpro = new MppGPro(ptr, off);
+	gpro = new MppGPro((uint8_t *)data.data(), data.size());
 
 	cursor = new QTextCursor(currScoreMain->editWidget->textCursor());
 	cursor->beginEditBlock();
@@ -2613,13 +2590,8 @@ load_file:
 	delete cursor;
 
 	handle_compile();
+
 done:
-
-	if (f > -1)
-		::close(f);
-
-	free(ptr);
-
 	delete diag;
 }
 

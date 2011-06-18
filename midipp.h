@@ -132,5 +132,7 @@ extern QString MppBaseName(QString fname);
 extern char *MppQStringToAscii(QString s);
 extern QString MppReadFile(QString fname, QString *perr);
 extern void MppWriteFile(QString fname, QString text, QString *perr);
+extern uint8_t MppReadRawFile(QString fname, QByteArray *pdata);
+extern uint8_t MppWriteRawFile(QString fname, QByteArray *pdata);
 
 #endif	/* _MIDIPP_H_ */

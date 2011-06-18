@@ -153,6 +153,53 @@ failure:
 	return;
 }
 
+uint8_t
+MppReadRawFile(QString fname, QByteArray *pdata)
+{
+	QFile file(fname);
+
+	if (!file.open(QIODevice::ReadOnly))
+		goto failure;
+
+	*pdata = file.readAll();
+
+	if (file.error()) {
+		file.close();
+		goto failure;
+	}
+
+	file.close();
+
+	return (0);
+
+failure:
+	return (1);
+}
+
+uint8_t
+MppWriteRawFile(QString fname, QByteArray *pdata)
+{
+	QFile file(fname);
+
+	if (!file.open(QIODevice::WriteOnly |
+	    QIODevice::Truncate))
+		goto failure;
+
+	file.write(*pdata);
+
+	if (file.error()) {
+		file.close();
+		goto failure;
+	}
+
+	file.close();
+
+	return (0);
+
+failure:
+	return (1);
+}
+
 static void
 mask_signal(int sig)
 {
