@@ -50,7 +50,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 {
 	QString defaultText = tr(
 	    "/*\n"
-	    " * Copyright (c) 2009-2010 Hans Petter Selasky. All rights reserved.\n"
+	    " * Copyright (c) 2009-2011 Hans Petter Selasky. All rights reserved.\n"
 	    " */\n"
 
 	    "\n"

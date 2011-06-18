@@ -1251,6 +1251,8 @@ MppGPro :: MppGPro(const uint8_t *ptr, uint32_t len)
 	setWindowTitle(tr("GuitarPro v3 and v4 import"));
 
 	lbl_import = new QLabel(tr("Select tracks\nto import"));
+	lbl_import->setAlignment(Qt::AlignCenter);
+
 	but_done = new QPushButton(tr("Done"));
 	connect(but_done, SIGNAL(released()), this, SLOT(handle_done()));
 
@@ -1263,7 +1265,7 @@ MppGPro :: MppGPro(const uint8_t *ptr, uint32_t len)
 	gpro_parse(&gpf, &output);
 
 	cbx_single_track = new QCheckBox();
-	lbl_single_track = new QLabel(tr("Output like single track"));
+	lbl_single_track = new QLabel(tr("Output like a single track"));
 
 	for (x = 0; x != GPRO_MAX_TRACKS; x++) {
 		if (gpf.track_str[x] != 0) {
