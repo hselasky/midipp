@@ -73,11 +73,7 @@ public:
 	QString get_midi_score_duration();
 	int log_midi_score_duration();
 	int convert_midi_duration(struct umidi20_track *, uint32_t thres, uint32_t chan_mask);
-	void import_midi_track(struct umidi20_track *, int flags = 0);
-#define	IMPORT_HAVE_STRING 0x01
-#define	IMPORT_HAVE_DURATION 0x02
-#define	IMPORT_HAVE_DIALOG 0x04
-#define	IMPORT_HAVE_MULTI_CHAN 0x08
+	void import_midi_track(struct umidi20_track *, uint32_t midi_flags = 0);
 
 	void update_play_device_no(void);
 
@@ -259,9 +255,6 @@ public:
 
 	QLabel	*lbl_key_delay;
 	QSpinBox *spn_key_delay;
-
-	QLabel	*lbl_parse_thres;
-	QSpinBox *spn_parse_thres;
 
 	MppButton *but_config_dev[MPP_MAX_DEVS];
 	MppButton *but_config_mm[MPP_MAX_DEVS];

@@ -46,7 +46,7 @@ public:
 private:
 	QGridLayout *gl;
 
-	QLabel *lbl_import;
+	QLabel *lbl_import[2];
 	QLabel *lbl_info[GPRO_MAX_TRACKS];
 	QLabel *lbl_single_track;
 

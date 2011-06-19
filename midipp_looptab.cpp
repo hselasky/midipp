@@ -29,6 +29,7 @@
 #include <midipp_looptab.h>
 #include <midipp_spinbox.h>
 #include <midipp_button.h>
+#include <midipp_midi.h>
 
 MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
   : QWidget(parent)
@@ -240,7 +241,7 @@ MppLoopTab :: handle_trig(int n)
 void
 MppLoopTab :: handle_import(int n)
 {
-	mw->import_midi_track(track[n], IMPORT_HAVE_DURATION);
+	mw->import_midi_track(track[n], MIDI_FLAG_DURATION | MIDI_FLAG_DIALOG);
 }
 
 /* Must be called locked */

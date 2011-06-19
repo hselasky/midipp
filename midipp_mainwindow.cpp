@@ -162,7 +162,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_midi_file_import = new QPushButton(tr("Import"));
 
 	lbl_gpro_title = new QLabel(tr("- GPro v3/4 -"));
-	but_gpro_file_import = new QPushButton(tr("Import"));
+	but_gpro_file_import = new QPushButton(tr("Open+Import"));
 
 	n = 0;
 
@@ -449,12 +449,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_bpm_length->setRange(0, MPP_MAX_BPM);
 	spn_bpm_length->setValue(0);
 
-	lbl_parse_thres = new QLabel(tr("MIDI To Scores Threshold (0..255)"));
-	spn_parse_thres = new QSpinBox();
-	spn_parse_thres->setRange(0, 255);
-	spn_parse_thres->setValue(30);
-	spn_parse_thres->setSuffix(tr(" ms"));
-
 	lbl_config_local = new QLabel(tr("Enable local MIDI on synth"));
 	cbx_config_local = new QCheckBox();
 	connect(cbx_config_local, SIGNAL(stateChanged(int)), this, SLOT(handle_config_local_changed(int)));
@@ -526,11 +520,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_config_gl->addWidget(lbl_base_key, x, 0, 1, 7, Qt::AlignLeft|Qt::AlignVCenter);
 	tab_config_gl->addWidget(spn_base_key, x, 7, 1, 1, Qt::AlignRight|Qt::AlignVCenter);
-
-	x++;
-
-	tab_config_gl->addWidget(lbl_parse_thres, x, 0, 1, 3, Qt::AlignLeft|Qt::AlignVCenter);
-	tab_config_gl->addWidget(spn_parse_thres, x, 3, 1, 2, Qt::AlignRight|Qt::AlignVCenter);
 
 	x++;
 
@@ -695,7 +684,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_midi_play, SIGNAL(pressed()), this, SLOT(handle_midi_play()));
 	connect(but_play, SIGNAL(pressed()), this, SLOT(handle_play_press()));
 	connect(but_play, SIGNAL(released()), this, SLOT(handle_play_release()));
-	connect(but_quit, SIGNAL(pressed()), this, SLOT(handle_quit()));
+	connect(but_quit, SIGNAL(released()), this, SLOT(handle_quit()));
 
 	connect(but_midi_file_new, SIGNAL(pressed()), this, SLOT(handle_midi_file_new()));
 	connect(but_midi_file_open, SIGNAL(pressed()), this, SLOT(handle_midi_file_new_open()));
@@ -2403,15 +2392,13 @@ MppMainWindow :: log_midi_score_duration(void)
 }
 
 void
-MppMainWindow :: import_midi_track(struct umidi20_track *im_track, int flags)
+MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flags)
 {
 	QTextCursor cursor(currScoreMain->editWidget->textCursor());
 
 	QString output;
 	QString out_block;
 	QString out_desc;
-
-	int thres = spn_parse_thres->value();
 
 	struct umidi20_event *event;
 
@@ -2422,6 +2409,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, int flags)
 	uint32_t x;
 	uint32_t last_u = MPP_MAX_DURATION + 1;
 	uint32_t chan_mask = 0;
+	uint32_t thres = 25;
 	uint8_t last_chan = 0;
 	uint8_t chan;
 
@@ -2440,22 +2428,14 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, int flags)
 
 	pthread_mutex_unlock(&mtx);
 
-	if (flags & IMPORT_HAVE_DIALOG) {
+	if (flags & MIDI_FLAG_DIALOG) {
 
 		MppMidi *diag;
 
-		diag = new MppMidi(chan_mask);
+		diag = new MppMidi(chan_mask, flags, thres);
 
-		if (diag->chan_merge)
-			flags &= ~IMPORT_HAVE_MULTI_CHAN;
-		else
-			flags |= IMPORT_HAVE_MULTI_CHAN;
-
-		if (diag->have_strings)
-			flags |= IMPORT_HAVE_STRING;
-		else
-			flags &= ~IMPORT_HAVE_STRING;
-
+		flags = diag->flags;
+		thres = diag->thres;
 		chan_mask = diag->chan_mask;
 
 		output += "L0:\n\n";
@@ -2501,7 +2481,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, int flags)
 				snprintf(buf, sizeof(buf), ".   ");
 
 			out_desc += buf;
-			if (flags & IMPORT_HAVE_DURATION) {
+			if (flags & MIDI_FLAG_DURATION) {
 				if (convIndex < max_index)
 					out_block += get_midi_score_duration();
 			}
@@ -2509,7 +2489,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, int flags)
 
 			if (do_flush) {
 
-				if (flags & IMPORT_HAVE_STRING) {
+				if (flags & MIDI_FLAG_STRING) {
 					snprintf(buf, sizeof(buf), "%5u", convIndex / 16);
 
 					output += "\nS\"";
@@ -2518,7 +2498,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, int flags)
 					output += "\"\n";
 				}
 				output += out_block;
-				if (flags & IMPORT_HAVE_STRING) {
+				if (flags & MIDI_FLAG_STRING) {
 					if (new_page)
 						output += "\nJP\n";
 				}
@@ -2558,7 +2538,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, int flags)
 
 			if (chan != last_chan) {
 				last_chan = chan;
-				if (flags & IMPORT_HAVE_MULTI_CHAN) {
+				if (flags & MIDI_FLAG_MULTI_CHAN) {
 					snprintf(buf, sizeof(buf), "T%u ", chan);
 					out_block += buf;
 				}
@@ -2577,7 +2557,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, int flags)
 
 	pthread_mutex_unlock(&mtx);
 
-	if (flags & IMPORT_HAVE_STRING) {
+	if (flags & MIDI_FLAG_STRING) {
 		snprintf(buf, sizeof(buf), "%5u", (convIndex + 15) / 16);
 
 		output += "\nS\"";
@@ -2596,7 +2576,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, int flags)
 void
 MppMainWindow :: handle_midi_file_import()
 {
-	import_midi_track(track, IMPORT_HAVE_DIALOG);
+	import_midi_track(track, MIDI_FLAG_DIALOG | MIDI_FLAG_MULTI_CHAN);
 }
 
 void

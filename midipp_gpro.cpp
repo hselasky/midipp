@@ -1111,6 +1111,7 @@ gpro_dump_events(struct gpro_file *pgf, QString &out, uint8_t single_track)
 	uint32_t dur_last = -1U;
 	uint32_t dur;
 	uint32_t time_last;
+	uint32_t nevent = 0;
 
 	pev = TAILQ_FIRST(&pgf->head);
 	if (pev != 0)
@@ -1134,6 +1135,9 @@ gpro_dump_events(struct gpro_file *pgf, QString &out, uint8_t single_track)
 			snprintf(buf, sizeof(buf), "/* %d */ ", pev->time);
 			out += buf;
 #endif
+			nevent++;
+			if (!(nevent & 15))
+				out += "\n";
 		}
 
 		if (pev->chan != chan_last) {
@@ -1483,6 +1487,9 @@ MppGPro :: MppGPro(const uint8_t *ptr, uint32_t len)
 	char line_buf[64];
 	uint32_t x;
 	uint32_t y;
+	uint32_t z;
+	uint32_t t;
+	uint32_t u;
 
 	gpf.ptr = ptr;
 	gpf.rem = len;
@@ -1491,46 +1498,62 @@ MppGPro :: MppGPro(const uint8_t *ptr, uint32_t len)
 
 	setWindowTitle(tr("GuitarPro v3 and v4 import"));
 
-	lbl_import = new QLabel(tr("Select tracks\nto import"));
-	lbl_import->setAlignment(Qt::AlignCenter);
+	lbl_import[0] = new QLabel(tr("Select tracks\nto import"));
+	lbl_import[0]->setAlignment(Qt::AlignCenter);
+
+	lbl_import[1] = new QLabel(tr("Select tracks\nto import"));
+	lbl_import[1]->setAlignment(Qt::AlignCenter);
 
 	but_done = new QPushButton(tr("Done"));
 	connect(but_done, SIGNAL(released()), this, SLOT(handle_done()));
 
 	y = 0;
 
-	gl->addWidget(lbl_import,y,1,1,1);
+	gl->addWidget(lbl_import[0],y,1,1,1);
+	gl->addWidget(lbl_import[1],y,3,1,1);
 
 	y++;
 
 	gpro_parse(&gpf, &output);
 
-	cbx_single_track = new QCheckBox();
-	lbl_single_track = new QLabel(tr("Output like a single track"));
+	for (z = x = 0; x != GPRO_MAX_TRACKS; x++) {
+		if (gpf.track_str[x] != 0)
+			z++;
+	}
 
-	for (x = 0; x != GPRO_MAX_TRACKS; x++) {
+	for (t = u = x = 0; x != GPRO_MAX_TRACKS; x++) {
 		if (gpf.track_str[x] != 0) {
+
+			if (t >= ((z + 1) / 2)) {
+				t = 0;
+				u = 2;
+			}
+
 			snprintf(line_buf, sizeof(line_buf),
 			    "Track%d: %s", (int)x, gpf.track_str[x]);
 
 			cbx_import[x] = new QCheckBox();
-			cbx_import[x]->setChecked(1);
 
 			lbl_info[x] = new QLabel(tr(line_buf));
 
-			gl->addWidget(cbx_import[x],y,1,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
-			gl->addWidget(lbl_info[x],y,0,1,1);
+			gl->addWidget(cbx_import[x],t+y,u+1,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
+			gl->addWidget(lbl_info[x],t+y,u+0,1,1,Qt::AlignLeft|Qt::AlignVCenter);
 
-			y++;
+			t++;
 		}
 	}
 
-	gl->addWidget(cbx_single_track,y,1,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(lbl_single_track,y,0,1,1);
+	y += ((z + 1) / 2);
+
+	cbx_single_track = new QCheckBox();
+	lbl_single_track = new QLabel(tr("Output like a single track"));
+
+	gl->addWidget(cbx_single_track,y,3,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(lbl_single_track,y,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
 
 	y++;
 
-	gl->addWidget(but_done,y,1,1,1);
+	gl->addWidget(but_done,y,3,1,1);
 
 	exec();
 
