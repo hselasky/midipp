@@ -2443,6 +2443,10 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 		delete diag;
 	}
 
+	/* if no channels, just return */
+	if (chan_mask == 0)
+		return;
+
 	pthread_mutex_lock(&mtx);
 
 	umidi20_track_compute_max_min(im_track);

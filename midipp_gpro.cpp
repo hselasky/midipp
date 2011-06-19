@@ -1561,11 +1561,14 @@ MppGPro :: MppGPro(const uint8_t *ptr, uint32_t len)
 		if (gpf.track_str[x] != 0) {
 			if (cbx_import[x]->isChecked()) {
 				gpf.track_dump[x] = 1;
+				y++;
 			}
 		}
 	}
 
-	gpro_dump_events(&gpf, output, cbx_single_track->isChecked());
+	/* only dump events if one or more tracks are selected */
+	if (y != 0)
+		gpro_dump_events(&gpf, output, cbx_single_track->isChecked());
 
 	gpro_cleanup(&gpf);
 }
