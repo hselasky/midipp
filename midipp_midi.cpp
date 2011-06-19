@@ -52,6 +52,12 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 	but_done = new QPushButton(tr("Done"));
 	connect(but_done, SIGNAL(released()), this, SLOT(handle_done()));
 
+	but_set_all = new QPushButton(tr("All tracks"));
+	connect(but_set_all, SIGNAL(released()), this, SLOT(handle_set_all_track()));
+
+	but_clear_all = new QPushButton(tr("No tracks"));
+	connect(but_clear_all, SIGNAL(released()), this, SLOT(handle_clear_all_track()));
+
 	y = 0;
 
 	gl->addWidget(lbl_import[0],y,1,1,1);
@@ -132,6 +138,8 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 
 	y++;
 
+	gl->addWidget(but_set_all,y,0,1,1);
+	gl->addWidget(but_clear_all,y,1,1,1);
 	gl->addWidget(but_done,y,3,1,1);
 
 	exec();
@@ -174,4 +182,28 @@ void
 MppMidi :: handle_done()
 {
 	accept();
+}
+
+void
+MppMidi :: handle_set_all_track()
+{
+	uint32_t x;
+
+	for (x = 0; x != MIDI_MAX_TRACKS; x++) {
+		if (chan_mask & (1 << x)) {
+			cbx_import[x]->setChecked(1);
+		}
+	}
+}
+
+void
+MppMidi :: handle_clear_all_track()
+{
+	uint32_t x;
+
+	for (x = 0; x != MIDI_MAX_TRACKS; x++) {
+		if (chan_mask & (1 << x)) {
+			cbx_import[x]->setChecked(0);
+		}
+	}
 }

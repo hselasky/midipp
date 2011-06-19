@@ -70,10 +70,14 @@ private:
 	QSpinBox *spn_parse_thres;
 
 	QPushButton *but_done;
+	QPushButton *but_set_all;
+	QPushButton *but_clear_all;
 
 public slots:
 
 	void handle_done();
+	void handle_set_all_track();
+	void handle_clear_all_track();
 };
 
 #endif		/* _MIDIPP_MIDI_H_ */

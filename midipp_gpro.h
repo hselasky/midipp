@@ -44,6 +44,8 @@ public:
 	QString output;
 
 private:
+	uint32_t chan_mask;
+
 	QGridLayout *gl;
 
 	QLabel *lbl_import[2];
@@ -54,10 +56,14 @@ private:
 	QCheckBox *cbx_single_track;
 
 	QPushButton *but_done;
+	QPushButton *but_set_all;
+	QPushButton *but_clear_all;
 
 public slots:
 
 	void handle_done();
+	void handle_set_all_track();
+	void handle_clear_all_track();
 };
 
 #endif		/* _MIDIPP_GPRO_H_ */

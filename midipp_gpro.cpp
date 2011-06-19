@@ -70,12 +70,12 @@ struct gpro_file {
 	uint32_t ticks_sub;
 	uint32_t imeas;
 	uint32_t nmeas;
+	uint32_t chan_mask;
 	uint8_t dur_num;
 	uint8_t dur_div;
 	uint8_t string_max[GPRO_MAX_TRACKS];
 	uint8_t track;
 	uint8_t is_v4;
-	uint8_t track_dump[GPRO_MAX_TRACKS];
 	uint8_t capo[GPRO_MAX_TRACKS];
 	uint8_t tuning[GPRO_MAX_TRACKS][8];
 };
@@ -345,7 +345,7 @@ gpro_event_duration(struct gpro_file *pgf, struct gpro_event *pev)
 
 		if (pev->chan >= GPRO_MAX_TRACKS)
 			continue;
-		if (pgf->track_dump[pev->chan] == 0)
+		if ((pgf->chan_mask & (1 << pev->chan)) == 0)
 			continue;
 		if (pev->time > end)
 			break;
@@ -1123,7 +1123,7 @@ gpro_dump_events(struct gpro_file *pgf, QString &out, uint8_t single_track)
 
 		if (pev->chan >= GPRO_MAX_TRACKS)
 			continue;
-		if (pgf->track_dump[pev->chan] == 0)
+		if ((pgf->chan_mask & (1 << pev->chan)) == 0)
 			continue;
 
 		if (pev->time != time_last) {
@@ -1187,7 +1187,7 @@ gpro_parse(struct gpro_file *pgf, QString *out)
 	TAILQ_INIT(&pgf->temp);
 
 	memset(pgf->track_str, 0, sizeof(pgf->track_str));
-	memset(pgf->track_dump, 0, sizeof(pgf->track_dump));
+	pgf->chan_mask = 0;
 
 	/* version */
 
@@ -1507,7 +1507,14 @@ MppGPro :: MppGPro(const uint8_t *ptr, uint32_t len)
 	but_done = new QPushButton(tr("Done"));
 	connect(but_done, SIGNAL(released()), this, SLOT(handle_done()));
 
+	but_set_all = new QPushButton(tr("All tracks"));
+	connect(but_set_all, SIGNAL(released()), this, SLOT(handle_set_all_track()));
+
+	but_clear_all = new QPushButton(tr("No tracks"));
+	connect(but_clear_all, SIGNAL(released()), this, SLOT(handle_clear_all_track()));
+
 	y = 0;
+	chan_mask = 0;
 
 	gl->addWidget(lbl_import[0],y,1,1,1);
 	gl->addWidget(lbl_import[1],y,3,1,1);
@@ -1517,12 +1524,14 @@ MppGPro :: MppGPro(const uint8_t *ptr, uint32_t len)
 	gpro_parse(&gpf, &output);
 
 	for (z = x = 0; x != GPRO_MAX_TRACKS; x++) {
-		if (gpf.track_str[x] != 0)
+		if (gpf.track_str[x] != 0) {
+			chan_mask |= (1 << x);
 			z++;
+		}
 	}
 
 	for (t = u = x = 0; x != GPRO_MAX_TRACKS; x++) {
-		if (gpf.track_str[x] != 0) {
+		if (chan_mask & (1 << x)) {
 
 			if (t >= ((z + 1) / 2)) {
 				t = 0;
@@ -1554,20 +1563,21 @@ MppGPro :: MppGPro(const uint8_t *ptr, uint32_t len)
 	y++;
 
 	gl->addWidget(but_done,y,3,1,1);
+	gl->addWidget(but_set_all,y,0,1,1);
+	gl->addWidget(but_clear_all,y,1,1,1);
 
 	exec();
 
-	for (x = y = 0; x != GPRO_MAX_TRACKS; x++) {
-		if (gpf.track_str[x] != 0) {
-			if (cbx_import[x]->isChecked()) {
-				gpf.track_dump[x] = 1;
-				y++;
+	for (x = 0; x != GPRO_MAX_TRACKS; x++) {
+		if (chan_mask & (1 << x)) {
+			if (cbx_import[x]->isChecked() == 0) {
+				chan_mask &= ~(1 << x);
 			}
 		}
 	}
 
 	/* only dump events if one or more tracks are selected */
-	if (y != 0)
+	if ((gpf.chan_mask = chan_mask) != 0)
 		gpro_dump_events(&gpf, output, cbx_single_track->isChecked());
 
 	gpro_cleanup(&gpf);
@@ -1584,4 +1594,28 @@ void
 MppGPro :: handle_done()
 {
 	accept();
+}
+
+void
+MppGPro :: handle_set_all_track()
+{
+	uint32_t x;
+
+	for (x = 0; x != GPRO_MAX_TRACKS; x++) {
+		if (chan_mask & (1 << x)) {
+			cbx_import[x]->setChecked(1);
+		}
+	}
+}
+
+void
+MppGPro :: handle_clear_all_track()
+{
+	uint32_t x;
+
+	for (x = 0; x != GPRO_MAX_TRACKS; x++) {
+		if (chan_mask & (1 << x)) {
+			cbx_import[x]->setChecked(0);
+		}
+	}
 }

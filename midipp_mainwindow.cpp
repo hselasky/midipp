@@ -2421,9 +2421,11 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 
 		if (!(umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL))
 			continue;
-		chan = umidi20_event_get_channel(event) & 0xF;
 
-		chan_mask |= (1 << chan);
+		if (umidi20_event_is_key_start(event)) {
+			chan = umidi20_event_get_channel(event) & 0xF;
+			chan_mask |= (1 << chan);
+		}
 	}
 
 	pthread_mutex_unlock(&mtx);
