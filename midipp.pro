@@ -31,8 +31,18 @@ SOURCES         += midipp_mutemap.cpp
 SOURCES         += midipp_scores.cpp
 SOURCES         += midipp_pattern.cpp
 SOURCES         += midipp_spinbox.cpp
-target.path	= /usr/local/bin
 TARGET          = midipp
-QTDIR_build:REQUIRES="contains(QT_CONFIG, full-config)"
+
 unix:LIBS	+= -lumidi20
+
+target.path	= $${PREFIX}/bin
+target.files	= midipp
 INSTALLS	+= target
+
+icons.path	= $${PREFIX}/share/pixmaps
+icons.files	= midipp.png
+INSTALLS	+= icons
+
+desktop.path	= $${PREFIX}/share/applications
+desktop.files	= midipp.desktop
+INSTALLS	+= desktop
