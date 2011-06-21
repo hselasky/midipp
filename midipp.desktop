@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=MIDI Player Pro
+Comment=MIDI playback and recording software
+Exec=midipp
+Icon=midipp
+Categories=AudioVideo;Audio;Midi;
+Terminal=false
+Type=Application
+
