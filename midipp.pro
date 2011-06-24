@@ -39,7 +39,6 @@ LIBS		+= -L$${PREFIX}/lib -lumidi20
 INCLUDEPATH	+= $${PREFIX}/include
 
 target.path	= $${PREFIX}/bin
-target.files	= midipp
 INSTALLS	+= target
 
 icons.path	= $${PREFIX}/share/pixmaps
