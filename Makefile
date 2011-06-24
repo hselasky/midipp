@@ -26,7 +26,7 @@
 # Makefile for MIDI Player Pro
 #
 
-VERSION=1.0.0
+VERSION=1.0.1
 
 help:
 	@echo "Targets are: all, install, clean, package, help"
@@ -46,7 +46,7 @@ package: clean
 
 	tar -cvf temp.tar --exclude="*~" --exclude="*#" \
 		--exclude=".svn" --exclude="*.orig" --exclude="*.rej" \
-		Makefile midipp*.pro \
+		Makefile midipp*.pro midipp*.qrc \
 		midipp*.cpp midipp*.h midipp*.png midipp*.desktop
 
 	rm -rf midipp-${VERSION}

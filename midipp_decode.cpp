@@ -211,6 +211,7 @@ MppDecode :: MppDecode(QWidget *parent, MppMainWindow *_mw)
 	gl = new QGridLayout(this);
 
 	setWindowTitle(tr("Chord decoder"));
+	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
 	lin_edit = new QLineEdit();
 	lin_edit->setText(QString("C"));

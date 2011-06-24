@@ -34,6 +34,7 @@ MppDevices :: MppDevices(QWidget *parent)
 	gl = new QGridLayout(this);
 
 	setWindowTitle(tr("Select playback and recording device"));
+	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
 	lw_rec = new QListWidget();
 	lw_play = new QListWidget();

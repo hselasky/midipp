@@ -100,6 +100,7 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 	connect(but_done_all, SIGNAL(released()), this, SLOT(handle_done_all()));
 
 	setWindowTitle(tr("BPM settings"));
+	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
 	gl->addWidget(lbl_bpm_pattern, 0, 0, 1, 2);
 	gl->addWidget(led_bpm_pattern, 0, 2, 1, 1);

@@ -42,6 +42,7 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 	snprintf(buf, sizeof(buf), "- Mute Map For Output Device %d -", _devno);
 
 	setWindowTitle(tr(buf));
+	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
 	lbl_title[0] = new QLabel(tr(" - Mute -"));
 	lbl_title[1] = new QLabel(tr(" - Mute -"));

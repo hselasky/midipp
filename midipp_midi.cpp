@@ -42,6 +42,7 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 	gl = new QGridLayout(this);
 
 	setWindowTitle(tr("MIDI import"));
+	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
 	lbl_import[0] = new QLabel(tr("Select tracks\nto import"));
 	lbl_import[0]->setAlignment(Qt::AlignCenter);

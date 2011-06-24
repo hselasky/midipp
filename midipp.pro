@@ -30,6 +30,9 @@ SOURCES		+= midipp_mutemap.cpp
 SOURCES		+= midipp_scores.cpp
 SOURCES		+= midipp_pattern.cpp
 SOURCES		+= midipp_spinbox.cpp
+
+RESOURCES	+= midipp.qrc
+
 TARGET		= midipp
 
 LIBS		+= -L$${PREFIX}/lib -lumidi20
