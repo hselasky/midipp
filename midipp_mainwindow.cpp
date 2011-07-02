@@ -36,8 +36,9 @@
 #include <midipp_button.h>
 #include <midipp_gpro.h>
 #include <midipp_midi.h>
+#include <midipp_mode.h>
 
-static void MidiEventRxPedal(MppMainWindow *mw, uint8_t val);
+static void MidiEventRxPedal(MppScoreMain *sm, uint8_t val);
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -68,7 +69,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	memset(auto_zero_start, 0, auto_zero_end - auto_zero_start);
 
-	midiMode = MM_PASS_MAX - 1;
 	CurrMidiFileName = NULL;
 	song = NULL;
 	track = NULL;
@@ -99,6 +99,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		scores_main[x] = new MppScoreMain(this);
 
 	currScoreMain = scores_main[0];
+	currScoreMain->devInputMask = -1U;
 
 	tab_import = new MppImportTab(this);
 
@@ -280,8 +281,13 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	lbl_score_record = new QLabel(QString());
 	lbl_midi_record = new QLabel(QString());
-	lbl_midi_mode = new QLabel(QString());
 	lbl_midi_play = new QLabel(QString());
+
+	for (n = 0; n != MPP_MAX_VIEWS; n++) {
+		dlg_mode[n] = new MppMode(n);
+		but_mode[n] = new MppButton(tr("View ") + QChar('A' + n) + tr(" mode"), n);
+		connect(but_mode[n], SIGNAL(released(int)), this, SLOT(handle_mode(int)));
+	}
 
 	for (n = 0; n != MPP_MAX_LBUTTON; n++) {
 		char buf[8];
@@ -290,7 +296,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	}
 
 	but_insert_chord = new QPushButton(tr("Get &Chord"));
-	but_midi_mode = new QPushButton(tr("Key Pass Mode"));
 	but_compile = new QPushButton(tr("Compile"));
 	but_score_record = new QPushButton(tr("Scores"));
 	but_midi_record = new QPushButton(tr("MIDI"));
@@ -358,11 +363,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_midi_mode, n, 3, 1, 1);
-	tab_play_gl->addWidget(but_midi_mode, n, 0, 1, 3);
-
-	n++;
-
 	tab_play_gl->addWidget(lbl_score_record, n, 3, 1, 1);
 	tab_play_gl->addWidget(but_score_record, n, 0, 1, 3);
 
@@ -383,6 +383,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	n++;
 
 	tab_play_gl->addWidget(but_bpm, n, 4, 1, 2);
+
+	for (x = 0; x != MPP_MAX_VIEWS; x++)
+		tab_play_gl->addWidget(but_mode[x], n + x, 6, 1, 2);
 
 	n++;
 
@@ -417,18 +420,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* <Configuration> Tab */
 
-	lbl_cmd_key = new QLabel(tr("Command Key"));
-	spn_cmd_key = new MppSpinBox();
-	connect(spn_cmd_key, SIGNAL(valueChanged(int)), this, SLOT(handle_cmd_key_changed(int)));
-	spn_cmd_key->setRange(0, 127);
-	spn_cmd_key->setValue(C3);
-
-	lbl_base_key = new QLabel(tr("Base Key"));
-	spn_base_key = new MppSpinBox();
-	connect(spn_base_key, SIGNAL(valueChanged(int)), this, SLOT(handle_base_key_changed(int)));
-	spn_base_key->setRange(0, 127);
-	spn_base_key->setValue(C4);
-
 	lbl_config_title = new QLabel(tr("- Device configuration -"));
 	lbl_config_play = new QLabel(tr("Play"));
 	lbl_config_rec = new QLabel(tr("Rec."));
@@ -436,14 +427,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_config_mm = new QLabel(tr("MuteMap"));
 	lbl_config_dv = new QLabel(tr("DevSel"));
 	lbl_bpm_count = new QLabel(tr("BPM average length (0..32)"));
-
-	lbl_key_delay = new QLabel(tr("Random Key Delay (0..255)"));
-	spn_key_delay = new QSpinBox();
-
-	connect(spn_key_delay, SIGNAL(valueChanged(int)), this, SLOT(handle_key_delay_changed(int)));
-	spn_key_delay->setRange(0, 255);
-	spn_key_delay->setValue(25);
-	spn_key_delay->setSuffix(tr(" ms"));
 
 	spn_bpm_length = new QSpinBox();
 	spn_bpm_length->setRange(0, MPP_MAX_BPM);
@@ -505,21 +488,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_config_gl->addWidget(lbl_bpm_count, x, 0, 1, 6, Qt::AlignLeft|Qt::AlignVCenter);
 	tab_config_gl->addWidget(spn_bpm_length, x, 6, 1, 2, Qt::AlignRight|Qt::AlignVCenter);
-
-	x++;
-
-	tab_config_gl->addWidget(lbl_key_delay, x, 0, 1, 6, Qt::AlignLeft|Qt::AlignVCenter);
-	tab_config_gl->addWidget(spn_key_delay, x, 6, 1, 2, Qt::AlignRight|Qt::AlignVCenter);
-
-	x++;
-
-	tab_config_gl->addWidget(lbl_cmd_key, x, 0, 1, 7, Qt::AlignLeft|Qt::AlignVCenter);
-	tab_config_gl->addWidget(spn_cmd_key, x, 7, 1, 1, Qt::AlignRight|Qt::AlignVCenter);
-
-	x++;
-
-	tab_config_gl->addWidget(lbl_base_key, x, 0, 1, 7, Qt::AlignLeft|Qt::AlignVCenter);
-	tab_config_gl->addWidget(spn_base_key, x, 7, 1, 1, Qt::AlignRight|Qt::AlignVCenter);
 
 	x++;
 
@@ -677,7 +645,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	for (n = 0; n != MPP_MAX_LBUTTON; n++)
 		connect(but_jump[n], SIGNAL(pressed(int)), this, SLOT(handle_jump(int)));
 
-	connect(but_midi_mode, SIGNAL(pressed()), this, SLOT(handle_pass_thru()));
 	connect(but_compile, SIGNAL(pressed()), this, SLOT(handle_compile()));
 	connect(but_score_record, SIGNAL(pressed()), this, SLOT(handle_score_record()));
 	connect(but_midi_record, SIGNAL(pressed()), this, SLOT(handle_midi_record()));
@@ -782,76 +749,6 @@ MppMainWindow :: handle_play_key_changed(int key)
 }
 
 void
-MppMainWindow :: handle_cmd_key_changed(int key)
-{
-	pthread_mutex_lock(&mtx);
-	cmdKey = key & 0x7F;
-	pthread_mutex_unlock(&mtx);
-}
-
-void
-MppMainWindow :: handle_base_key_changed(int key)
-{
-	int x;
-
-	key &= 0x7F;
-
-	pthread_mutex_lock(&mtx);
-
-	for (x = 0; x != MPP_MAX_VIEWS; x++)
-		scores_main[x]->baseKey = key;
-
-	baseKey = key;
-	pthread_mutex_unlock(&mtx);
-
-	if (spn_play_key != NULL)
-		spn_play_key->setValue(key);
-}
-
-void
-MppMainWindow :: handle_key_delay_changed(int delay)
-{
-	int x;
-
-	delay &= 0xFF;
-
-	pthread_mutex_lock(&mtx);
-
-	for (x = 0; x != MPP_MAX_VIEWS; x++)
-		scores_main[x]->delayNoise = delay;
-
-	pthread_mutex_unlock(&mtx);
-}
-
-void
-MppMainWindow :: handle_pass_thru()
-{
-	pthread_mutex_lock(&mtx);
-	midiMode++;
-	if (midiMode >= MM_PASS_MAX)
-		midiMode = 0;
-	pthread_mutex_unlock(&mtx);
-
-	switch (midiMode) {
-	case MM_PASS_ALL:
-		lbl_midi_mode->setText(tr("ALL"));
-		break;
-	case MM_PASS_NONE_FIXED:
-		lbl_midi_mode->setText(tr("FIXED"));
-		break;
-	case MM_PASS_ONE_MIXED:
-		lbl_midi_mode->setText(tr("MIXED"));
-		break;
-	case MM_PASS_NONE_TRANS:
-		lbl_midi_mode->setText(tr("TRANSP"));
-		break;
-	default:
-		lbl_midi_mode->setText(tr("UNKNOWN"));
-		break;
-	}
-}
-
-void
 MppMainWindow :: handle_compile()
 {
 	int x;
@@ -953,7 +850,7 @@ MppMainWindow :: handle_play_press()
 	pthread_mutex_lock(&mtx);
 	if (tab_loop->handle_trigN(playKey, 90)) {
 		/* ignore */
-	} else if (midiMode != MM_PASS_ALL) {
+	} else if (currScoreMain->keyMode != MM_PASS_ALL) {
 		currScoreMain->handleKeyPress(playKey, 90);
 	} else {
 		output_key(currScoreMain->synthChannel, playKey, 90, 0, 0);
@@ -965,7 +862,7 @@ void
 MppMainWindow :: handle_play_release()
 {
 	pthread_mutex_lock(&mtx);
-	if (midiMode != MM_PASS_ALL) {
+	if (currScoreMain->keyMode != MM_PASS_ALL) {
 		currScoreMain->handleKeyRelease(playKey);
 	} else {
 		output_key(currScoreMain->synthChannel, playKey, 0, 0, 0);
@@ -1677,11 +1574,11 @@ MppMainWindow :: handle_stop(int flag)
 			output_key(chan, out_key, 0, delay, 0);
 		}
 	    }
-	}
 
-	/* check if we should kill the pedal */
-	if (!(flag & 1))
-		MidiEventRxPedal(this, 0);
+	    /* check if we should kill the pedal */
+	    if (!(flag & 1))
+		MidiEventRxPedal(scores_main[z], 0);
+	}
 
 	midiTriggered = ScMidiTriggered;
 }
@@ -1794,19 +1691,20 @@ MppMainWindow :: do_bpm_stats(void)
 }
 
 static void
-MidiEventRxPedal(MppMainWindow *mw, uint8_t val)
+MidiEventRxPedal(MppScoreMain *sm, uint8_t val)
 {
+	MppMainWindow *mw = sm->mainWindow;
 	struct mid_data *d = &mw->mid_data;
 	uint16_t mask;
 	uint8_t y;
 	uint8_t chan;
 
-	chan = mw->currScoreMain->synthChannel & 0xF;
+	chan = sm->synthChannel;
 
-	if (mw->midiMode == MM_PASS_ALL)
-		mask = 1;
+	if (sm->keyMode == MM_PASS_ALL)
+		mask = 1U << chan;
 	else
-		mask = mw->currScoreMain->active_channels;
+		mask = sm->active_channels;
 
 	/* the pedal event is distributed to all active channels */
 	while (mask) {
@@ -1831,26 +1729,22 @@ static void
 MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uint8_t *drop)
 {
 	MppMainWindow *mw = (MppMainWindow *)arg;
+	MppScoreMain *sm;
 	uint8_t chan;
 	int key;
 	int vel;
 	int lbl;
+	int n;
 
 	*drop = 1;
 
-	chan = mw->currScoreMain->synthChannel;
-
-	if (umidi20_event_get_control_address(event) == 0x40) {
-
-		MidiEventRxPedal(mw, umidi20_event_get_control_value(event));
-
-	} else if (umidi20_event_is_key_start(event)) {
+	if (umidi20_event_is_key_start(event)) {
 
 		key = umidi20_event_get_key(event) & 0x7F;
 		vel = umidi20_event_get_velocity(event);
-		lbl = key - mw->cmdKey;
 
 		if (mw->scoreRecordOff == 0) {
+
 			if (mw->numInputEvents < MPP_MAX_QUEUE) {
 				mw->inputEvents[mw->numInputEvents] = key;
 				mw->numInputEvents++;
@@ -1859,72 +1753,101 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 		}
 
 		if (mw->tab_loop->handle_trigN(key, vel)) {
-
 			mw->do_update_bpm();
-
-		} else if (mw->midiMode != MM_PASS_ALL) {
-
-			if (mw->currScoreMain->checkLabelJump(lbl)) {
-				mw->handle_jump_locked(lbl);
-			} else {
-				if ((mw->midiMode == MM_PASS_NONE_FIXED) ||
-				    (mw->midiMode == MM_PASS_NONE_TRANS)) {
-
-					if (mw->midiMode == MM_PASS_NONE_FIXED)
-						key = mw->playKey;
-
-					mw->currScoreMain->handleKeyPress(key, vel);
-
-				} else if (mw->currScoreMain->checkHalfPassThru(key) != 0) {
-
-					if (key == mw->baseKey)
-						mw->currScoreMain->handleKeyPress(key, vel);
-
-				} else if (mw->currScoreMain->setPressedKey(chan, key, 255, 0) == 0) {
-					mw->output_key(chan, key, vel, 0, 0);
-					mw->do_update_bpm();
-				}
-			}
-		} else if (mw->currScoreMain->setPressedKey(chan, key, 255, 0) == 0) {
-
-			mw->output_key(chan, key, vel, 0, 0);
-
-			mw->do_update_bpm();
+			return;
 		}
-	} else if (umidi20_event_is_key_end(event)) {
+	}
 
-		key = umidi20_event_get_key(event) & 0x7F;
-		lbl = key - mw->cmdKey;
+	for (n = 0; n != MPP_MAX_VIEWS; n++) {
+		sm = mw->scores_main[n];
 
-		if (mw->midiMode != MM_PASS_ALL) {
+		chan = sm->synthChannel;
 
-			if (mw->currScoreMain->checkLabelJump(lbl) == 0) {
-				if ((mw->midiMode == MM_PASS_NONE_FIXED) ||
-				    (mw->midiMode == MM_PASS_NONE_TRANS)) {
+		if (!(sm->devInputMask & (1U << n)))
+			continue;
 
-					if (mw->midiMode == MM_PASS_NONE_FIXED)
-						key = mw->playKey;
+		if (umidi20_event_get_control_address(event) == 0x40) {
 
-					mw->currScoreMain->handleKeyRelease(key);
+			MidiEventRxPedal(sm, umidi20_event_get_control_value(event));
 
-				} else if (mw->currScoreMain->checkHalfPassThru(key) != 0) {
+		} else if (umidi20_event_is_key_start(event)) {
 
-					if (key == mw->baseKey)
-						mw->currScoreMain->handleKeyRelease(key);
+			key = umidi20_event_get_key(event) & 0x7F;
+			vel = umidi20_event_get_velocity(event);
 
-				} else if (mw->currScoreMain->setPressedKey(chan, key, 0, 0) == 0) {
-					mw->output_key(chan, key, 0, 0, 0);
+			if (sm->cmdKey != 0)
+				lbl = key - sm->cmdKey;
+			else
+				lbl = -1;
+
+
+			if (sm->keyMode != MM_PASS_ALL) {
+
+				if (sm->checkLabelJump(lbl)) {
+					mw->handle_jump_locked(lbl);
+				} else {
+					if ((sm->keyMode == MM_PASS_NONE_FIXED) ||
+					    (sm->keyMode == MM_PASS_NONE_TRANS)) {
+
+						if (sm->keyMode == MM_PASS_NONE_FIXED)
+							key = mw->playKey;
+
+						sm->handleKeyPress(key, vel);
+					} else if (sm->checkHalfPassThru(key) != 0) {
+
+						if (key == sm->baseKey)
+							sm->handleKeyPress(key, vel);
+
+					} else if (sm->setPressedKey(chan, key, 255, 0) == 0) {
+						mw->output_key(chan, key, vel, 0, 0);
+						mw->do_update_bpm();
+					}
 				}
+
+			} else if (sm->setPressedKey(chan, key, 255, 0) == 0) {
+
+				mw->output_key(chan, key, vel, 0, 0);
+				mw->do_update_bpm();
 			}
 
-		} else if (mw->currScoreMain->setPressedKey(chan, key, 0, 0) == 0) {
+		} else if (umidi20_event_is_key_end(event)) {
 
-			mw->output_key(chan, key, 0, 0, 0);
+			key = umidi20_event_get_key(event) & 0x7F;
+
+			if (sm->cmdKey != 0)
+				lbl = key - sm->cmdKey;
+			else
+				lbl = -1;
+
+			if (sm->keyMode != MM_PASS_ALL) {
+
+				if (sm->checkLabelJump(lbl) == 0) {
+					if ((sm->keyMode == MM_PASS_NONE_FIXED) ||
+					    (sm->keyMode == MM_PASS_NONE_TRANS)) {
+
+						if (sm->keyMode == MM_PASS_NONE_FIXED)
+							key = mw->playKey;
+
+						sm->handleKeyRelease(key);
+
+					} else if (sm->checkHalfPassThru(key) != 0) {
+
+						if (key == sm->baseKey)
+							sm->handleKeyRelease(key);
+
+					} else if (sm->setPressedKey(chan, key, 0, 0) == 0) {
+						mw->output_key(chan, key, 0, 0, 0);
+					}
+				}
+
+			} else if (sm->setPressedKey(chan, key, 0, 0) == 0) {
+
+				mw->output_key(chan, key, 0, 0, 0);
+			}
+
+		} else if (mw->do_instr_check(event, &chan)) {
+
 		}
-	} else if (mw->do_instr_check(event, &chan)) {
-		/* found instrument */
-		mw->currScoreMain->synthChannel = chan;
-		mw->instrUpdated = 1;
 	}
 }
 
@@ -2073,7 +1996,6 @@ MppMainWindow :: handle_instr_program()
 
 	pthread_mutex_lock(&mtx);
 	instr[chan].updated |= 1;
-	currScoreMain->synthChannel = chan;
 	pthread_mutex_unlock(&mtx);
 
 	handle_instr_changed(0);
@@ -2649,7 +2571,6 @@ MppMainWindow :: MidiInit(void)
 	handle_midi_record();
 	handle_midi_play();
 	handle_score_record();
-	handle_pass_thru();
 	handle_instr_reset();
 	handle_volume_reset();
 
@@ -2732,7 +2653,7 @@ MppPlayWidget :: keyPressEvent(QKeyEvent *event)
 	case Qt::Key_Shift:
 		pthread_mutex_lock(&mw->mtx);
 		if (mw->midiTriggered != 0)
-			MidiEventRxPedal(mw, 127);
+			MidiEventRxPedal(mw->currScoreMain, 127);
 		pthread_mutex_unlock(&mw->mtx);
 		break;
 	case Qt::Key_0:
@@ -2759,7 +2680,7 @@ MppPlayWidget :: keyReleaseEvent(QKeyEvent *event)
 	if (event->key() == Qt::Key_Shift) {
 		pthread_mutex_lock(&mw->mtx);
 		if (mw->midiTriggered != 0)
-			MidiEventRxPedal(mw, 0);
+			MidiEventRxPedal(mw->currScoreMain, 0);
 		pthread_mutex_unlock(&mw->mtx);
 	}
 }
@@ -2925,4 +2846,19 @@ void
 MppMainWindow :: handle_bpm()
 {
 	dlg_bpm->exec();
+}
+
+void
+MppMainWindow :: handle_mode(int index)
+{
+	dlg_mode[index]->exec();
+
+	pthread_mutex_lock(&mtx);
+	scores_main[index]->baseKey = dlg_mode[index]->base_key;
+	scores_main[index]->cmdKey = dlg_mode[index]->cmd_key;
+	scores_main[index]->delayNoise = dlg_mode[index]->key_delay;
+	scores_main[index]->devInputMask = dlg_mode[index]->input_mask;
+	scores_main[index]->keyMode = dlg_mode[index]->key_mode;
+	scores_main[index]->synthChannel = dlg_mode[index]->channel;
+	pthread_mutex_unlock(&mtx);
 }

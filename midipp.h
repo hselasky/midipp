@@ -72,7 +72,7 @@
 #define	MPP_MAX_SCORES	32
 #define	MPP_MAX_LABELS	32
 #define	MPP_MAX_QUEUE	32
-#define	MPP_MAX_DEVS	4
+#define	MPP_MAX_DEVS	6
 #define	MPP_MAX_BPM	32
 #define	MPP_MAX_LBUTTON	8
 #define	MPP_MAX_ETAB	3
@@ -102,6 +102,7 @@ class MppBpm;
 class MppButton;
 class MppGPro;
 class MppMidi;
+class MppMode;
 
 struct MppScoreEntry {
 	uint8_t key;

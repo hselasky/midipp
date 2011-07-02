@@ -26,6 +26,7 @@
 #include <midipp.h>
 
 #include <midipp_mainwindow.h>
+#include <midipp_scores.h>
 #include <midipp_looptab.h>
 #include <midipp_spinbox.h>
 #include <midipp_button.h>
@@ -329,7 +330,7 @@ MppLoopTab :: handle_trigN(int key, int vel)
 
 	if (is_multi == 0) {
 		n = last_loop;
-		key -= mw->baseKey;
+		key -= mw->currScoreMain->baseKey;
 
 		switch (state[n]) {
 		case ST_IDLE:

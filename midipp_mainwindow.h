@@ -28,14 +28,6 @@
 
 #include <midipp.h>
 
-enum {
-	MM_PASS_ALL,
-	MM_PASS_ONE_MIXED,
-	MM_PASS_NONE_FIXED,
-	MM_PASS_NONE_TRANS,
-	MM_PASS_MAX,
-};
-
 class MppPlayWidget : public QWidget
 {
 	Q_OBJECT;
@@ -132,8 +124,6 @@ public:
 	uint8_t muteMap[MPP_MAX_DEVS][16];
 	uint8_t inputEvents[MPP_MAX_QUEUE];
 	uint8_t numInputEvents;
-	uint8_t cmdKey;
-	uint8_t baseKey;
 	uint8_t playKey;
 	uint8_t bpmAvgLength;
 	uint8_t bpmAvgPos;
@@ -144,7 +134,6 @@ public:
 	uint8_t instrUpdated;
 	uint8_t midiRecordOff;
 	uint8_t midiPlayOff;
-	uint8_t midiMode;
 	uint8_t midiTriggered;
 	uint8_t midiPaused;
 
@@ -211,20 +200,12 @@ public:
 	QLabel	*lbl_play_key;
 	MppSpinBox *spn_play_key;
 
-	QLabel	*lbl_cmd_key;
-	MppSpinBox *spn_cmd_key;
-
-	QLabel	*lbl_base_key;
-	MppSpinBox *spn_base_key;
-
 	QLabel	*lbl_score_record;
 	QLabel	*lbl_midi_record;
 	QLabel	*lbl_midi_play;
-	QLabel	*lbl_midi_mode;
 
 	QPushButton *but_insert_chord;
 	QPushButton *but_jump[MPP_MAX_LBUTTON];
-	QPushButton *but_midi_mode;
 	QPushButton *but_compile;
 	QPushButton *but_score_record;
 	QPushButton *but_play;
@@ -234,6 +215,9 @@ public:
 	QPushButton *but_midi_trigger;
 	QPushButton *but_midi_rewind;
 	QPushButton *but_bpm;
+
+	MppButton *but_mode[MPP_MAX_VIEWS];
+	MppMode *dlg_mode[MPP_MAX_VIEWS];
 
 	MppBpm *dlg_bpm;
 
@@ -252,9 +236,6 @@ public:
 	QLabel *lbl_bpm_count;
 
 	QSpinBox *spn_bpm_length;
-
-	QLabel	*lbl_key_delay;
-	QSpinBox *spn_key_delay;
 
 	MppButton *but_config_dev[MPP_MAX_DEVS];
 	MppButton *but_config_mm[MPP_MAX_DEVS];
@@ -329,13 +310,9 @@ public:
 public slots:
 	void handle_quit();
 	void handle_play_key_changed(int);
-	void handle_cmd_key_changed(int);
-	void handle_base_key_changed(int);
-	void handle_key_delay_changed(int);
 	void handle_config_local_changed(int);
 	void handle_insert_chord();
 	void handle_jump(int index);
-	void handle_pass_thru();
 	void handle_compile();
 	void handle_score_record();
 	void handle_midi_record();
@@ -378,6 +355,7 @@ public slots:
 	void handle_config_dev(int);
 
 	void handle_bpm();
+	void handle_mode(int);
 };
 
 #endif		/* _MIDIPP_MAINWINDOW_H_ */

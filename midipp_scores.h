@@ -96,6 +96,7 @@ public:
 	uint32_t realLine[MPP_MAX_LINES];
 	uint32_t timer_ticks_pre[MPP_MAX_LINES];
 	uint32_t timer_ticks_post[MPP_MAX_LINES];
+	uint32_t devInputMask;
 
 	uint16_t jumpTable[MPP_MAX_LABELS];
 	uint16_t mousePressPos[MPP_MAX_LINES];
@@ -116,12 +117,14 @@ public:
 	uint8_t playCommand[MPP_MAX_LINES];
 	uint8_t synthChannel;
 	uint8_t baseKey;
+	uint8_t cmdKey;
 	uint8_t delayNoise;
 	uint8_t isPlayKeyLocked;
 	uint8_t whatPlayKeyLocked;
 	uint8_t last_key;
 	uint8_t last_vel;
 	uint8_t timer_was_active;
+	uint8_t keyMode;
 
 protected:
 
@@ -152,7 +155,6 @@ public slots:
 	void handleScoreFileSave();
 	void handleScoreFileSaveAs();
 	void handleScorePrint();
-	void handleChannelChanged(int chan);
 	void handleScrollChanged(int value);
 };
 

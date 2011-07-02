@@ -78,6 +78,13 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 
 	memset(auto_zero_start, 0, auto_zero_end - auto_zero_start);
 
+	/* all devices are input */
+
+	devInputMask = 0;
+	baseKey = C4;
+	cmdKey = C3;
+	delayNoise = 25;
+
 	/* Set parent */
 
 	mainWindow = parent;
@@ -1189,14 +1196,6 @@ done:
 		viewScroll->setValue(0);
 		viewScroll->setMaximum(picMax - 1);
 	}
-}
-
-void
-MppScoreMain :: handleChannelChanged(int chan)
-{
-	pthread_mutex_lock(&mainWindow->mtx);
-	synthChannel = chan;
-	pthread_mutex_unlock(&mainWindow->mtx);
 }
 
 void
