@@ -1763,7 +1763,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 		chan = sm->synthChannel;
 
-		if (!(sm->devInputMask & (1U << n)))
+		if (!(sm->devInputMask & (1U << device_no)))
 			continue;
 
 		if (umidi20_event_get_control_address(event) == 0x40) {
