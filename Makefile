@@ -26,7 +26,7 @@
 # Makefile for MIDI Player Pro
 #
 
-VERSION=1.0.1
+VERSION=1.0.2
 
 help:
 	@echo "Targets are: all, install, clean, package, help"
