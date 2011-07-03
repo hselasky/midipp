@@ -669,13 +669,23 @@ done:
 	ps.bufIndex = 0;
 }
 
+char
+MppScoreMain :: getChar(uint32_t offset)
+{
+	offset += ps.x;
+
+	if (offset >= (uint32_t)ps.ps->size())
+		return (0);
+	return ((*(ps.ps))[offset].toUpper().toAscii());
+}
+
 void
 MppScoreMain :: parseAdv(uint8_t delta)
 {
+	char c;
 	while (delta--) {
 		if (ps.x >= 0) {
-			int c;
-			c = (*(ps.ps))[ps.x].toUpper().toAscii();
+			c = getChar(0);
 			if (c == '\n')
 				ps.realLine++;
 		}
@@ -762,7 +772,7 @@ next_char:
 	parseAdv(1);
 	y++;
 
-	c = pstr[ps.x].toUpper().toAscii();
+	c = getChar(0);
 
 	switch (c) {
 	case 'C':
@@ -857,12 +867,12 @@ next_char:
 			goto next_char;
 
 		/* check for comment */
-		c = pstr[ps.x+1].toUpper().toAscii();
+		c = getChar(1);
 		if (c == '*') {
 			while (1) {
-				c = pstr[ps.x+2].toUpper().toAscii();
+				c = getChar(2);
 				if (c == '*') {
-					c = pstr[ps.x+3].toUpper().toAscii();
+					c = getChar(3);
 					if (c == '/') {
 						/* end of comment */
 						parseAdv(3);
@@ -879,14 +889,15 @@ next_char:
 	case ' ':
 	case '\t':
 		y = -1;
+		goto next_char;
 	default:
 		goto next_char;
 	}
 
 parse_score:
-	c = pstr[ps.x+1].toAscii();
+	c = getChar(1);
 	if (c >= '0' && c <= '9') {
-		d = pstr[ps.x+2].toAscii();
+		d = getChar(2);
 		if (d >= '0' && d <= '9') {
 			base_key += 120 * (c - '0');
 			base_key += 12 * (d - '0');
@@ -895,7 +906,7 @@ parse_score:
 			base_key += 12 * (c - '0');
 			parseAdv(1);
 		}
-		c = pstr[ps.x+1].toUpper().toAscii();
+		c = getChar(1);
 		if (c == 'B') {
 			base_key -= 1;
 			parseAdv(1);
@@ -910,9 +921,9 @@ parse_score:
 	goto next_char;
 
 parse_duration:
-	c = pstr[ps.x+1].toAscii();
+	c = getChar(1);
 	if (c >= '0' && c <= '9') {
-		d = pstr[ps.x+2].toAscii();
+		d = getChar(2);
 		if (d >= '0' && d <= '9') {
 			duration = (10 * (c - '0')) + (d - '0');
 			parseAdv(2);
@@ -926,7 +937,7 @@ parse_duration:
 
 	duration *= 2;
 
-	c = pstr[ps.x+1].toAscii();
+	c = getChar(1);
 	if (c == '.') {
 		parseAdv(1);
 	} else 	if (duration != 0)
@@ -935,21 +946,21 @@ parse_duration:
 	goto next_char;
 
 parse_timer:
-	c = pstr[ps.x+1].toAscii();
+	c = getChar(1);
 	if (c >= '0' && c <= '9') {
 		timer = (c - '0');
 
-		d = pstr[ps.x+2].toAscii();
+		d = getChar(2);
 		if (d >= '0' && d <= '9') {
 			timer *= 10;
 			timer += (d - '0');
 
-			d = pstr[ps.x+3].toAscii();
+			d = getChar(3);
 			if (d >= '0' && d <= '9') {
 				timer *= 10;
 				timer += (d - '0');
 
-				d = pstr[ps.x+4].toAscii();
+				d = getChar(4);
 				if (d >= '0' && d <= '9') {
 					timer *= 10;
 					timer += (d - '0');
@@ -970,24 +981,24 @@ parse_timer:
 	if (ps.line < MPP_MAX_LINES)
 		timer_ticks_pre[ps.line] = timer;
 
-	c = pstr[ps.x+1].toAscii();
+	c = getChar(1);
 	if (c == '.') {
 
-		c = pstr[ps.x+2].toAscii();
+		c = getChar(2);
 		if (c >= '0' && c <= '9') {
 			timer = (c - '0');
 
-			d = pstr[ps.x+3].toAscii();
+			d = getChar(3);
 			if (d >= '0' && d <= '9') {
 				timer *= 10;
 				timer += (d - '0');
 
-				d = pstr[ps.x+4].toAscii();
+				d = getChar(4);
 				if (d >= '0' && d <= '9') {
 					timer *= 10;
 					timer += (d - '0');
 
-					d = pstr[ps.x+5].toAscii();
+					d = getChar(5);
 					if (d >= '0' && d <= '9') {
 						timer *= 10;
 						timer += (d - '0');
@@ -1015,9 +1026,9 @@ parse_timer:
 	goto next_char;
 
 parse_channel:
-	c = pstr[ps.x+1].toAscii();
+	c = getChar(1);
 	if (c >= '0' && c <= '9') {
-		d = pstr[ps.x+2].toAscii();
+		d = getChar(2);
 		if (d >= '0' && d <= '9') {
 			channel = (10 * (c - '0')) + (d - '0');
 			parseAdv(2);
@@ -1033,9 +1044,9 @@ parse_channel:
 	goto next_char;
 
 parse_command:
-	c = pstr[ps.x+1].toAscii();
+	c = getChar(1);
 	if (c >= '0' && c <= '9') {
-		d = pstr[ps.x+2].toAscii();
+		d = getChar(2);
 		if (d >= '0' && d <= '9') {
 			command = (10 * (c - '0')) + (d - '0');
 			parseAdv(2);
@@ -1053,10 +1064,10 @@ parse_command:
 
 parse_label:
 
-	c = pstr[ps.x+1].toAscii();
+	c = getChar(1);
 
 	if (c >= '0' && c <= '9') {
-		d = pstr[ps.x+2].toAscii();
+		d = getChar(2);
 		if (d >= '0' && d <= '9') {
 			label = (10 * (c - '0')) + (d - '0');
 			parseAdv(2);
@@ -1073,7 +1084,7 @@ parse_label:
 	goto next_char;
 
 parse_string:
-	c = pstr[ps.x+1].toAscii();
+	c = getChar(1);
 	if (c != '\"')
 		goto next_char;
 
@@ -1084,7 +1095,7 @@ parse_string:
 		ps.line++;
 	}
 
-	while ((c = pstr[ps.x+2].toAscii()) != 0) {
+	while ((c = getChar(2)) != 0) {
 		if (c == '\"') {
 			newVisual();
 			break;
@@ -1115,17 +1126,17 @@ parse_jump:
 
 parse_jump_sub:
 
-	c = pstr[ps.x+1].toAscii();
+	c = getChar(1);
 
 	if (c == 'R') {
-		c = pstr[ps.x+2].toAscii();
+		c = getChar(2);
 		parseAdv(1);
 		flag |= 2;
 		goto parse_jump_sub;
 	}
 
 	if (c == 'P') {
-		c = pstr[ps.x+2].toAscii();
+		c = getChar(2);
 		parseAdv(1);
 		flag |= 1;
 		goto parse_jump_sub;
@@ -1134,7 +1145,7 @@ parse_jump_sub:
 	if (c >= '0' && c <= '9') {
 		label = (c - '0');
 
-		c = pstr[ps.x+2].toAscii();
+		c = getChar(2);
 		if (c >= '0' && c <= '9') {
 			label *= 10;
 			label += (c - '0');
