@@ -678,7 +678,8 @@ MppScoreMain :: getChar(uint32_t offset)
 
 	if (offset >= (uint32_t)ps.ps->size())
 		return (0);
-	c = (*(ps.ps))[offset].toUpper().toAscii();
+
+	c = (*(ps.ps))[offset].toAscii();
 	/* convert non-printable characters into space */
 	if (c == 0)
 		return (' ');
@@ -779,6 +780,7 @@ next_char:
 	y++;
 
 	c = getChar(0);
+	c = toupper(c);
 
 	switch (c) {
 	case 'C':
@@ -901,6 +903,7 @@ next_char:
 	}
 
 parse_score:
+
 	c = getChar(1);
 	if (c >= '0' && c <= '9') {
 		d = getChar(2);
@@ -913,7 +916,7 @@ parse_score:
 			parseAdv(1);
 		}
 		c = getChar(1);
-		if (c == 'B') {
+		if (c == 'B' || c == 'b') {
 			base_key -= 1;
 			parseAdv(1);
 		}
@@ -927,6 +930,7 @@ parse_score:
 	goto next_char;
 
 parse_duration:
+
 	c = getChar(1);
 	if (c >= '0' && c <= '9') {
 		d = getChar(2);
@@ -952,6 +956,7 @@ parse_duration:
 	goto next_char;
 
 parse_timer:
+
 	c = getChar(1);
 	if (c >= '0' && c <= '9') {
 		timer = (c - '0');
@@ -1032,6 +1037,7 @@ parse_timer:
 	goto next_char;
 
 parse_channel:
+
 	c = getChar(1);
 	if (c >= '0' && c <= '9') {
 		d = getChar(2);
@@ -1050,6 +1056,7 @@ parse_channel:
 	goto next_char;
 
 parse_command:
+
 	c = getChar(1);
 	if (c >= '0' && c <= '9') {
 		d = getChar(2);
@@ -1071,7 +1078,6 @@ parse_command:
 parse_label:
 
 	c = getChar(1);
-
 	if (c >= '0' && c <= '9') {
 		d = getChar(2);
 		if (d >= '0' && d <= '9') {
@@ -1090,6 +1096,7 @@ parse_label:
 	goto next_char;
 
 parse_string:
+
 	c = getChar(1);
 	if (c != '\"')
 		goto next_char;
@@ -1133,15 +1140,14 @@ parse_jump:
 parse_jump_sub:
 
 	c = getChar(1);
-
-	if (c == 'R') {
+	if (c == 'R' || c == 'r') {
 		c = getChar(2);
 		parseAdv(1);
 		flag |= 2;
 		goto parse_jump_sub;
 	}
 
-	if (c == 'P') {
+	if (c == 'P' || c == 'p') {
 		c = getChar(2);
 		parseAdv(1);
 		flag |= 1;
