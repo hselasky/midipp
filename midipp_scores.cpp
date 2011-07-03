@@ -672,11 +672,17 @@ done:
 char
 MppScoreMain :: getChar(uint32_t offset)
 {
+	char c;
+
 	offset += ps.x;
 
 	if (offset >= (uint32_t)ps.ps->size())
 		return (0);
-	return ((*(ps.ps))[offset].toUpper().toAscii());
+	c = (*(ps.ps))[offset].toUpper().toAscii();
+	/* convert non-printable characters into space */
+	if (c == 0)
+		return (' ');
+	return (c);
 }
 
 void
