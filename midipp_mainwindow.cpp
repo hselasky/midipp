@@ -1706,7 +1706,7 @@ MidiEventRxControl(MppScoreMain *sm, uint8_t ctrl, uint8_t val)
 	chan = sm->synthChannel;
 
 	if (sm->keyMode == MM_PASS_ALL)
-		mask = 1U << chan;
+		mask = 1;
 	else
 		mask = sm->active_channels;
 
@@ -1741,7 +1741,7 @@ MidiEventRxPitch(MppScoreMain *sm, uint16_t val)
 	chan = sm->synthChannel;
 
 	if (sm->keyMode == MM_PASS_ALL)
-		mask = 1U << chan;
+		mask = 1;
 	else
 		mask = sm->active_channels;
 
