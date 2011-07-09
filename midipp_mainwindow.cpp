@@ -1579,7 +1579,7 @@ MppMainWindow :: handle_stop(int flag)
 	    /* check if we should kill the pedal, modulation and pitch */
 	    if (!(flag & 1)) {
 		MidiEventRxControl(scores_main[z], 0x40, 0);
-		MidiEventRxControl(scores_main[z], 0x01, 0x40);
+		MidiEventRxControl(scores_main[z], 0x01, 0);
 		MidiEventRxPitch(scores_main[z], 1U << 13);
 	    }
 	}
