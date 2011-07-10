@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2010 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2011 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -68,11 +68,16 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	    " *     Relative(R) line (0..31) and starts a new page(P).\n"
 	    " * S\"<string>\" - creates a visual string.\n"
 	    " * CDEFGAH<number><B> - defines a score in the given octave (0..10).\n"
+	    " * X[+/-]<number> - defines the transpose level of the following scores in half-steps.\n"
 	    " */\n"
 	    "\n"
-	    "S\"(L0:) .Welcom.e!\"\n"
+	    "S\"(L0:) .Welcome .to .MIDI .Player .Pro!\"\n"
 	    "\nC3"
-	    "\nC3\n");
+	    "\nC3"
+	    "\nD3"
+	    "\nE3"
+	    "\nC3"
+	    "\n");
 
 	/* set memory default */
 
@@ -738,6 +743,8 @@ MppScoreMain :: handleParse(const QString &pstr)
 	int duration;
 	int flag;
 	int timer;
+	int negative;
+	int transpose;
 
 	/* cleanup all scores */
 
@@ -774,6 +781,7 @@ next_line:
 	y = -1;
 	channel = 0;
 	duration = 1;
+	transpose = 0;
 
 next_char:
 	parseAdv(1);
@@ -861,6 +869,11 @@ next_char:
 			goto parse_timer;
 		}
 		goto next_char;
+	case 'X':
+		if (y == 0) {
+			goto parse_transpose;
+		}
+		goto next_char;
 	case 0:
 		goto done;
 	case '\n':
@@ -920,6 +933,9 @@ parse_score:
 			base_key -= 1;
 			parseAdv(1);
 		}
+		/* transpose, if any */
+		base_key += transpose;
+
 		if ((ps.line < MPP_MAX_LINES) && (ps.index < MPP_MAX_SCORES)) {
 			scores[ps.line][ps.index].key = base_key & 127;
 			scores[ps.line][ps.index].dur = duration & 255;
@@ -1038,6 +1054,7 @@ parse_timer:
 
 parse_channel:
 
+	/* check for channel number */
 	c = getChar(1);
 	if (c >= '0' && c <= '9') {
 		d = getChar(2);
@@ -1051,8 +1068,45 @@ parse_channel:
 	} else {
 		channel = 0;
 	}
+
 	if (channel < 16)
 		active_channels |= (1 << channel);
+	goto next_char;
+
+parse_transpose:
+
+	negative = 0;
+
+	c = getChar(1);
+
+	/* check sign, if any */
+	if (c == '-') {
+		negative = 1;
+		parseAdv(1);
+	} else if (c == '+') {
+		negative = 0;
+		parseAdv(1);
+	} else {
+		negative = 0;
+	}
+
+	c = getChar(1);
+
+	/* check for transpose value */
+	if (c >= '0' && c <= '9') {
+		d = getChar(2);
+		if (d >= '0' && d <= '9') {
+			transpose = (10 * (c - '0')) + (d - '0');
+			parseAdv(2);
+		} else {
+			transpose = (c - '0');
+			parseAdv(1);
+		}
+		if (negative)
+			transpose = -transpose;
+	} else {
+		transpose = 0;
+	}
 	goto next_char;
 
 parse_command:
