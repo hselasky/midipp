@@ -45,11 +45,13 @@ public:
 	QLabel *lbl_bpm_pattern;
 	QLabel *lbl_bpm_value;
 	QLabel *lbl_bpm_duty;
+	QLabel *lbl_bpm_amp;
 	QLabel *lbl_view[MPP_MAX_VIEWS];
 
 	MppPattern *led_bpm_pattern;
 	QSpinBox *spn_bpm_value;
 	QSpinBox *spn_bpm_duty;
+	QSpinBox *spn_bpm_amp;
 	QCheckBox *cbx_view[MPP_MAX_VIEWS];
 
 	QPushButton *but_bpm_enable;
@@ -62,6 +64,7 @@ public:
 	uint32_t duty;
 	uint32_t duty_ticks;
 	uint8_t view[MPP_MAX_VIEWS];
+	uint8_t amp;
 
 public slots:
 	void handle_view_all(int);
@@ -70,6 +73,7 @@ public slots:
 	void handle_done_all();
 	void handle_bpm_value(int);
 	void handle_bpm_duty(int);
+	void handle_bpm_amp(int);
 };
 
 #endif		/* _MIDIPP_BPM_H_ */

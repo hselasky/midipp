@@ -39,6 +39,8 @@ MppTimerCallback(void *arg)
 
 	pthread_mutex_lock(&mw->mtx);
 	if (mb->enabled &&
+	    mb->duty_ticks &&
+	    mb->amp &&
 	    mw->midiTriggered &&
 	    mb->led_bpm_pattern->matchPattern(mb->time)) {
 
@@ -49,7 +51,7 @@ MppTimerCallback(void *arg)
 				continue;
 
 			sm = mw->scores_main[n];
-			sm->handleKeyPress(key, 127, 0);
+			sm->handleKeyPress(key, mb->amp, 0);
 			sm->handleKeyRelease(key, mb->duty_ticks);
 		}
 	}
@@ -69,7 +71,8 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 
 	lbl_bpm_pattern = new QLabel(tr("BPM pattern: a+bc+d"));
 	lbl_bpm_value = new QLabel(tr("BPM value (1..6000)"));
-	lbl_bpm_duty = new QLabel(tr("BPM duty (1..99)"));
+	lbl_bpm_duty = new QLabel(tr("BPM duty (1..199)"));
+	lbl_bpm_amp = new QLabel(tr("BPM amplitude (1..127)"));
 
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
 		snprintf(buf, sizeof(buf), "BPM to view %c", 'A' + n);
@@ -83,8 +86,12 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 	connect(spn_bpm_value, SIGNAL(valueChanged(int)), this, SLOT(handle_bpm_value(int)));
 
 	spn_bpm_duty = new QSpinBox();
-	spn_bpm_duty->setRange(1, 99);
+	spn_bpm_duty->setRange(1, 199);
 	connect(spn_bpm_duty, SIGNAL(valueChanged(int)), this, SLOT(handle_bpm_duty(int)));
+
+	spn_bpm_amp = new QSpinBox();
+	spn_bpm_amp->setRange(1, 127);
+	connect(spn_bpm_amp, SIGNAL(valueChanged(int)), this, SLOT(handle_bpm_amp(int)));
 
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
 		cbx_view[n] = new QCheckBox();
@@ -111,12 +118,15 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 	gl->addWidget(lbl_bpm_duty, 2, 0, 1, 2);
 	gl->addWidget(spn_bpm_duty, 2, 2, 1, 1);
 
+	gl->addWidget(lbl_bpm_amp, 3, 0, 1, 2);
+	gl->addWidget(spn_bpm_amp, 3, 2, 1, 1);
+
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
-		gl->addWidget(lbl_view[n], 3 + n, 0, 1, 2);
-		gl->addWidget(cbx_view[n], 3 + n, 2, 1, 1);
+		gl->addWidget(lbl_view[n], 4 + n, 0, 1, 2);
+		gl->addWidget(cbx_view[n], 4 + n, 2, 1, 1);
 	}
 
-	n = 3 + MPP_MAX_VIEWS;
+	n = 4 + MPP_MAX_VIEWS;
 
 	gl->addWidget(but_bpm_enable, n, 0, 1, 1);
 	gl->addWidget(but_reset_all, n, 1, 1, 1);
@@ -137,6 +147,7 @@ MppBpm :: handle_reset_all()
 
 	spn_bpm_value->setValue(60);
 	spn_bpm_duty->setValue(50);
+	spn_bpm_amp->setValue(96);
 	but_bpm_enable->setText(tr("Enable"));
 
 	for (n = 0; n != MPP_MAX_VIEWS; n++)
@@ -153,6 +164,7 @@ MppBpm :: handle_reset_all()
 	bpm = 60;
 	duty = 50;
 	duty_ticks = 0;
+	amp = 96;
 
 	handle_update();
 
@@ -241,6 +253,17 @@ MppBpm :: handle_bpm_duty(int val)
 	pthread_mutex_lock(&mw->mtx);
 	if (duty != (uint32_t)val) {
 		duty = (uint32_t)val;
+		handle_update();
+	}
+	pthread_mutex_unlock(&mw->mtx);
+}
+
+void
+MppBpm :: handle_bpm_amp(int val)
+{
+	pthread_mutex_lock(&mw->mtx);
+	if (amp != (uint8_t)val) {
+		amp = (uint8_t)val;
 		handle_update();
 	}
 	pthread_mutex_unlock(&mw->mtx);
