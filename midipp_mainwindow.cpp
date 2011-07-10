@@ -2369,6 +2369,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 	QString output;
 	QString out_block;
 	QString out_desc;
+	QString out_prefix;
 
 	struct umidi20_event *event;
 
@@ -2382,8 +2383,10 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 	uint32_t thres = 25;
 	uint8_t last_chan = 0;
 	uint8_t chan;
+	uint8_t first_score;
 
 	convIndex = 0;
+	first_score = 0;
 
 	pthread_mutex_lock(&mtx);
 
@@ -2409,6 +2412,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 		flags = diag->flags;
 		thres = diag->thres;
 		chan_mask = diag->chan_mask;
+		out_prefix = diag->prefix;
 
 		output += "L0:\n\n";
 
@@ -2462,6 +2466,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 					out_block += get_midi_score_duration();
 			}
 			out_block += "\n";
+			first_score = 0;
 
 			if (do_flush) {
 
@@ -2510,6 +2515,12 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 				else
 					end = 0;	/* should not happen */
 
+			}
+
+			if (first_score == 0) {
+				first_score = 1;
+				if (out_prefix.size() > 0)
+					out_block += out_prefix + " ";
 			}
 
 			if (chan != last_chan) {

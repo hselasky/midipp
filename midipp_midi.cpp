@@ -134,8 +134,16 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 	spn_parse_thres->setValue(thres);
 	spn_parse_thres->setSuffix(tr(" ms"));
 
-	gl->addWidget(spn_parse_thres,y,3,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(spn_parse_thres,y,3,1,1,Qt::AlignLeft|Qt::AlignVCenter);
 	gl->addWidget(lbl_parse_thres,y,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
+
+	y++;
+
+	lbl_prefix = new QLabel(tr("Line prefix"));
+	led_prefix = new QLineEdit();
+
+	gl->addWidget(led_prefix,y,3,1,1,Qt::AlignLeft|Qt::AlignVCenter);
+	gl->addWidget(lbl_prefix,y,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
 
 	y++;
 
@@ -171,6 +179,8 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 		flags &= ~MIDI_FLAG_DURATION;
 
 	thres = spn_parse_thres->value();
+
+	prefix = led_prefix->text().trimmed();
 }
 
 MppMidi :: ~MppMidi()

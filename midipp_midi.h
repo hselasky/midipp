@@ -52,6 +52,9 @@ public:
 	/* event threshold in milliseconds */
 	uint32_t thres;
 
+	/* prefix */
+	QString prefix;
+
 private:
 	QGridLayout *gl;
 
@@ -59,13 +62,15 @@ private:
 	QLabel *lbl_info[MIDI_MAX_TRACKS];
 	QLabel *lbl_single_track;
 	QLabel *lbl_have_strings;
-	QLabel	*lbl_parse_thres;
-	QLabel	*lbl_have_duration;
+	QLabel *lbl_parse_thres;
+	QLabel *lbl_have_duration;
+	QLabel *lbl_prefix;
 
 	QCheckBox *cbx_import[MIDI_MAX_TRACKS];
 	QCheckBox *cbx_single_track;
 	QCheckBox *cbx_have_strings;
 	QCheckBox *cbx_have_duration;
+	QLineEdit *led_prefix;
 
 	QSpinBox *spn_parse_thres;
 
