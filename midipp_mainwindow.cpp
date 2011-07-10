@@ -2111,10 +2111,6 @@ MppMainWindow :: handle_instr_changed(int dummy)
 			}
 			update_curr = 1;
 		}
-		if (currScoreMain->synthChannel == x &&
-		    curr_chan != x) {
-			update_curr = 1;
-		}
 		pthread_mutex_unlock(&mtx);
 
 		if (update_curr) {
@@ -2131,7 +2127,7 @@ MppMainWindow :: handle_instr_changed(int dummy)
 			cbx_instr_mute[x]->blockSignals(0);
 
 			pthread_mutex_lock(&mtx);
-			update_curr = (currScoreMain->synthChannel == x);
+			update_curr = (curr_chan == x);
 			pthread_mutex_unlock(&mtx);
 		}
 
