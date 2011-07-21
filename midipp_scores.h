@@ -60,6 +60,7 @@ public:
 	void viewMousePressEvent(QMouseEvent *e);
 
 	char getChar(uint32_t offset);
+	int32_t getIntValue(uint32_t offset);
 	void parseAdv(uint8_t delta);
 	void parseMax(uint16_t *pmax, float value);
 	void newLine();

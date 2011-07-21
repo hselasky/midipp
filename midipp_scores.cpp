@@ -685,10 +685,48 @@ MppScoreMain :: getChar(uint32_t offset)
 		return (0);
 
 	c = (*(ps.ps))[offset].toAscii();
+
 	/* convert non-printable characters into space */
 	if (c == 0)
 		return (' ');
 	return (c);
+}
+
+int32_t
+MppScoreMain :: getIntValue(uint32_t offset)
+{
+	int32_t value;
+	char c;
+	char neg;
+
+	c = getChar(offset);
+
+	/* check sign, if any */
+	if (c == '-') {
+		neg = 1;
+		parseAdv(1);
+		c = getChar(offset);
+	} else if (c == '+') {
+		neg = 0;
+		parseAdv(1);
+		c = getChar(offset);
+	} else {
+		neg = 0;
+	}
+
+	value = 0;
+
+	while (c >= '0' && c <= '9') {
+		value *= 10;
+		value += c - '0';
+		parseAdv(1);
+		c = getChar(offset);
+	}
+
+	if (neg)
+		value = -value;
+
+	return (value);
 }
 
 void
@@ -734,7 +772,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 {
 	int z;
 	int c;
-	int d;
 	int y;
 	int label;
 	int channel;
@@ -743,7 +780,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 	int duration;
 	int flag;
 	int timer;
-	int negative;
 	int transpose;
 
 	/* cleanup all scores */
@@ -917,134 +953,51 @@ next_char:
 
 parse_score:
 
-	c = getChar(1);
-	if (c >= '0' && c <= '9') {
-		d = getChar(2);
-		if (d >= '0' && d <= '9') {
-			base_key += 120 * (c - '0');
-			base_key += 12 * (d - '0');
-			parseAdv(2);
-		} else {
-			base_key += 12 * (c - '0');
-			parseAdv(1);
-		}
-		c = getChar(1);
-		if (c == 'B' || c == 'b') {
-			base_key -= 1;
-			parseAdv(1);
-		}
-		/* transpose, if any */
-		base_key += transpose;
+	/* add octave number */
+	base_key += 12 * getIntValue(1);
 
-		if ((ps.line < MPP_MAX_LINES) && (ps.index < MPP_MAX_SCORES)) {
-			scores[ps.line][ps.index].key = base_key & 127;
-			scores[ps.line][ps.index].dur = duration & 255;
-			scores[ps.line][ps.index].channel = channel & 15;
-			ps.index++;
-		}
+	c = getChar(1);
+	if (c == 'B' || c == 'b') {
+		base_key -= 1;
+		parseAdv(1);
+	}
+
+	/* transpose, if any */
+	base_key += transpose;
+
+	if ((ps.line < MPP_MAX_LINES) && (ps.index < MPP_MAX_SCORES)) {
+		scores[ps.line][ps.index].key = base_key & 127;
+		scores[ps.line][ps.index].dur = duration & 255;
+		scores[ps.line][ps.index].channel = channel & 15;
+		ps.index++;
 	}
 	goto next_char;
 
 parse_duration:
 
-	c = getChar(1);
-	if (c >= '0' && c <= '9') {
-		d = getChar(2);
-		if (d >= '0' && d <= '9') {
-			duration = (10 * (c - '0')) + (d - '0');
-			parseAdv(2);
-		} else {
-			duration = (c - '0');
-			parseAdv(1);
-		}
-	} else {
-		duration = 0;
-	}
-
-	duration *= 2;
+	duration = 2 * getIntValue(1);
 
 	c = getChar(1);
-	if (c == '.') {
+
+	if (c == '.')
 		parseAdv(1);
-	} else 	if (duration != 0)
+	else if (duration != 0)
 		duration --;
 
 	goto next_char;
 
 parse_timer:
 
-	c = getChar(1);
-	if (c >= '0' && c <= '9') {
-		timer = (c - '0');
-
-		d = getChar(2);
-		if (d >= '0' && d <= '9') {
-			timer *= 10;
-			timer += (d - '0');
-
-			d = getChar(3);
-			if (d >= '0' && d <= '9') {
-				timer *= 10;
-				timer += (d - '0');
-
-				d = getChar(4);
-				if (d >= '0' && d <= '9') {
-					timer *= 10;
-					timer += (d - '0');
-					parseAdv(4);
-				} else {
-					parseAdv(3);
-				}
-			} else {
-				parseAdv(2);
-			}
-		} else {
-			parseAdv(1);
-		}
-	} else {
-		timer = 0;
-	}
+	timer = getIntValue(1);
 
 	if (ps.line < MPP_MAX_LINES)
 		timer_ticks_pre[ps.line] = timer;
 
 	c = getChar(1);
+
 	if (c == '.') {
-
-		c = getChar(2);
-		if (c >= '0' && c <= '9') {
-			timer = (c - '0');
-
-			d = getChar(3);
-			if (d >= '0' && d <= '9') {
-				timer *= 10;
-				timer += (d - '0');
-
-				d = getChar(4);
-				if (d >= '0' && d <= '9') {
-					timer *= 10;
-					timer += (d - '0');
-
-					d = getChar(5);
-					if (d >= '0' && d <= '9') {
-						timer *= 10;
-						timer += (d - '0');
-						parseAdv(5);
-					} else {
-						parseAdv(4);
-					}
-				} else {
-					parseAdv(3);
-				}
-			} else {
-				parseAdv(2);
-			}
-		} else {
-			parseAdv(1);
-			timer = 0;
-		}
-	} else {
-		timer = 0;
+		parseAdv(1);
+		timer = getIntValue(1);
 	}
 
 	if (ps.line < MPP_MAX_LINES)
@@ -1054,96 +1007,38 @@ parse_timer:
 
 parse_channel:
 
-	/* check for channel number */
-	c = getChar(1);
-	if (c >= '0' && c <= '9') {
-		d = getChar(2);
-		if (d >= '0' && d <= '9') {
-			channel = (10 * (c - '0')) + (d - '0');
-			parseAdv(2);
-		} else {
-			channel = (c - '0');
-			parseAdv(1);
-		}
-	} else {
-		channel = 0;
-	}
+	channel = getIntValue(1);
 
 	if (channel < 16)
 		active_channels |= (1 << channel);
+
 	goto next_char;
 
 parse_transpose:
 
-	negative = 0;
+	transpose = getIntValue(1);
 
-	c = getChar(1);
-
-	/* check sign, if any */
-	if (c == '-') {
-		negative = 1;
-		parseAdv(1);
-	} else if (c == '+') {
-		negative = 0;
-		parseAdv(1);
-	} else {
-		negative = 0;
-	}
-
-	c = getChar(1);
-
-	/* check for transpose value */
-	if (c >= '0' && c <= '9') {
-		d = getChar(2);
-		if (d >= '0' && d <= '9') {
-			transpose = (10 * (c - '0')) + (d - '0');
-			parseAdv(2);
-		} else {
-			transpose = (c - '0');
-			parseAdv(1);
-		}
-		if (negative)
-			transpose = -transpose;
-	} else {
-		transpose = 0;
-	}
 	goto next_char;
 
 parse_command:
 
 	c = getChar(1);
-	if (c >= '0' && c <= '9') {
-		d = getChar(2);
-		if (d >= '0' && d <= '9') {
-			command = (10 * (c - '0')) + (d - '0');
-			parseAdv(2);
-		} else {
-			command = (c - '0');
-			parseAdv(1);
-		}
-	} else {
-		command = MPP_CMD_NOP;		/* NOP */
-	}
-	if (ps.line < MPP_MAX_LINES)
-		playCommand[ps.line] = command;
+	if (c == 'L') {
+		parseAdv(1);
+		label = getIntValue(1);
 
+	} else {
+		command = getIntValue(1);
+
+		if (ps.line < MPP_MAX_LINES)
+			playCommand[ps.line] = command;
+	}
 	goto next_char;
 
 parse_label:
 
-	c = getChar(1);
-	if (c >= '0' && c <= '9') {
-		d = getChar(2);
-		if (d >= '0' && d <= '9') {
-			label = (10 * (c - '0')) + (d - '0');
-			parseAdv(2);
-		} else {
-			label = (c - '0');
-			parseAdv(1);
-		}
-	} else {
-		label = 0;
-	}
+	label = getIntValue(1);
+
 	if ((label >= 0) && (label < MPP_MAX_LABELS))
 		jumpTable[label] = ps.line + 1;
 
@@ -1209,16 +1104,7 @@ parse_jump_sub:
 	}
 
 	if (c >= '0' && c <= '9') {
-		label = (c - '0');
-
-		c = getChar(2);
-		if (c >= '0' && c <= '9') {
-			label *= 10;
-			label += (c - '0');
-			parseAdv(2);
-		} else {
-			parseAdv(1);
-		}
+		label = getIntValue(1);
 
 		if (label < 0 || label >= MPP_MAX_LABELS)
 			goto next_char;
