@@ -63,6 +63,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	    " * K0 - no operation.\n"
 	    " * K1 - lock play key until next label jump.\n"
 	    " * K2 - unlock play key.\n"
+	    " * M<number> - macro inline the given label.\n"
 	    " * L<number> - defines a label (0..31).\n"
 	    " * J<R><P><number> - jumps to the given label (0..31) or \n"
 	    " *     Relative(R) line (0..31) and starts a new page(P).\n"
@@ -643,19 +644,112 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 	}
 }
 
-void
-MppScoreMain :: newLine()
+int
+mergeCompare(const void *_a, const void *_b)
 {
+	const struct MppMergeEntry *a = (const struct MppMergeEntry *)_a;
+	const struct MppMergeEntry *b = (const struct MppMergeEntry *)_b;
+
+	return ((a->ticks == b->ticks) ? 0 : 
+	    (a->ticks > b->ticks) ? 1 : -1);
+}
+
+void
+MppScoreMain :: newLine(uint8_t force, uint8_t label, uint8_t new_page)
+{
+top:
 	if (ps.line >= MPP_MAX_LINES)
 		return;
-	if (ps.index == 0 &&
-	    timer_ticks_pre[ps.line] == 0 &&
-	    timer_ticks_post[ps.line] == 0)
-		return;
 
-	realLine[ps.line] = ps.realLine;
-	ps.line++;
-	ps.index = 0;
+	if (force == 0 &&
+	    ps.index == 0 &&
+	    ps.mindex == 0 &&
+	    timer_ticks_pre[ps.line] == 0 &&
+	    timer_ticks_post[ps.line] == 0) {
+		return;
+	}
+
+	/* check if we should merge any label calls */
+
+	if (ps.mindex != 0) {
+
+		uint32_t x;
+		uint32_t y;
+
+		uint32_t temp_tick;
+		uint32_t last_tick;
+		uint32_t dur;
+		uint32_t delta;
+
+		qsort(merge, ps.mindex, sizeof(merge[0]), &mergeCompare);
+
+		last_tick = 0;
+
+		for (x = 0; x != (uint32_t)ps.mindex; x++) {
+
+			if ((merge[x].ticks != last_tick) &&
+			    (ps.line < MPP_MAX_LINES)) {
+
+				delta = merge[x].ticks - last_tick;
+				last_tick = merge[x].ticks;
+
+				timer_ticks_pre[ps.line] = delta;
+				timer_ticks_post[ps.line] = 0;
+				jumpLabel[ps.line] = 0;
+				pageNext[ps.line] = 0;
+				realLine[ps.line] = ps.realLine;
+				ps.line++;
+				ps.index = 0;
+			}
+
+			if (merge[x].is_on == 0)
+				continue;
+
+			dur = 0;
+			temp_tick = merge[x].ticks;
+
+			/* compute relative duration */
+			for (y = x + 1; y < (uint32_t)ps.mindex; y++) {
+				if (temp_tick != merge[y].ticks) {
+					temp_tick = merge[y].ticks;
+					dur++;
+				}
+				/* look for next key event on the given channel */
+				if (merge[y].key == merge[x].key &&
+				    merge[y].channel == merge[x].channel) {
+					break;
+				}
+			}
+
+			if (dur)
+				dur = (2 * dur) - 1;
+
+			if ((ps.line < MPP_MAX_LINES) && (ps.index < MPP_MAX_SCORES)) {
+				scores[ps.line][ps.index].key = merge[x].key & 127;
+				scores[ps.line][ps.index].dur = dur & 255;
+				scores[ps.line][ps.index].channel = merge[x].channel & 15;
+				ps.index++;
+			}
+		}
+		ps.mindex = 0;
+
+ 		if (ps.line < MPP_MAX_LINES) {
+ 			jumpLabel[ps.line] = MPP_JUMP_REL ;
+			pageNext[ps.line] = 0;
+			realLine[ps.line] = ps.realLine;
+			ps.line++;
+			ps.index = 0;
+		}
+ 		goto top;
+	}
+
+	if (ps.line < MPP_MAX_LINES) {
+		jumpLabel[ps.line] = label;
+		pageNext[ps.line] = new_page;
+		realLine[ps.line] = ps.realLine;
+		ps.line++;
+		ps.index = 0;
+	}
 }
 
 void
@@ -767,6 +861,36 @@ MppScoreMain :: resolveJump(uint32_t line)
 	return (jump);
 }
 
+uint32_t
+MppScoreMain :: resolveDuration(uint32_t line_start, uint32_t line_end, uint8_t dur)
+{
+	uint32_t duration = 0;
+
+	while (line_start < line_end) {
+
+		if (timer_ticks_pre[line_start] == 0 &&
+		    timer_ticks_post[line_start] == 0)
+			break;
+
+		if (jumpLabel[line_start] != 0)
+			break;
+
+		if (dur < 2) {
+			if (dur == 1) {
+				duration += timer_ticks_pre[line_start];
+				break;
+			}
+			break;
+		}
+
+		dur -= 2;
+		duration += timer_ticks_pre[line_start];
+		duration += timer_ticks_post[line_start];
+		line_start++;
+	}
+	return (duration);
+}
+
 void
 MppScoreMain :: handleParse(const QString &pstr)
 {
@@ -781,6 +905,11 @@ MppScoreMain :: handleParse(const QString &pstr)
 	int flag;
 	int timer;
 	int transpose;
+	int jmp_line;
+	int curr_ticks;
+	int key;
+	int dur;
+	int end_line;
 
 	/* cleanup all scores */
 
@@ -791,6 +920,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 		}
 	}
 
+	ps.mindex = 0;
 	ps.x = -1;
 	ps.line = 0;
 	ps.realLine = 0;
@@ -799,6 +929,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 	ps.ps = &pstr;
 
 	memset(scores, 0, sizeof(scores));
+	memset(merge, 0, sizeof(merge));
 	memset(jumpLabel, 0, sizeof(jumpLabel));
 	memset(jumpTable, 0, sizeof(jumpTable));
 	memset(pageNext, 0, sizeof(pageNext));
@@ -812,7 +943,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 		goto done;
 
 next_line:
-	newLine();
+	newLine(0,0,0);
 
 	y = -1;
 	channel = 0;
@@ -883,6 +1014,11 @@ next_char:
 	case 'L':
 		if (y == 0) {
 			goto parse_label;
+		}
+		goto next_char;
+	case 'M':
+		if (y == 0) {
+			goto parse_inline;
 		}
 		goto next_char;
 	case 'J':
@@ -965,7 +1101,8 @@ parse_score:
 	/* transpose, if any */
 	base_key += transpose;
 
-	if ((ps.line < MPP_MAX_LINES) && (ps.index < MPP_MAX_SCORES)) {
+	if ((base_key >= 0) && (base_key <= 127) &&
+	    (ps.line < MPP_MAX_LINES) && (ps.index < MPP_MAX_SCORES)) {
 		scores[ps.line][ps.index].key = base_key & 127;
 		scores[ps.line][ps.index].dur = duration & 255;
 		scores[ps.line][ps.index].channel = channel & 15;
@@ -979,11 +1116,11 @@ parse_duration:
 
 	c = getChar(1);
 
-	if (c == '.')
+	if (c == '.') {
 		parseAdv(1);
-	else if (duration != 0)
+	} else if (duration > 0) {
 		duration --;
-
+	}
 	goto next_char;
 
 parse_timer:
@@ -1021,18 +1158,78 @@ parse_transpose:
 	goto next_char;
 
 parse_command:
+	command = getIntValue(1);
 
-	c = getChar(1);
-	if (c == 'L') {
-		parseAdv(1);
-		label = getIntValue(1);
+	if (ps.line < MPP_MAX_LINES)
+		playCommand[ps.line] = command;
 
-	} else {
-		command = getIntValue(1);
+	goto next_char;
 
-		if (ps.line < MPP_MAX_LINES)
-			playCommand[ps.line] = command;
+parse_inline:
+
+	/* handle macro label inlining, if any */
+
+	label = getIntValue(1);
+
+	if (label < 0 || label >= MPP_MAX_LABELS)
+		goto next_char;
+
+	jmp_line = jumpTable[label] - 1;
+	if (jmp_line < 0)
+		goto next_char;
+
+	curr_ticks = 0;
+	end_line = ps.line;
+
+	if (end_line > MPP_MAX_LINES)
+		end_line = MPP_MAX_LINES;
+
+	while (jmp_line < end_line) {
+
+		uint32_t x;
+
+		if (jumpLabel[jmp_line] != 0)
+			break;
+
+		if (timer_ticks_pre[jmp_line] == 0 &&
+		    timer_ticks_post[jmp_line] == 0)
+			break;
+
+		for (x = 0; x != MPP_MAX_SCORES; x++) {
+			if (scores[jmp_line][x].dur == 0)
+				continue;
+
+			key = scores[jmp_line][x].key + transpose;
+			if (key < 0 || key > 127)
+				continue;
+
+			dur = resolveDuration(jmp_line, end_line,
+			    scores[jmp_line][x].dur);
+			if (dur <= 0)
+				continue;
+
+			if (ps.mindex >= MPP_MAX_MERGE)
+				break;
+
+			merge[ps.mindex].ticks = curr_ticks;
+			merge[ps.mindex].is_on = 1;
+			merge[ps.mindex].key = key;
+			merge[ps.mindex].channel = channel;
+			ps.mindex++;
+
+			merge[ps.mindex].ticks = curr_ticks + dur;
+			merge[ps.mindex].is_on = 0;
+			merge[ps.mindex].key = key;
+			merge[ps.mindex].channel = channel;
+			ps.mindex++;
+		}
+
+		curr_ticks += timer_ticks_pre[jmp_line] +
+		    timer_ticks_post[jmp_line];
+
+		jmp_line++;
 	}
+
 	goto next_char;
 
 parse_label:
@@ -1051,11 +1248,8 @@ parse_string:
 		goto next_char;
 
 	/* check if the current line already has a string */
-	if (ps.line < MPP_MAX_LINES && visual[ps.line].pstr != NULL) {
-		jumpLabel[ps.line] = MPP_JUMP_REL;
-		realLine[ps.line] = ps.realLine;
-		ps.line++;
-	}
+	if (ps.line < MPP_MAX_LINES && visual[ps.line].pstr != NULL)
+		newLine(1, MPP_JUMP_REL, 0);
 
 	while ((c = getChar(2)) != 0) {
 		if (c == '\"') {
@@ -1120,20 +1314,12 @@ parse_jump_sub:
 		label = MPP_JUMP_REL - 1;
 	}
 
-	newLine();
+	newLine(1, label + 1, flag & 1);
 
-	if (ps.line < MPP_MAX_LINES) {
-		if (flag & 1)
-			pageNext[ps.line] = 1;
-
-		jumpLabel[ps.line] = label + 1;
-		realLine[ps.line] = ps.realLine;
-		ps.line++;
-	}
 	goto next_char;
 
 done:
-	newLine();
+	newLine(0, 0, 0);
 
 	if (ps.bufIndex != 0)
 		newVisual();
@@ -1286,10 +1472,10 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 	uint32_t timeout = 0;
 	uint32_t t_pre;
 	uint32_t t_post;
+	int out_key;
 	uint16_t pos;
 	uint8_t chan;
 	uint8_t x;
-	uint8_t out_key;
 	uint8_t delay;
 
  repeat:
@@ -1329,7 +1515,7 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 	}
 
 	t_pre = timer_ticks_pre[currPos];
-	t_post = timer_ticks_pre[currPos];
+	t_post = timer_ticks_post[currPos];
 
 	if (timer_was_active && t_pre == 0 && t_post == 0)
 		goto done;
@@ -1346,8 +1532,10 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 	for (x = 0; x != MPP_MAX_SCORES; x++, pn++) {
 
 		if (pn->dur != 0) {
-			out_key = pn->key + (in_key - baseKey);
-			out_key &= 127;
+			out_key = (int)pn->key + (int)in_key - (int)baseKey;
+
+			if (out_key < 0 || out_key > 127)
+				continue;
 
 			chan = (synthChannel + pn->channel) & 0xF;
 

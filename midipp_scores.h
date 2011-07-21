@@ -63,10 +63,11 @@ public:
 	int32_t getIntValue(uint32_t offset);
 	void parseAdv(uint8_t delta);
 	void parseMax(uint16_t *pmax, float value);
-	void newLine();
+	void newLine(uint8_t force, uint8_t label, uint8_t new_page);
 	void newVisual();
 	void watchdog();
 	uint32_t resolveJump(uint32_t line);
+	uint32_t resolveDuration(uint32_t line, uint32_t line_end, uint8_t dur);
 
 	int checkLabelJump(int label);
 	int checkHalfPassThru(int key);
@@ -93,6 +94,7 @@ public:
 
 	struct MppScoreEntry scores[MPP_MAX_LINES][MPP_MAX_SCORES];
 	struct MppVisualScore visual[MPP_MAX_LINES];
+	struct MppMergeEntry merge[MPP_MAX_MERGE];
 
 	uint32_t pressedKeys[MPP_PRESSED_MAX];
 	uint32_t realLine[MPP_MAX_LINES];
@@ -140,6 +142,7 @@ protected:
 		int realLine;
 		int channel;
 		int duration;
+		int mindex;
 	} ps;
 
 	/* parse buffer */

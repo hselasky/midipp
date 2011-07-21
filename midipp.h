@@ -67,6 +67,7 @@
 
 #include <umidi20.h>
 
+#define	MPP_MAX_MERGE	1024
 #define	MPP_MAX_VIEWS	2
 #define	MPP_MAX_LINES	8192
 #define	MPP_MAX_SCORES	32
@@ -107,6 +108,13 @@ class MppMode;
 struct MppScoreEntry {
 	uint8_t key;
 	uint8_t dur;
+	uint8_t channel;
+};
+
+struct MppMergeEntry {
+	uint32_t ticks;
+	uint8_t is_on;
+	uint8_t key;
 	uint8_t channel;
 };
 
