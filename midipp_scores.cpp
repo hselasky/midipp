@@ -79,7 +79,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	    "\nD3"
 	    "\nE3"
 	    "\nC3"
-	    "J0\n"
+	    "\n\nJ0"
 	    "\n");
 
 	/* set memory default */
