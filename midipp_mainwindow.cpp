@@ -2294,6 +2294,7 @@ MppMainWindow :: convert_midi_duration(struct umidi20_track *im_track, uint32_t 
 	duration = 0;
 
 	memset(convLineStart, 0, sizeof(convLineStart));
+	memset(convLineEnd, 0, sizeof(convLineEnd));
 
 	UMIDI20_QUEUE_FOREACH(event, &(im_track->queue)) {
 
@@ -2316,6 +2317,11 @@ MppMainWindow :: convert_midi_duration(struct umidi20_track *im_track, uint32_t 
 				}
 			}
 		}
+
+		if (umidi20_event_is_key_end(event)) {
+			if (index > 0 && index < MPP_MAX_LINES)
+				convLineEnd[index - 1] = curr_pos;
+		}
 	}
 	if ((curr_pos + duration) > last_pos && index < MPP_MAX_LINES) {
 		convLineStart[index] = curr_pos + duration;
@@ -2328,14 +2334,21 @@ QString
 MppMainWindow :: get_midi_score_duration(void)
 {
 	uint32_t retval;
+	uint32_t lend;
 	char buf[16];
 
 	retval = convLineStart[convIndex] - 
 	    convLineStart[convIndex - 1];
 
-	retval = (retval + 1) / 2;
+	lend = convLineEnd[convIndex - 1];
 
-	snprintf(buf, sizeof(buf), "W%u.%u ", retval, retval);
+	if (lend <= convLineStart[convIndex] &&
+	    lend >= convLineStart[convIndex - 1])
+		lend = convLineStart[convIndex] - lend;
+	else
+		lend = retval / 2;
+
+	snprintf(buf, sizeof(buf), "W%u.%u ", retval - lend, lend);
 
 	return (QString(buf));
 }

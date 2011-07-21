@@ -94,6 +94,7 @@ public:
 	MppScoreMain *currScoreMain;
 
 	uint32_t convLineStart[MPP_MAX_LINES];
+	uint32_t convLineEnd[MPP_MAX_LINES];
 	uint32_t convIndex;
 
 	uint32_t bpmData[MPP_MAX_BPM];
