@@ -27,6 +27,7 @@
 #include <midipp_mainwindow.h>
 #include <midipp_pattern.h>
 #include <midipp_scores.h>
+#include <midipp_spinbox.h>
 
 static void
 MppTimerCallback(void *arg)
@@ -34,7 +35,6 @@ MppTimerCallback(void *arg)
 	MppBpm *mb = (MppBpm *)arg;
 	MppMainWindow *mw = mb->mw;
 	MppScoreMain *sm;
-	int key;
 	int n;
 
 	pthread_mutex_lock(&mw->mtx);
@@ -44,15 +44,13 @@ MppTimerCallback(void *arg)
 	    mw->midiTriggered &&
 	    mb->led_bpm_pattern->matchPattern(mb->time)) {
 
-		key = mw->playKey;
-
 		for (n = 0; n != MPP_MAX_VIEWS; n++) {
 			if (mb->view[n] == 0)
 				continue;
 
 			sm = mw->scores_main[n];
-			sm->handleKeyPress(key, mb->amp, 0);
-			sm->handleKeyRelease(key, mb->duty_ticks);
+			sm->handleKeyPress(mb->key, mb->amp, 0);
+			sm->handleKeyRelease(mb->key, mb->duty_ticks);
 		}
 	}
 	mb->time++;
@@ -73,6 +71,7 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 	lbl_bpm_value = new QLabel(tr("BPM value (1..6000)"));
 	lbl_bpm_duty = new QLabel(tr("BPM duty (1..199)"));
 	lbl_bpm_amp = new QLabel(tr("BPM amplitude (1..127)"));
+	lbl_bpm_key = new QLabel(tr("BPM play key"));
 
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
 		snprintf(buf, sizeof(buf), "BPM to view %c", 'A' + n);
@@ -92,6 +91,10 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 	spn_bpm_amp = new QSpinBox();
 	spn_bpm_amp->setRange(1, 127);
 	connect(spn_bpm_amp, SIGNAL(valueChanged(int)), this, SLOT(handle_bpm_amp(int)));
+
+	spn_bpm_key = new MppSpinBox();
+	spn_bpm_key->setRange(0, 127);
+	connect(spn_bpm_key, SIGNAL(valueChanged(int)), this, SLOT(handle_bpm_key(int)));
 
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
 		cbx_view[n] = new QCheckBox();
@@ -121,12 +124,15 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 	gl->addWidget(lbl_bpm_amp, 3, 0, 1, 2);
 	gl->addWidget(spn_bpm_amp, 3, 2, 1, 1);
 
+	gl->addWidget(lbl_bpm_key, 4, 0, 1, 2);
+	gl->addWidget(spn_bpm_key, 4, 2, 1, 1);
+
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
-		gl->addWidget(lbl_view[n], 4 + n, 0, 1, 2);
-		gl->addWidget(cbx_view[n], 4 + n, 2, 1, 1);
+		gl->addWidget(lbl_view[n], 5 + n, 0, 1, 2);
+		gl->addWidget(cbx_view[n], 5 + n, 2, 1, 1);
 	}
 
-	n = 4 + MPP_MAX_VIEWS;
+	n = 5 + MPP_MAX_VIEWS;
 
 	gl->addWidget(but_bpm_enable, n, 0, 1, 1);
 	gl->addWidget(but_reset_all, n, 1, 1, 1);
@@ -148,6 +154,8 @@ MppBpm :: handle_reset_all()
 	spn_bpm_value->setValue(60);
 	spn_bpm_duty->setValue(50);
 	spn_bpm_amp->setValue(96);
+	spn_bpm_key->setValue(C4);
+
 	but_bpm_enable->setText(tr("Enable"));
 
 	for (n = 0; n != MPP_MAX_VIEWS; n++)
@@ -165,6 +173,7 @@ MppBpm :: handle_reset_all()
 	duty = 50;
 	duty_ticks = 0;
 	amp = 96;
+	key = C4;
 
 	handle_update();
 
@@ -264,6 +273,17 @@ MppBpm :: handle_bpm_amp(int val)
 	pthread_mutex_lock(&mw->mtx);
 	if (amp != (uint8_t)val) {
 		amp = (uint8_t)val;
+		handle_update();
+	}
+	pthread_mutex_unlock(&mw->mtx);
+}
+
+void
+MppBpm :: handle_bpm_key(int val)
+{
+	pthread_mutex_lock(&mw->mtx);
+	if (key != (uint8_t)val) {
+		key = (uint8_t)val;
 		handle_update();
 	}
 	pthread_mutex_unlock(&mw->mtx);
