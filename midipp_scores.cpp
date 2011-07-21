@@ -73,11 +73,13 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	    " */\n"
 	    "\n"
 	    "S\"(L0:) .Welcome .to .MIDI .Player .Pro!\"\n"
+	    "L0:\n"
 	    "\nC3"
 	    "\nC3"
 	    "\nD3"
 	    "\nE3"
 	    "\nC3"
+	    "J0\n"
 	    "\n");
 
 	/* set memory default */

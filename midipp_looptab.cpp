@@ -242,7 +242,7 @@ MppLoopTab :: handle_trig(int n)
 void
 MppLoopTab :: handle_import(int n)
 {
-	mw->import_midi_track(track[n], MIDI_FLAG_DURATION | MIDI_FLAG_DIALOG);
+	mw->import_midi_track(track[n], MIDI_FLAG_DURATION | MIDI_FLAG_DIALOG, n);
 }
 
 /* Must be called locked */

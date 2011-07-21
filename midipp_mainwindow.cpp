@@ -2358,7 +2358,7 @@ MppMainWindow :: log_midi_score_duration(void)
 }
 
 void
-MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flags)
+MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flags, int label)
 {
 	QTextCursor cursor(currScoreMain->editWidget->textCursor());
 
@@ -2410,9 +2410,12 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 		chan_mask = diag->chan_mask;
 		out_prefix = diag->prefix;
 
-		output += "L0:\n\n";
-
 		delete diag;
+	}
+
+	if (label > -1) {
+		snprintf(buf, sizeof(buf), "L%d:\n\n", label);
+		output += buf;
 	}
 
 	/* if no channels, just return */
@@ -2551,6 +2554,11 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 	output += out_block;
 	output += "\n";
 
+	if (label > -1) {
+		snprintf(buf, sizeof(buf), "J%d\n", label);
+		output += buf;
+	}
+
 	cursor.insertText(output);
 	
 	handle_compile();
@@ -2559,7 +2567,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 void
 MppMainWindow :: handle_midi_file_import()
 {
-	import_midi_track(track, MIDI_FLAG_DIALOG | MIDI_FLAG_MULTI_CHAN);
+	import_midi_track(track, MIDI_FLAG_DIALOG | MIDI_FLAG_MULTI_CHAN, 0);
 }
 
 void

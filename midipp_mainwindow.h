@@ -65,7 +65,7 @@ public:
 	QString get_midi_score_duration();
 	int log_midi_score_duration();
 	int convert_midi_duration(struct umidi20_track *, uint32_t thres, uint32_t chan_mask);
-	void import_midi_track(struct umidi20_track *, uint32_t midi_flags = 0);
+	void import_midi_track(struct umidi20_track *, uint32_t midi_flags = 0, int label = -1);
 
 	void update_play_device_no(void);
 
