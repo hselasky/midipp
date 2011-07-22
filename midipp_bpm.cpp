@@ -247,6 +247,7 @@ MppBpm :: handle_bpm_enable()
 	} else {
 		pthread_mutex_lock(&mw->mtx);
 		enabled = 1;
+		skip_bpm = 0;
 		handle_update();
 		pthread_mutex_unlock(&mw->mtx);
 
