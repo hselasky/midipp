@@ -305,7 +305,7 @@ MppBpm :: handle_bpm_value(int val)
 	pthread_mutex_lock(&mw->mtx);
 	if (bpm != (uint32_t)val) {
 		bpm = (uint32_t)val;
-		skip_bpm = enabled;
+		skip_bpm = enabled && mw->midiTriggered;
 		handle_update();
 	}
 	pthread_mutex_unlock(&mw->mtx);
@@ -318,7 +318,7 @@ MppBpm :: handle_bpm_duty(int val)
 	pthread_mutex_lock(&mw->mtx);
 	if (duty != (uint32_t)val) {
 		duty = (uint32_t)val;
-		skip_bpm = enabled;
+		skip_bpm = enabled && mw->midiTriggered;
 		handle_update();
 	}
 	pthread_mutex_unlock(&mw->mtx);
@@ -330,7 +330,7 @@ MppBpm :: handle_bpm_amp(int val)
 	pthread_mutex_lock(&mw->mtx);
 	if (amp != (uint8_t)val) {
 		amp = (uint8_t)val;
-		skip_bpm = enabled;
+		skip_bpm = enabled && mw->midiTriggered;
 		handle_update();
 	}
 	pthread_mutex_unlock(&mw->mtx);
@@ -342,7 +342,7 @@ MppBpm :: handle_bpm_key(int val)
 	pthread_mutex_lock(&mw->mtx);
 	if (key != (uint8_t)val) {
 		key = (uint8_t)val;
-		skip_bpm = enabled;
+		skip_bpm = enabled && mw->midiTriggered;
 		handle_update();
 	}
 	pthread_mutex_unlock(&mw->mtx);
@@ -354,7 +354,7 @@ MppBpm :: handle_bpm_ref(int val)
 	pthread_mutex_lock(&mw->mtx);
 	if (ref != (uint32_t)val) {
 		ref = (uint32_t)val;
-		skip_bpm = enabled;
+		skip_bpm = enabled && mw->midiTriggered;
 		handle_update();
 	}
 	pthread_mutex_unlock(&mw->mtx);
@@ -366,7 +366,7 @@ MppBpm :: handle_bpm_period(int val)
 	pthread_mutex_lock(&mw->mtx);
 	if (period != (uint32_t)val) {
 		period = (uint32_t)val;
-		skip_bpm = enabled;
+		skip_bpm = enabled && mw->midiTriggered;
 		handle_update();
 	}
 	pthread_mutex_unlock(&mw->mtx);
