@@ -30,7 +30,9 @@ MppPattern :: MppPattern(QWidget *parent)
 {
 	pthread_mutex_init(&mtx, NULL);
 
-	handleChanged(QString());
+	setText(QString("1"));
+
+	handleChanged(QString("1"));
 
 	connect(this, SIGNAL(textChanged(const QString &)), this, SLOT(handleChanged(const QString &)));
 }
@@ -70,6 +72,7 @@ MppPattern :: handleChanged(const QString &text)
 	int c;
 	uint32_t temp = 0;
 	uint8_t i;
+	uint8_t any;
 
 	ch = text.data();
 
@@ -79,22 +82,29 @@ MppPattern :: handleChanged(const QString &text)
 		pattern[i] = 0x80000000U;
 
 	i = 0;
+	any = 0;
 
 	while (ch->isNull() == 0) {
 		c = ch->toAscii();
-		if (c >= 'a' && c <= 'z')
+		if (c >= 'a' && c <= 'z') {
 			temp |= 1 << (c - 'a');
+			any = 1;
+		}
+		if (c == '1') {
+			any = 1;
+		}
 		if (c == '+') {
 			if (i < MPP_PATTERN_MAX) {
 				pattern[i] = temp;
 				temp = 0;
+				any = 0;
 				i++;
 			}
 		}
 		ch++;
 	}
 
-	if (i < MPP_PATTERN_MAX)
+	if (any != 0 && i < MPP_PATTERN_MAX)
 		pattern[i] = temp;
 
 	pthread_mutex_unlock(&mtx);

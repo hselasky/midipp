@@ -2331,11 +2331,11 @@ MppMainWindow :: convert_midi_duration(struct umidi20_track *im_track, uint32_t 
 }
 
 QString
-MppMainWindow :: get_midi_score_duration(void)
+MppMainWindow :: get_midi_score_duration(uint32_t *psum)
 {
 	uint32_t retval;
 	uint32_t lend;
-	char buf[16];
+	char buf[32];
 
 	retval = convLineStart[convIndex] - 
 	    convLineStart[convIndex - 1];
@@ -2348,7 +2348,11 @@ MppMainWindow :: get_midi_score_duration(void)
 	else
 		lend = retval / 2;
 
-	snprintf(buf, sizeof(buf), "W%u.%u ", retval - lend, lend);
+	snprintf(buf, sizeof(buf), "W%u.%u /* %u */",
+	    retval - lend, lend, retval);
+
+	if (psum != 0)
+		*psum += retval;
 
 	return (QString(buf));
 }
@@ -2390,6 +2394,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 	uint32_t last_u = MPP_MAX_DURATION + 1;
 	uint32_t chan_mask = 0;
 	uint32_t thres = 25;
+	uint32_t sumdur = 0;
 	uint8_t last_chan = 0;
 	uint8_t chan;
 	uint8_t first_score;
@@ -2475,7 +2480,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 			out_desc += buf;
 			if (flags & MIDI_FLAG_DURATION) {
 				if (convIndex < max_index)
-					out_block += get_midi_score_duration();
+					out_block += get_midi_score_duration(&sumdur);
 			}
 			out_block += "\n";
 			first_score = 0;
@@ -2566,6 +2571,11 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 	}
 	output += out_block;
 	output += "\n";
+
+	if (flags & MIDI_FLAG_DURATION) {
+		snprintf(buf, sizeof(buf), "/* W = %u ms */\n\n", sumdur);
+		output += buf;
+	}
 
 	if (label > -1) {
 		snprintf(buf, sizeof(buf), "J%d\n", label);
@@ -2835,6 +2845,11 @@ MppMainWindow :: output_key_sub(int chan, int key, int vel, int delay, int dur)
 	struct mid_data *d = &mid_data;
 	uint8_t y;
 
+	/* check for time scaling */
+	if (dlg_bpm->period != 0 && dlg_bpm->bpm != 0)
+		delay = (dlg_bpm->ref * delay) / dlg_bpm->bpm;
+
+	/* output note to all synths first */
 	for (y = 0; y != MPP_MAX_DEVS; y++) {
 		if (check_synth(y, chan, 0)) {
 			mid_delay(d, delay);
@@ -2842,6 +2857,7 @@ MppMainWindow :: output_key_sub(int chan, int key, int vel, int delay, int dur)
 		}
 	}
 
+	/* output note to recording device */
 	if (check_record(chan, 0)) {
 		mid_delay(d, delay);
 		do_key_press(key, vel, dur);
@@ -2920,6 +2936,7 @@ skip_echo:;
 void
 MppMainWindow :: handle_bpm()
 {
+	dlg_bpm->handle_reload_all();
 	dlg_bpm->exec();
 }
 

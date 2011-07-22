@@ -28,6 +28,7 @@
 #include <midipp_looptab.h>
 #include <midipp_import.h>
 #include <midipp_pattern.h>
+#include <midipp_bpm.h>
 
 MppScoreView :: MppScoreView(MppScoreMain *parent)
 {
@@ -63,6 +64,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	    " * K0 - no operation.\n"
 	    " * K1 - lock play key until next label jump.\n"
 	    " * K2 - unlock play key.\n"
+	    " * K3.<bpm>.<period_ms> - set reference BPM and period in ms.\n"
 	    " * M<number> - macro inline the given label.\n"
 	    " * L<number> - defines a label (0..31).\n"
 	    " * J<R><P><number> - jumps to the given label (0..31) or \n"
@@ -1161,6 +1163,41 @@ parse_transpose:
 
 parse_command:
 	command = getIntValue(1);
+
+	if (command == 3) {
+		int ref = 120;
+		int per = 0;
+
+		c = getChar(1);
+		if (c == '.') {
+			parseAdv(1);
+			ref = getIntValue(1);
+		}
+
+		c = getChar(1);
+		if (c == '.') {
+			parseAdv(1);
+			per = getIntValue(1);
+		}
+
+		/* range check */
+		if (ref < 1)
+			ref = 1;
+		else if (ref > 6000)
+			ref = 6000;
+
+		if (per < 0)
+			per = 0;
+		else if (per > 60000)
+			per = 60000;
+
+		/* update BPM timer */
+
+		mainWindow->dlg_bpm->ref = ref;
+		mainWindow->dlg_bpm->period = per;
+
+		goto next_char;
+	}
 
 	if (ps.line < MPP_MAX_LINES)
 		playCommand[ps.line] = command;

@@ -62,7 +62,7 @@ public:
 	void handle_midi_file_instr_delete(void);
 	void handle_jump_locked(int index);
 
-	QString get_midi_score_duration();
+	QString get_midi_score_duration(uint32_t *psum = 0);
 	int log_midi_score_duration();
 	int convert_midi_duration(struct umidi20_track *, uint32_t thres, uint32_t chan_mask);
 	void import_midi_track(struct umidi20_track *, uint32_t midi_flags = 0, int label = -1);
