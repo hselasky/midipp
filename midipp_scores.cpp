@@ -755,11 +755,11 @@ MppScoreMain :: computeAutoMelody(void)
 				    scores[z][y].channel != c)
 					continue;
 
-				t = (2 * ps.am_steps);
+				t = (2 * x) + 1;
 
 				if (scores[z][y].dur > t) {
-					scores[ps.line][ps.index].dur = scores[z][y].dur - t;
-					scores[z][y].dur = t - 1;
+					scores[ps.line][ps.index].dur = scores[z][y].dur - t + 1;
+					scores[z][y].dur = t;
 					break;
 				}
 			}
