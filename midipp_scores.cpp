@@ -735,7 +735,7 @@ MppScoreMain :: computeAutoMelody(void)
 			continue;
 
 		scores[ps.line][ps.index].key = k;
-		scores[ps.line][ps.index].dur = scores[ps.line][y].dur;
+		scores[ps.line][ps.index].dur = 1;
 		scores[ps.line][ps.index].channel = scores[ps.line][y].channel;
 
 		/* check if we have to split the tone */
