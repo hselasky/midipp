@@ -748,14 +748,18 @@ MppScoreMain :: computeAutoMelody(void)
 
 			for (y = 0; y != MPP_MAX_SCORES; y++) {
 
+				int t;
+
 				if (scores[z][y].dur == 0 ||
 				    scores[z][y].key != k ||
 				    scores[z][y].channel != c)
 					continue;
 
-				if (scores[z][y].dur > ps.am_steps) {
-					scores[ps.line][ps.index].dur = scores[z][y].dur - ps.am_steps;
-					scores[z][y].dur = ps.am_steps;
+				t = (2 * ps.am_steps);
+
+				if (scores[z][y].dur > t) {
+					scores[ps.line][ps.index].dur = scores[z][y].dur - t;
+					scores[z][y].dur = t;
 					break;
 				}
 			}
