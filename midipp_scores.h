@@ -63,6 +63,8 @@ public:
 	int32_t getIntValue(uint32_t offset);
 	void parseAdv(uint8_t delta);
 	void parseMax(uint16_t *pmax, float value);
+	void resetAutoMelody(void);
+	void computeAutoMelody(void);
 	void newLine(uint8_t force, uint8_t label, uint8_t new_page);
 	void newVisual();
 	void watchdog();
@@ -134,6 +136,7 @@ protected:
 
 	/* parse state */
 	struct {
+		uint8_t am_keys[12];
 		const QString *ps;
 		int x;
 		int line;
@@ -143,6 +146,8 @@ protected:
 		int channel;
 		int duration;
 		int mindex;
+		int am_steps;
+		int am_mode;
 	} ps;
 
 	/* parse buffer */

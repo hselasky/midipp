@@ -65,6 +65,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	    " * K1 - lock play key until next label jump.\n"
 	    " * K2 - unlock play key.\n"
 	    " * K3.<bpm>.<period_ms> - set reference BPM and period in ms.\n"
+	    " * K4.<number> - enable automatic melody effect, if non-zero.\n"
 	    " * M<number> - macro inline the given label.\n"
 	    " * L<number> - defines a label (0..31).\n"
 	    " * J<R><P><number> - jumps to the given label (0..31) or \n"
@@ -659,6 +660,110 @@ mergeCompare(const void *_a, const void *_b)
 }
 
 void
+MppScoreMain :: resetAutoMelody(void)
+{
+	memset(ps.am_keys, 0, sizeof(ps.am_keys));
+	ps.am_steps = 0;
+}
+
+void
+MppScoreMain :: computeAutoMelody(void)
+{
+	int c;
+	int k;
+	int n;
+	int x;
+	int y;
+	int z;
+
+	for (c = 0; c != 16; c++) {
+		for (n = x = 0; x != MPP_MAX_SCORES; x++) {
+			if (scores[ps.line][x].channel == c &&
+			    scores[ps.line][x].dur != 0) {
+				n++;
+			}
+		}
+		if (n >= 3) {
+			/* check for chord */
+			resetAutoMelody();
+
+			for (x = 0; x != MPP_MAX_SCORES; x++) {
+				if (scores[ps.line][x].dur != 0)
+					ps.am_keys[scores[ps.line][x].key % 12] = 1;
+			}
+			return;
+		}
+	}
+
+	ps.am_steps++;
+
+	for (c = 0; c != 16; c++) {
+		for (y = n = x = 0; x != MPP_MAX_SCORES; x++) {
+			if (scores[ps.line][x].channel == c &&
+			    scores[ps.line][x].dur != 0) {
+				if (n == 0)
+					y = x;
+				n++;
+			}
+		}
+
+		if (ps.index >= MPP_MAX_SCORES)
+			break;
+
+		if (n != 1)
+			continue;
+
+		k = scores[ps.line][y].key;
+
+		if (ps.am_keys[k % 12] == 0)
+			continue;
+
+		for (x = 11; x != 0; x--) {
+			if (ps.am_keys[(k + x) % 12] != 0)
+				break;
+		}
+		if (x == 0)
+			continue;
+
+		/* compute harmonic tone */
+
+		k = k - 12 + x;
+		if (k >= 128 || k < 0)
+			continue;
+
+		scores[ps.line][ps.index].key = k;
+		scores[ps.line][ps.index].dur = scores[ps.line][y].dur;
+		scores[ps.line][ps.index].channel = scores[ps.line][y].channel;
+
+		/* check if we have to split the tone */
+
+		for (x = 0; x != ps.am_steps; x++) {
+
+			z = ps.line - x - 1;
+			if (z < 0)
+				break;
+
+			for (y = 0; y != MPP_MAX_SCORES; y++) {
+
+				if (scores[z][y].dur == 0 ||
+				    scores[z][y].key != k ||
+				    scores[z][y].channel != c)
+					continue;
+
+				if (scores[z][y].dur > ps.am_steps) {
+					scores[ps.line][ps.index].dur = scores[z][y].dur - ps.am_steps;
+					scores[z][y].dur = ps.am_steps;
+					break;
+				}
+			}
+			if (y != MPP_MAX_SCORES)
+				break;
+		}
+		ps.index++;
+	}
+}
+
+void
 MppScoreMain :: newLine(uint8_t force, uint8_t label, uint8_t new_page)
 {
 top:
@@ -748,6 +853,10 @@ top:
 	}
 
 	if (ps.line < MPP_MAX_LINES) {
+
+		if (ps.am_mode != 0)
+			computeAutoMelody();
+
 		jumpLabel[ps.line] = label;
 		pageNext[ps.line] = new_page;
 		realLine[ps.line] = ps.realLine;
@@ -924,12 +1033,9 @@ MppScoreMain :: handleParse(const QString &pstr)
 		}
 	}
 
-	ps.mindex = 0;
+	memset(&ps, 0, sizeof(ps));
+
 	ps.x = -1;
-	ps.line = 0;
-	ps.realLine = 0;
-	ps.index = 0;
-	ps.bufIndex = 0;
 	ps.ps = &pstr;
 
 	memset(scores, 0, sizeof(scores));
@@ -1164,7 +1270,17 @@ parse_transpose:
 parse_command:
 	command = getIntValue(1);
 
-	if (command == 3) {
+	if (command == 4) {
+		c = getChar(1);
+		if (c == '.') {
+			parseAdv(1);
+			ps.am_mode = getIntValue(1);
+		} else {
+			ps.am_mode = 0;	/* disabled */
+		}
+		goto next_char;
+
+	} else if (command == 3) {
 		int ref = 120;
 		int per = 0;
 
@@ -1346,6 +1462,8 @@ parse_jump_sub:
 
 		if (flag & 2)
 			label += MPP_JUMP_REL - 1;
+
+		resetAutoMelody();
 
 	} else {
 		/* no jump */
