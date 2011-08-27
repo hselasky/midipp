@@ -759,7 +759,7 @@ MppScoreMain :: computeAutoMelody(void)
 
 				if (scores[z][y].dur > t) {
 					scores[ps.line][ps.index].dur = scores[z][y].dur - t;
-					scores[z][y].dur = t;
+					scores[z][y].dur = t - 1;
 					break;
 				}
 			}
