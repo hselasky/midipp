@@ -65,7 +65,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	    " * K1 - lock play key until next label jump.\n"
 	    " * K2 - unlock play key.\n"
 	    " * K3.<bpm>.<period_ms> - set reference BPM and period in ms.\n"
-	    " * K4.<number> - enable automatic melody effect, if non-zero.\n"
+	    " * K4.<number> - enable automatic melody effect on the N-th note, if non-zero.\n"
 	    " * M<number> - macro inline the given label.\n"
 	    " * L<number> - defines a label (0..31).\n"
 	    " * J<R><P><number> - jumps to the given label (0..31) or \n"
@@ -718,9 +718,12 @@ MppScoreMain :: computeAutoMelody(void)
 		if (ps.am_keys[k % 12] == 0)
 			continue;
 
-		for (x = 11; x != 0; x--) {
-			if (ps.am_keys[(k + x) % 12] != 0)
-				break;
+		for (z = 0, x = 11; x != 0; x--) {
+			if (ps.am_keys[(k + x) % 12] != 0) {
+				z++;
+				if (ps.am_mode == z)
+					break;
+			}
 		}
 		if (x == 0)
 			continue;
