@@ -29,6 +29,7 @@
 #include <midipp_import.h>
 #include <midipp_pattern.h>
 #include <midipp_bpm.h>
+#include <midipp_echotab.h>
 
 MppScoreView :: MppScoreView(MppScoreMain *parent)
 {
@@ -1641,6 +1642,14 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 	uint8_t x;
 	uint8_t delay;
 
+	/* update for echo */
+
+	for (x = 0; x != MPP_MAX_ETAB; x++) {
+		if (this == mainWindow->scores_main[mainWindow->tab_echo[x]->echo_val.view]) {
+			mainWindow->tab_echo[x]->updateVel(vel);
+		}
+	}
+
  repeat:
 	for (x = 0; x != 128; x++) {
 		pos = resolveJump(currPos);
@@ -1707,7 +1716,8 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 			if (setPressedKey(chan, out_key, pn->dur, delay))
 				continue;
 
-			mainWindow->output_key(chan, out_key, vel, key_delay + timeout + delay, 0, x);
+			mainWindow->output_key(chan, out_key, vel,
+			    key_delay + timeout + delay, 0);
 		}
 	}
 
@@ -1756,7 +1766,8 @@ MppScoreMain :: decrementDuration(uint32_t timeout)
 			/* clear entry */
 			pressedKeys[x] = 0;
 
-			mainWindow->output_key(chan, out_key, 0, timeout + delay, 0, x);
+			mainWindow->output_key(chan, out_key, 0,
+			    timeout + delay, 0);
 		}
 
 		if (pressedKeys[x] != 0)

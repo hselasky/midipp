@@ -1250,6 +1250,8 @@ MppMainWindow :: handle_rewind()
 void
 MppMainWindow :: handle_midi_trigger()
 {
+	int n;
+
 	pthread_mutex_lock(&mtx);
 
 	if (midiTriggered == 0) {
@@ -1271,6 +1273,9 @@ MppMainWindow :: handle_midi_trigger()
 		pausePosition = 0;
 
 		dlg_bpm->handle_update();
+
+		for (n = 0; n != MPP_MAX_ETAB; n++)
+			tab_echo[n]->handle_echo_update();
 	}
 
 	pthread_mutex_unlock(&mtx);
@@ -2840,7 +2845,7 @@ MppMainWindow :: handle_instr_unmute_all()
 }
 
 void
-MppMainWindow :: output_key_sub(int chan, int key, int vel, int delay, int dur)
+MppMainWindow :: output_key(int chan, int key, int vel, int delay, int dur)
 {
 	struct mid_data *d = &mid_data;
 	uint8_t y;
@@ -2864,73 +2869,6 @@ MppMainWindow :: output_key_sub(int chan, int key, int vel, int delay, int dur)
 	}
 
 	tab_loop->add_key(key, vel);
-}
-
-void
-MppMainWindow :: output_key(int chan, int key, int vel, int delay, int dur, int seq)
-{
-	uint8_t n;
-
-	output_key_sub(chan, key, vel, delay, dur);
-
-	for (n = 0; n != MPP_MAX_ETAB; n++) {
-	  MppEchoTab *et = tab_echo[n];
-
-	  if (et->echo_enabled && (vel != 0) &&
-	      (et->echo_val.in_channel == chan)) {
-		int echo_amp = (vel * et->echo_val.amp_init);
-		int echo_key = key + et->echo_val.transpose;
-		uint32_t echo_delay = delay;
-		uint32_t n;
-
-		/* range check */
-		if (echo_key < 0)
-			echo_key = 0;
-		else if (echo_key > 127)
-			echo_key = 127;
-
-		switch (et->echo_val.mode) {
-		case ME_MODE_BASE_ONLY:
-			if (seq < 2)
-				et->echo_val.last_key[seq] = echo_key;
-			if ((seq != 1) ||
-			    ((et->echo_val.last_key[0] % 12) !=
-			     (et->echo_val.last_key[1] % 12))) {
-				goto skip_echo;
-			}
-			echo_key = et->echo_val.last_key[0];
-			break;
-		case ME_MODE_SLIDE:
-			echo_delay += seq * et->echo_val.ival_repeat;
-			break;
-		default:
-			break;
-		}
-
-		echo_delay += et->echo_val.ival_init;
-
-		for (n = 0; n < et->echo_val.num_echo; n++) {
-
-			echo_delay += (et->echo_val.ival_rand * noise8(128)) / 128;
-
-			output_key_sub(et->echo_val.out_channel, echo_key, echo_amp / 128, echo_delay, 0);
-
-			echo_delay += et->echo_val.ival_repeat;
-
-			output_key_sub(et->echo_val.out_channel, echo_key, 0, echo_delay, 0);
-
-			echo_delay += et->echo_val.ival_repeat;
-
-			echo_amp = (echo_amp * et->echo_val.amp_fact) / 128;
-
-			echo_amp += (127 * noise8(et->echo_val.amp_rand));
-
-			if (echo_amp >= (128 * 128))
-				echo_amp = 127 * 128;
-		}
-	  }
-	}
-skip_echo:;
 }
 
 void

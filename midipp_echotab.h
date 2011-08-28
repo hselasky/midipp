@@ -51,7 +51,14 @@ struct MppEchoValues {
 	uint8_t out_channel;
 	uint8_t last_key[2];
 	uint8_t mode;
+	uint8_t view;
 	int8_t transpose;
+};
+
+struct MppEchoState {
+	uint32_t seq;
+	uint32_t pressed;
+	uint32_t amp;
 };
 
 class MppEchoTab : public QWidget
@@ -63,6 +70,8 @@ public:
 	~MppEchoTab();
 
 	void watchdog();
+	void updateVel(int vel);
+	void echoKey(int key);
 
 	uint8_t auto_zero_start[0];
 
@@ -80,6 +89,7 @@ public:
 	QSpinBox *spn_echo_transpose;
 	QSpinBox *spn_echo_in_channel;
 	QSpinBox *spn_echo_out_channel;
+	QSpinBox *spn_echo_view;
 
 	QLabel *lbl_echo_mode;
 	QLabel *lbl_echo_ival_init;
@@ -92,6 +102,7 @@ public:
 	QLabel *lbl_echo_transpose;
 	QLabel *lbl_echo_in_channel;
 	QLabel *lbl_echo_out_channel;
+	QLabel *lbl_echo_view;
 
 	QLabel *lbl_echo_title;
 	QLabel *lbl_echo_status;
@@ -101,10 +112,11 @@ public:
 	QPushButton *but_echo_reset;
 
 	struct MppEchoValues echo_val;
+	struct MppEchoState echo_st;
 
 	uint8_t echo_enabled;
-	uint8_t echo_dirty;
 	uint8_t echo_mode;
+	uint8_t echo_dirty;
 
 	uint8_t auto_zero_end[0];
 
@@ -114,6 +126,7 @@ public slots:
 	void handle_echo_enable();
 	void handle_echo_generate(int);
 	void handle_echo_mode();
+	void handle_echo_update();
 };
 
 #endif	/* _MIDIPP_ECHO_H_ */
