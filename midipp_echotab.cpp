@@ -331,8 +331,8 @@ MppEchoTab :: echoKey(int key)
 void
 MppEchoTab :: handle_echo_reset()
 {
-	spn_echo_ival_init->setValue(100);
-	spn_echo_ival_repeat->setValue(50);
+	spn_echo_ival_init->setValue(30);
+	spn_echo_ival_repeat->setValue(100);
 	spn_echo_ival_rand->setValue(2);
 	spn_echo_amp_init->setValue(128);
 	spn_echo_amp_fact->setValue(110);
