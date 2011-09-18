@@ -202,10 +202,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_file_gl->addWidget(but_gpro_file_import, n, 4, 1, 2);
 
 	n++;
+	n++;
 
 	tab_file_gl->addWidget(lbl_file_status, n, 0, 1, 8, Qt::AlignLeft|Qt::AlignVCenter);
 
-	n++;
 	n++;
 
 	tab_file_gl->setRowStretch(n, 3);
@@ -694,7 +694,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	sync_key_mode();
 
-	setWindowTitle(tr("MIDI Player Pro v1.0"));
+	setWindowTitle(tr("MIDI Player Pro v1.0.7"));
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
 	watchdog->start(250);

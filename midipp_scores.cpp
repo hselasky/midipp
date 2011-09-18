@@ -184,6 +184,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 	uint16_t z;
 	uint16_t y_max;
 	uint16_t x_max;
+	uint16_t check_x;
 	char *ptr;
 	uint8_t draw_chord;
 	uint8_t last_dot;
@@ -195,6 +196,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 	float text_x;
 	float adj_x;
 	float scale_min;
+	float spacing = 0;
 
 	QFont fnt_a;
 	QFont fnt_b;
@@ -297,6 +299,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 		chord_x_last = 0;
 		chord_x = MPP_VISUAL_MARGIN;
 		text_x = MPP_VISUAL_MARGIN;
+		check_x = 0;
 		z = x;
 		x_max = 0;
 
@@ -311,7 +314,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 			QRectF temp_size = 
 			    paint.boundingRect(QRectF(0,0,0,0), temp);
 			QRectF space_size = paint.boundingRect(
-			    QRectF(0,0,0,0), QString("_"));
+			    QRectF(0,0,0,0), QString("-"));
 
 			if (temp_size.width() == 0.0)
 				temp_size = space_size;
@@ -423,27 +426,65 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 
 				chord_x += temp_size.width();
 
-				chord_x_last = chord_x + (space_size.width() * 2);
+				chord_x_last = chord_x + (2.0 * space_size.width());
 
 				parseMax(&maxScoresWidth, chord_x);
 
 				parseMax(&x_max, chord_x);
 
 			} else {
+
+				float temp_space;
+
+				/*
+				 * Make sure there is enough room for
+				 * the chords:
+				 */
+				if (y >= check_x) {
+					uint16_t t;
+					uint16_t u;
+					float sum_x;
+
+					sum_x = text_x;
+					u = 0;
+
+					for (t = y; ptr[t]; t++) {
+						QRectF check_size = 
+						  paint.boundingRect(QRectF(0,0,0,0),
+						  QString(ptr[t]));
+
+						if (check_size.width() == 0.0)
+							check_size = space_size;
+
+						if (ptr[t] == '(')
+							break;
+						if (ptr[t] == '.')
+							continue;
+						if (ptr[t] == ' ' || ptr[t] == '-')
+							u++;
+
+						sum_x += check_size.width();
+					}
+
+					if ((u != 0) && (sum_x < chord_x_last))
+						spacing = (chord_x_last - sum_x) / (2.0 * (float)u);
+					else
+						spacing = 0;
+
+					check_x = t;
+				}
+
+				if (ptr[y] == '-' || ptr[y] == ' ')
+					temp_space = spacing;
+				else
+					temp_space = 0;
+
+				text_x += temp_space;
+
 				paint.drawText(QPointF(text_x, MPP_VISUAL_Y_MAX -
 				    (MPP_VISUAL_Y_MAX/4) - MPP_VISUAL_MARGIN), temp);
 
-				/* check for split word */
-				if (ptr[y] == ' ' || ptr[y] == '-') {
-
-					/*
-					 * Make sure there is enough
-					 * room for the chords:
-					 */
-					if (text_x < chord_x_last)
-						text_x = chord_x_last;
-				}
-
+				text_x += temp_space;
 				text_x += temp_size.width();
 				chord_x = text_x;
 				last_dot = 0;
