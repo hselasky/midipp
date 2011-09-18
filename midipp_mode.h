@@ -65,7 +65,7 @@ public:
 	/* synth channel */
 	uint8_t channel;
 
-private:
+public:
 	QGridLayout *gl;
 
 	QLabel *lbl_mode;

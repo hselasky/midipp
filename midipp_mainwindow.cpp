@@ -99,8 +99,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	for (x = 0; x != MPP_MAX_VIEWS; x++)
 		scores_main[x] = new MppScoreMain(this);
 
-	currScoreMain = scores_main[0];
-	currScoreMain->devInputMask = -1U;
+	currScoreMain()->devInputMask = -1U;
 
 	tab_import = new MppImportTab(this);
 
@@ -321,6 +320,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_recording = new QLabel(tr("- Recording -"));
 	lbl_scores = new QLabel(tr("- Scores -"));
 
+	lbl_key_mode = new QLabel(QString());
+	but_key_mode = new QPushButton(QString());
+	connect(but_key_mode, SIGNAL(released()), this, SLOT(handle_key_mode()));
+
 	n = 0;
 
 	tab_play_gl->addWidget(lbl_time_counter, n, 0, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
@@ -371,6 +374,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_play_gl->addWidget(lbl_midi_record, n, 3, 1, 1);
 	tab_play_gl->addWidget(but_midi_record, n, 0, 1, 3);
+
+	n++;
+
+	tab_play_gl->addWidget(lbl_key_mode, n, 3, 1, 1);
+	tab_play_gl->addWidget(but_key_mode, n, 0, 1, 3);
 
 	n = 0;
 
@@ -684,6 +692,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	MidiInit();
 
+	sync_key_mode();
+
 	setWindowTitle(tr("MIDI Player Pro v1.0"));
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
@@ -716,7 +726,7 @@ MppMainWindow :: handle_insert_chord()
 	MppDecode dlg(this, this);
 
         if(dlg.exec() == QDialog::Accepted) {
-		QTextCursor cursor(currScoreMain->editWidget->textCursor());
+		QTextCursor cursor(currScoreMain()->editWidget->textCursor());
 		cursor.beginEditBlock();
 		cursor.insertText(led_config_insert->text());
 		cursor.insertText(dlg.getText());
@@ -848,13 +858,15 @@ MppMainWindow :: handle_midi_record()
 void
 MppMainWindow :: handle_play_press()
 {
+	MppScoreMain *sm = currScoreMain();
+
 	pthread_mutex_lock(&mtx);
 	if (tab_loop->handle_trigN(playKey, 90)) {
 		/* ignore */
-	} else if (currScoreMain->keyMode != MM_PASS_ALL) {
-		currScoreMain->handleKeyPress(playKey, 90);
+	} else if (sm->keyMode != MM_PASS_ALL) {
+		sm->handleKeyPress(playKey, 90);
 	} else {
-		output_key(currScoreMain->synthChannel, playKey, 90, 0, 0);
+		output_key(sm->synthChannel, playKey, 90, 0, 0);
 	}
 	pthread_mutex_unlock(&mtx);
 }
@@ -862,11 +874,13 @@ MppMainWindow :: handle_play_press()
 void
 MppMainWindow :: handle_play_release()
 {
+	MppScoreMain *sm = currScoreMain();
+
 	pthread_mutex_lock(&mtx);
-	if (currScoreMain->keyMode != MM_PASS_ALL) {
-		currScoreMain->handleKeyRelease(playKey);
+	if (sm->keyMode != MM_PASS_ALL) {
+		sm->handleKeyRelease(playKey);
 	} else {
-		output_key(currScoreMain->synthChannel, playKey, 0, 0, 0);
+		output_key(sm->synthChannel, playKey, 0, 0, 0);
 	}
 	pthread_mutex_unlock(&mtx);
 }
@@ -874,7 +888,8 @@ MppMainWindow :: handle_play_release()
 void
 MppMainWindow :: handle_watchdog()
 {
-	QTextCursor cursor(currScoreMain->editWidget->textCursor());
+	MppScoreMain *sm = currScoreMain();
+	QTextCursor cursor(sm->editWidget->textCursor());
 	uint32_t delta;
 	char buf[32];
 	uint8_t events_copy[MPP_MAX_QUEUE];
@@ -894,19 +909,19 @@ MppMainWindow :: handle_watchdog()
 	instr_update = instrUpdated;
 	instrUpdated = 0;
 	num_events = numInputEvents;
-	play_pos = currScoreMain->currPos;
+	play_pos = sm->currPos;
 
 	/* skip any jumps */
 	for (x = 0; x != 128; x++) {
 		uint32_t jump_pos;
-		jump_pos = currScoreMain->resolveJump(play_pos);
+		jump_pos = sm->resolveJump(play_pos);
 		if (jump_pos != 0)
 			play_pos = jump_pos - 1;
 		else
 			break;
 	}
 
-	play_line = currScoreMain->realLine[play_pos];
+	play_line = sm->realLine[play_pos];
 	if (num_events != 0) {
 		delta =  umidi20_get_curr_position() - lastInputEvent;
 		if (delta >= ((UMIDI20_BPM + 60 - 1) / 60)) {
@@ -953,7 +968,7 @@ MppMainWindow :: handle_watchdog()
 
 		cursor.insertText(QString("\n"));
 		cursor.endEditBlock();
-		currScoreMain->editWidget->setTextCursor(cursor);
+		sm->editWidget->setTextCursor(cursor);
 	}
 
 	if (instr_update)
@@ -967,11 +982,11 @@ MppMainWindow :: handle_watchdog()
 		cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor, 1);
 		cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, play_line);
 		cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor, 1);
-		currScoreMain->editWidget->setTextCursor(cursor);
-		currScoreMain->watchdog();
+		sm->editWidget->setTextCursor(cursor);
+		sm->watchdog();
 	}
 
-	currScoreMain->viewWidgetSub->repaint();
+	sm->viewWidgetSub->repaint();
 
 	tab_loop->watchdog();
 
@@ -2253,14 +2268,16 @@ MppMainWindow :: handle_tab_changed(int index)
 	}
 
 	if (x == MPP_MAX_VIEWS)
-		currScoreMain = scores_main[0];
+		currViewIndex = 0;
 	else
-		currScoreMain = scores_main[x];
+		currViewIndex = x;
 
-	handle_instr_channel_changed(currScoreMain->synthChannel);
+	handle_instr_channel_changed(currScoreMain()->synthChannel);
 
 	if (compile)
 		handle_compile();
+
+	sync_key_mode();
 }
 
 void 
@@ -2382,7 +2399,7 @@ MppMainWindow :: log_midi_score_duration(void)
 void
 MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flags, int label)
 {
-	QTextCursor cursor(currScoreMain->editWidget->textCursor());
+	QTextCursor cursor(currScoreMain()->editWidget->textCursor());
 
 	QString output;
 	QString out_block;
@@ -2631,7 +2648,7 @@ load_file:
 
 	gpro = new MppGPro((uint8_t *)data.data(), data.size());
 
-	cursor = new QTextCursor(currScoreMain->editWidget->textCursor());
+	cursor = new QTextCursor(currScoreMain()->editWidget->textCursor());
 	cursor->beginEditBlock();
 	cursor->insertText(gpro->output);
 	cursor->endEditBlock();
@@ -2743,7 +2760,7 @@ MppPlayWidget :: keyPressEvent(QKeyEvent *event)
 	case Qt::Key_Shift:
 		pthread_mutex_lock(&mw->mtx);
 		if (mw->midiTriggered != 0)
-			MidiEventRxControl(mw->currScoreMain, 0x40, 127);
+			MidiEventRxControl(mw->currScoreMain(), 0x40, 127);
 		pthread_mutex_unlock(&mw->mtx);
 		break;
 	case Qt::Key_0:
@@ -2770,7 +2787,7 @@ MppPlayWidget :: keyReleaseEvent(QKeyEvent *event)
 	if (event->key() == Qt::Key_Shift) {
 		pthread_mutex_lock(&mw->mtx);
 		if (mw->midiTriggered != 0)
-			MidiEventRxControl(mw->currScoreMain, 0x40, 0);
+			MidiEventRxControl(mw->currScoreMain(), 0x40, 0);
 		pthread_mutex_unlock(&mw->mtx);
 	}
 }
@@ -2891,4 +2908,40 @@ MppMainWindow :: handle_mode(int index)
 	scores_main[index]->keyMode = dlg_mode[index]->key_mode;
 	scores_main[index]->synthChannel = dlg_mode[index]->channel;
 	pthread_mutex_unlock(&mtx);
+
+	sync_key_mode();
+}
+
+void
+MppMainWindow :: handle_key_mode()
+{
+	MppScoreMain *sm = currScoreMain();
+	MppMode *cm = currModeDlg();
+
+	cm->handle_mode();
+
+	pthread_mutex_lock(&mtx);
+	sm->keyMode = cm->key_mode;
+	pthread_mutex_unlock(&mtx);
+
+	sync_key_mode();
+}
+
+void
+MppMainWindow :: sync_key_mode()
+{
+	lbl_key_mode->setText(currModeDlg()->lbl_mode->text());
+	but_key_mode->setText(tr("Key Mode ") + QChar('A' + currViewIndex));
+}
+
+MppScoreMain *
+MppMainWindow :: currScoreMain()
+{
+	return (scores_main[currViewIndex]);
+}
+
+MppMode *
+MppMainWindow :: currModeDlg()
+{
+	return (dlg_mode[currViewIndex]);
 }

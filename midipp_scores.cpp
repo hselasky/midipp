@@ -1743,7 +1743,7 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 done:
 	mainWindow->cursorUpdate = 1;
 
-	if (mainWindow->currScoreMain == this)
+	if (mainWindow->currScoreMain() == this)
 		mainWindow->do_update_bpm();
 }
 

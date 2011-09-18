@@ -82,6 +82,11 @@ public:
 	uint8_t check_record(uint8_t chan, uint32_t off);
 	uint8_t check_synth(uint8_t device_no, uint8_t chan, uint32_t off);
 
+	MppScoreMain *currScoreMain();
+	MppMode *currModeDlg();
+
+	void sync_key_mode();
+
 	pthread_mutex_t mtx;
 
 	QFont defaultFont;
@@ -89,8 +94,6 @@ public:
 	uint8_t auto_zero_start[0];
 
 	struct MppInstr instr[16];
-
-	MppScoreMain *currScoreMain;
 
 	uint32_t convLineStart[MPP_MAX_LINES];
 	uint32_t convLineEnd[MPP_MAX_LINES];
@@ -136,6 +139,7 @@ public:
 	uint8_t midiPlayOff;
 	uint8_t midiTriggered;
 	uint8_t midiPaused;
+	uint8_t currViewIndex;
 
 	char *deviceName[MPP_MAX_DEVS];
 
@@ -203,6 +207,7 @@ public:
 	QLabel	*lbl_score_record;
 	QLabel	*lbl_midi_record;
 	QLabel	*lbl_midi_play;
+	QLabel	*lbl_key_mode;
 
 	QPushButton *but_insert_chord;
 	QPushButton *but_jump[MPP_MAX_LBUTTON];
@@ -215,6 +220,7 @@ public:
 	QPushButton *but_midi_trigger;
 	QPushButton *but_midi_rewind;
 	QPushButton *but_bpm;
+	QPushButton *but_key_mode;
 
 	MppButton *but_mode[MPP_MAX_VIEWS];
 	MppMode *dlg_mode[MPP_MAX_VIEWS];
@@ -356,6 +362,8 @@ public slots:
 
 	void handle_bpm();
 	void handle_mode(int);
+
+	void handle_key_mode();
 };
 
 #endif		/* _MIDIPP_MAINWINDOW_H_ */

@@ -294,5 +294,5 @@ MppImportTab :: handleImport()
 {
 	struct midipp_import ps;
 
-	midipp_import(editWidget->toPlainText(), &ps, mainWindow->currScoreMain);
+	midipp_import(editWidget->toPlainText(), &ps, mainWindow->currScoreMain());
 }

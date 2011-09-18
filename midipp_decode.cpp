@@ -290,10 +290,10 @@ MppDecode :: handle_play_press()
 	pthread_mutex_lock(&mw->mtx);
 	for (x = 0; x != MPP_MAX_VAR_OFF; x++) {
 		if (auto_base[x] != 0)
-			mw->output_key(mw->currScoreMain->synthChannel, auto_base[x], 90, 0, 0);
+			mw->output_key(mw->currScoreMain()->synthChannel, auto_base[x], 90, 0, 0);
 	}
 	for (x = 0; current_score[x]; x++) {
-		mw->output_key(mw->currScoreMain->synthChannel, current_score[x], 90, 0, 0);
+		mw->output_key(mw->currScoreMain()->synthChannel, current_score[x], 90, 0, 0);
 	}
 	pthread_mutex_unlock(&mw->mtx);
 }
@@ -306,10 +306,10 @@ MppDecode :: handle_play_release()
 	pthread_mutex_lock(&mw->mtx);
 	for (x = 0; x != MPP_MAX_VAR_OFF; x++) {
 		if (auto_base[x] != 0)
-			mw->output_key(mw->currScoreMain->synthChannel, auto_base[x], 0, 0, 0);
+			mw->output_key(mw->currScoreMain()->synthChannel, auto_base[x], 0, 0, 0);
 	}
 	for (x = 0; current_score[x]; x++) {
-		mw->output_key(mw->currScoreMain->synthChannel, current_score[x], 0, 0, 0);
+		mw->output_key(mw->currScoreMain()->synthChannel, current_score[x], 0, 0, 0);
 	}
 	pthread_mutex_unlock(&mw->mtx);
 }
