@@ -190,6 +190,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 	uint8_t last_jump = 0;
 	uint16_t duration;
 
+	float chord_x_last;
 	float chord_x;
 	float text_x;
 	float adj_x;
@@ -293,6 +294,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 
 		draw_chord = 0;
 		last_dot = 0;
+		chord_x_last = 0;
 		chord_x = MPP_VISUAL_MARGIN;
 		text_x = MPP_VISUAL_MARGIN;
 		z = x;
@@ -308,12 +310,11 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 			QString temp(ptr[y]);
 			QRectF temp_size = 
 			    paint.boundingRect(QRectF(0,0,0,0), temp);
+			QRectF space_size = paint.boundingRect(
+			    QRectF(0,0,0,0), QString("_"));
 
-			if (temp_size.width() == 0.0) {
-				temp_size = 
-				    paint.boundingRect(
-				    QRectF(0,0,0,0), QString("-"));
-			}
+			if (temp_size.width() == 0.0)
+				temp_size = space_size;
 
 			if (ptr[y] == '(') {
 				draw_chord = 1;
@@ -346,7 +347,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 				paint.setBrush(QColor(color_black));
 
 				if (last_dot) {
-					text_x += MPP_VISUAL_R_MAX;
+					text_x += 2 * MPP_VISUAL_R_MAX;
 				}
 
 				if (ptr[y+1] != 0) {
@@ -422,12 +423,26 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 
 				chord_x += temp_size.width();
 
+				chord_x_last = chord_x + (space_size.width() * 2);
+
 				parseMax(&maxScoresWidth, chord_x);
 
 				parseMax(&x_max, chord_x);
+
 			} else {
 				paint.drawText(QPointF(text_x, MPP_VISUAL_Y_MAX -
 				    (MPP_VISUAL_Y_MAX/4) - MPP_VISUAL_MARGIN), temp);
+
+				/* check for split word */
+				if (ptr[y] == ' ' || ptr[y] == '-') {
+
+					/*
+					 * Make sure there is enough
+					 * room for the chords:
+					 */
+					if (text_x < chord_x_last)
+						text_x = chord_x_last;
+				}
 
 				text_x += temp_size.width();
 				chord_x = text_x;
@@ -1483,6 +1498,10 @@ parse_jump_sub:
 	goto next_char;
 
 done:
+	/* check if the current line already has a string */
+	if (ps.line < MPP_MAX_LINES && visual[ps.line].pstr != NULL)
+		newLine(1, MPP_JUMP_REL, 0);
+
 	newLine(0, 0, 0);
 
 	if (ps.bufIndex != 0)
