@@ -466,7 +466,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 						sum_x += check_size.width();
 					}
 
-					if ((u != 0) && (sum_x < chord_x_last))
+					if ((u != 0) && (ptr[t] == '(') && (sum_x < chord_x_last))
 						spacing = (chord_x_last - sum_x) / (2.0 * (float)u);
 					else
 						spacing = 0;
