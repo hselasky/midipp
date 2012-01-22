@@ -1688,6 +1688,177 @@ MppScoreMain :: handleLabelJump(int pos)
 	mainWindow->handle_stop(1);
 }
 
+void
+MppScoreMain :: handleChordsLoad(void)
+{
+	uint16_t pos;
+	uint8_t x;
+	uint8_t y;
+	uint8_t z;
+
+	for (x = 0; x != 128; x++) {
+		pos = resolveJump(currPos);
+		if (pos != 0) {
+			/* set new position */
+			currPos = pos - 1;
+		} else {
+			break;
+		}
+	}
+
+	memcpy(score_past, score_future, sizeof(score_past));
+
+	memset(score_future, 0, sizeof(score_future));
+
+	if (scores[currPos][0].dur != 0 && scores[currPos][1].dur != 0 &&
+	    ((scores[currPos][1].key - scores[currPos][0].key) % 12) == 0) {
+
+		score_future[0] = scores[currPos][0];
+		score_future[2] = scores[currPos][1];
+		y = 2;
+		z = 5;
+	} else {
+
+		score_future[0] = scores[currPos][0];
+		y = 1;
+		z = 5;
+	}
+
+	for ( ; y != MPP_MAX_SCORES; y++) {
+
+		if (scores[currPos][y].dur != 0) {
+
+			score_future[z] = scores[currPos][y];
+
+			z += 2;
+
+			if (z >= 12)
+				break;
+		}
+	}
+
+	lastPos = currPos;
+	currPos++;
+
+	if (currPos >= linesMax)
+		currPos = 0;
+
+	mainWindow->cursorUpdate = 1;
+}
+
+/* must be called locked */
+void
+MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
+{
+	struct MppScoreEntry *pn;
+	int out_key;
+	int off;
+	uint8_t chan;
+
+	off = (int)in_key - (int)baseKey;
+
+	if (off >= 0 && off < 11) {
+
+		if (pressed_future == 0) {
+			pressed_future = 1;
+			handleChordsLoad();
+		}
+
+		pn = &score_future[off];
+
+		if (pn->dur != 0) {
+
+			out_key = (int)pn->key + (int)mainWindow->playKey - (int)baseKey;
+
+			if (out_key < 0 || out_key > 127)
+				return;
+
+			chan = (synthChannel + pn->channel) & 0xF;
+
+			mainWindow->output_key(chan, out_key, vel, key_delay, 0);
+		}
+	} else if (off >= 12 && off < 22) {
+
+		if (pressed_future != 0) {
+			pressed_future = 0;
+			handleChordsLoad();
+		}
+
+		pn = &score_future[off - 12];
+
+		if (pn->dur != 0) {
+
+			out_key = (int)pn->key + (int)mainWindow->playKey - (int)baseKey;
+
+			if (out_key < 0 || out_key > 127)
+				return;
+
+			chan = (synthChannel + pn->channel) & 0xF;
+
+			mainWindow->output_key(chan, out_key, vel, key_delay, 0);
+		}
+	} else {
+		return;
+	}
+
+	if (mainWindow->currScoreMain() == this)
+		mainWindow->do_update_bpm();
+}
+
+/* must be called locked */
+void
+MppScoreMain :: handleKeyReleaseChord(int in_key, uint32_t key_delay)
+{
+	struct MppScoreEntry *pn;
+	int out_key;
+	int off;
+	uint8_t chan;
+
+	off = (int)in_key - (int)baseKey;
+
+	if (off >= 0 && off < 11) {
+
+		if (pressed_future == 0) {
+			pn = &score_past[off];
+		} else {
+			pn = &score_future[off];
+		}
+
+		if (pn->dur != 0) {
+
+			out_key = (int)pn->key + (int)mainWindow->playKey - (int)baseKey;
+
+			if (out_key < 0 || out_key > 127)
+				return;
+
+			chan = (synthChannel + pn->channel) & 0xF;
+
+			mainWindow->output_key(chan, out_key, 0, key_delay, 0);
+		}
+	} else if (off >= 12 && off < 22) {
+
+		if (pressed_future != 0) {
+			pn = &score_past[off - 12];
+		} else {
+			pn = &score_future[off - 12];
+		}
+
+		if (pn->dur != 0) {
+
+			out_key = (int)pn->key + (int)mainWindow->playKey - (int)baseKey;
+
+			if (out_key < 0 || out_key > 127)
+				return;
+
+			chan = (synthChannel + pn->channel) & 0xF;
+
+			mainWindow->output_key(chan, out_key, 0, key_delay, 0);
+		}
+	} else {
+		return;
+	}
+}
+
 /* must be called locked */
 void
 MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)

@@ -1249,6 +1249,8 @@ MppMainWindow :: handle_rewind()
 	midiPaused = 0;
 	pausePosition = 0;
 
+	currScoreMain()->pressed_future = 0;
+
 	update_play_device_no();
 
 	if (song != NULL) {
@@ -1854,12 +1856,17 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 					mw->handle_jump_locked(lbl);
 				} else {
 					if ((sm->keyMode == MM_PASS_NONE_FIXED) ||
-					    (sm->keyMode == MM_PASS_NONE_TRANS)) {
+					    (sm->keyMode == MM_PASS_NONE_TRANS) ||
+					    (sm->keyMode == MM_PASS_NONE_CHORD)) {
 
 						if (sm->keyMode == MM_PASS_NONE_FIXED)
 							key = mw->playKey;
 
-						sm->handleKeyPress(key, vel);
+						if (sm->keyMode != MM_PASS_NONE_CHORD)
+							sm->handleKeyPress(key, vel);
+						else
+							sm->handleKeyPressChord(key, vel);
+
 					} else if (sm->checkHalfPassThru(key) != 0) {
 
 						if (key == sm->baseKey)
@@ -1890,12 +1897,16 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 				if (sm->checkLabelJump(lbl) == 0) {
 					if ((sm->keyMode == MM_PASS_NONE_FIXED) ||
-					    (sm->keyMode == MM_PASS_NONE_TRANS)) {
+					    (sm->keyMode == MM_PASS_NONE_TRANS) ||
+					    (sm->keyMode == MM_PASS_NONE_CHORD)) {
 
 						if (sm->keyMode == MM_PASS_NONE_FIXED)
 							key = mw->playKey;
 
-						sm->handleKeyRelease(key);
+						if (sm->keyMode != MM_PASS_NONE_CHORD)
+							sm->handleKeyRelease(key);
+						else
+							sm->handleKeyReleaseChord(key);
 
 					} else if (sm->checkHalfPassThru(key) != 0) {
 

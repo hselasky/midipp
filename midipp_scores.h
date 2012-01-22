@@ -51,6 +51,9 @@ public:
 
 	void decrementDuration(uint32_t timeout = 0);
 	void handleLabelJump(int label);
+	void handleChordsLoad(void);
+	void handleKeyPressChord(int key, int vel, uint32_t key_delay = 0);
+	void handleKeyReleaseChord(int key, uint32_t key_delay = 0);
 	void handleKeyPress(int key, int vel, uint32_t key_delay = 0);
 	void handleKeyRelease(int key, uint32_t key_delay = 0);
 	void handleParse(const QString &ps);
@@ -94,6 +97,8 @@ public:
 	QString *currScoreFileName;
 	QLabel *lblFileStatus;
 
+	struct MppScoreEntry score_past[12];
+	struct MppScoreEntry score_future[12];
 	struct MppScoreEntry scores[MPP_MAX_LINES][MPP_MAX_SCORES];
 	struct MppVisualScore visual[MPP_MAX_LINES];
 	struct MppMergeEntry merge[MPP_MAX_MERGE];
@@ -131,6 +136,7 @@ public:
 	uint8_t last_vel;
 	uint8_t timer_was_active;
 	uint8_t keyMode;
+	uint8_t pressed_future;
 
 protected:
 

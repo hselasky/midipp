@@ -141,6 +141,9 @@ MppMode :: handle_mode()
 	case MM_PASS_NONE_TRANS:
 		lbl_mode->setText(tr("TRANSP"));
 		break;
+	case MM_PASS_NONE_CHORD:
+		lbl_mode->setText(tr("CHORD"));
+		break;
 	default:
 		lbl_mode->setText(tr("UNKNOWN"));
 		break;
