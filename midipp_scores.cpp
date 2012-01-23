@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2011 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2012 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,6 +30,7 @@
 #include <midipp_pattern.h>
 #include <midipp_bpm.h>
 #include <midipp_echotab.h>
+#include <midipp_mode.h>
 
 MppScoreView :: MppScoreView(MppScoreMain *parent)
 {
@@ -152,6 +153,24 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	/* Initial compile */
 
 	handleCompile();
+
+	QPainter paint;
+
+	picChord[0] = new QPicture();
+	paint.begin(picChord[0]);
+	paint.setRenderHints(QPainter::Antialiasing, 1);
+ 	paint.setPen(QPen(color_black, 1));
+	paint.setBrush(QColor(color_black));
+	paint.drawEllipse(QRect(0,0,MPP_VISUAL_C_MAX,MPP_VISUAL_C_MAX));
+	paint.end();
+
+	picChord[1] = new QPicture();
+	paint.begin(picChord[1]);
+	paint.setRenderHints(QPainter::Antialiasing, 1);
+ 	paint.setPen(QPen(color_black, 1));
+	paint.setBrush(QColor(color_black));
+	paint.drawEllipse(QRect(MPP_VISUAL_C_MAX,0,MPP_VISUAL_C_MAX,MPP_VISUAL_C_MAX));
+	paint.end();
 }
 
 MppScoreMain :: ~MppScoreMain()
@@ -703,6 +722,30 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 		paint.drawEllipse(QRect(visual[pos].x_off,
 		    visual[pos].y_off + (yc_rem * MPP_VISUAL_Y_MAX),
 		    MPP_VISUAL_R_MAX, MPP_VISUAL_R_MAX));
+	}
+
+	/* overlay (active chord) */
+
+	if (keyMode == MM_PASS_NONE_CHORD) {
+		int width = viewWidgetSub->width();
+		int mask;
+
+		pthread_mutex_lock(&mainWindow->mtx);
+		mask = ((mainWindow->get_time_offset() % 1000) >= 500);
+		pthread_mutex_unlock(&mainWindow->mtx);
+
+		if (width >= (2 * MPP_VISUAL_C_MAX)) {
+		  if (pressed_future != 1 || mask) {
+			paint.drawPicture(QPoint(width -
+			    (2 * MPP_VISUAL_C_MAX), 0),
+			    *picChord[0]);
+		  }
+		  if (pressed_future != 0 || mask) {
+			paint.drawPicture(QPoint(width -
+			    (2 * MPP_VISUAL_C_MAX), 0),
+			    *picChord[1]);
+		  }
+		}
 	}
 }
 
@@ -1694,7 +1737,13 @@ MppScoreMain :: handleChordsLoad(void)
 	uint16_t pos;
 	uint8_t x;
 	uint8_t y;
-	uint8_t z;
+	uint8_t ns;
+	uint8_t nb;
+	uint8_t nk;
+	uint8_t chan;
+	uint8_t score[12];
+	uint8_t base[12];
+	uint8_t key[12];
 
 	for (x = 0; x != 128; x++) {
 		pos = resolveJump(currPos);
@@ -1706,35 +1755,90 @@ MppScoreMain :: handleChordsLoad(void)
 		}
 	}
 
-	memcpy(score_past, score_future, sizeof(score_past));
-
 	memset(score_future, 0, sizeof(score_future));
 
-	if (scores[currPos][0].dur != 0 && scores[currPos][1].dur != 0 &&
-	    ((scores[currPos][1].key - scores[currPos][0].key) % 12) == 0) {
+	nb = 0;
+	nk = 0;
+	ns = 0;
+	chan = 0;
 
-		score_future[0] = scores[currPos][0];
-		score_future[2] = scores[currPos][1];
-		y = 2;
-		z = 5;
-	} else {
-
-		score_future[0] = scores[currPos][0];
-		y = 1;
-		z = 5;
+	for (y = 0; y != MPP_MAX_SCORES; y++) {
+		if (scores[currPos][y].dur != 0 && ns < 12) {
+			score[ns] = scores[currPos][y].key;
+			chan = scores[currPos][y].channel;
+			ns++;
+		}
 	}
 
-	for ( ; y != MPP_MAX_SCORES; y++) {
+	if (ns == 0)
+		return;
 
-		if (scores[currPos][y].dur != 0) {
+	mid_sort(score, ns);
 
-			score_future[z] = scores[currPos][y];
+	for (x = 0; x != ns; x++) {
 
-			z += 2;
-
-			if (z >= 12)
-				break;
+		if (x == 0) {
+			base[nb++] = score[0];
+		} else if (score[x] == score[x - 1]) {
+			continue;
+		} else if (x == 1 && (score[0] + 12) == score[1]) {
+			continue;
+		} else {
+			key[nk++] = score[x];
 		}
+	}
+
+	if (nb != 0) {
+		score_future[0].dur = 1;
+		score_future[0].key = base[0];
+		score_future[0].channel = chan;
+		mid_trans(base, nb, 1);
+		score_future[2].dur = 1;
+		score_future[2].key = base[0];
+		score_future[2].channel = chan;
+		mid_trans(base, nb, 1);
+		score_future[4].dur = 1;
+		score_future[4].key = base[0];
+		score_future[4].channel = chan;
+		mid_trans(base, nb, 1);
+		score_future[1].dur = 1;
+		score_future[1].key = base[0];
+		score_future[1].channel = chan;
+		mid_trans(base, nb, 1);
+		score_future[3].dur = 1;
+		score_future[3].key = base[0];
+		score_future[3].channel = chan;
+		mid_trans(base, nb, 1);
+	}
+	if (nk != 0) {
+		score_future[5].dur = 1;
+		score_future[5].key = key[0];
+		score_future[5].channel = chan;
+		mid_trans(key, nk, 1);
+		score_future[7].dur = 1;
+		score_future[7].key = key[0];
+		score_future[7].channel = chan;
+		mid_trans(key, nk, 1);
+		score_future[9].dur = 1;
+		score_future[9].key = key[0];
+		score_future[9].channel = chan;
+		mid_trans(key, nk, 1);
+		score_future[11].dur = 1;
+		score_future[11].key = key[0];
+		score_future[11].channel = chan;
+		mid_trans(key, nk, 1);
+		score_future[6].dur = 1;
+		score_future[6].key = key[0];
+		score_future[6].channel = chan;
+		mid_trans(key, nk, 1);
+		score_future[8].dur = 1;
+		score_future[8].key = key[0];
+		score_future[8].channel = chan;
+		mid_trans(key, nk, 1);
+		score_future[10].dur = 1;
+		score_future[10].key = key[0];
+		score_future[10].channel = chan;
+		mid_trans(key, nk, 1);
 	}
 
 	lastPos = currPos;
@@ -1753,18 +1857,22 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 	struct MppScoreEntry *pn;
 	int out_key;
 	int off;
+	int do_update;
 	uint8_t chan;
 
 	off = (int)in_key - (int)baseKey;
 
-	if (off >= 0 && off < 11) {
+	do_update = ((off % 12) >= 2 && (off % 12) <= 9);
 
-		if (pressed_future == 0) {
+	if (off >= 0 && off < 12) {
+
+		if (pressed_future == 0 && do_update != 0) {
 			pressed_future = 1;
 			handleChordsLoad();
 		}
 
 		pn = &score_future[off];
+		score_past[off] = *pn;
 
 		if (pn->dur != 0) {
 
@@ -1777,14 +1885,15 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 
 			mainWindow->output_key(chan, out_key, vel, key_delay, 0);
 		}
-	} else if (off >= 12 && off < 22) {
+	} else if (off >= 12 && off < 24) {
 
-		if (pressed_future != 0) {
+		if (pressed_future != 0 && do_update != 0) {
 			pressed_future = 0;
 			handleChordsLoad();
 		}
 
 		pn = &score_future[off - 12];
+		score_past[off] = *pn;
 
 		if (pn->dur != 0) {
 
@@ -1803,6 +1912,8 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 
 	if (mainWindow->currScoreMain() == this)
 		mainWindow->do_update_bpm();
+
+	mainWindow->cursorUpdate = 1;
 }
 
 /* must be called locked */
@@ -1816,13 +1927,9 @@ MppScoreMain :: handleKeyReleaseChord(int in_key, uint32_t key_delay)
 
 	off = (int)in_key - (int)baseKey;
 
-	if (off >= 0 && off < 11) {
+	if (off >= 0 && off < 24) {
 
-		if (pressed_future == 0) {
-			pn = &score_past[off];
-		} else {
-			pn = &score_future[off];
-		}
+		pn = &score_past[off];
 
 		if (pn->dur != 0) {
 
@@ -1835,27 +1942,6 @@ MppScoreMain :: handleKeyReleaseChord(int in_key, uint32_t key_delay)
 
 			mainWindow->output_key(chan, out_key, 0, key_delay, 0);
 		}
-	} else if (off >= 12 && off < 22) {
-
-		if (pressed_future != 0) {
-			pn = &score_past[off - 12];
-		} else {
-			pn = &score_future[off - 12];
-		}
-
-		if (pn->dur != 0) {
-
-			out_key = (int)pn->key + (int)mainWindow->playKey - (int)baseKey;
-
-			if (out_key < 0 || out_key > 127)
-				return;
-
-			chan = (synthChannel + pn->channel) & 0xF;
-
-			mainWindow->output_key(chan, out_key, 0, key_delay, 0);
-		}
-	} else {
-		return;
 	}
 }
 

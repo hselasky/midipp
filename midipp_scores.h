@@ -96,8 +96,9 @@ public:
 	QPushButton *butScoreFilePrint;
 	QString *currScoreFileName;
 	QLabel *lblFileStatus;
+	QPicture *picChord[2];
 
-	struct MppScoreEntry score_past[12];
+	struct MppScoreEntry score_past[24];
 	struct MppScoreEntry score_future[12];
 	struct MppScoreEntry scores[MPP_MAX_LINES][MPP_MAX_SCORES];
 	struct MppVisualScore visual[MPP_MAX_LINES];

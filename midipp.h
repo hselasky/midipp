@@ -86,6 +86,7 @@
 #define	MPP_VISUAL_MARGIN	8
 #define	MPP_VISUAL_Y_MAX	80
 #define	MPP_VISUAL_R_MAX	8
+#define	MPP_VISUAL_C_MAX	20
 #define	MPP_VOLUME_UNIT		127
 
 class MppMainWindow;
