@@ -1866,6 +1866,9 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 
 	if (off >= 0 && off < 12) {
 
+		if (lastPos == currPos)
+			handleChordsLoad();
+
 		if (pressed_future == 0 && do_update != 0) {
 			pressed_future = 1;
 			handleChordsLoad();
@@ -1886,6 +1889,9 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 			mainWindow->output_key(chan, out_key, vel, key_delay, 0);
 		}
 	} else if (off >= 12 && off < 24) {
+
+		if (lastPos == currPos)
+			handleChordsLoad();
 
 		if (pressed_future != 0 && do_update != 0) {
 			pressed_future = 0;
