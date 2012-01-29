@@ -1272,9 +1272,6 @@ next_char:
 		}
 		goto next_char;
 	case '/':
-		if (y != 0)
-			goto next_char;
-
 		/* check for comment */
 		c = getChar(1);
 		if (c == '*') {
@@ -1789,10 +1786,6 @@ MppScoreMain :: handleChordsLoad(void)
 	}
 
 	if (nb != 0) {
-		score_future[0].dur = 1;
-		score_future[0].key = base[0];
-		score_future[0].channel = chan;
-		mid_trans(base, nb, 1);
 		score_future[2].dur = 1;
 		score_future[2].key = base[0];
 		score_future[2].channel = chan;
@@ -1857,20 +1850,15 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 	struct MppScoreEntry *pn;
 	int out_key;
 	int off;
-	int do_update;
 	uint8_t chan;
 
 	off = (int)in_key - (int)baseKey;
 
-	do_update = ((off % 12) >= 2 && (off % 12) <= 9);
+	if (off >= 1 && off < 12) {
 
-	if (off >= 0 && off < 12) {
-
-		if (do_update) {
-			if (pressed_future == 0 || lastPos == currPos) {
-				pressed_future = 1;
-				handleChordsLoad();
-			}
+		if (pressed_future == 0 || lastPos == currPos) {
+			pressed_future = 1;
+			handleChordsLoad();
 		}
 
 		pn = &score_future[off];
@@ -1878,22 +1866,22 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 
 		if (pn->dur != 0) {
 
-			out_key = (int)pn->key + (int)mainWindow->playKey - (int)baseKey;
+			out_key = (int)pn->key +
+			    (int)mainWindow->playKey - (int)baseKey;
 
 			if (out_key < 0 || out_key > 127)
 				return;
 
 			chan = (synthChannel + pn->channel) & 0xF;
 
-			mainWindow->output_key(chan, out_key, vel, key_delay, 0);
+			mainWindow->output_key(chan, out_key,
+			    vel, key_delay, 0);
 		}
-	} else if (off >= 12 && off < 24) {
+	} else if (off >= 13 && off < 24) {
 
-		if (do_update) {
-			if (pressed_future == 1 || lastPos == currPos) {
-				pressed_future = 0;
-				handleChordsLoad();
-			}
+		if (pressed_future == 1 || lastPos == currPos) {
+			pressed_future = 0;
+			handleChordsLoad();
 		}
 
 		pn = &score_future[off - 12];
@@ -1901,14 +1889,16 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 
 		if (pn->dur != 0) {
 
-			out_key = (int)pn->key + (int)mainWindow->playKey - (int)baseKey;
+			out_key = (int)pn->key +
+			    (int)mainWindow->playKey - (int)baseKey;
 
 			if (out_key < 0 || out_key > 127)
 				return;
 
 			chan = (synthChannel + pn->channel) & 0xF;
 
-			mainWindow->output_key(chan, out_key, vel, key_delay, 0);
+			mainWindow->output_key(chan, out_key,
+			    vel, key_delay, 0);
 		}
 	} else {
 		return;
@@ -1931,13 +1921,17 @@ MppScoreMain :: handleKeyReleaseChord(int in_key, uint32_t key_delay)
 
 	off = (int)in_key - (int)baseKey;
 
+	if (off == 0 || off == 12)
+		return;
+
 	if (off >= 0 && off < 24) {
 
 		pn = &score_past[off];
 
 		if (pn->dur != 0) {
 
-			out_key = (int)pn->key + (int)mainWindow->playKey - (int)baseKey;
+			out_key = (int)pn->key +
+			    (int)mainWindow->playKey - (int)baseKey;
 
 			if (out_key < 0 || out_key > 127)
 				return;
