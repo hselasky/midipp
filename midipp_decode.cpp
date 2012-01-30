@@ -26,6 +26,7 @@
 #include <midipp_decode.h>
 #include <midipp_mainwindow.h>
 #include <midipp_scores.h>
+#include <midipp_button.h>
 
 /* The list is sorted by priority. C5 is base. */
 
@@ -209,6 +210,8 @@ mpp_parse_score(const char *input, uint8_t base,
 MppDecode :: MppDecode(QWidget *parent, MppMainWindow *_mw)
   : QDialog(parent)
 {
+	int n;
+
 	mw = _mw;
 
 	gl = new QGridLayout(this);
@@ -237,15 +240,20 @@ MppDecode :: MppDecode(QWidget *parent, MppMainWindow *_mw)
 	spn_base->setValue(C5);
 
 	cbx_auto_base = new QCheckBox();
+	cbx_auto_base->setChecked(1);
 
 	but_ok = new QPushButton(tr("Ok"));
 	but_cancel = new QPushButton(tr("Cancel"));
-	but_play = new QPushButton(tr("&Play"));
+	but_play[0] = new MppButton(tr("Play &90"), 90);
+	but_play[1] = new MppButton(tr("Play &60"), 60);
+	but_play[2] = new MppButton(tr("Play &30"), 30);
 
 	connect(but_ok, SIGNAL(released()), this, SLOT(handle_ok()));
 	connect(but_cancel, SIGNAL(released()), this, SLOT(handle_cancel()));
-	connect(but_play, SIGNAL(pressed()), this, SLOT(handle_play_press()));
-	connect(but_play, SIGNAL(released()), this, SLOT(handle_play_release()));
+	for (n = 0; n != 3; n++) {
+		connect(but_play[n], SIGNAL(pressed(int)), this, SLOT(handle_play_press(int)));
+		connect(but_play[n], SIGNAL(released(int)), this, SLOT(handle_play_release(int)));
+	}
 	connect(lin_edit, SIGNAL(textChanged(const QString &)), this, SLOT(handle_parse_text(const QString &)));
 	connect(spn_rol, SIGNAL(valueChanged(int)), this, SLOT(handle_parse_int(int)));
 	connect(spn_base, SIGNAL(valueChanged(int)), this, SLOT(handle_parse_int(int)));
@@ -270,7 +278,9 @@ MppDecode :: MppDecode(QWidget *parent, MppMainWindow *_mw)
 	gl->addWidget(lbl_auto_base, 5,0,1,4, Qt::AlignRight|Qt::AlignVCenter);
 	gl->addWidget(cbx_auto_base, 5,4,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
 
-	gl->addWidget(but_play, 6, 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	for (n = 0; n != 3; n++)
+		gl->addWidget(but_play[n], 6, n, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+
 	gl->addWidget(but_ok, 6, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	gl->addWidget(but_cancel, 6, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
@@ -283,23 +293,23 @@ MppDecode :: ~MppDecode()
 }
 
 void
-MppDecode :: handle_play_press()
+MppDecode :: handle_play_press(int vel)
 {
 	uint8_t x;
 
 	pthread_mutex_lock(&mw->mtx);
 	for (x = 0; x != MPP_MAX_VAR_OFF; x++) {
 		if (auto_base[x] != 0)
-			mw->output_key(mw->currScoreMain()->synthChannel, auto_base[x], 90, 0, 0);
+			mw->output_key(mw->currScoreMain()->synthChannel, auto_base[x], vel, 0, 0);
 	}
 	for (x = 0; current_score[x]; x++) {
-		mw->output_key(mw->currScoreMain()->synthChannel, current_score[x], 90, 0, 0);
+		mw->output_key(mw->currScoreMain()->synthChannel, current_score[x], vel, 0, 0);
 	}
 	pthread_mutex_unlock(&mw->mtx);
 }
 
 void
-MppDecode :: handle_play_release()
+MppDecode :: handle_play_release(int vel)
 {
 	uint8_t x;
 
@@ -378,7 +388,7 @@ MppDecode :: handle_parse()
 
 		b_auto = b_auto - C5 + base;
 
-		while (b_auto > (current_score[0] & 0x7F))
+		while (b_auto >= (int)(current_score[0] & 0x7F))
 			b_auto -= 12;
 
 		memset(auto_base, 0, sizeof(auto_base));

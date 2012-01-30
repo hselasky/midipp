@@ -64,7 +64,7 @@ public:
 	QSpinBox *spn_rol;
 	QSpinBox *spn_base;
 
-	QPushButton *but_play;
+	MppButton *but_play[3];
 	QPushButton *but_ok;
 	QPushButton *but_cancel;
 
@@ -73,8 +73,8 @@ public:
 
 public slots:
 
-	void handle_play_press();
-	void handle_play_release();
+	void handle_play_press(int);
+	void handle_play_release(int);
 	void handle_ok();
 	void handle_cancel();
 	void handle_parse_int(int x);
