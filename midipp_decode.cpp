@@ -180,7 +180,7 @@ mpp_parse_score(const char *input, uint8_t base,
 		break;
 	}
 
-	strlcpy(buffer, input, sizeof(buffer));
+	STRLCPY(buffer, input, sizeof(buffer));
 
 	ptr = strstr(buffer, "/");
 	if (ptr)

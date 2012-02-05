@@ -1337,12 +1337,12 @@ MppMainWindow :: handle_config_reload()
 		    (p_rec[1] == ':') && (p_rec[2] != 0))  {
 			switch (p_rec[0]) {
 			case 'A':
-				strlcpy(cfg.cfg_dev[n].rec_fname, p_rec + 2,
+				STRLCPY(cfg.cfg_dev[n].rec_fname, p_rec + 2,
 				    sizeof(cfg.cfg_dev[n].rec_fname));
 				cfg.cfg_dev[n].rec_enabled_cfg = UMIDI20_ENABLED_CFG_JACK;
 				break;
 			case 'D':
-				strlcpy(cfg.cfg_dev[n].rec_fname, p_rec + 2,
+				STRLCPY(cfg.cfg_dev[n].rec_fname, p_rec + 2,
 				    sizeof(cfg.cfg_dev[n].rec_fname));
 				cfg.cfg_dev[n].rec_enabled_cfg = UMIDI20_ENABLED_CFG_DEV;
 				break;
@@ -1359,12 +1359,12 @@ MppMainWindow :: handle_config_reload()
 		    (p_play[1] == ':') && (p_play[2] != 0))  {
 			switch (p_play[0]) {
 			case 'A':
-				strlcpy(cfg.cfg_dev[n].play_fname, p_play + 2,
+				STRLCPY(cfg.cfg_dev[n].play_fname, p_play + 2,
 				    sizeof(cfg.cfg_dev[n].play_fname));
 				cfg.cfg_dev[n].play_enabled_cfg = UMIDI20_ENABLED_CFG_JACK;
 				break;
 			case 'D':
-				strlcpy(cfg.cfg_dev[n].play_fname, p_play + 2,
+				STRLCPY(cfg.cfg_dev[n].play_fname, p_play + 2,
 				    sizeof(cfg.cfg_dev[n].play_fname));
 				cfg.cfg_dev[n].play_enabled_cfg = UMIDI20_ENABLED_CFG_DEV;
 				break;
@@ -1382,7 +1382,7 @@ MppMainWindow :: handle_config_reload()
 
 	/* enable magic device */
 	n = MPP_MAGIC_DEVNO;
-	strlcpy(cfg.cfg_dev[n].play_fname, "/dev/null",
+	STRLCPY(cfg.cfg_dev[n].play_fname, "/dev/null",
 	    sizeof(cfg.cfg_dev[n].play_fname));
 	cfg.cfg_dev[n].play_enabled_cfg = 1;
 

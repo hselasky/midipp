@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_H_
 #define	_MIDIPP_H_
 
-#include <sys/stdint.h>
+#include <stdint.h>
 #include <sys/param.h>
 
 #include <err.h>
@@ -88,6 +88,10 @@
 #define	MPP_VISUAL_R_MAX	8
 #define	MPP_VISUAL_C_MAX	20
 #define	MPP_VOLUME_UNIT		127
+
+#define	STRLCPY(a,b,c) do { \
+    strncpy(a,b,c); ((char *)(a))[(c)-1] = 0; \
+} while (0)
 
 class MppMainWindow;
 class MppScoreView;
