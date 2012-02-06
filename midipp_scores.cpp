@@ -1625,31 +1625,39 @@ MppScoreMain :: handleScoreFileNew()
 	}
 }
 
+int
+MppScoreMain :: handleScoreFileOpenSub(QString fname)
+{
+	QString scores;
+	QString status;
+
+	handleScoreFileNew();
+
+	currScoreFileName = new QString(fname);
+
+	scores = MppReadFile(fname, &status);
+
+	editWidget->setPlainText(scores);
+
+	handleCompile();
+
+	mainWindow->lbl_file_status->setText(status);
+
+	return (scores.isNull());
+}
+
 void
 MppScoreMain :: handleScoreFileOpen()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(mainWindow, tr("Select Score File"), 
 		QString(), QString("Score File (*.txt *.TXT)"));
-	QString scores;
-	QString status;
 
 	diag->setAcceptMode(QFileDialog::AcceptOpen);
 	diag->setFileMode(QFileDialog::ExistingFile);
 
-	if (diag->exec()) {
-		handleScoreFileNew();
-
-		currScoreFileName = new QString(diag->selectedFiles()[0]);
-
-		scores = MppReadFile(*currScoreFileName, &status);
-
-		editWidget->setPlainText(scores);
-
-		handleCompile();
-
-		mainWindow->lbl_file_status->setText(status);
-	}
+	if (diag->exec())
+		handleScoreFileOpenSub(diag->selectedFiles()[0]);
 
 	delete diag;
 }

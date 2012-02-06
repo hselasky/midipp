@@ -32,7 +32,7 @@ help:
 	@echo "Targets are: all, install, clean, package, help"
 
 all:
-	qmake-qt4 PREFIX=/usr/local -spec freebsd-g++ -o Makefile.unix midipp.pro
+	qmake-qt4 PREFIX=/usr/local -o Makefile.unix midipp.pro
 
 	make -f Makefile.unix -j2 all
 

@@ -7,7 +7,5 @@ echo "Assuming that QT4 was installed from \"/usr/ports/devel/qt4\" ... "
 # before anything will work:
 #
 
-QTDIR="/usr/local"
-
-$QTDIR/bin/qmake-qt4 -spec freebsd-g++ -o Makefile midipp.pro
+qmake-qt4 -o Makefile midipp.pro
 

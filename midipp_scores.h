@@ -58,6 +58,7 @@ public:
 	void handleKeyRelease(int key, uint32_t key_delay = 0);
 	void handleParse(const QString &ps);
 	void handleParseSub(QPrinter *pd, QPoint orig, float scale_f);
+	int handleScoreFileOpenSub(QString fname);
 
 	void viewPaintEvent(QPaintEvent *event);
 	void viewMousePressEvent(QMouseEvent *e);

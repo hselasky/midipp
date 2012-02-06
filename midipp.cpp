@@ -25,9 +25,14 @@
 
 #include <midipp.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <signal.h>
+#include <err.h>
 
 #include <midipp_mainwindow.h>
+#include <midipp_scores.h>
 
 QColor color_black   (0x00, 0x00, 0x00, 0xff);
 QColor color_white   (0xff, 0xff, 0xff, 0xff);
@@ -205,9 +210,21 @@ mask_signal(int sig)
 {
 }
 
+static const char *mpp_input_file;
+static int mpp_pdf_print;
+
+static void
+usage(void)
+{
+	fprintf(stderr, "midipp [-f <score_file.txt>] [-p show_print]\n");
+	exit(1);
+}
+
 int
 main(int argc, char **argv)
 {
+	int c;
+
 	QApplication app(argc, argv);
 
 	signal(SIGPIPE, mask_signal);
@@ -218,7 +235,33 @@ main(int argc, char **argv)
 
 	MppMainWindow main;
 
-	main.show();
+	while ((c = getopt(argc, argv, "f:ph")) != -1) {
+		switch (c) {
+		case 'f':
+			mpp_input_file = optarg;
+			break;
+		case 'p':
+			mpp_pdf_print = 1;
+			break;
+		default:
+			usage();
+			break;
+		}
+	}
+
+	if (mpp_input_file != NULL) {
+		if (main.scores_main[0]->handleScoreFileOpenSub(
+		    QString(mpp_input_file)) != 0) {
+			errx(1, "Could not open file '%s'\n", mpp_input_file);
+		}
+	}
+
+	if (mpp_pdf_print) {
+		main.scores_main[0]->handleScorePrint();
+		exit(0);
+	} else {
+		main.show();
+	}
 
 	return (app.exec());
 }
