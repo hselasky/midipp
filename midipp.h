@@ -64,6 +64,7 @@
 #include <QSizePolicy>
 #include <QListWidget>
 #include <QIcon>
+#include <QCloseEvent>
 
 #include <umidi20.h>
 

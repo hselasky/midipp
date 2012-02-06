@@ -706,6 +706,12 @@ MppMainWindow :: ~MppMainWindow()
 }
 
 void
+MppMainWindow :: closeEvent(QCloseEvent *event)
+{
+	exit(0);
+}
+
+void
 MppMainWindow :: handle_quit()
 {
 	exit(0);
