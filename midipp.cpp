@@ -252,7 +252,7 @@ main(int argc, char **argv)
 	if (mpp_input_file != NULL) {
 		if (main.scores_main[0]->handleScoreFileOpenSub(
 		    QString(mpp_input_file)) != 0) {
-			errx(1, "Could not open file '%s'\n", mpp_input_file);
+			errx(1, "Could not open file '%s'", mpp_input_file);
 		}
 	}
 
