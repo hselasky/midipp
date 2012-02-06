@@ -28,11 +28,13 @@
 
 VERSION=1.0.10
 
+PREFIX?=/usr/local
+
 help:
 	@echo "Targets are: all, install, clean, package, help"
 
 all:
-	qmake-qt4 PREFIX=/usr/local -o Makefile.unix midipp.pro
+	qmake-qt4 PREFIX=${PREFIX} -o Makefile.unix midipp.pro
 
 	make -f Makefile.unix -j2 all
 
