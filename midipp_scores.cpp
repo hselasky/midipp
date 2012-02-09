@@ -1316,10 +1316,31 @@ parse_score:
 
 	if ((base_key >= 0) && (base_key <= 127) &&
 	    (ps.line < MPP_MAX_LINES) && (ps.index < MPP_MAX_SCORES)) {
-		scores[ps.line][ps.index].key = base_key & 127;
-		scores[ps.line][ps.index].dur = duration & 255;
-		scores[ps.line][ps.index].channel = channel & 15;
-		ps.index++;
+
+		uint8_t t_key;
+		uint8_t t_dur;
+		uint8_t t_chan;
+
+		t_key = base_key & 127;
+		t_dur = duration & 255;
+		t_chan = channel & 15;
+
+		/* check for duplicate keys */
+		for (z = 0; z != ps.index; z++) {
+			if (scores[ps.line][z].key != t_key)
+				continue;
+			if (scores[ps.line][z].channel != t_chan)
+				continue;
+			break;
+		}
+
+		/* insert new key into list */
+		if (z == ps.index) {
+			scores[ps.line][z].key = t_key;
+			scores[ps.line][z].dur = t_dur;
+			scores[ps.line][z].channel = t_chan;
+			ps.index++;
+		}
 	}
 	goto next_char;
 
