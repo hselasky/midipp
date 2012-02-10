@@ -211,7 +211,10 @@ MppDecode :: parseScoreChord(struct MppScoreEntry *ps, const char *chord)
 	key = (foot_max[x] % 12);
 
 	spn_base->setValue(foot_max[x] - key);
-	spn_rol->setValue(-(int)z);
+
+	z = z - foot_len + 1;
+
+	spn_rol->setValue(z);
 
 	out += MppBaseKeyToString(key, is_sharp);
 	out += score_variant[y].keyword;

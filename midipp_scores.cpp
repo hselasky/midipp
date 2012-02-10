@@ -2745,12 +2745,14 @@ MppScoreMain :: handleEditLine(void)
 				cursor.insertText(dlg.getText());
 				cursor.endEditBlock();
 
-				chord.beginEditBlock();
-				chord.removeSelectedText();
-				chord.insertText(QString("("));
-				chord.insertText(dlg.lin_edit->text().trimmed());
-				chord.insertText(QString(")"));
-				chord.endEditBlock();
+				if (update_chord) {
+					chord.beginEditBlock();
+					chord.removeSelectedText();
+					chord.insertText(QString("("));
+					chord.insertText(dlg.lin_edit->text().trimmed());
+					chord.insertText(QString(")"));
+					chord.endEditBlock();
+				}
 
 				retval = 0;
 			}
