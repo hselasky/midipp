@@ -202,6 +202,24 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_file_gl->addWidget(but_gpro_file_import, n, 4, 1, 2);
 
 	n++;
+
+	tab_file_gl->addWidget(scores_main[0]->butScoreFileStepUp, n, 0, 1, 2);
+	tab_file_gl->addWidget(scores_main[1]->butScoreFileStepUp, n, 2, 1, 2);
+
+	n++;
+
+	tab_file_gl->addWidget(scores_main[0]->butScoreFileStepDown, n, 0, 1, 2);
+	tab_file_gl->addWidget(scores_main[1]->butScoreFileStepDown, n, 2, 1, 2);
+
+	n++;
+
+	tab_file_gl->addWidget(scores_main[0]->butScoreFileSetFlat, n, 0, 1, 1);
+	tab_file_gl->addWidget(scores_main[1]->butScoreFileSetFlat, n, 2, 1, 1);
+
+	tab_file_gl->addWidget(scores_main[0]->butScoreFileSetSharp, n, 1, 1, 1);
+	tab_file_gl->addWidget(scores_main[1]->butScoreFileSetSharp, n, 3, 1, 1);
+
+	n++;
 	n++;
 
 	tab_file_gl->addWidget(lbl_file_status, n, 0, 1, 8, Qt::AlignLeft|Qt::AlignVCenter);

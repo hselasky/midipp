@@ -59,6 +59,8 @@ public:
 	void handleParse(const QString &ps);
 	void handleParseSub(QPrinter *pd, QPoint orig, float scale_f);
 	int handleScoreFileOpenSub(QString fname);
+	QString handleTextTranspose(const QString &str, int level, int sharp);
+	const char *baseKeyToString(int key, int sharp);
 
 	void viewPaintEvent(QPaintEvent *event);
 	void viewMousePressEvent(QMouseEvent *e);
@@ -95,6 +97,10 @@ public:
 	QPushButton *butScoreFileSave;
 	QPushButton *butScoreFileSaveAs;
 	QPushButton *butScoreFilePrint;
+	QPushButton *butScoreFileStepUp;
+	QPushButton *butScoreFileStepDown;
+	QPushButton *butScoreFileSetSharp;
+	QPushButton *butScoreFileSetFlat;
 	QString *currScoreFileName;
 	QLabel *lblFileStatus;
 	QPicture *picChord[2];
@@ -173,6 +179,10 @@ public slots:
 	void handleScoreFileSave();
 	void handleScoreFileSaveAs();
 	void handleScorePrint();
+	void handleScoreFileStepUp(void);
+	void handleScoreFileStepDown(void);
+	void handleScoreFileSetSharp(void);
+	void handleScoreFileSetFlat(void);
 	void handleScrollChanged(int value);
 };
 

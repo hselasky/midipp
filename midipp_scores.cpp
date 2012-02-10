@@ -109,12 +109,20 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	butScoreFileSave = new QPushButton(tr("Save"));
 	butScoreFileSaveAs = new QPushButton(tr("Save As"));
 	butScoreFilePrint = new QPushButton(tr("Print"));
+	butScoreFileStepUp = new QPushButton(tr("Step Up"));
+	butScoreFileStepDown = new QPushButton(tr("Step Down"));
+	butScoreFileSetSharp = new QPushButton(tr("Set #"));
+	butScoreFileSetFlat = new QPushButton(tr("Set b"));
 
 	connect(butScoreFileNew, SIGNAL(pressed()), this, SLOT(handleScoreFileNew()));
 	connect(butScoreFileOpen, SIGNAL(pressed()), this, SLOT(handleScoreFileOpen()));
 	connect(butScoreFileSave, SIGNAL(pressed()), this, SLOT(handleScoreFileSave()));
 	connect(butScoreFileSaveAs, SIGNAL(pressed()), this, SLOT(handleScoreFileSaveAs()));
 	connect(butScoreFilePrint, SIGNAL(pressed()), this, SLOT(handleScorePrint()));
+	connect(butScoreFileStepUp, SIGNAL(pressed()), this, SLOT(handleScoreFileStepUp()));
+	connect(butScoreFileStepDown, SIGNAL(pressed()), this, SLOT(handleScoreFileStepDown()));
+	connect(butScoreFileSetSharp, SIGNAL(pressed()), this, SLOT(handleScoreFileSetSharp()));
+	connect(butScoreFileSetFlat, SIGNAL(pressed()), this, SLOT(handleScoreFileSetFlat()));
 
 	/* Widget */
 
@@ -1664,7 +1672,7 @@ MppScoreMain :: handleScoreFileOpenSub(QString fname)
 
 	mainWindow->lbl_file_status->setText(status);
 
-	return (scores.isNull());
+	return (scores.isNull() || scores.isEmpty());
 }
 
 void
@@ -2314,4 +2322,372 @@ MppScoreMain :: handleScrollChanged(int value)
 	pthread_mutex_unlock(&mainWindow->mtx);
 
 	viewWidgetSub->repaint();
+}
+
+const char *
+MppScoreMain :: baseKeyToString(int key, int sharp)
+{
+	switch (key) {
+	case A0:
+		return ("A");
+	case H0:
+		return ("H");
+	case C0:
+		return ("C");
+	case D0:
+		return ("D");
+	case E0:
+		return ("E");
+	case F0:
+		return ("F");
+	case G0:
+		return ("G");
+	case H0B:
+		if (sharp)
+			return ("A#");
+		else
+			return ("Hb");
+	case A0B:
+		if (sharp)
+			return ("G#");
+		else
+			return ("Ab");
+	case G0B:
+		if (sharp)
+			return ("F#");
+		else
+			return ("Gb");
+	case E0B:
+		if (sharp)
+			return ("D#");
+		else
+			return ("Eb");
+	case D0B:
+		if (sharp)
+			return ("C#");
+		else
+			return ("Db");
+	default:
+		return ("??");
+	}
+}
+
+QString
+MppScoreMain :: handleTextTranspose(const QString &str, int level, int sharp)
+{
+	QString out;
+
+	char c;
+	int is_comment = 0;
+	int skip = 0;
+	int key;
+	int y;
+
+	memset(&ps, 0, sizeof(ps));
+
+	ps.x = 0;
+	ps.ps = &str;
+
+top:
+	while ((c = getChar(0)) != 0) {
+
+		switch (c) {
+		case 'A':
+			if (skip || is_comment)
+				break;
+			key = A0;
+			goto parse_score;
+		case 'H':
+			if (skip || is_comment)
+				break;
+		case 'B':
+			if (skip || is_comment)
+				break;
+			key = H0;
+			goto parse_score;
+		case 'C':
+			if (skip || is_comment)
+				break;
+			key = C0;
+			goto parse_score;
+		case 'D':
+			if (skip || is_comment)
+				break;
+			key = D0;
+			goto parse_score;
+		case 'E':
+			if (skip || is_comment)
+				break;
+			key = E0;
+			goto parse_score;
+		case 'F':
+			if (skip || is_comment)
+				break;
+			key = F0;
+			goto parse_score;
+		case 'G':
+			if (skip || is_comment)
+				break;
+			key = G0;
+			goto parse_score;
+		case 'S':
+			if (skip || is_comment)
+				break;
+			if (getChar(1) == '\"') {
+				out += "S\"";
+				ps.x += 2;
+				goto parse_string;
+			}
+			skip = 1;
+			break;
+		case ' ':
+		case '\t':
+		case '\n':
+			skip = 0;
+			break;
+		case '/':
+			if (getChar(1) == '*') {
+				skip = 0;
+				is_comment++;
+			}
+			break;
+		case '*':
+			if (getChar(1) == '/') {
+				skip = 0;
+				is_comment--;
+			}
+			break;
+		default:
+			skip = 1;
+			break;
+		}
+		out += (char)c;		
+		ps.x++;
+	}
+	return (out);
+
+parse_score:
+
+	parseAdv(1);
+
+	/* add octave number */
+	key += 12 * getIntValue(0);
+
+	c = getChar(0);
+	if (c == 'B' || c == 'b') {
+		key--;
+		parseAdv(1);
+	}
+
+	key += level;
+	if (key >= 0 && key <= 127)
+		out += mid_key_str[key];
+
+	skip = 1;
+	goto top;
+
+parse_string:
+
+	while (1) {
+		int is_dot;
+
+		c = getChar(0);
+		if (c == '\"' || c == 0)
+			goto top;
+
+		if (c == '.' && getChar(1) == '(') {
+			ps.x += 2;
+			is_dot = 1;
+		} else if (c == '(') {
+			ps.x++;
+			is_dot = 0;
+		} else {
+			out += (char)c;
+			ps.x++;
+			continue;
+		}
+
+		for (y = 0; ; y++) {
+			c = getChar(y);
+
+			/* check for end of string */
+			if (c == '\"' || c == 0)
+				goto top;
+			if (c == ')') 
+				break;
+		}
+		if (getChar(y + 1) == '.') {
+			is_dot = 1;
+			y++;
+		}
+
+		if (is_dot == 0) {
+			out += '(';
+			continue;
+		}
+
+		y = ps.x + y;
+		break;
+	}
+
+	switch (getChar(0)) {
+	case 'A':
+		key = A0;
+		break;
+	case 'H':
+	case 'B':
+		key = H0;
+		break;
+	case 'C':
+		key = C0;
+		break;
+	case 'D':
+		key = D0;
+		break;
+	case 'E':
+		key = E0;
+		break;
+	case 'F':
+		key = F0;
+		break;
+	case 'G':
+		key = G0;
+		break;
+	default:
+		out += ".(?)";
+		ps.x = y;
+		goto parse_string;
+	}
+
+	ps.x++;
+
+	c = getChar(0);
+
+	if (c == '#') {
+		key++;
+		ps.x++;
+	} else if (c == 'b') {
+		key--;
+		ps.x++;
+	}
+
+	key = (key + level) % 12;
+	if (key < 0)
+		key += 12;
+
+	out += ".(";
+	out += baseKeyToString(key, sharp);
+
+	while (1) {
+		c = getChar(0);
+		out += (char)c;
+		ps.x++;
+
+		if (c == ')') {
+			if (getChar(0) == '.')
+				ps.x++;
+			goto parse_string;
+		} else if (c == '/') {
+			break;
+		}
+	}
+
+	switch (getChar(0)) {
+	case 'A':
+		key = A0;
+		break;
+	case 'H':
+	case 'B':
+		key = H0;
+		break;
+	case 'C':
+		key = C0;
+		break;
+	case 'D':
+		key = D0;
+		break;
+	case 'E':
+		key = E0;
+		break;
+	case 'F':
+		key = F0;
+		break;
+	case 'G':
+		key = G0;
+		break;
+	default:
+		out += "?)";
+		ps.x = y;
+		goto parse_string;
+	}
+
+	ps.x++;
+
+	c = getChar(0);
+
+	if (c == '#') {
+		key++;
+		ps.x++;
+	} else if (c == 'b') {
+		key--;
+		ps.x++;
+	}
+
+	key = (key + level) % 12;
+	if (key < 0)
+		key += 12;
+
+	out += baseKeyToString(key, sharp);
+
+	while (ps.x != y) {
+		c = getChar(0);
+		if (c != '.')
+			out += (char)c;
+		ps.x++;
+	}
+	goto parse_string;
+}
+
+void
+MppScoreMain :: handleScoreFileStepUp(void)
+{
+	editWidget->setPlainText(
+	    handleTextTranspose(
+	        editWidget->toPlainText(), 1, 0)
+	    );
+
+	handleCompile();
+}
+
+void
+MppScoreMain :: handleScoreFileStepDown(void)
+{
+	editWidget->setPlainText(
+	    handleTextTranspose(
+	        editWidget->toPlainText(), -1, 0)
+	    );
+
+	handleCompile();
+}
+
+void
+MppScoreMain :: handleScoreFileSetSharp(void)
+{
+	editWidget->setPlainText(
+	    handleTextTranspose(
+	        editWidget->toPlainText(), 0, 1)
+	    );
+
+	handleCompile();
+}
+
+void
+MppScoreMain :: handleScoreFileSetFlat(void)
+{
+	editWidget->setPlainText(
+	    handleTextTranspose(
+	        editWidget->toPlainText(), 0, 0)
+	    );
+
+	handleCompile();
 }
