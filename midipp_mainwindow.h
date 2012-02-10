@@ -304,9 +304,9 @@ public:
 
 	MppLoopTab *tab_loop;
 
-	/* tab <Echo> */
+	/* tab <Help> */
 
-	MppEchoTab *tab_echo[MPP_MAX_ETAB];
+	QPlainTextEdit *tab_help;
 
 	/* MIDI stuff */
 	struct mid_data mid_data;

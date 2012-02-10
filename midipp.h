@@ -77,7 +77,6 @@
 #define	MPP_MAX_DEVS	6
 #define	MPP_MAX_BPM	32
 #define	MPP_MAX_LBUTTON	8
-#define	MPP_MAX_ETAB	3
 #define	MPP_MIN_POS	4	/* ticks */
 #define	MPP_PRESSED_MAX	128
 #define	MPP_MAX_DURATION 255	/* inclusive */

@@ -40,6 +40,17 @@ public:
 	MppScoreMain *pScores;
 };
 
+class MppScoreTextEdit : public QPlainTextEdit
+{
+public:
+	MppScoreMain *sm;
+
+	MppScoreTextEdit(MppScoreMain *parent);
+	~MppScoreTextEdit(void);
+
+	void mouseDoubleClickEvent(QMouseEvent *e);
+};
+
 class MppScoreMain : public QObject
 {
 	Q_OBJECT;
@@ -60,6 +71,8 @@ public:
 	void handleParseSub(QPrinter *pd, QPoint orig, float scale_f);
 	int handleScoreFileOpenSub(QString fname);
 	QString handleTextTranspose(const QString &str, int level, int sharp);
+	QString doExport(void);
+
 	uint8_t handleEditLine(void);
 	uint8_t isValidChordInfo(uint32_t line);
 
@@ -92,7 +105,7 @@ public:
 	MppScoreView *viewWidgetSub;
 
 	MppMainWindow *mainWindow;
-	QPlainTextEdit *editWidget;
+	MppScoreTextEdit *editWidget;
 	QPushButton *butScoreFileNew;
 	QPushButton *butScoreFileOpen;
 	QPushButton *butScoreFileSave;
@@ -102,6 +115,7 @@ public:
 	QPushButton *butScoreFileStepDown;
 	QPushButton *butScoreFileSetSharp;
 	QPushButton *butScoreFileSetFlat;
+	QPushButton *butScoreFileExport;
 	QString *currScoreFileName;
 	QLabel *lblFileStatus;
 	QPicture *picChord[2];
@@ -186,6 +200,7 @@ public slots:
 	void handleScoreFileStepDown(void);
 	void handleScoreFileSetSharp(void);
 	void handleScoreFileSetFlat(void);
+	void handleScoreFileExport(void);
 	void handleScrollChanged(int value);
 };
 

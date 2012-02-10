@@ -1,5 +1,5 @@
 /*-
-c * Copyright (c) 2009-2011 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2011 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,7 +27,6 @@ c * Copyright (c) 2009-2011 Hans Petter Selasky. All rights reserved.
 #include <midipp_scores.h>
 #include <midipp_mutemap.h>
 #include <midipp_looptab.h>
-#include <midipp_echotab.h>
 #include <midipp_decode.h>
 #include <midipp_import.h>
 #include <midipp_devices.h>
@@ -105,8 +104,37 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_loop = new MppLoopTab(this, this);
 
-	for (x = 0; x != MPP_MAX_ETAB; x++)
-		tab_echo[x] = new MppEchoTab(this, this);
+	tab_help = new QPlainTextEdit();
+	tab_help->setFont(font_fixed);
+	tab_help->setLineWrapMode(QPlainTextEdit::NoWrap);
+	tab_help->setPlainText(tr(
+	    "/*\n"
+	    " * Copyright (c) 2009-2012 Hans Petter Selasky. All rights reserved.\n"
+	    " */\n"
+
+	    "\n"
+	    "/*\n"
+	    " * Command syntax:\n"
+	    " * ===============\n"
+	    " *\n"
+	    " * U<number>[.] - specifies the duration of the following scores (0..255).\n"
+	    " * T<number> - specifies the track number of the following scores (0..31).\n"
+	    " * K<number> - defines a command (0..99).\n"
+	    " * W<number>.<number> - defines an autoplay timeout (1..9999ms).\n"
+	    " * K0 - no operation.\n"
+	    " * K1 - lock play key until next label jump.\n"
+	    " * K2 - unlock play key.\n"
+	    " * K3.<bpm>.<period_ms> - set reference BPM and period in ms.\n"
+	    " * K4.<number> - enable automatic melody effect on the N-th note, if non-zero.\n"
+	    " * M<number> - macro inline the given label.\n"
+	    " * L<number> - defines a label (0..31).\n"
+	    " * J<R><P><number> - jumps to the given label (0..31) or \n"
+	    " *     Relative(R) line (0..31) and starts a new page(P).\n"
+	    " * S\"<string>\" - creates a visual string.\n"
+	    " * CDEFGAH<number><B> - defines a score in the given octave (0..10).\n"
+	    " * X[+/-]<number> - defines the transpose level of the following scores in half-steps.\n"
+	    " */\n"
+	    "\n"));
 
 	tab_file_wg = new QWidget();
 	tab_play_wg = new MppPlayWidget(this);
@@ -126,7 +154,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	scores_tw->addTab(&scores_main[1]->viewWidget, tr("View B-Scores"));
 	scores_tw->addTab(scores_main[1]->editWidget, tr("Edit B-Scores"));
 
-	scores_tw->addTab(tab_import->editWidget, tr("Import Scores"));
+	scores_tw->addTab(tab_import->editWidget, tr("Lyrics"));
 
 	main_tw->addTab(tab_file_wg, tr("File"));
 	main_tw->addTab(tab_play_wg, tr("Play"));
@@ -135,11 +163,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_tw->addTab(tab_volume_wg, tr("Volume"));
 	main_tw->addTab(tab_loop, tr("Loop"));
 
-	for (n = 0; n != MPP_MAX_ETAB; n++) {
-		char buf[8];
-		snprintf(buf, sizeof(buf), "Echo%u", n);
-		main_tw->addTab(tab_echo[n], tr(buf));
-	}
+	main_tw->addTab(tab_help, tr("Help"));
 
 	/* <File> Tab */
 
@@ -147,7 +171,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	lbl_score_Bfile = new QLabel(tr("- B-Scores -"));
 
-	lbl_import_file = new QLabel(tr("- Import -"));
+	lbl_import_file = new QLabel(tr("- Lyrics -"));
 
 	lbl_midi_file = new QLabel(tr("- MIDI File -"));
 
@@ -160,10 +184,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_midi_file_merge = new QPushButton(tr("Merge"));
 	but_midi_file_save = new QPushButton(tr("Save"));
 	but_midi_file_save_as = new QPushButton(tr("Save As"));
-	but_midi_file_import = new QPushButton(tr("Import"));
+	but_midi_file_import = new QPushButton(tr("To X-Scores"));
 
 	lbl_gpro_title = new QLabel(tr("- GPro v3/4 -"));
-	but_gpro_file_import = new QPushButton(tr("Open+Import"));
+	but_gpro_file_import = new QPushButton(tr("Open+To X-Scores"));
 
 	n = 0;
 
@@ -218,6 +242,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_file_gl->addWidget(scores_main[0]->butScoreFileSetSharp, n, 1, 1, 1);
 	tab_file_gl->addWidget(scores_main[1]->butScoreFileSetSharp, n, 3, 1, 1);
+
+	n++;
+
+	tab_file_gl->addWidget(scores_main[0]->butScoreFileExport, n, 0, 1, 2);
+	tab_file_gl->addWidget(scores_main[1]->butScoreFileExport, n, 2, 1, 2);
 
 	n++;
 	n++;
@@ -313,7 +342,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		but_jump[n] = new MppButton(tr(buf), n);
 	}
 
-	but_insert_chord = new QPushButton(tr("Get &Chord"));
+	but_insert_chord = new QPushButton(tr("&Insert Chord"));
 	but_edit_chord = new QPushButton(tr("&Edit Chord"));
 	but_compile = new QPushButton(tr("Compile"));
 	but_score_record = new QPushButton(tr("Scores"));
@@ -1030,9 +1059,6 @@ MppMainWindow :: handle_watchdog()
 	sm->viewWidgetSub->repaint();
 
 	tab_loop->watchdog();
-
-	for (x = 0; x != MPP_MAX_ETAB; x++)
-		tab_echo[x]->watchdog();
 }
 
 void
@@ -1308,8 +1334,6 @@ MppMainWindow :: handle_rewind()
 void
 MppMainWindow :: handle_midi_trigger()
 {
-	int n;
-
 	pthread_mutex_lock(&mtx);
 
 	if (midiTriggered == 0) {
@@ -1331,11 +1355,7 @@ MppMainWindow :: handle_midi_trigger()
 		pausePosition = 0;
 
 		dlg_bpm->handle_update();
-
-		for (n = 0; n != MPP_MAX_ETAB; n++)
-			tab_echo[n]->handle_echo_update();
 	}
-
 	pthread_mutex_unlock(&mtx);
 }
 

@@ -81,9 +81,6 @@ midipp_import_flush(struct midipp_import *ps)
 
 			ps->dlg->setText(ps->d_word[0][ai].name);
 
-			if(ps->dlg->exec() != QDialog::Accepted)
-				return (1);
-
 			out += ps->sm->mainWindow->led_config_insert->text() +
 			    ps->dlg->getText() + QString("\n");
 		}
@@ -245,7 +242,7 @@ MppImportTab :: MppImportTab(MppMainWindow *parent)
 
 	butImportFileNew = new QPushButton(tr("New"));
 	butImportFileOpen = new QPushButton(tr("Open"));
-	butImport = new QPushButton(tr("Import"));
+	butImport = new QPushButton(tr("To X-Scores"));
 
 	connect(butImportFileNew, SIGNAL(pressed()), this, SLOT(handleImportNew()));
 	connect(butImportFileOpen, SIGNAL(pressed()), this, SLOT(handleImportOpen()));

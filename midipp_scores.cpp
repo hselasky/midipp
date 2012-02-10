@@ -29,7 +29,6 @@
 #include <midipp_import.h>
 #include <midipp_pattern.h>
 #include <midipp_bpm.h>
-#include <midipp_echotab.h>
 #include <midipp_mode.h>
 #include <midipp_decode.h>
 
@@ -50,43 +49,35 @@ MppScoreView :: paintEvent(QPaintEvent *event)
 	pScores->viewPaintEvent(event);
 }
 
+MppScoreTextEdit :: MppScoreTextEdit(MppScoreMain *parent)
+{
+	sm = parent;
+}
+
+MppScoreTextEdit :: ~MppScoreTextEdit(void)
+{
+
+}
+
+void
+MppScoreTextEdit :: mouseDoubleClickEvent(QMouseEvent *e)
+{
+	if (sm->handleEditLine() == 0)
+		sm->mainWindow->handle_compile();
+}
+
 MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 {
 	QString defaultText = tr(
-	    "/*\n"
-	    " * Copyright (c) 2009-2011 Hans Petter Selasky. All rights reserved.\n"
-	    " */\n"
-
+	    "S\"L0 - verse: \"\n"
 	    "\n"
-	    "/*\n"
-	    " * Command syntax:\n"
-	    " * U<number>[.] - specifies the duration of the following scores (0..255).\n"
-	    " * T<number> - specifies the track number of the following scores (0..31).\n"
-	    " * K<number> - defines a command (0..99).\n"
-	    " * W<number>.<number> - defines an autoplay timeout (1..9999ms).\n"
-	    " * K0 - no operation.\n"
-	    " * K1 - lock play key until next label jump.\n"
-	    " * K2 - unlock play key.\n"
-	    " * K3.<bpm>.<period_ms> - set reference BPM and period in ms.\n"
-	    " * K4.<number> - enable automatic melody effect on the N-th note, if non-zero.\n"
-	    " * M<number> - macro inline the given label.\n"
-	    " * L<number> - defines a label (0..31).\n"
-	    " * J<R><P><number> - jumps to the given label (0..31) or \n"
-	    " *     Relative(R) line (0..31) and starts a new page(P).\n"
-	    " * S\"<string>\" - creates a visual string.\n"
-	    " * CDEFGAH<number><B> - defines a score in the given octave (0..10).\n"
-	    " * X[+/-]<number> - defines the transpose level of the following scores in half-steps.\n"
-	    " */\n"
+	    "S\".(C)Welcome .(C)to .(D)MIDI .(E)Player .(C)Pro! \"\n"
 	    "\n"
-	    "S\"(L0:) .Welcome .to .MIDI .Player .Pro!\"\n"
-	    "L0:\n"
-	    "\nC3"
-	    "\nC3"
-	    "\nD3"
-	    "\nE3"
-	    "\nC3"
-	    "\n\nJ0"
-	    "\n");
+	    "U1 C3 C4 C5 E5 G5 /* C */\n"
+	    "U1 C3 C4 C5 E5 G5 /* C */\n"
+	    "U1 D3 D4 D5 G5B A5 /* D */\n"
+	    "U1 E3 E4 E5 A5B H5 /* E */\n"
+	    "U1 C3 C4 C5 E5 G5 /* C */\n");
 
 	/* set memory default */
 
@@ -114,6 +105,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	butScoreFileStepDown = new QPushButton(tr("Step Down"));
 	butScoreFileSetSharp = new QPushButton(tr("Set #"));
 	butScoreFileSetFlat = new QPushButton(tr("Set b"));
+	butScoreFileExport = new QPushButton(tr("To Lyrics"));
 
 	connect(butScoreFileNew, SIGNAL(pressed()), this, SLOT(handleScoreFileNew()));
 	connect(butScoreFileOpen, SIGNAL(pressed()), this, SLOT(handleScoreFileOpen()));
@@ -124,6 +116,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	connect(butScoreFileStepDown, SIGNAL(pressed()), this, SLOT(handleScoreFileStepDown()));
 	connect(butScoreFileSetSharp, SIGNAL(pressed()), this, SLOT(handleScoreFileSetSharp()));
 	connect(butScoreFileSetFlat, SIGNAL(pressed()), this, SLOT(handleScoreFileSetFlat()));
+	connect(butScoreFileExport, SIGNAL(pressed()), this, SLOT(handleScoreFileExport()));
 
 	/* Widget */
 
@@ -131,7 +124,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 
 	/* Editor */
 
-	editWidget = new QPlainTextEdit();
+	editWidget = new MppScoreTextEdit(this);
 
 	editWidget->setFont(font_fixed);
 	editWidget->setPlainText(defaultText);
@@ -552,6 +545,90 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 
 	if (pd != NULL)
 		paint.end();
+}
+
+#define	MAX_LINE_BUF 128
+
+QString
+MppScoreMain :: doExport(void)
+{
+	QString out;
+	const char *ptr;
+	uint16_t x;
+	uint16_t y;
+	uint16_t z;
+	uint16_t t;
+	char linebuf[2][MAX_LINE_BUF];
+	char c;
+	uint8_t draw_chord;
+	uint8_t do_skip;
+
+	for (x = 0; x != MPP_MAX_LINES; x++) {
+
+		ptr = visual[x].pstr;
+		if (ptr == NULL)
+			continue;
+
+		memset(linebuf, 0, sizeof(linebuf));
+
+		draw_chord = 0;
+		do_skip = 0;
+
+		for (z = t = y = 0; ptr[y] != 0; y++) {
+
+			c = ptr[y];
+
+			if (c == '(') {
+				draw_chord = 1;
+				continue;
+			} else if (c == ')') {
+				draw_chord = 0;
+				if (z < (MAX_LINE_BUF - 1)) {
+					linebuf[0][z] = ' ';
+					z++;
+				}
+				continue;
+			} else if (c == '.' && ptr[y+1] == '[') {
+				do_skip = 1;
+				continue;
+			} else if (do_skip) {
+				if (c == ']')
+					do_skip = 0;
+				continue;
+			} else if (c == '.') {
+				continue;
+			} else if (c == '\n' || c == '\r') {
+				continue;
+			}
+
+			if (draw_chord) {
+				if (z < (MAX_LINE_BUF - 1)) {
+					linebuf[0][z] = c;
+					z++;
+				}
+			} else {
+				if (t < (MAX_LINE_BUF - 1)) {
+					linebuf[1][t] = c;
+					t++;
+				}
+			}
+
+			while (z < t) {
+				linebuf[0][z] = ' ';
+				z++;
+			}
+		}
+
+		linebuf[0][z] = 0;
+		linebuf[1][t] = 0;
+
+		out += linebuf[0];
+		out += "\n";
+
+		out += linebuf[1];
+		out += "\n";
+	}
+	return (out);
 }
 
 void
@@ -2025,14 +2102,6 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 	uint8_t x;
 	uint8_t delay;
 
-	/* update for echo */
-
-	for (x = 0; x != MPP_MAX_ETAB; x++) {
-		if (this == mainWindow->scores_main[mainWindow->tab_echo[x]->echo_val.view]) {
-			mainWindow->tab_echo[x]->updateVel(vel);
-		}
-	}
-
  repeat:
 	for (x = 0; x != 128; x++) {
 		pos = resolveJump(currPos);
@@ -2673,6 +2742,16 @@ MppScoreMain :: handleScoreFileSetFlat(void)
 	    );
 
 	handleCompile();
+}
+
+void
+MppScoreMain :: handleScoreFileExport(void)
+{
+	QTextCursor cursor(mainWindow->tab_import->editWidget->textCursor());
+
+	cursor.beginEditBlock();
+	cursor.insertText(doExport());
+	cursor.endEditBlock();
 }
 
 uint8_t
