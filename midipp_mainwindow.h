@@ -211,6 +211,7 @@ public:
 	QLabel	*lbl_key_mode;
 
 	QPushButton *but_insert_chord;
+	QPushButton *but_edit_chord;
 	QPushButton *but_jump[MPP_MAX_LBUTTON];
 	QPushButton *but_compile;
 	QPushButton *but_score_record;
@@ -319,6 +320,7 @@ public slots:
 	void handle_play_key_changed(int);
 	void handle_config_local_changed(int);
 	void handle_insert_chord();
+	void handle_edit_chord();
 	void handle_jump(int index);
 	void handle_compile();
 	void handle_score_record();

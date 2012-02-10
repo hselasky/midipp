@@ -143,7 +143,7 @@ midipp_import_parse(struct midipp_import *ps)
 
 	if (ps->index == 0) {
 		for (y = x = 0; x != n_word; x++) {
-			y += mpp_parse_score(ps->d_word[0][x].name, C4, 0, out);
+			y += mpp_parse_chord(ps->d_word[0][x].name, C4, 0, out);
 		}
 		if (y == 0 && n_word != 0) {
 			/* get one more line */
@@ -166,7 +166,7 @@ midipp_import_parse(struct midipp_import *ps)
 uint8_t
 midipp_import(QString str, struct midipp_import *ps, MppScoreMain *sm)
 {
-	MppDecode dlg(sm->mainWindow, sm->mainWindow);
+	MppDecode dlg(sm->mainWindow, sm->mainWindow, 0);
 	char ch;
 	int off;
 	char *ptr;

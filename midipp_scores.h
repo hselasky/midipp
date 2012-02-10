@@ -60,7 +60,8 @@ public:
 	void handleParseSub(QPrinter *pd, QPoint orig, float scale_f);
 	int handleScoreFileOpenSub(QString fname);
 	QString handleTextTranspose(const QString &str, int level, int sharp);
-	const char *baseKeyToString(int key, int sharp);
+	uint8_t handleEditLine(void);
+	uint8_t isValidChordInfo(uint32_t line);
 
 	void viewPaintEvent(QPaintEvent *event);
 	void viewMousePressEvent(QMouseEvent *e);
@@ -107,6 +108,7 @@ public:
 
 	struct MppScoreEntry score_past[24];
 	struct MppScoreEntry score_future[12];
+	struct MppChordInfo chord_info[MPP_MAX_LINES];
 	struct MppScoreEntry scores[MPP_MAX_LINES][MPP_MAX_SCORES];
 	struct MppVisualScore visual[MPP_MAX_LINES];
 	struct MppMergeEntry merge[MPP_MAX_MERGE];
@@ -157,6 +159,7 @@ protected:
 		int index;
 		int bufIndex;
 		int realLine;
+		int realCol;
 		int channel;
 		int duration;
 		int mindex;

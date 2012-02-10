@@ -40,11 +40,12 @@ class MppDecode : public QDialog
 	Q_OBJECT;
 
 public:
-	MppDecode(QWidget *parent, MppMainWindow *);
+	MppDecode(QWidget *parent, MppMainWindow *, int);
 	~MppDecode();
 
 	QString getText();
 	void setText(const char *ptr);
+	uint8_t parseScoreChord(struct MppScoreEntry *, const char *);
 
 	MppMainWindow *mw;
 
@@ -82,6 +83,6 @@ public slots:
 	void handle_parse();
 };
 
-extern uint8_t mpp_parse_score(const char *input, uint8_t base, int8_t rol, uint8_t pout[MPP_MAX_VAR_OFF]);
+extern uint8_t mpp_parse_chord(const char *input, uint8_t base, int8_t rol, uint8_t pout[MPP_MAX_VAR_OFF]);
 
 #endif		/* _MIDIPP_DECODE_H_ */

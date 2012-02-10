@@ -31,6 +31,7 @@
 #include <midipp_bpm.h>
 #include <midipp_echotab.h>
 #include <midipp_mode.h>
+#include <midipp_decode.h>
 
 MppScoreView :: MppScoreView(MppScoreMain *parent)
 {
@@ -1056,9 +1057,12 @@ MppScoreMain :: parseAdv(uint8_t delta)
 	char c;
 	while (delta--) {
 		if (ps.x >= 0) {
+			ps.realCol++;
 			c = getChar(0);
-			if (c == '\n')
+			if (c == '\n') {
 				ps.realLine++;
+				ps.realCol = 0;
+			}
 		}
 		ps.x++;
 	}
@@ -1137,6 +1141,8 @@ MppScoreMain :: handleParse(const QString &pstr)
 	int key;
 	int dur;
 	int end_line;
+	int post_inc;
+	int line_off;
 
 	/* cleanup all scores */
 
@@ -1152,6 +1158,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 	ps.x = -1;
 	ps.ps = &pstr;
 
+	memset(chord_info, 0, sizeof(chord_info));
 	memset(scores, 0, sizeof(scores));
 	memset(merge, 0, sizeof(merge));
 	memset(jumpLabel, 0, sizeof(jumpLabel));
@@ -1538,6 +1545,9 @@ parse_string:
 	if (ps.line < MPP_MAX_LINES && visual[ps.line].pstr != NULL)
 		newLine(1, MPP_JUMP_REL, 0);
 
+	post_inc = 0;
+	line_off = 0;
+
 	while ((c = getChar(2)) != 0) {
 		if (c == '\"') {
 			newVisual();
@@ -1553,6 +1563,27 @@ parse_string:
 			parseAdv(1);
 			continue;
 		}
+		if (c == '.' && getChar(3) == '(') {
+			post_inc = 1;
+		} else if (c == '.') {
+			if (line_off < MPP_MAX_LINES)
+				line_off++;
+		} else if (c == '(') {
+			if ((ps.line + line_off) < MPP_MAX_LINES) {
+				chord_info[ps.line + line_off].start_col = ps.realCol + 2;
+				chord_info[ps.line + line_off].chord_line = ps.realLine;
+			}
+		} else if (c == ')') {
+			if ((ps.line + line_off) < MPP_MAX_LINES) {
+				chord_info[ps.line + line_off].stop_col = ps.realCol + 2;
+			}
+
+			if (post_inc && (line_off < MPP_MAX_LINES))
+				line_off++;
+
+			post_inc = 0;
+		}
+
 		if (ps.bufIndex == (sizeof(bufData) - 1)) {
 			/* wrap long line */
 			newVisual();
@@ -2324,54 +2355,6 @@ MppScoreMain :: handleScrollChanged(int value)
 	viewWidgetSub->repaint();
 }
 
-const char *
-MppScoreMain :: baseKeyToString(int key, int sharp)
-{
-	switch (key) {
-	case A0:
-		return ("A");
-	case H0:
-		return ("H");
-	case C0:
-		return ("C");
-	case D0:
-		return ("D");
-	case E0:
-		return ("E");
-	case F0:
-		return ("F");
-	case G0:
-		return ("G");
-	case H0B:
-		if (sharp)
-			return ("A#");
-		else
-			return ("Hb");
-	case A0B:
-		if (sharp)
-			return ("G#");
-		else
-			return ("Ab");
-	case G0B:
-		if (sharp)
-			return ("F#");
-		else
-			return ("Gb");
-	case E0B:
-		if (sharp)
-			return ("D#");
-		else
-			return ("Eb");
-	case D0B:
-		if (sharp)
-			return ("C#");
-		else
-			return ("Db");
-	default:
-		return ("??");
-	}
-}
-
 QString
 MppScoreMain :: handleTextTranspose(const QString &str, int level, int sharp)
 {
@@ -2576,7 +2559,7 @@ parse_string:
 		key += 12;
 
 	out += ".(";
-	out += baseKeyToString(key, sharp);
+	out += MppBaseKeyToString(key, sharp);
 
 	while (1) {
 		c = getChar(0);
@@ -2637,7 +2620,7 @@ parse_string:
 	if (key < 0)
 		key += 12;
 
-	out += baseKeyToString(key, sharp);
+	out += MppBaseKeyToString(key, sharp);
 
 	while (ps.x != y) {
 		c = getChar(0);
@@ -2690,4 +2673,92 @@ MppScoreMain :: handleScoreFileSetFlat(void)
 	    );
 
 	handleCompile();
+}
+
+uint8_t
+MppScoreMain :: isValidChordInfo(uint32_t line)
+{
+	if (line >= MPP_MAX_LINES)
+		return (0);
+
+	return (chord_info[line].stop_col > chord_info[line].start_col);
+}
+
+
+uint8_t
+MppScoreMain :: handleEditLine(void)
+{
+	char *ptr = NULL;
+	uint32_t row;
+	uint16_t x;
+	uint8_t retval = 1;
+	int len;
+	int update_chord;
+
+	QTextCursor cursor(editWidget->textCursor());
+
+	cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::MoveAnchor, 1);
+	cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor, 1);
+
+	row = cursor.blockNumber();
+
+	for (x = 0; x != linesMax; x++) {
+		if (realLine[x] == row) {
+
+			QTextCursor chord;
+
+			MppDecode dlg(mainWindow, mainWindow, 1);
+
+			if (isValidChordInfo(x)) {
+
+				chord = cursor;
+				chord.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor, 1);
+				chord.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, chord_info[x].chord_line);
+				chord.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, chord_info[x].start_col);
+				chord.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, 1 + chord_info[x].stop_col - chord_info[x].start_col);
+
+				ptr = MppQStringToAscii(chord.selectedText());
+			}
+			if (ptr)
+				len = strlen(ptr);
+			else
+				len = 0;
+
+			if (isValidChordInfo(x) && ptr[0] == '(' && ptr[len-1] == ')') {
+				ptr[len-1] = 0;
+				update_chord = 1;
+				if (dlg.parseScoreChord(scores[x], ptr + 1)) {
+					break;
+				}
+			} else {
+				update_chord = 0;
+				if (dlg.parseScoreChord(scores[x], "")) {
+					break;
+				}
+			}
+
+			if (dlg.exec() == QDialog::Accepted) {
+
+				cursor.beginEditBlock();
+				cursor.removeSelectedText();
+				cursor.insertText(mainWindow->led_config_insert->text());
+				cursor.insertText(dlg.getText());
+				cursor.endEditBlock();
+
+				chord.beginEditBlock();
+				chord.removeSelectedText();
+				chord.insertText(QString("("));
+				chord.insertText(dlg.lin_edit->text().trimmed());
+				chord.insertText(QString(")"));
+				chord.endEditBlock();
+
+				retval = 0;
+			}
+			break;
+		}
+	}
+	if (ptr != NULL)
+		free(ptr);
+
+	return (retval);
 }

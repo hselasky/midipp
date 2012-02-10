@@ -314,6 +314,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	}
 
 	but_insert_chord = new QPushButton(tr("Get &Chord"));
+	but_edit_chord = new QPushButton(tr("&Edit Chord"));
 	but_compile = new QPushButton(tr("Compile"));
 	but_score_record = new QPushButton(tr("Scores"));
 	but_midi_record = new QPushButton(tr("MIDI"));
@@ -419,6 +420,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_play_gl->addWidget(but_insert_chord, n, 4, 1, 2);
 
 	n++;
+
+	tab_play_gl->addWidget(but_edit_chord, n, 6, 1, 2);
 
 	for (x = 0; x != (MPP_MAX_LBUTTON / 2); x++) {
 		tab_play_gl->addWidget(but_jump[x + (MPP_MAX_LBUTTON / 2)], n + x, 5, 1, 1);
@@ -668,6 +671,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	/* Connect all */
 
 	connect(but_insert_chord, SIGNAL(released()), this, SLOT(handle_insert_chord()));
+	connect(but_edit_chord, SIGNAL(released()), this, SLOT(handle_edit_chord()));
 
 	for (n = 0; n != MPP_MAX_LBUTTON; n++)
 		connect(but_jump[n], SIGNAL(pressed(int)), this, SLOT(handle_jump(int)));
@@ -747,7 +751,7 @@ MppMainWindow :: handle_jump_locked(int index)
 void
 MppMainWindow :: handle_insert_chord()
 {
-	MppDecode dlg(this, this);
+	MppDecode dlg(this, this, 0);
 
         if(dlg.exec() == QDialog::Accepted) {
 		QTextCursor cursor(currScoreMain()->editWidget->textCursor());
@@ -756,7 +760,20 @@ MppMainWindow :: handle_insert_chord()
 		cursor.insertText(dlg.getText());
 		cursor.insertText(QString("\n"));
 		cursor.endEditBlock();
+
+		handle_compile();
 	}
+}
+
+void
+MppMainWindow :: handle_edit_chord()
+{
+	MppScoreMain *sm = currScoreMain();
+
+	handle_compile();
+
+	if (sm->handleEditLine() == 0)
+		handle_compile();
 }
 
 void

@@ -71,6 +71,8 @@ static const struct score_variant score_variant[] = {
   { "13", {C5, H5B, D6, F6, A6} },
 };
 
+#define	MAX_VAR (sizeof(score_variant)/sizeof(score_variant[0]))
+
 static uint8_t
 mpp_get_key(const char *ptr)
 {
@@ -121,7 +123,111 @@ mpp_get_key(const char *ptr)
 }
 
 uint8_t
-mpp_parse_score(const char *input, uint8_t base,
+MppDecode :: parseScoreChord(struct MppScoreEntry *ps, const char *chord)
+{
+	QString out;
+
+	uint8_t foot_print[12];
+	uint8_t foot_max[12];
+	uint8_t foot_len = 0;
+	uint8_t max;
+	uint8_t min;
+
+	const char *ptr;
+
+	int n;
+	int x;
+	int y;
+	int z;
+	int is_sharp;
+	int key;
+
+	memset(foot_print, 0, sizeof(foot_print));
+	memset(foot_max, 0, sizeof(foot_max));
+	max = 0;
+
+	is_sharp = (strstr(chord, "#") != NULL);
+
+	ptr = strstr(chord, "/");
+	if (ptr != NULL) {
+		min = mpp_get_key(ptr + 1);
+		if (min == 0)
+			min = 255;
+		else
+			min %= 12;
+	} else {
+		min = 255;
+	}
+
+	for (x = 0; x != MPP_MAX_SCORES; x++) {
+		if (ps[x].dur != 0) {
+			int key = ps[x].key % 12;
+			foot_print[key] = 1;
+			if (foot_max[key] < ps[x].key)
+				foot_max[key] = ps[x].key;
+			if (max < ps[x].key)
+				max = ps[x].key;
+		}
+	}
+	for (x = 0; x != 12; x++) {
+		if (foot_print[x])
+			foot_len++;
+	}
+
+	if (foot_len == 0)
+		return (1);
+
+	for (x = 0; x != 12; x++) {
+		for (y = 0; y != MAX_VAR; y++) {
+			n = foot_len;
+			for (z = 0; z != MPP_MAX_VAR_OFF; z++) {
+				int key = score_variant[y].offset[z];
+
+				if (key != 0) {
+					if (foot_print[(key + x) % 12])
+						n--;
+					else
+						break;
+				}
+			}
+			if (z == MPP_MAX_VAR_OFF && n == 0)
+				break;
+			  
+		}
+		if (y != MAX_VAR && n == 0)
+			break;
+	}
+
+	if (x == 12)
+		return (1);
+
+	for (z = 0; z != MPP_MAX_VAR_OFF; z++) {
+		int key = score_variant[y].offset[z];
+
+		if ((key % 12) == ((max - foot_max[x]) % 12))
+			break;
+	}
+
+	key = (foot_max[x] % 12);
+
+	spn_base->setValue(foot_max[x] - key);
+	spn_rol->setValue(-(int)z);
+
+	out += MppBaseKeyToString(key, is_sharp);
+	out += score_variant[y].keyword;
+
+	if (min != 255 && min != key) {
+		out += "/";
+		out += MppBaseKeyToString(min, is_sharp);
+	}
+
+	lin_edit->setText(out);
+
+	return (0);
+}
+
+uint8_t
+mpp_parse_chord(const char *input, uint8_t base,
     int8_t rol, uint8_t pout[MPP_MAX_VAR_OFF])
 {
 	char *ptr;
@@ -186,7 +292,7 @@ mpp_parse_score(const char *input, uint8_t base,
 	if (ptr)
 		*ptr = 0;
 
-	for (x = 0; x != (sizeof(score_variant)/sizeof(score_variant[0])); x++) {
+	for (x = 0; x != MAX_VAR; x++) {
 
 		if (strcmp(buffer, score_variant[x].keyword) == 0) {
 
@@ -208,7 +314,7 @@ mpp_parse_score(const char *input, uint8_t base,
 	return (1);		/* failed */
 }
 
-MppDecode :: MppDecode(QWidget *parent, MppMainWindow *_mw)
+MppDecode :: MppDecode(QWidget *parent, MppMainWindow *_mw, int is_edit)
   : QDialog(parent)
 {
 	int n;
@@ -217,7 +323,11 @@ MppDecode :: MppDecode(QWidget *parent, MppMainWindow *_mw)
 
 	gl = new QGridLayout(this);
 
-	setWindowTitle(tr("Chord decoder"));
+	if (is_edit)
+		setWindowTitle(tr("Edit chord"));
+	else
+		setWindowTitle(tr("Chord decoder"));
+
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
 	lin_edit = new QLineEdit();
@@ -370,7 +480,7 @@ MppDecode :: handle_parse()
 	rol = spn_rol->value();
 	base = spn_base->value();
 
-	error = mpp_parse_score(ptr, base, rol, current_score);
+	error = mpp_parse_chord(ptr, base, rol, current_score);
 
 	if (error == 0)
 		lbl_status->setText(tr("OK"));

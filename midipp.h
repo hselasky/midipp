@@ -111,6 +111,12 @@ class MppGPro;
 class MppMidi;
 class MppMode;
 
+struct MppChordInfo {
+	int chord_line;
+	uint8_t start_col;
+	uint8_t stop_col;
+};
+
 struct MppScoreEntry {
 	uint8_t key;
 	uint8_t dur;
@@ -152,5 +158,6 @@ extern QString MppReadFile(QString fname, QString *perr);
 extern void MppWriteFile(QString fname, QString text, QString *perr);
 extern uint8_t MppReadRawFile(QString fname, QByteArray *pdata);
 extern uint8_t MppWriteRawFile(QString fname, QByteArray *pdata);
+extern const char *MppBaseKeyToString(int key, int sharp);
 
 #endif	/* _MIDIPP_H_ */

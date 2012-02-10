@@ -92,6 +92,54 @@ MppQStringToAscii(QString s)
 	return (ptr);
 }
 
+const char *
+MppBaseKeyToString(int key, int sharp)
+{
+	switch (key) {
+	case A0:
+		return ("A");
+	case H0:
+		return ("H");
+	case C0:
+		return ("C");
+	case D0:
+		return ("D");
+	case E0:
+		return ("E");
+	case F0:
+		return ("F");
+	case G0:
+		return ("G");
+	case H0B:
+		if (sharp)
+			return ("A#");
+		else
+			return ("Hb");
+	case A0B:
+		if (sharp)
+			return ("G#");
+		else
+			return ("Ab");
+	case G0B:
+		if (sharp)
+			return ("F#");
+		else
+			return ("Gb");
+	case E0B:
+		if (sharp)
+			return ("D#");
+		else
+			return ("Eb");
+	case D0B:
+		if (sharp)
+			return ("C#");
+		else
+			return ("Db");
+	default:
+		return ("??");
+	}
+}
+
 QString
 MppReadFile(QString fname, QString *perr)
 {
