@@ -258,7 +258,6 @@ void
 MppImportTab :: handleImportNew()
 {
 	editWidget->setPlainText(QString());
-	mainWindow->lbl_file_status->setText(QString());
 }
 
 void
@@ -268,7 +267,6 @@ MppImportTab :: handleImportOpen()
 	  new QFileDialog(mainWindow, tr("Select Chord Tabular File"), 
 		QString(), QString("Chord Tabular File (*.txt; *.TXT)"));
 	QString scores;
-	QString status;
 
 	diag->setAcceptMode(QFileDialog::AcceptOpen);
 	diag->setFileMode(QFileDialog::ExistingFile);
@@ -277,11 +275,9 @@ MppImportTab :: handleImportOpen()
 
 		handleImportNew();
 
-		scores = MppReadFile(diag->selectedFiles()[0], &status);
+		scores = MppReadFile(diag->selectedFiles()[0]);
 
 		editWidget->setPlainText(scores);
-
-		mainWindow->lbl_file_status->setText(status);
 	}
 	delete diag;
 }

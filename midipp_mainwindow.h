@@ -91,6 +91,7 @@ public:
 	pthread_mutex_t mtx;
 
 	QFont defaultFont;
+	QString version;
 
 	uint8_t auto_zero_start[0];
 
@@ -168,7 +169,6 @@ public:
 	QLabel *lbl_score_Bfile;
 	QLabel *lbl_import_file;
 	QLabel *lbl_midi_file;
-	QLabel *lbl_file_status;
 
 	QPushButton *but_quit;
 

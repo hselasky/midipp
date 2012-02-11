@@ -175,8 +175,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	lbl_midi_file = new QLabel(tr("- MIDI File -"));
 
-	lbl_file_status = new QLabel(QString());
-
 	but_quit = new QPushButton(tr("Quit"));
 
 	but_midi_file_new = new QPushButton(tr("New"));
@@ -187,7 +185,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_midi_file_import = new QPushButton(tr("To X-Scores"));
 
 	lbl_gpro_title = new QLabel(tr("- GPro v3/4 -"));
-	but_gpro_file_import = new QPushButton(tr("Open+To X-Scores"));
+	but_gpro_file_import = new QPushButton(tr("Open In X-Scores"));
 
 	n = 0;
 
@@ -249,10 +247,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_file_gl->addWidget(scores_main[1]->butScoreFileExport, n, 2, 1, 2);
 
 	n++;
-	n++;
-
-	tab_file_gl->addWidget(lbl_file_status, n, 0, 1, 8, Qt::AlignLeft|Qt::AlignVCenter);
-
 	n++;
 
 	tab_file_gl->setRowStretch(n, 3);
@@ -745,7 +739,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	sync_key_mode();
 
-	setWindowTitle(tr("MIDI Player Pro v1.0.10"));
+	version = tr("MIDI Player Pro v1.0.10");
+
+	setWindowTitle(version);
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
 	watchdog->start(250);
@@ -1068,7 +1064,6 @@ MppMainWindow :: handle_midi_file_clear_name()
 		delete (CurrMidiFileName);
 		CurrMidiFileName = NULL;
 	}
-	lbl_file_status->setText(QString());
 }
 
 void
@@ -1145,17 +1140,19 @@ MppMainWindow :: handle_midi_file_open(int merge)
 			song_copy = umidi20_load_file(&mtx,
 			    (const uint8_t *)data.data(), data.size());
 			pthread_mutex_unlock(&mtx);
+
+			if (song_copy == NULL) {
+				QMessageBox box;
+
+				box.setText(tr("Invalid MIDI file!"));
+				box.setStandardButtons(QMessageBox::Ok);
+				box.setIcon(QMessageBox::Information);
+				box.exec();
+			} else {
+				goto load_file;
+			}
 		} else {
 			song_copy = NULL;
-		}
-
-		if (song_copy != NULL) {
-			lbl_file_status->setText(MppBaseName(*CurrMidiFileName) +
-			    tr(": MIDI file opened"));
-			goto load_file;
-		} else {
-			lbl_file_status->setText(MppBaseName(*CurrMidiFileName) +
-			    tr(": Could not open MIDI file"));
 		}
 	}
 
@@ -1270,14 +1267,22 @@ MppMainWindow :: handle_midi_file_save()
 			status = MppWriteRawFile(*CurrMidiFileName, &qdata);
 
 			free(data);
-		}
 
-		if (status) {
-			lbl_file_status->setText(MppBaseName(*CurrMidiFileName) + 
-			    tr(": Could not save MIDI file"));
+			if (status) {
+				QMessageBox box;
+
+				box.setText(tr("Could not write MIDI file!"));
+				box.setStandardButtons(QMessageBox::Ok);
+				box.setIcon(QMessageBox::Information);
+				box.exec();
+			}
 		} else {
-			lbl_file_status->setText(MppBaseName(*CurrMidiFileName) + 
-			    tr(": MIDI file saved"));
+			QMessageBox box;
+
+			box.setText(tr("Could not get MIDI data!"));
+			box.setStandardButtons(QMessageBox::Ok);
+			box.setIcon(QMessageBox::Information);
+			box.exec();
 		}
 	} else {
 		handle_midi_file_save_as();
@@ -1293,6 +1298,7 @@ MppMainWindow :: handle_midi_file_save_as()
 
 	diag->setAcceptMode(QFileDialog::AcceptSave);
 	diag->setFileMode(QFileDialog::AnyFile);
+	diag->setDefaultSuffix(QString("mid"));
 
 	if (diag->exec()) {
 		if (CurrMidiFileName != NULL)
@@ -2339,10 +2345,17 @@ MppMainWindow :: handle_tab_changed(int index)
 			break;
 	}
 
-	if (x == MPP_MAX_VIEWS)
+	if (x == MPP_MAX_VIEWS) {
 		currViewIndex = 0;
-	else
+		setWindowTitle(version);
+	} else {
 		currViewIndex = x;
+		QString *ps = scores_main[x]->currScoreFileName;
+		if (ps != NULL)
+			setWindowTitle(version + " - " + MppBaseName(*ps));
+		else
+			setWindowTitle(version);
+	}
 
 	handle_instr_channel_changed(currScoreMain()->synthChannel);
 
@@ -2704,13 +2717,15 @@ MppMainWindow :: handle_gpro_file_import()
 
 		QString fname(diag->selectedFiles()[0]);
 
-		if (MppReadRawFile(fname, &data) == 0) {
-			lbl_file_status->setText(MppBaseName(fname) +
-			    tr(": GPro file opened"));
-			goto load_file;
+		if (MppReadRawFile(fname, &data) != 0) {
+			QMessageBox box;
+
+			box.setText(tr("Could not read MIDI file!"));
+			box.setStandardButtons(QMessageBox::Ok);
+			box.setIcon(QMessageBox::Information);
+			box.exec();
 		} else {
-			lbl_file_status->setText(MppBaseName(fname) +
-			    tr(": Could not open GPro file"));
+			goto load_file;
 		}
 	}
 

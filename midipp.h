@@ -65,6 +65,7 @@
 #include <QListWidget>
 #include <QIcon>
 #include <QCloseEvent>
+#include <QMessageBox>
 
 #include <umidi20.h>
 
@@ -153,8 +154,8 @@ extern QFont font_fixed;
 
 extern QString MppBaseName(QString fname);
 extern char *MppQStringToAscii(QString s);
-extern QString MppReadFile(QString fname, QString *perr);
-extern void MppWriteFile(QString fname, QString text, QString *perr);
+extern QString MppReadFile(QString fname);
+extern void MppWriteFile(QString fname, QString text);
 extern uint8_t MppReadRawFile(QString fname, QByteArray *pdata);
 extern uint8_t MppWriteRawFile(QString fname, QByteArray *pdata);
 extern const char *MppBaseKeyToString(int key, int sharp);

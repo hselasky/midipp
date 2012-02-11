@@ -1752,7 +1752,6 @@ void
 MppScoreMain :: handleScoreFileNew()
 {
 	editWidget->setPlainText(QString());
-	mainWindow->lbl_file_status->setText(QString());
 
 	handleCompile();
 
@@ -1760,25 +1759,26 @@ MppScoreMain :: handleScoreFileNew()
 		delete (currScoreFileName);
 		currScoreFileName = NULL;
 	}
+
+	mainWindow->handle_tab_changed(mainWindow->scores_tw->currentIndex());
 }
 
 int
 MppScoreMain :: handleScoreFileOpenSub(QString fname)
 {
 	QString scores;
-	QString status;
 
 	handleScoreFileNew();
 
 	currScoreFileName = new QString(fname);
 
-	scores = MppReadFile(fname, &status);
+	scores = MppReadFile(fname);
 
 	editWidget->setPlainText(scores);
 
 	handleCompile();
 
-	mainWindow->lbl_file_status->setText(status);
+	mainWindow->handle_tab_changed(mainWindow->scores_tw->currentIndex());
 
 	return (scores.isNull() || scores.isEmpty());
 }
@@ -1802,16 +1802,10 @@ MppScoreMain :: handleScoreFileOpen()
 void
 MppScoreMain :: handleScoreFileSave()
 {
-	QString status;
-
-	if (currScoreFileName != NULL) {
-		MppWriteFile(*currScoreFileName, editWidget->toPlainText(), 
-		    &status);
-
-		mainWindow->lbl_file_status->setText(status);
-	} else {
+	if (currScoreFileName != NULL)
+		MppWriteFile(*currScoreFileName, editWidget->toPlainText());
+	else
 		handleScoreFileSaveAs();
-	}
 }
 
 void
@@ -1823,6 +1817,7 @@ MppScoreMain :: handleScoreFileSaveAs()
 
 	diag->setAcceptMode(QFileDialog::AcceptSave);
 	diag->setFileMode(QFileDialog::AnyFile);
+	diag->setDefaultSuffix(QString("txt"));
 
 	if (diag->exec()) {
 		if (currScoreFileName != NULL)
@@ -1832,6 +1827,8 @@ MppScoreMain :: handleScoreFileSaveAs()
 
 		if (currScoreFileName != NULL)
 			handleScoreFileSave();
+
+		mainWindow->handle_tab_changed(mainWindow->scores_tw->currentIndex());
 	}
 
 	delete diag;
@@ -2011,8 +2008,7 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 
 		if (pn->dur != 0) {
 
-			out_key = (int)pn->key +
-			    (int)mainWindow->playKey - (int)baseKey;
+			out_key = (int)pn->key;
 
 			if (out_key < 0 || out_key > 127)
 				return;
@@ -2034,8 +2030,7 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 
 		if (pn->dur != 0) {
 
-			out_key = (int)pn->key +
-			    (int)mainWindow->playKey - (int)baseKey;
+			out_key = (int)pn->key;
 
 			if (out_key < 0 || out_key > 127)
 				return;
@@ -2075,8 +2070,7 @@ MppScoreMain :: handleKeyReleaseChord(int in_key, uint32_t key_delay)
 
 		if (pn->dur != 0) {
 
-			out_key = (int)pn->key +
-			    (int)mainWindow->playKey - (int)baseKey;
+			out_key = (int)pn->key;
 
 			if (out_key < 0 || out_key > 127)
 				return;

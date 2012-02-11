@@ -141,69 +141,58 @@ MppBaseKeyToString(int key, int sharp)
 }
 
 QString
-MppReadFile(QString fname, QString *perr)
+MppReadFile(QString fname)
 {
 	QFile file(fname);
 	QString retval;
+	QMessageBox box;
 
 	if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-		goto failure;
+		goto error;
 
 	retval = file.readAll();
 	if (file.error()) {
 		file.close();
-		goto failure;
+		goto error;
 	}
 
 	file.close();
-
-	if (perr != NULL) {
-		*perr = MppBaseName(fname) + 
-		    QString(": Scores read from disk");
-	}
-
 	return (retval);
 
-failure:
-	if (perr != NULL) {
-		*perr = MppBaseName(fname) + 
-		    QString(": Could not read scores from disk");
-	}
-
+error:
+	box.setText(QObject::tr("Could not read from file!"));
+	box.setStandardButtons(QMessageBox::Ok);
+	box.setIcon(QMessageBox::Information);
+	box.exec();
 	return (QString());
 }
 
 void
-MppWriteFile(QString fname, QString text, QString *perr)
+MppWriteFile(QString fname, QString text)
 {
 	QFile file(fname);
+	QMessageBox box;
 
 	if (!file.open(QIODevice::WriteOnly | QIODevice::Text |
-	    QIODevice::Truncate))
-		goto failure;
+	    QIODevice::Truncate)) {
+		goto error;
+	}
 
 	file.write(text.toAscii());
 
 	if (file.error()) {
 		file.close();
-		goto failure;
+		goto error;
 	}
 
 	file.close();
-
-	if (perr != NULL) {
-		*perr = MppBaseName(fname) +
-		    QString(": Scores written to disk");
-	}
 	return;
 
-failure:
-
-	if (perr) {
-		*perr = MppBaseName(fname) +
-		    QString(": Could not write scores to disk");
-	}
-	return;
+error:
+	box.setText(QObject::tr("Could not write to file!"));
+	box.setStandardButtons(QMessageBox::Ok);
+	box.setIcon(QMessageBox::Information);
+	box.exec();
 }
 
 uint8_t
