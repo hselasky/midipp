@@ -1986,13 +1986,38 @@ MppScoreMain :: handleChordsLoad(void)
 }
 
 /* must be called locked */
+uint8_t
+MppScoreMain :: handleKeyRemovePast(struct MppScoreEntry *pn, uint32_t key_delay)
+{
+	int x;
+	uint8_t chan;
+	uint8_t retval = 0;
+
+	chan = (synthChannel + pn->channel) & 0xF;
+
+	for (x = 0; x != 24; x++) {
+		if (score_past[x].dur != 0 &&
+		    score_past[x].key == pn->key &&
+		    score_past[x].channel == chan) {
+
+			mainWindow->output_key(chan, pn->key, 0, key_delay, 0);
+
+			/* kill past score */
+			score_past[x].dur = 0;
+
+			/* tell caller about leftover key presses */
+			retval = 1;
+		}
+	}
+	return (retval);
+}
+
+/* must be called locked */
 void
 MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 {
 	struct MppScoreEntry *pn;
-	int out_key;
 	int off;
-	uint8_t chan;
 
 	off = (int)in_key - (int)baseKey;
 
@@ -2004,20 +2029,22 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 		}
 
 		pn = &score_future[off];
-		score_past[off] = *pn;
 
-		if (pn->dur != 0) {
+		/* check for silent key */
+		if (pn->dur == 0)
+			return;
 
-			out_key = (int)pn->key;
+		/* remove key if already pressed */
+		if (handleKeyRemovePast(pn, key_delay))
+			key_delay++;
 
-			if (out_key < 0 || out_key > 127)
-				return;
+		score_past[off].channel = (synthChannel + pn->channel) & 0xF;
+		score_past[off].key = pn->key;
+		score_past[off].dur = 1;
 
-			chan = (synthChannel + pn->channel) & 0xF;
+		mainWindow->output_key(score_past[off].channel, score_past[off].key,
+		    vel, key_delay, 0);
 
-			mainWindow->output_key(chan, out_key,
-			    vel, key_delay, 0);
-		}
 	} else if (off >= 13 && off < 24) {
 
 		if (pressed_future == 1 || lastPos == currPos) {
@@ -2026,21 +2053,23 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 		}
 
 		pn = &score_future[off - 12];
-		score_past[off] = *pn;
 
-		if (pn->dur != 0) {
+		/* check for silent key */
+		if (pn->dur == 0)
+			return;
 
-			out_key = (int)pn->key;
+		/* remove key if already pressed */
+		if (handleKeyRemovePast(pn, key_delay))
+			key_delay++;
 
-			if (out_key < 0 || out_key > 127)
-				return;
+		score_past[off].channel = (synthChannel + pn->channel) & 0xF;
+		score_past[off].key = pn->key;
+		score_past[off].dur = 1;
 
-			chan = (synthChannel + pn->channel) & 0xF;
-
-			mainWindow->output_key(chan, out_key,
-			    vel, key_delay, 0);
-		}
+		mainWindow->output_key(score_past[off].channel, score_past[off].key,
+		    vel, key_delay, 0);
 	} else {
+		/* silent keys */
 		return;
 	}
 
@@ -2055,9 +2084,7 @@ void
 MppScoreMain :: handleKeyReleaseChord(int in_key, uint32_t key_delay)
 {
 	struct MppScoreEntry *pn;
-	int out_key;
 	int off;
-	uint8_t chan;
 
 	off = (int)in_key - (int)baseKey;
 
@@ -2070,14 +2097,10 @@ MppScoreMain :: handleKeyReleaseChord(int in_key, uint32_t key_delay)
 
 		if (pn->dur != 0) {
 
-			out_key = (int)pn->key;
+			mainWindow->output_key(pn->channel, pn->key, 0, key_delay, 0);
 
-			if (out_key < 0 || out_key > 127)
-				return;
-
-			chan = (synthChannel + pn->channel) & 0xF;
-
-			mainWindow->output_key(chan, out_key, 0, key_delay, 0);
+			/* only release once */
+			pn->dur = 0;
 		}
 	}
 }

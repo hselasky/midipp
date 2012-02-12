@@ -1322,8 +1322,6 @@ MppMainWindow :: handle_rewind()
 	midiPaused = 0;
 	pausePosition = 0;
 
-	currScoreMain()->pressed_future = 0;
-
 	update_play_device_no();
 
 	if (song != NULL) {
@@ -1649,6 +1647,8 @@ MppMainWindow :: handle_stop(int flag)
 
 	for (z = 0; z != MPP_MAX_VIEWS; z++) {
 
+	    /* TRANS mode cleanup */
+
 	    for (x = 0; x != MPP_PRESSED_MAX; x++) {
 
 		pkey = &scores_main[z]->pressedKeys[x];
@@ -1659,9 +1659,26 @@ MppMainWindow :: handle_stop(int flag)
 			chan = (*pkey >> 16) & 0xFF;
 			delay = (*pkey >> 24) & 0xFF;
 
+			/* only release once */
 			*pkey = 0;
 
 			output_key(chan, out_key, 0, delay, 0);
+		}
+	    }
+
+	    /* CHORD mode cleanup */
+
+	    for (x = 0; x != 24; x++) {
+		struct MppScoreEntry *ps;
+
+		ps = &scores_main[z]->score_past[x];
+
+		if (ps->dur != 0) {
+
+			/* only release once */
+			ps->dur = 0;
+
+			output_key(ps->channel, ps->key, 0, 0, 0);
 		}
 	    }
 

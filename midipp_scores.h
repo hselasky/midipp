@@ -68,6 +68,7 @@ public:
 	void handleKeyPress(int key, int vel, uint32_t key_delay = 0);
 	void handleKeyRelease(int key, uint32_t key_delay = 0);
 	void handleParse(const QString &ps);
+	uint8_t handleKeyRemovePast(struct MppScoreEntry *pn, uint32_t key_delay = 0);
 	void handleParseSub(QPrinter *pd, QPoint orig, float scale_f);
 	int handleScoreFileOpenSub(QString fname);
 	QString handleTextTranspose(const QString &str, int level, int sharp);
