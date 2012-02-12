@@ -162,7 +162,7 @@ MppReadFile(QString fname)
 error:
 	box.setText(QObject::tr("Could not read from file!"));
 	box.setStandardButtons(QMessageBox::Ok);
-	box.setIcon(QMessageBox::Information);
+	box.setIcon(QMessageBox::Critical);
 	box.exec();
 	return (QString());
 }
@@ -191,7 +191,7 @@ MppWriteFile(QString fname, QString text)
 error:
 	box.setText(QObject::tr("Could not write to file!"));
 	box.setStandardButtons(QMessageBox::Ok);
-	box.setIcon(QMessageBox::Information);
+	box.setIcon(QMessageBox::Critical);
 	box.exec();
 }
 
@@ -268,7 +268,15 @@ main(int argc, char **argv)
 
 	umidi20_init();
 
-	umidi20_jack_init("midipp");
+	if (umidi20_jack_init("midipp") != 0) {
+		QMessageBox box;
+
+		box.setText(QObject::tr("Could not connect to "
+		    "the JACK subsystem!"));
+		box.setStandardButtons(QMessageBox::Ok);
+		box.setIcon(QMessageBox::Critical);
+		box.exec();
+	}
 
 	MppMainWindow main;
 
