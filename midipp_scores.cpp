@@ -209,7 +209,6 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 	char *ptr;
 	uint8_t draw_chord;
 	uint8_t last_dot;
-	uint8_t last_jump = 0;
 	uint16_t duration;
 
 	float chord_x_last;
@@ -245,10 +244,6 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 				if (y > y_max)
 					y_max = y;
 				y = 0;
-				last_jump = 0;
-			} else if (jumpLabel[x] != 0) {
-				y++;
-				last_jump = 1;
 			}
 
 			ptr = visual[x].pstr;
@@ -256,10 +251,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 				continue;
 
 			y++;
-			last_jump = 0;
 		}
-
-		y -= last_jump;
 
 		if (y > y_max)
 			y_max = y;
@@ -297,9 +289,6 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 				while (y_max--)
 					paint.translate(QPoint(0, -MPP_VISUAL_Y_MAX));
 				y_max = 0;
-			} else if (jumpLabel[x] != 0) {
-				paint.translate(QPoint(0,MPP_VISUAL_Y_MAX));
-				y_max++;
 			}
 		}
 
