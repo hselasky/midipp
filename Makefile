@@ -30,14 +30,14 @@ VERSION=1.0.10
 
 PREFIX?=/usr/local
 
-help:
-	@echo "Targets are: all, install, clean, package, help"
+all: Makefile.unix
+	make -f Makefile.unix -j2 all
 
 Makefile.unix: midipp.pro
 	qmake-qt4 PREFIX=${PREFIX} -o Makefile.unix midipp.pro
 
-all: Makefile.unix
-	make -f Makefile.unix -j2 all
+help:
+	@echo "Targets are: all, install, clean, package, help"
 
 install: Makefile.unix
 	make -f Makefile.unix install
