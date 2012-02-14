@@ -266,20 +266,6 @@ main(int argc, char **argv)
 
 	signal(SIGPIPE, mask_signal);
 
-	umidi20_init();
-
-	if (umidi20_jack_init("midipp") != 0) {
-		QMessageBox box;
-
-		box.setText(QObject::tr("Could not connect to "
-		    "the JACK subsystem!"));
-		box.setStandardButtons(QMessageBox::Ok);
-		box.setIcon(QMessageBox::Critical);
-		box.exec();
-	}
-
-	MppMainWindow main;
-
 	while ((c = getopt(argc, argv, "f:ph")) != -1) {
 		switch (c) {
 		case 'f':
@@ -293,6 +279,20 @@ main(int argc, char **argv)
 			break;
 		}
 	}
+
+	umidi20_init();
+
+	if (umidi20_jack_init("midipp") != 0 && mpp_pdf_print == 0) {
+		QMessageBox box;
+
+		box.setText(QObject::tr("Could not connect to "
+		    "the JACK subsystem!"));
+		box.setStandardButtons(QMessageBox::Ok);
+		box.setIcon(QMessageBox::Critical);
+		box.exec();
+	}
+
+	MppMainWindow main;
 
 	if (mpp_input_file != NULL) {
 		if (main.scores_main[0]->handleScoreFileOpenSub(
