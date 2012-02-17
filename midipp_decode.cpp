@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010,2012 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -74,7 +74,7 @@ static const struct score_variant score_variant[] = {
 #define	MAX_VAR (sizeof(score_variant)/sizeof(score_variant[0]))
 
 static uint8_t
-mpp_get_key(const char *ptr)
+mpp_get_key(char *ptr, char **pp)
 {
 	uint8_t key;
 
@@ -105,19 +105,24 @@ mpp_get_key(const char *ptr)
 		key = 0;
 		break;
 	}
-	if (ptr[0])
+	if (key)
 		ptr++;
 
 	switch (ptr[0]) {
 	case '#':
 		key ++;
+		ptr++;
 		break;
 	case 'b':
 		key --;
+		ptr++;
 		break;
 	default:
 		break;
 	}
+
+	if (pp != NULL)
+		*pp = ptr;
 
 	return (key);
 }
@@ -132,8 +137,9 @@ MppDecode :: parseScoreChord(struct MppScoreEntry *ps, const char *chord)
 	uint8_t foot_len = 0;
 	uint8_t max;
 	uint8_t min;
-
-	const char *ptr;
+	uint8_t var_min;
+	uint8_t var_max;
+	uint8_t fkey;
 
 	int n;
 	int x;
@@ -148,20 +154,18 @@ MppDecode :: parseScoreChord(struct MppScoreEntry *ps, const char *chord)
 
 	is_sharp = (strstr(chord, "#") != NULL);
 
-	ptr = strstr(chord, "/");
-	if (ptr != NULL) {
-		min = mpp_get_key(ptr + 1);
-		if (min == 0)
-			min = 255;
-		else
-			min %= 12;
-	} else {
+	if (mpp_find_chord(chord, &min, &fkey, &var_min)) {
 		min = 255;
+		var_min = 0;
+		var_max = MAX_VAR;
+	} else {
+		min %= 12;
+		var_max = var_min + 1;
 	}
 
 	for (x = 0; x != MPP_MAX_SCORES; x++) {
 		if (ps[x].dur != 0) {
-			int key = ps[x].key % 12;
+			key = ps[x].key % 12;
 			foot_print[key] = 1;
 			if (foot_max[key] < ps[x].key)
 				foot_max[key] = ps[x].key;
@@ -178,10 +182,10 @@ MppDecode :: parseScoreChord(struct MppScoreEntry *ps, const char *chord)
 		return (1);
 
 	for (x = 0; x != 12; x++) {
-		for (y = 0; y != MAX_VAR; y++) {
+		for (y = var_min; y != var_max; y++) {
 			n = foot_len;
 			for (z = 0; z != MPP_MAX_VAR_OFF; z++) {
-				int key = score_variant[y].offset[z];
+				key = score_variant[y].offset[z];
 
 				if (key != 0) {
 					if (foot_print[(key + x) % 12])
@@ -192,29 +196,31 @@ MppDecode :: parseScoreChord(struct MppScoreEntry *ps, const char *chord)
 			}
 			if (z == MPP_MAX_VAR_OFF && n == 0)
 				break;
-			  
 		}
-		if (y != MAX_VAR && n == 0)
+		if (y != var_max && n == 0)
 			break;
 	}
 
-	if (x == 12)
-		return (1);
+	if (x == 12) {
+		if (min == 255)
+			return (1);
+		z = MPP_MAX_VAR_OFF;
+		y = var_min;
+		key = fkey % 12;
+		spn_base->setValue(C5);
+		spn_rol->setValue(0);
+	} else {
+		for (z = 0; z != MPP_MAX_VAR_OFF; z++) {
+			key = score_variant[y].offset[z];
 
-	for (z = 0; z != MPP_MAX_VAR_OFF; z++) {
-		int key = score_variant[y].offset[z];
-
-		if ((key % 12) == ((max - foot_max[x]) % 12))
-			break;
+			if ((key % 12) == ((max - foot_max[x]) % 12))
+				break;
+		}
+		key = (foot_max[x] % 12);
+		spn_base->setValue(foot_max[x] - key);
+		z = z - foot_len + 1;
+		spn_rol->setValue(z);
 	}
-
-	key = (foot_max[x] % 12);
-
-	spn_base->setValue(foot_max[x] - key);
-
-	z = z - foot_len + 1;
-
-	spn_rol->setValue(z);
 
 	out += MppBaseKeyToString(key, is_sharp);
 	out += score_variant[y].keyword;
@@ -230,91 +236,92 @@ MppDecode :: parseScoreChord(struct MppScoreEntry *ps, const char *chord)
 }
 
 uint8_t
-mpp_parse_chord(const char *input, uint8_t base,
-    int8_t rol, uint8_t pout[MPP_MAX_VAR_OFF])
+mpp_find_chord(const char *input, uint8_t *pbase,
+    uint8_t *pkey, uint8_t *pvar)
 {
 	char *ptr;
+	char *pb2;
 	char buffer[16];
-	uint8_t error = 0;
 	uint8_t key;
+	uint8_t base;
 	uint8_t x;
-	uint8_t y;
 
-	switch (*input) {
-	case 'C':
-		key = C5;
-		input++;
-		break;
-	case 'D':
-		key = D5;
-		input++;
-		break;
-	case 'E':
-		key = E5;
-		input++;
-		break;
-	case 'F':
-		key = F5;
-		input++;
-		break;
-	case 'G':
-		key = G5;
-		input++;
-		break;
-	case 'A':
-		key = A5;
-		input++;
-		break;
-	case 'B':
-	case 'H':
-		key = H5;
-		input++;
-		break;
-	default:
-		key = C5;
-		error = 1;
-		break;
-	}
-
-	switch (*input) {
-	case '#':
-		key ++;
-		input++;
-		break;
-	case 'b':
-		key --;
-		input++;
-		break;
-	default:
-		break;
-	}
+	if (pbase != NULL)
+		*pbase = 0;
+	if (pkey != NULL)
+		*pkey = 0;
+	if (pvar != NULL)
+		*pvar = 0;
 
 	STRLCPY(buffer, input, sizeof(buffer));
 
-	ptr = strstr(buffer, "/");
-	if (ptr)
-		*ptr = 0;
+	key = base = mpp_get_key(buffer, &ptr);
+
+	if (key == 0)
+		return (1);
+
+	pb2 = strstr(ptr, "/");
+	if (pb2 != NULL) {
+		*pb2 = 0;
+		base = mpp_get_key(pb2 + 1, NULL);
+		if (base == 0)
+			base = key;
+	}
 
 	for (x = 0; x != MAX_VAR; x++) {
-
-		if (strcmp(buffer, score_variant[x].keyword) == 0) {
-
-			for (y = 0; y != (MPP_MAX_VAR_OFF-1); y++) {
-				uint8_t z;
-
-				z = score_variant[x].offset[y];
-				if (z == 0)
-					break;
-				pout[y] = (z - C5) + (key - C5) + base;
-			}
-
-			pout[y] = 0;
-			mid_trans(pout, y, rol);
-			return (error);
-		}
+		if (strcmp(ptr, score_variant[x].keyword) == 0)
+			break;
 	}
-	pout[0] = 0;
-	return (1);		/* failed */
+
+	if (x == MAX_VAR)
+		return (1);
+
+	if (pkey != NULL)
+		*pkey = key;
+	if (pbase != NULL)
+		*pbase = base;
+	if (pvar != NULL)
+		*pvar = x;
+
+	return (0);
+}
+
+uint8_t
+mpp_parse_chord(const char *input, uint8_t trans,
+    int8_t rol, uint8_t *pout, uint8_t *pn)
+{
+	uint8_t error = 0;
+	uint8_t base;
+	uint8_t key;
+	uint8_t x;
+	uint8_t y;
+	uint8_t n;
+
+	error = mpp_find_chord(input, &base, &key, &x);
+	if (error) {
+		*pn = 0;
+		return (1);
+	}
+
+	n = 0;
+
+	pout[n++] = (base - C5) + trans;
+
+	for (y = 0; y != MPP_MAX_VAR_OFF; y++) {
+		uint8_t z;
+
+		z = score_variant[x].offset[y];
+		if (z == 0)
+			break;
+		if (n < *pn)
+			pout[n++] = (z - C5) + (key - C5) + trans;
+	}
+
+	mid_trans(pout + 1, n - 1, rol);
+
+	*pn = n;
+
+	return (0);
 }
 
 MppDecode :: MppDecode(QWidget *parent, MppMainWindow *_mw, int is_edit)
@@ -468,7 +475,6 @@ MppDecode :: handle_parse()
 	QString out;
 
 	char *ptr;
-	char *pba;
 
 	int error;
 	int base;
@@ -476,36 +482,36 @@ MppDecode :: handle_parse()
 	int rol;
 	int x;
 
+	uint8_t n;
+
 	ptr = MppQStringToAscii(lin_edit->text().trimmed());
 	if (ptr == NULL)
 		return;
 
+	out += QString("U1 ");
+
 	rol = spn_rol->value();
 	base = spn_base->value();
 
-	error = mpp_parse_chord(ptr, base, rol, current_score);
+	memset(current_score, 0, sizeof(current_score));
+	memset(auto_base, 0, sizeof(auto_base));
 
-	if (error == 0)
+	n = sizeof(current_score) / sizeof(current_score[0]);
+	error = mpp_parse_chord(ptr, base, rol, current_score, &n);
+
+	if (error == 0) {
 		lbl_status->setText(tr("OK"));
-	else
+	} else {
 		lbl_status->setText(tr("ERROR"));
+		goto done;
+	}
 
-	out += QString("U1 ");
+	b_auto = current_score[0];
 
-	pba = strstr(ptr, "/");
-	if (pba != NULL)
-		b_auto = mpp_get_key(pba + 1);
-	else
-		b_auto = mpp_get_key(ptr);
+	if (cbx_auto_base->isChecked()) {
 
-	if (b_auto != 0 && cbx_auto_base->isChecked()) {
-
-		b_auto = b_auto - C5 + base;
-
-		while (b_auto >= (int)(current_score[0] & 0x7F))
+		while (b_auto >= (int)(current_score[1] & 0x7F))
 			b_auto -= 12;
-
-		memset(auto_base, 0, sizeof(auto_base));
 
 		if (b_auto >= 12) {
 		  auto_base[0] = (b_auto - 12) & 0x7F;
@@ -519,16 +525,17 @@ MppDecode :: handle_parse()
 		}
 	}
 
-	for (x = 0; current_score[x]; x++) {
+	for (x = 1; x < n; x++) {
 		out += QString(mid_key_str[current_score[x] & 0x7F]) +
 		  QString(" ");
 	}
 
+done:
 	out += QString("/* ") + lin_edit->text().trimmed() 
 	  + QString(" */");
 
 	lin_out->setText(out);
-	lbl_base->setText(tr("Base (") + tr(mid_key_str[base]) + tr("):"));
+	lbl_base->setText(tr("Base (") + QString(mid_key_str[base]) + tr("):"));
 
 	free(ptr);
 }

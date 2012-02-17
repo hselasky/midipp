@@ -182,10 +182,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_midi_file_merge = new QPushButton(tr("Merge"));
 	but_midi_file_save = new QPushButton(tr("Save"));
 	but_midi_file_save_as = new QPushButton(tr("Save As"));
-	but_midi_file_import = new QPushButton(tr("To X-Scores"));
+	but_midi_file_import = new QPushButton(tr("To A/B-Scores"));
 
 	lbl_gpro_title = new QLabel(tr("- GPro v3/4 -"));
-	but_gpro_file_import = new QPushButton(tr("Open In X-Scores"));
+	but_gpro_file_import = new QPushButton(tr("Open In A/B-Scores"));
 
 	n = 0;
 

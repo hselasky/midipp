@@ -40,6 +40,7 @@ struct midipp_import {
 	char line_buffer[MIDIPP_IMPORT_LB];
 
 	struct midipp_word d_word[2][MIDIPP_IMPORT_MW];
+	uint8_t d_chords[2];
 
 	MppScoreMain *sm;
 
@@ -48,6 +49,7 @@ struct midipp_import {
 	uint16_t n_word[2];
 
 	uint8_t index;
+	uint8_t load_more;
 };
 
 class MppImportTab : public QObject

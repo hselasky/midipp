@@ -83,6 +83,7 @@ public slots:
 	void handle_parse();
 };
 
-extern uint8_t mpp_parse_chord(const char *input, uint8_t base, int8_t rol, uint8_t pout[MPP_MAX_VAR_OFF]);
+extern uint8_t mpp_find_chord(const char *input, uint8_t *pbase, uint8_t *pkey, uint8_t *pvar);
+extern uint8_t mpp_parse_chord(const char *input, uint8_t trans, int8_t rol, uint8_t *pout, uint8_t *pn);
 
 #endif		/* _MIDIPP_DECODE_H_ */

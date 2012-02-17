@@ -26,11 +26,11 @@
 #include <midipp_mainwindow.h>
 #include <midipp_scores.h>
 #include <midipp_looptab.h>
-#include <midipp_import.h>
 #include <midipp_pattern.h>
 #include <midipp_bpm.h>
 #include <midipp_mode.h>
 #include <midipp_decode.h>
+#include <midipp_import.h>
 
 MppScoreView :: MppScoreView(MppScoreMain *parent)
 {
@@ -2844,8 +2844,7 @@ MppScoreMain :: handleEditLine(void)
 			break;
 		}
 	}
-	if (ptr != NULL)
-		free(ptr);
+	free(ptr);
 
 	return (retval);
 }
