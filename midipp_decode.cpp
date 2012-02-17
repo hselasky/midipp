@@ -30,39 +30,35 @@
 
 /* The list is sorted by priority. C5 is base. */
 
-static const struct score_variant score_variant[] = {
-  { "dim7", {C5, E5B, G5B, A5} },
-  { "m7b5", {C5, E5B, G5B, H5B} },
-  { "m7", {C5, E5B, G5, H5B} },
-  { "maj7", {C5, E5, G5, H5} },
-  { "maj9", {C5, E5, G5, A5, C6} },
+static const struct score_variant score_internal[] = {
   { "", {C5, E5, G5} },
   { "M", {C5, E5, G5} },
   { "maj", {C5, E5, G5} },
   { "major", {C5, E5, G5} },
+
+  { "min", {C5, E5B, G5} },
+  { "minor", {C5, E5B, G5} },
+
+  { "maj7", {C5, E5, G5, H5} },
+  { "maj9", {C5, E5, G5, A5, C6} },
+
   { "7b5", {C5, E5, G5B, H5B} },
   { "7#5", {C5, E5, A5B, H5B} },
   { "7b9", {C5, E5, G5, H5B, D6B} },
+  { "7#9", {C5, E5, G5, H5B, E6B} },
+
   { "69", {C5, E5, G5, A5, D6} },
-  { "m6", {C5, E5B, G5, A5} },
-  { "m9", {C5, E5B, G5, H5B, D6} },
-  { "m11", {C5, E5B, G5, H5B, D6, F6} },
-  { "madd6", {C5, E5B, G5, A5} },
-  { "madd9", {C5, E5B, G5, H5B, D6} },
-  { "madd11", {C5, E5B, G5, H5B, D6, F6} },
+
   { "add3", {C5, E5, G5, H5 - 3} },
   { "add5", {C5, E5, G5, H5 - 5} },
   { "add9", {C5, E5, G5, H5 - 9} },
-  { "sus2", {C5, D5, G5} },
-  { "sus",  {C5, F5, G5} },
-  { "sus4", {C5, F5, G5} },
-  { "sus7", {C5, F5, G5, H5B} },
-  { "dim", {C5, E5B, G5B} },
-  { "aug", {C5, E5, A5B} },
-  { "m", {C5, E5B, G5} },
-  { "min", {C5, E5B, G5} },
-  { "minor", {C5, E5B, G5} },
+
+  { "+3", {C5, E5, G5, H5 - 3} },
+  { "+5", {C5, E5, G5, H5 - 5} },
+  { "+9", {C5, E5, G5, H5 - 9} },
+
   { "2", {C5, D5, E5, G5} },
+  { "4", {C5, E5, G5} },
   { "5", {C5, G5} },
   { "6", {C5, E5, G5, A5} },
   { "7", {C5, E5, G5, H5B} },
@@ -71,7 +67,120 @@ static const struct score_variant score_variant[] = {
   { "13", {C5, H5B, D6, F6, A6} },
 };
 
-#define	MAX_VAR (sizeof(score_variant)/sizeof(score_variant[0]))
+#define	MAX_VAR (sizeof(score_internal)/sizeof(score_internal[0]))
+#define	MAX_TYPE 5
+
+static struct score_variant mpp_score_variant[MAX_VAR * MAX_TYPE];
+
+static int mpp_max_variant;
+
+QString MppVariantList;
+
+static uint8_t
+score_variant_init_sub(unsigned int x, struct score_variant *ps)
+{
+	unsigned int type;
+	unsigned int what;
+	unsigned int y;
+	int e_off = -1;
+	int g_off = -1;
+
+	type = x / MAX_VAR;
+	what = x % MAX_VAR;
+
+	for (y = 0; y != MPP_MAX_VAR_OFF; y++) {
+		if (score_internal[what].offset[y] == E5)
+			e_off = y;
+		if (score_internal[what].offset[y] == G5)
+			g_off = y;
+	}
+
+	if (type != 0 && (e_off == -1 || g_off == -1 ||
+	    strstr(score_internal[what].keyword, "maj") ||
+	    strstr(score_internal[what].keyword, "min") ||
+	    strstr(score_internal[what].keyword, "M")))
+		return (1);
+
+	switch (type) {
+	case 1:
+		/* minors */
+		ps->keyword[0] = 'm';
+		STRLCPY(ps->keyword + 1, score_internal[what].keyword,
+		    sizeof(ps->keyword) - 1);
+		memcpy(ps->offset, score_internal[what].offset,
+		    sizeof(ps->offset));
+
+		ps->offset[e_off]--;
+		break;
+	case 2:
+		/* dim */
+		ps->keyword[0] = 'd';
+		ps->keyword[1] = 'i';
+		ps->keyword[2] = 'm';
+
+		STRLCPY(ps->keyword + 3, score_internal[what].keyword,
+		    sizeof(ps->keyword) - 3);
+		memcpy(ps->offset, score_internal[what].offset,
+		    sizeof(ps->offset));
+
+		ps->offset[e_off]--;
+		ps->offset[g_off]--;
+		break;
+	case 3:
+		/* aug */
+		ps->keyword[0] = 'a';
+		ps->keyword[1] = 'u';
+		ps->keyword[2] = 'g';
+
+		STRLCPY(ps->keyword + 3, score_internal[what].keyword,
+		    sizeof(ps->keyword) - 3);
+		memcpy(ps->offset, score_internal[what].offset,
+		    sizeof(ps->offset));
+
+		ps->offset[g_off]++;
+		break;
+	case 4:
+		/* sus */
+		ps->keyword[0] = 's';
+		ps->keyword[1] = 'u';
+		ps->keyword[2] = 's';
+
+		STRLCPY(ps->keyword + 3, score_internal[what].keyword,
+		    sizeof(ps->keyword) - 3);
+		memcpy(ps->offset, score_internal[what].offset,
+		    sizeof(ps->offset));
+
+		ps->offset[e_off]++;
+		break;
+	default:
+		/* others */
+		STRLCPY(ps->keyword, score_internal[what].keyword,
+		    sizeof(ps->keyword));
+		memcpy(ps->offset, score_internal[what].offset,
+		    sizeof(ps->offset));
+		break;
+	}
+	return (0);
+}
+
+void
+MppScoreVariantInit(void)
+{
+	unsigned int x;
+	unsigned int y;
+
+	for (x = y = 0; x != (MAX_VAR * MAX_TYPE); x++) {
+		if (score_variant_init_sub(x, &mpp_score_variant[y]) == 0) {
+			MppVariantList += QString("/* C") +
+			    QString(mpp_score_variant[y].keyword) +
+			    QString(" */\n");
+			y++;
+		}
+	}
+
+	mpp_max_variant = y;
+}
+
 
 static uint8_t
 mpp_get_key(char *ptr, char **pp)
@@ -157,7 +266,7 @@ MppDecode :: parseScoreChord(struct MppScoreEntry *ps, const char *chord)
 	if (mpp_find_chord(chord, &min, &fkey, &var_min)) {
 		min = 255;
 		var_min = 0;
-		var_max = MAX_VAR;
+		var_max = mpp_max_variant;
 	} else {
 		min %= 12;
 		var_max = var_min + 1;
@@ -185,7 +294,7 @@ MppDecode :: parseScoreChord(struct MppScoreEntry *ps, const char *chord)
 		for (y = var_min; y != var_max; y++) {
 			n = foot_len;
 			for (z = 0; z != MPP_MAX_VAR_OFF; z++) {
-				key = score_variant[y].offset[z];
+				key = mpp_score_variant[y].offset[z];
 
 				if (key != 0) {
 					if (foot_print[(key + x) % 12])
@@ -211,7 +320,7 @@ MppDecode :: parseScoreChord(struct MppScoreEntry *ps, const char *chord)
 		spn_rol->setValue(0);
 	} else {
 		for (z = 0; z != MPP_MAX_VAR_OFF; z++) {
-			key = score_variant[y].offset[z];
+			key = mpp_score_variant[y].offset[z];
 
 			if ((key % 12) == ((max - foot_max[x]) % 12))
 				break;
@@ -223,7 +332,7 @@ MppDecode :: parseScoreChord(struct MppScoreEntry *ps, const char *chord)
 	}
 
 	out += MppBaseKeyToString(key, is_sharp);
-	out += score_variant[y].keyword;
+	out += mpp_score_variant[y].keyword;
 
 	if (min != 255 && min != key) {
 		out += "/";
@@ -268,12 +377,12 @@ mpp_find_chord(const char *input, uint8_t *pbase,
 			base = key;
 	}
 
-	for (x = 0; x != MAX_VAR; x++) {
-		if (strcmp(ptr, score_variant[x].keyword) == 0)
+	for (x = 0; x != mpp_max_variant; x++) {
+		if (strcmp(ptr, mpp_score_variant[x].keyword) == 0)
 			break;
 	}
 
-	if (x == MAX_VAR)
+	if (x == mpp_max_variant)
 		return (1);
 
 	if (pkey != NULL)
@@ -310,7 +419,7 @@ mpp_parse_chord(const char *input, uint8_t trans,
 	for (y = 0; y != MPP_MAX_VAR_OFF; y++) {
 		uint8_t z;
 
-		z = score_variant[x].offset[y];
+		z = mpp_score_variant[x].offset[y];
 		if (z == 0)
 			break;
 		if (n < *pn)

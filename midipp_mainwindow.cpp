@@ -134,7 +134,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " * CDEFGAH<number><B> - defines a score in the given octave (0..10).\n"
 	    " * X[+/-]<number> - defines the transpose level of the following scores in half-steps.\n"
 	    " */\n"
-	    "\n"));
+	    "\n"
+	    "/*\n"
+	    " * List of supported chords:\n"
+	    " * =========================\n"
+	    " */\n") + MppVariantList + tr("\n"));
 
 	tab_file_wg = new QWidget();
 	tab_play_wg = new MppPlayWidget(this);

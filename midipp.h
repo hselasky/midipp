@@ -152,6 +152,8 @@ extern QColor color_green;
 
 extern QFont font_fixed;
 
+extern QString MppVariantList;
+
 extern QString MppBaseName(QString fname);
 extern char *MppQStringToAscii(QString s);
 extern QString MppReadFile(QString fname);
@@ -159,5 +161,6 @@ extern void MppWriteFile(QString fname, QString text);
 extern uint8_t MppReadRawFile(QString fname, QByteArray *pdata);
 extern uint8_t MppWriteRawFile(QString fname, QByteArray *pdata);
 extern const char *MppBaseKeyToString(int key, int sharp);
+extern void MppScoreVariantInit(void);
 
 #endif	/* _MIDIPP_H_ */

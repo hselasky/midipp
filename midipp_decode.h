@@ -31,7 +31,7 @@
 #define	MPP_MAX_VAR_OFF 12
 
 struct score_variant {
-	const char *keyword;
+	char keyword[12];
 	uint8_t offset[MPP_MAX_VAR_OFF];
 };
 

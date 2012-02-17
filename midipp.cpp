@@ -292,6 +292,8 @@ main(int argc, char **argv)
 		box.exec();
 	}
 
+	MppScoreVariantInit();
+
 	MppMainWindow main;
 
 	if (mpp_input_file != NULL) {
