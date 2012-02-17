@@ -70,8 +70,6 @@ midipp_import_flush(struct midipp_import *ps, int i_txt, int i_score)
 	next_word:
 		if (i_txt > -1 && bi < ps->n_word[i_txt]) {
 
-			any = 1;
-
 			off = ps->d_word[i_txt][bi].off;
 
 			if (x >= off) {
@@ -84,13 +82,17 @@ midipp_import_flush(struct midipp_import *ps, int i_txt, int i_score)
 					out += QString(ch);
 				}
 			} else {
+				if (!any)
+					break;
+
 				out += QString(" ");
 			}
 		} else {
+			if (!any)
+				break;
+
 			out += QString(" ");
 		}
-		if (!any)
-			break;
 	}
 	out += QString("\"\n\n") + scs + QString("\n");
 
