@@ -36,6 +36,7 @@ static const struct score_variant score_internal[] = {
   { "maj", {C5, E5, G5} },
   { "major", {C5, E5, G5} },
 
+  { "m", {C5, E5B, G5} },
   { "min", {C5, E5B, G5} },
   { "minor", {C5, E5B, G5} },
 
@@ -96,9 +97,8 @@ score_variant_init_sub(unsigned int x, struct score_variant *ps)
 	}
 
 	if (type != 0 && (e_off == -1 || g_off == -1 ||
-	    strstr(score_internal[what].keyword, "maj") ||
-	    strstr(score_internal[what].keyword, "min") ||
-	    strstr(score_internal[what].keyword, "M")))
+	    (score_internal[what].keyword[0] == 'M') ||
+	    (score_internal[what].keyword[0] == 'm')))
 		return (1);
 
 	switch (type) {
