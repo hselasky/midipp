@@ -117,6 +117,8 @@ midipp_import_is_chord(char c)
 		return (1);
 	if (c == '/')
 		return (1);
+	if (c == '#')
+		return (1);
 	if (c == ' ')
 		return (2);
 	return (0);
