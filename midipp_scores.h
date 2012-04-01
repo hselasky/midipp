@@ -71,7 +71,8 @@ public:
 	uint8_t handleKeyRemovePast(struct MppScoreEntry *pn, uint32_t key_delay = 0);
 	void handleParseSub(QPrinter *pd, QPoint orig, float scale_f);
 	int handleScoreFileOpenSub(QString fname);
-	QString handleTextTranspose(const QString &str, int level, int sharp);
+	void handleAlign(uint8_t *ptr, int nak, int limit);
+	QString handleTextTranspose(const QString &str, int level, int sharp, int align);
 	QString doExport(void);
 
 	uint8_t handleEditLine(void);
@@ -112,6 +113,8 @@ public:
 	QPushButton *butScoreFileSave;
 	QPushButton *butScoreFileSaveAs;
 	QPushButton *butScoreFilePrint;
+	QPushButton *butScoreFileAlign;
+	MppSpinBox *spnScoreFileAlign;
 	QPushButton *butScoreFileStepUp;
 	QPushButton *butScoreFileStepDown;
 	QPushButton *butScoreFileSetSharp;
@@ -197,6 +200,7 @@ public slots:
 	void handleScoreFileSave();
 	void handleScoreFileSaveAs();
 	void handleScorePrint();
+	void handleScoreFileAlign(void);
 	void handleScoreFileStepUp(void);
 	void handleScoreFileStepDown(void);
 	void handleScoreFileSetSharp(void);

@@ -31,6 +31,7 @@
 #include <midipp_mode.h>
 #include <midipp_decode.h>
 #include <midipp_import.h>
+#include <midipp_spinbox.h>
 
 MppScoreView :: MppScoreView(MppScoreMain *parent)
 {
@@ -101,6 +102,9 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	butScoreFileSave = new QPushButton(tr("Save"));
 	butScoreFileSaveAs = new QPushButton(tr("Save As"));
 	butScoreFilePrint = new QPushButton(tr("Print"));
+	butScoreFileAlign = new QPushButton(tr("Align"));
+	spnScoreFileAlign = new MppSpinBox();
+	spnScoreFileAlign->setValue(C6);
 	butScoreFileStepUp = new QPushButton(tr("Step Up"));
 	butScoreFileStepDown = new QPushButton(tr("Step Down"));
 	butScoreFileSetSharp = new QPushButton(tr("Set #"));
@@ -112,6 +116,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	connect(butScoreFileSave, SIGNAL(pressed()), this, SLOT(handleScoreFileSave()));
 	connect(butScoreFileSaveAs, SIGNAL(pressed()), this, SLOT(handleScoreFileSaveAs()));
 	connect(butScoreFilePrint, SIGNAL(pressed()), this, SLOT(handleScorePrint()));
+	connect(butScoreFileAlign, SIGNAL(pressed()), this, SLOT(handleScoreFileAlign()));
 	connect(butScoreFileStepUp, SIGNAL(pressed()), this, SLOT(handleScoreFileStepUp()));
 	connect(butScoreFileStepDown, SIGNAL(pressed()), this, SLOT(handleScoreFileStepDown()));
 	connect(butScoreFileSetSharp, SIGNAL(pressed()), this, SLOT(handleScoreFileSetSharp()));
@@ -2430,12 +2435,68 @@ MppScoreMain :: handleScrollChanged(int value)
 	viewWidgetSub->repaint();
 }
 
+void
+MppScoreMain :: handleAlign(uint8_t *ptr, int nak, int limit)
+{
+	int x;
+	int y;
+	int z;
+	int temp;
+	int min;
+
+	/* sort scores by value */
+
+	mid_sort(ptr, nak);
+
+	/* align scores */
+
+	min = 12;
+	z = nak - 1;
+
+	for (x = nak; x--; ) {
+		y = (12 + (limit % 12) - (ptr[x] % 12)) % 12;
+		if (y != 0 && y < min) {
+			min = y;
+			z = x;
+		}
+	}
+
+	/* swap */
+	temp = ptr[z];
+	ptr[z] = ptr[nak - 1];
+	ptr[nak - 1] = temp;
+
+	min = limit;
+
+	for (x = nak; x--; ) {
+
+		temp = ptr[x];
+
+		while (temp < min) {
+			temp += 12;
+		}
+		while (temp >= min) {
+			temp -= 12;
+		}
+		if (temp < 0) {
+			min = 0;
+			ptr[x] = 255;
+		} else {
+			min = temp;
+			ptr[x] = temp;
+		}
+	}
+}
+
 QString
-MppScoreMain :: handleTextTranspose(const QString &str, int level, int sharp)
+MppScoreMain :: handleTextTranspose(const QString &str, int level, int sharp, int align)
 {
 	QString out;
 
 	char c;
+	uint8_t score[MPP_MAX_SCORES];
+	int score_index[MPP_MAX_SCORES];
+	int nak = 0;
 	int is_comment = 0;
 	int skip = 0;
 	int key;
@@ -2498,9 +2559,22 @@ top:
 			}
 			skip = 1;
 			break;
+		case '\n':
+			if (nak != 0) {
+				int x;
+				int off;
+				handleAlign(score, nak, align);
+				for (x = off = 0; x != nak; x++) {
+					if (score[x] > 127)
+						continue;
+					QString temp(mid_key_str[score[x]]);
+					out.insert(score_index[x] + off, temp);
+					off += temp.size();
+				}
+				nak = 0;
+			}
 		case ' ':
 		case '\t':
-		case '\n':
 			skip = 0;
 			break;
 		case '/':
@@ -2522,6 +2596,19 @@ top:
 		out += (char)c;		
 		ps.x++;
 	}
+	if (nak != 0) {
+		int x;
+		int off;
+		handleAlign(score, nak, align);
+		for (x = off = 0; x != nak; x++) {
+			if (score[x] > 127)
+				continue;
+			QString temp(mid_key_str[score[x]]);
+			out.insert(score_index[x] + off, temp);
+			off += temp.size();
+		}
+		nak = 0;
+	}
 	return (out);
 
 parse_score:
@@ -2538,8 +2625,17 @@ parse_score:
 	}
 
 	key += level;
-	if (key >= 0 && key <= 127)
-		out += mid_key_str[key];
+	if (key >= 0 && key <= 127) {
+		if (align > -1) {
+			if (nak < MPP_MAX_SCORES) {
+				score[nak] = key;
+				score_index[nak] = out.size();
+				nak++;
+			}
+		} else {
+			out += mid_key_str[key];
+		}
+	}
 
 	skip = 1;
 	goto top;
@@ -2707,11 +2803,24 @@ parse_string:
 }
 
 void
+MppScoreMain :: handleScoreFileAlign(void)
+{
+	int align = spnScoreFileAlign->value();
+
+	editWidget->setPlainText(
+	    handleTextTranspose(
+	        editWidget->toPlainText(), 0, 0, align)
+	    );
+
+	handleCompile();
+}
+
+void
 MppScoreMain :: handleScoreFileStepUp(void)
 {
 	editWidget->setPlainText(
 	    handleTextTranspose(
-	        editWidget->toPlainText(), 1, 0)
+	        editWidget->toPlainText(), 1, 0, -1)
 	    );
 
 	handleCompile();
@@ -2722,7 +2831,7 @@ MppScoreMain :: handleScoreFileStepDown(void)
 {
 	editWidget->setPlainText(
 	    handleTextTranspose(
-	        editWidget->toPlainText(), -1, 0)
+	        editWidget->toPlainText(), -1, 0, -1)
 	    );
 
 	handleCompile();
@@ -2733,7 +2842,7 @@ MppScoreMain :: handleScoreFileSetSharp(void)
 {
 	editWidget->setPlainText(
 	    handleTextTranspose(
-	        editWidget->toPlainText(), 0, 1)
+	        editWidget->toPlainText(), 0, 1, -1)
 	    );
 
 	handleCompile();
@@ -2744,7 +2853,7 @@ MppScoreMain :: handleScoreFileSetFlat(void)
 {
 	editWidget->setPlainText(
 	    handleTextTranspose(
-	        editWidget->toPlainText(), 0, 0)
+	        editWidget->toPlainText(), 0, 0, -1)
 	    );
 
 	handleCompile();

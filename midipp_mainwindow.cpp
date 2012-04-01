@@ -229,6 +229,14 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n++;
 
+	tab_file_gl->addWidget(scores_main[0]->butScoreFileAlign, n, 0, 1, 1);
+	tab_file_gl->addWidget(scores_main[1]->butScoreFileAlign, n, 2, 1, 1);
+
+	tab_file_gl->addWidget(scores_main[0]->spnScoreFileAlign, n, 1, 1, 1);
+	tab_file_gl->addWidget(scores_main[1]->spnScoreFileAlign, n, 3, 1, 1);
+
+	n++;
+
 	tab_file_gl->addWidget(scores_main[0]->butScoreFileStepUp, n, 0, 1, 2);
 	tab_file_gl->addWidget(scores_main[1]->butScoreFileStepUp, n, 2, 1, 2);
 
@@ -743,7 +751,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	sync_key_mode();
 
-	version = tr("MIDI Player Pro v1.0.12");
+	version = tr("MIDI Player Pro v1.0.13");
 
 	setWindowTitle(version);
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
