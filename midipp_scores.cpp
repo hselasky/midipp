@@ -2075,6 +2075,28 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 
 /* must be called locked */
 void
+MppScoreMain :: handleKeyPressureChord(int in_key, int vel, uint32_t key_delay)
+{
+	struct MppScoreEntry *pn;
+	int off;
+
+	off = (int)in_key - (int)baseKey;
+
+	if (off == 0 || off == 12)
+		return;
+
+	if (off >= 0 && off < 24) {
+
+		pn = &score_pressure[off];
+
+		if (pn->dur != 0) {
+			outputKeyPressure(pn->channel, pn->key, vel);
+		}
+	}
+}
+
+/* must be called locked */
+void
 MppScoreMain :: handleKeyReleaseChord(int in_key, uint32_t key_delay)
 {
 	struct MppScoreEntry *pn;
@@ -2090,6 +2112,9 @@ MppScoreMain :: handleKeyReleaseChord(int in_key, uint32_t key_delay)
 		pn = &score_past[off];
 
 		if (pn->dur != 0) {
+
+			/* store score for pressure */
+			score_pressure[off] = score_past[off];
 
 			mainWindow->output_key(pn->channel, pn->key, 0, key_delay, 0);
 
@@ -2956,4 +2981,145 @@ MppScoreMain :: handleEditLine(void)
 	free(ptr);
 
 	return (retval);
+}
+
+/* must be called locked */
+void
+MppScoreMain :: outputControl(uint8_t ctrl, uint8_t val)
+{
+	MppMainWindow *mw = mainWindow;
+	struct mid_data *d = &mw->mid_data;
+	uint16_t mask;
+	uint8_t x;
+	uint8_t chan;
+
+	chan = synthChannel;
+
+	if (keyMode == MM_PASS_ALL)
+		mask = 1;
+	else
+		mask = active_channels;
+
+	/* the control event is distributed to all active channels */
+	while (mask) {
+		if (mask & 1) {
+			for (x = 0; x != MPP_MAX_DEVS; x++) {
+				if (mw->check_synth(x, chan, 0))
+					mid_control(d, ctrl, val);
+			}
+			if (mw->check_record(chan, 0))
+				mid_control(d, ctrl, val);
+		}
+		mask /= 2;
+		chan++;
+		chan &= 0xF;
+	}
+
+	if (ctrl == 0x40)
+		mw->tab_loop->add_pedal(val);
+}
+
+/* must be called locked */
+void
+MppScoreMain :: outputKeyPressure(uint8_t chan, uint8_t key, uint8_t pressure)
+{
+	MppMainWindow *mw = mainWindow;
+	struct mid_data *d = &mw->mid_data;
+	uint16_t mask;
+	uint8_t x;
+	uint8_t buf[4];
+
+	if (keyMode == MM_PASS_ALL)
+		mask = 1;
+	else
+		mask = active_channels;
+
+	buf[0] = 0xA0;
+	buf[1] = key & 0x7F;
+	buf[2] = pressure & 0x7F;
+	buf[3] = 0;
+
+	/* the pressure event is distributed to all active channels */
+	while (mask) {
+		if (mask & 1) {
+			for (x = 0; x != MPP_MAX_DEVS; x++) {
+				if (mw->check_synth(x, chan, 0))
+					mid_add_raw(d, buf, 3, 0);
+			}
+			if (mw->check_record(chan, 0))
+				mid_add_raw(d, buf, 3, 0);
+		}
+		mask /= 2;
+		chan++;
+		chan &= 0xF;
+	}
+}
+
+/* must be called locked */
+void
+MppScoreMain :: outputChanPressure(uint8_t chan, uint8_t pressure)
+{
+	MppMainWindow *mw = mainWindow;
+	struct mid_data *d = &mw->mid_data;
+	uint16_t mask;
+	uint8_t x;
+	uint8_t buf[4];
+
+	if (keyMode == MM_PASS_ALL)
+		mask = 1;
+	else
+		mask = active_channels;
+
+	buf[0] = 0xD0;
+	buf[1] = pressure & 0x7F;
+	buf[2] = 0;
+	buf[3] = 0;
+
+	/* the pressure event is distributed to all active channels */
+	while (mask) {
+		if (mask & 1) {
+			for (x = 0; x != MPP_MAX_DEVS; x++) {
+				if (mw->check_synth(x, chan, 0))
+					mid_add_raw(d, buf, 2, 0);
+			}
+			if (mw->check_record(chan, 0))
+				mid_add_raw(d, buf, 2, 0);
+		}
+		mask /= 2;
+		chan++;
+		chan &= 0xF;
+	}
+}
+
+/* must be called locked */
+void
+MppScoreMain :: outputPitch(uint16_t val)
+{
+	MppMainWindow *mw = mainWindow;
+	struct mid_data *d = &mw->mid_data;
+	uint16_t mask;
+	uint8_t x;
+	uint8_t chan;
+
+	chan = synthChannel;
+
+	if (keyMode == MM_PASS_ALL)
+		mask = 1;
+	else
+		mask = active_channels;
+
+	/* the control event is distributed to all active channels */
+	while (mask) {
+		if (mask & 1) {
+			for (x = 0; x != MPP_MAX_DEVS; x++) {
+				if (mw->check_synth(x, chan, 0))
+					mid_pitch_bend(d, val);
+			}
+			if (mw->check_record(chan, 0))
+				mid_pitch_bend(d, val);
+		}
+		mask /= 2;
+		chan++;
+		chan &= 0xF;
+	}
 }

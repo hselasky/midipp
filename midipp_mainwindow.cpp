@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2011 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2012 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,9 +36,6 @@
 #include <midipp_gpro.h>
 #include <midipp_midi.h>
 #include <midipp_mode.h>
-
-static void MidiEventRxControl(MppScoreMain *sm, uint8_t ctrl, uint8_t val);
-static void MidiEventRxPitch(MppScoreMain *sm, uint16_t val);
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -1696,9 +1693,9 @@ MppMainWindow :: handle_stop(int flag)
 
 	    /* check if we should kill the pedal, modulation and pitch */
 	    if (!(flag & 1)) {
-		MidiEventRxControl(scores_main[z], 0x40, 0);
-		MidiEventRxControl(scores_main[z], 0x01, 0);
-		MidiEventRxPitch(scores_main[z], 1U << 13);
+		scores_main[z]->outputControl(0x40, 0);
+		scores_main[z]->outputControl(0x01, 0);
+		scores_main[z]->outputPitch(1U << 13);
 	    }
 	}
 
@@ -1812,73 +1809,6 @@ MppMainWindow :: do_bpm_stats(void)
 	lbl_bpm_avg_val->display((int)sum);
 }
 
-static void
-MidiEventRxControl(MppScoreMain *sm, uint8_t ctrl, uint8_t val)
-{
-	MppMainWindow *mw = sm->mainWindow;
-	struct mid_data *d = &mw->mid_data;
-	uint16_t mask;
-	uint8_t x;
-	uint8_t chan;
-
-	chan = sm->synthChannel;
-
-	if (sm->keyMode == MM_PASS_ALL)
-		mask = 1;
-	else
-		mask = sm->active_channels;
-
-	/* the control event is distributed to all active channels */
-	while (mask) {
-		if (mask & 1) {
-			for (x = 0; x != MPP_MAX_DEVS; x++) {
-				if (mw->check_synth(x, chan, 0))
-					mid_control(d, ctrl, val);
-			}
-			if (mw->check_record(chan, 0))
-				mid_control(d, ctrl, val);
-		}
-		mask /= 2;
-		chan++;
-		chan &= 0xF;
-	}
-
-	if (ctrl == 0x40)
-		mw->tab_loop->add_pedal(val);
-}
-
-static void
-MidiEventRxPitch(MppScoreMain *sm, uint16_t val)
-{
-	MppMainWindow *mw = sm->mainWindow;
-	struct mid_data *d = &mw->mid_data;
-	uint16_t mask;
-	uint8_t x;
-	uint8_t chan;
-
-	chan = sm->synthChannel;
-
-	if (sm->keyMode == MM_PASS_ALL)
-		mask = 1;
-	else
-		mask = sm->active_channels;
-
-	/* the control event is distributed to all active channels */
-	while (mask) {
-		if (mask & 1) {
-			for (x = 0; x != MPP_MAX_DEVS; x++) {
-				if (mw->check_synth(x, chan, 0))
-					mid_pitch_bend(d, val);
-			}
-			if (mw->check_record(chan, 0))
-				mid_pitch_bend(d, val);
-		}
-		mask /= 2;
-		chan++;
-		chan &= 0xF;
-	}
-}
-
 /* is called locked */
 static void
 MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uint8_t *drop)
@@ -1928,13 +1858,50 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 			vel = umidi20_event_get_pitch_value(event);
 
-			MidiEventRxPitch(sm, vel);
+			sm->outputPitch(vel);
+
+		} else if (umidi20_event_get_what(event) &
+		    UMIDI20_WHAT_KEY_PRESSURE) {
+
+			key = umidi20_event_get_key(event) & 0x7F;
+			vel = umidi20_event_get_pressure(event) & 0x7F;
+
+			if (sm->cmdKey != 0)
+				lbl = key - sm->cmdKey;
+			else
+				lbl = -1;
+
+			switch (sm->keyMode) {
+			case MM_PASS_ALL:
+				sm->outputKeyPressure(sm->synthChannel, key, vel);
+				break;
+			case MM_PASS_NONE_CHORD:
+				if (sm->checkLabelJump(lbl) == 0)
+					sm->handleKeyPressureChord(key, vel);
+				break;
+			default:
+				break;
+			}
+
+		} else if (umidi20_event_get_what(event) &
+		    UMIDI20_WHAT_CHANNEL_PRESSURE) {
+
+			vel = umidi20_event_get_pressure(event) & 0x7F;
+
+			switch (sm->keyMode) {
+			case MM_PASS_ALL:
+			case MM_PASS_NONE_CHORD:
+				sm->outputChanPressure(sm->synthChannel, vel);
+				break;
+			default:
+				break;
+			}
 
 		} else if (ctrl == 0x40 || ctrl == 0x01) {
 
 			vel = umidi20_event_get_control_value(event);
 
-			MidiEventRxControl(sm, ctrl, vel);
+			sm->outputControl(ctrl, vel);
 
 		} else if (umidi20_event_is_key_start(event)) {
 
@@ -2876,7 +2843,7 @@ MppPlayWidget :: keyPressEvent(QKeyEvent *event)
 	case Qt::Key_Shift:
 		pthread_mutex_lock(&mw->mtx);
 		if (mw->midiTriggered != 0)
-			MidiEventRxControl(mw->currScoreMain(), 0x40, 127);
+			mw->currScoreMain()->outputControl(0x40, 127);
 		pthread_mutex_unlock(&mw->mtx);
 		break;
 	case Qt::Key_0:
@@ -2903,7 +2870,7 @@ MppPlayWidget :: keyReleaseEvent(QKeyEvent *event)
 	if (event->key() == Qt::Key_Shift) {
 		pthread_mutex_lock(&mw->mtx);
 		if (mw->midiTriggered != 0)
-			MidiEventRxControl(mw->currScoreMain(), 0x40, 0);
+			mw->currScoreMain()->outputControl(0x40, 0);
 		pthread_mutex_unlock(&mw->mtx);
 	}
 }

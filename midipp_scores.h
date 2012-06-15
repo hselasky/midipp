@@ -64,6 +64,7 @@ public:
 	void handleLabelJump(int label);
 	void handleChordsLoad(void);
 	void handleKeyPressChord(int key, int vel, uint32_t key_delay = 0);
+	void handleKeyPressureChord(int key, int vel, uint32_t key_delay = 0);
 	void handleKeyReleaseChord(int key, uint32_t key_delay = 0);
 	void handleKeyPress(int key, int vel, uint32_t key_delay = 0);
 	void handleKeyRelease(int key, uint32_t key_delay = 0);
@@ -74,6 +75,10 @@ public:
 	void handleAlign(uint8_t *ptr, int nak, int limit);
 	QString handleTextTranspose(const QString &str, int level, int sharp, int align);
 	QString doExport(void);
+	void outputControl(uint8_t ctrl, uint8_t val);
+	void outputKeyPressure(uint8_t chan, uint8_t key, uint8_t pressure);
+	void outputChanPressure(uint8_t chan, uint8_t pressure);
+	void outputPitch(uint16_t val);
 
 	uint8_t handleEditLine(void);
 	uint8_t isValidChordInfo(uint32_t line);
@@ -125,6 +130,7 @@ public:
 	QPicture *picChord[2];
 
 	struct MppScoreEntry score_past[24];
+	struct MppScoreEntry score_pressure[24];
 	struct MppScoreEntry score_future[12];
 	struct MppChordInfo chord_info[MPP_MAX_LINES];
 	struct MppScoreEntry scores[MPP_MAX_LINES][MPP_MAX_SCORES];
