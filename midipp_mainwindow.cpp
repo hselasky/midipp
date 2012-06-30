@@ -494,11 +494,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_bpm_length->setRange(0, MPP_MAX_BPM);
 	spn_bpm_length->setValue(0);
 
-	lbl_config_local = new QLabel(tr("Enable local MIDI on synth"));
-	cbx_config_local = new QCheckBox();
-	connect(cbx_config_local, SIGNAL(stateChanged(int)), this, SLOT(handle_config_local_changed(int)));
-	cbx_config_local->setCheckState(Qt::Checked);
-
 	but_config_apply = new QPushButton(tr("Apply"));
 	but_config_revert = new QPushButton(tr("Revert"));
 	but_config_fontsel = new QPushButton(tr("Select Font"));
@@ -550,11 +545,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_config_gl->addWidget(lbl_bpm_count, x, 0, 1, 6, Qt::AlignLeft|Qt::AlignVCenter);
 	tab_config_gl->addWidget(spn_bpm_length, x, 6, 1, 2, Qt::AlignRight|Qt::AlignVCenter);
-
-	x++;
-
-	tab_config_gl->addWidget(lbl_config_local, x, 0, 1, 7, Qt::AlignLeft|Qt::AlignVCenter);
-	tab_config_gl->addWidget(cbx_config_local, x, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	x++;
 
@@ -748,7 +738,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	sync_key_mode();
 
-	version = tr("MIDI Player Pro v1.0.13");
+	version = tr("MIDI Player Pro v1.0.14");
 
 	setWindowTitle(version);
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
@@ -815,14 +805,6 @@ MppMainWindow :: handle_jump(int index)
 {
 	pthread_mutex_lock(&mtx);
 	handle_jump_locked(index);
-	pthread_mutex_unlock(&mtx);
-}
-
-void
-MppMainWindow :: handle_config_local_changed(int state)
-{
-	pthread_mutex_lock(&mtx);
-	synthIsLocal = (state == Qt::Checked);
 	pthread_mutex_unlock(&mtx);
 }
 
@@ -1376,12 +1358,9 @@ void
 MppMainWindow :: handle_config_reload()
 {
 	struct umidi20_config cfg;
-	uint8_t ScMidiTriggered;
 	char *p_play;
 	char *p_rec;
 	int n;
-	int x;
-	int y;
 
 	/* setup the I/O devices */
 
@@ -1465,26 +1444,6 @@ MppMainWindow :: handle_config_reload()
 	handle_compile();
 
 	handle_config_revert();
-
-	pthread_mutex_lock(&mtx);
-	ScMidiTriggered = midiTriggered;
-	midiTriggered = 1;
-
-	for (y = 0; y != MPP_MAX_DEVS; y++) {
-		/* set local on all channels */
-		for (x = 0; x != 16; x++) {
-			if (check_synth(y, x, 0)) {
-				uint8_t buf[4];
-				buf[0] = 0xB0 | x;
-				buf[1] = 0x7A;
-				buf[2] = synthIsLocal ? 0x7F : 0x00;
-				mid_add_raw(&mid_data, buf, 3, x);
-			}
-		}
-	}
-
-	midiTriggered = ScMidiTriggered;
-	pthread_mutex_unlock(&mtx);
 }
 
 void
@@ -2252,12 +2211,14 @@ MppMainWindow :: handle_instr_changed(int dummy)
 
 		instr[x].updated = 0;
 		for (y = 0; y != MPP_MAX_DEVS; y++) {
-			if (check_synth(y, x, 0)) {
-				mid_delay(d, (4 * x));
-				mid_set_bank_program(d, x, 
-				    instr[x].bank,
-				    instr[x].prog);
-			}
+			if (muteProgram[y] != 0)
+				continue;
+			if (check_synth(y, x, 0) == 0)
+				continue;
+			mid_delay(d, (4 * x));
+			mid_set_bank_program(d, x, 
+			    instr[x].bank,
+			    instr[x].prog);
 		}
 	}
 
@@ -2878,8 +2839,31 @@ MppPlayWidget :: keyReleaseEvent(QKeyEvent *event)
 void
 MppMainWindow :: handle_mute_map(int n)
 {
+	uint8_t ScMidiTriggered;
+	uint8_t x;
+
 	MppMuteMap diag(this, this, n);
-	diag.exec();
+
+	if (diag.exec() == QDialog::Accepted) {
+		pthread_mutex_lock(&mtx);
+		ScMidiTriggered = midiTriggered;
+		midiTriggered = 1;
+
+		/* Update local key enable/disable on all channels */
+		for (x = 0; x != 16; x++) {
+			if (check_synth(n, x, 0)) {
+				uint8_t buf[4];
+
+				buf[0] = 0xB0 | x;
+				buf[1] = 0x7A;
+				buf[2] = muteLocalKeys[n] ? 0x00 : 0x7F;
+				mid_add_raw(&mid_data, buf, 3, x);
+			}
+		}
+
+		midiTriggered = ScMidiTriggered;
+		pthread_mutex_unlock(&mtx);
+	}
 }
 
 void

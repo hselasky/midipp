@@ -3004,8 +3004,13 @@ MppScoreMain :: outputControl(uint8_t ctrl, uint8_t val)
 	while (mask) {
 		if (mask & 1) {
 			for (x = 0; x != MPP_MAX_DEVS; x++) {
-				if (mw->check_synth(x, chan, 0))
-					mid_control(d, ctrl, val);
+				if (ctrl == 0x40 && mw->mutePedal[x] != 0)
+					continue;
+				if (mw->muteAllControl[x] != 0)
+					continue;
+				if (mw->check_synth(x, chan, 0) == 0)
+					continue;
+				mid_control(d, ctrl, val);
 			}
 			if (mw->check_record(chan, 0))
 				mid_control(d, ctrl, val);
@@ -3112,8 +3117,11 @@ MppScoreMain :: outputPitch(uint16_t val)
 	while (mask) {
 		if (mask & 1) {
 			for (x = 0; x != MPP_MAX_DEVS; x++) {
-				if (mw->check_synth(x, chan, 0))
-					mid_pitch_bend(d, val);
+				if (mw->muteAllControl[x] != 0)
+					continue;
+				if (mw->check_synth(x, chan, 0) == 0)
+					continue;
+				mid_pitch_bend(d, val);
 			}
 			if (mw->check_record(chan, 0))
 				mid_pitch_bend(d, val);

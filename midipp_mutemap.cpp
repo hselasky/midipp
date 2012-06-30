@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010-2012 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,8 +44,9 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 	setWindowTitle(tr(buf));
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
-	lbl_title[0] = new QLabel(tr(" - Mute -"));
-	lbl_title[1] = new QLabel(tr(" - Mute -"));
+	lbl_title[0] = new QLabel(tr("- Channel Mute -"));
+	lbl_title[1] = new QLabel(tr("- Channel Mute -"));
+	lbl_title[2] = new QLabel(tr("- - - - Other - - - -"));
 
 	gl->addWidget(lbl_title[0], 1, 0, 1, 3, Qt::AlignHCenter|Qt::AlignVCenter);
 	gl->addWidget(lbl_title[1], 1, 3, 1, 3, Qt::AlignHCenter|Qt::AlignVCenter);
@@ -83,6 +84,41 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 		gl->addWidget(cbx_mute[n], y_off, x_off + 1, 1, 2, Qt::AlignHCenter|Qt::AlignVCenter);
 	}
 
+	cbx_mute_program = new QCheckBox();
+	cbx_mute_pedal = new QCheckBox();
+	cbx_mute_local_keys = new QCheckBox();
+	cbx_mute_all_control = new QCheckBox();
+
+	lbl_mute_program = new QLabel(tr("Mute all bank and program change events"));
+	lbl_mute_pedal = new QLabel(tr("Mute all pedal events"));
+	lbl_mute_local_keys = new QLabel(tr("Mute all local keys on instrument"));
+	lbl_mute_all_control = new QLabel(tr("Mute all control events"));
+
+	y_off = 10;
+
+	gl->addWidget(lbl_title[2], y_off, 0, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
+
+	y_off++;
+
+	gl->addWidget(lbl_mute_program, y_off, 0, 1, 3, Qt::AlignLeft|Qt::AlignVCenter);
+	gl->addWidget(cbx_mute_program, y_off, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+
+	y_off++;
+
+	gl->addWidget(lbl_mute_pedal, y_off, 0, 1, 3, Qt::AlignLeft|Qt::AlignVCenter);
+	gl->addWidget(cbx_mute_pedal, y_off, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+
+	y_off++;
+
+	gl->addWidget(lbl_mute_local_keys, y_off, 0, 1, 3, Qt::AlignLeft|Qt::AlignVCenter);
+	gl->addWidget(cbx_mute_local_keys, y_off, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+
+	y_off++;
+
+	gl->addWidget(lbl_mute_all_control, y_off, 0, 1, 3, Qt::AlignLeft|Qt::AlignVCenter);
+	gl->addWidget(cbx_mute_all_control, y_off, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+
+
 	handle_revert_all();
 }
 
@@ -113,29 +149,57 @@ void
 MppMuteMap :: handle_revert_all()
 {
 	uint8_t mute_copy[16];
+	uint8_t mute_prog_copy;
+	uint8_t mute_pedal_copy;
+	uint8_t mute_local_copy;
+	uint8_t mute_all_control_copy;
 	int n;
 
 	pthread_mutex_lock(&mw->mtx);
 	for (n = 0; n != 16; n++)
 		mute_copy[n] = mw->muteMap[devno][n] ? 1 : 0;
+
+	mute_prog_copy = mw->muteProgram[devno];
+	mute_pedal_copy = mw->mutePedal[devno];
+	mute_local_copy = mw->muteLocalKeys[devno];
+	mute_all_control_copy = mw->muteAllControl[devno];
 	pthread_mutex_unlock(&mw->mtx);
 
 	for (n = 0; n != 16; n++)
 		cbx_mute[n]->setChecked(mute_copy[n]);
+
+	cbx_mute_program->setChecked(mute_prog_copy);
+	cbx_mute_pedal->setChecked(mute_pedal_copy);
+	cbx_mute_local_keys->setChecked(mute_local_copy);
+	cbx_mute_all_control->setChecked(mute_all_control_copy);
 }
 
 void
 MppMuteMap :: handle_apply_all()
 {
 	uint8_t mute_copy[16];
+	uint8_t mute_prog_copy;
+	uint8_t mute_pedal_copy;
+	uint8_t mute_local_copy;
+	uint8_t mute_all_control_copy;
 	int n;
 
 	for (n = 0; n != 16; n++)
 		mute_copy[n] = (cbx_mute[n]->checkState() == Qt::Checked);
 
+	mute_prog_copy = (cbx_mute_program->checkState() == Qt::Checked);
+	mute_pedal_copy = (cbx_mute_pedal->checkState() == Qt::Checked);
+	mute_local_copy = (cbx_mute_local_keys->checkState() == Qt::Checked);
+	mute_all_control_copy = (cbx_mute_all_control->checkState() == Qt::Checked);
+
 	pthread_mutex_lock(&mw->mtx);
 	for (n = 0; n != 16; n++)
 		mw->muteMap[devno][n] = mute_copy[n];
+
+	mw->muteProgram[devno] = mute_prog_copy;
+	mw->mutePedal[devno] = mute_pedal_copy;
+	mw->muteLocalKeys[devno] = mute_local_copy;
+	mw->muteAllControl[devno] = mute_all_control_copy;
 	pthread_mutex_unlock(&mw->mtx);
 
 	this->accept();

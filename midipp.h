@@ -66,6 +66,7 @@
 #include <QIcon>
 #include <QCloseEvent>
 #include <QMessageBox>
+#include <QDir>
 
 #include <umidi20.h>
 

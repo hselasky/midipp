@@ -126,13 +126,16 @@ public:
 	uint16_t playVolume[16];
 	uint16_t synthVolume[16];
 
+	uint8_t muteProgram[MPP_MAX_DEVS];
+	uint8_t mutePedal[MPP_MAX_DEVS];
+	uint8_t muteLocalKeys[MPP_MAX_DEVS];
+	uint8_t muteAllControl[MPP_MAX_DEVS];
 	uint8_t muteMap[MPP_MAX_DEVS][16];
 	uint8_t inputEvents[MPP_MAX_QUEUE];
 	uint8_t numInputEvents;
 	uint8_t playKey;
 	uint8_t bpmAvgLength;
 	uint8_t bpmAvgPos;
-	uint8_t synthIsLocal;
 	uint8_t cursorUpdate;
 
 	uint8_t scoreRecordOff;
@@ -250,9 +253,6 @@ public:
 	QLineEdit *led_config_dev[MPP_MAX_DEVS];
 	QCheckBox *cbx_config_dev[3 * MPP_MAX_DEVS];
 
-	QLabel *lbl_config_local;
-	QCheckBox *cbx_config_local;
-
 	QPushButton *but_config_apply;
 	QPushButton *but_config_revert;
 	QPushButton *but_config_fontsel;
@@ -318,7 +318,6 @@ public:
 public slots:
 	void handle_quit();
 	void handle_play_key_changed(int);
-	void handle_config_local_changed(int);
 	void handle_insert_chord();
 	void handle_edit_chord();
 	void handle_jump(int index);

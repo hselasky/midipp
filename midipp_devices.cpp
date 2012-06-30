@@ -57,19 +57,36 @@ MppDevices :: MppDevices(QWidget *parent)
 	gl->addWidget(but_ok, 2,2,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
 	gl->addWidget(but_cancel, 2,3,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
 
+	QDir dir("/dev");
+
+	QStringList filters;
+	filters << "umidi*" << "midi*";
+	dir.setFilter(QDir::Files | QDir::System);
+	dir.setNameFilters(filters);
+	dir.setSorting(QDir::Name);
+	QFileInfoList list = dir.entryInfoList();
+
 	new QListWidgetItem(tr("No recording device"), lw_rec);
-	new QListWidgetItem(QString("D:/dev/umidi0.0"), lw_rec);
-	new QListWidgetItem(QString("D:/dev/umidi1.0"), lw_rec);
-	new QListWidgetItem(QString("D:/dev/umidi2.0"), lw_rec);
-	new QListWidgetItem(QString("D:/dev/umidi3.0"), lw_rec);
-	n_rec_umidi = 5;
+	n_rec_umidi = 1;
+
+	for (n = 0; n != list.size(); n++) {
+		QFileInfo fileInfo = list.at(n);
+		if (fileInfo.fileName() == QString("midistat"))
+			continue;
+		new QListWidgetItem(QString("D:/dev/") + fileInfo.fileName(), lw_rec);
+		n_rec_umidi++;
+	}
 
 	new QListWidgetItem(tr("No playback device"), lw_play);
-	new QListWidgetItem(QString("D:/dev/umidi0.0"), lw_play);
-	new QListWidgetItem(QString("D:/dev/umidi1.0"), lw_play);
-	new QListWidgetItem(QString("D:/dev/umidi2.0"), lw_play);
-	new QListWidgetItem(QString("D:/dev/umidi3.0"), lw_play);
-	n_play_umidi = 5;
+	n_play_umidi = 1;
+
+	for (n = 0; n != list.size(); n++) {
+		QFileInfo fileInfo = list.at(n);
+		if (fileInfo.fileName() == QString("midistat"))
+			continue;
+		new QListWidgetItem(QString("D:/dev/") + fileInfo.fileName(), lw_play);
+		n_play_umidi++;
+	}
 
 	rec_dev_str = umidi20_jack_alloc_outputs();
 	if (rec_dev_str != NULL) {
