@@ -1474,7 +1474,15 @@ MppMainWindow :: handle_config_revert()
 void
 MppMainWindow :: handle_config_apply()
 {
+	handle_config_apply_sub(-1);
+}
+
+void
+MppMainWindow :: handle_config_apply_sub(int devno)
+{
+	uint8_t ScMidiTriggered;
 	int n;
+	int x;
 
 	deviceBits = 0;
 
@@ -1500,6 +1508,47 @@ MppMainWindow :: handle_config_apply()
 	pthread_mutex_unlock(&mtx);
 
 	handle_config_reload();
+
+	/* wait for MIDI devices to be opened */
+
+	usleep(125000);
+
+	pthread_mutex_lock(&mtx);
+	ScMidiTriggered = midiTriggered;
+	midiTriggered = 1;
+
+	/*
+	 * Update local key enable/disable on all devices and
+	 * channels:
+	 */
+	for (n = 0; n != MPP_MAX_DEVS; n++) {
+
+		if (devno != -1 && devno != n)
+			continue;
+
+		for (x = 0; x != 16; x++) {
+			uint8_t buf[4];
+
+			if (check_synth(n, x, 0) == 0)
+				continue;
+
+			if (enableLocalKeys[n]) {
+				buf[0] = 0xB0 | x;
+				buf[1] = 0x7A;
+				buf[2] = 0x7F;
+				mid_add_raw(&mid_data, buf, 3, x);
+			}
+			if (disableLocalKeys[n]) {
+				buf[0] = 0xB0 | x;
+				buf[1] = 0x7A;
+				buf[2] = 0x00;
+				mid_add_raw(&mid_data, buf, 3, x);
+			}
+		}
+	}
+
+	midiTriggered = ScMidiTriggered;
+	pthread_mutex_unlock(&mtx);
 }
 
 void
@@ -2839,31 +2888,12 @@ MppPlayWidget :: keyReleaseEvent(QKeyEvent *event)
 void
 MppMainWindow :: handle_mute_map(int n)
 {
-	uint8_t ScMidiTriggered;
-	uint8_t x;
+	/* mutemap dialog */
 
 	MppMuteMap diag(this, this, n);
 
-	if (diag.exec() == QDialog::Accepted) {
-		pthread_mutex_lock(&mtx);
-		ScMidiTriggered = midiTriggered;
-		midiTriggered = 1;
-
-		/* Update local key enable/disable on all channels */
-		for (x = 0; x != 16; x++) {
-			if (check_synth(n, x, 0)) {
-				uint8_t buf[4];
-
-				buf[0] = 0xB0 | x;
-				buf[1] = 0x7A;
-				buf[2] = muteLocalKeys[n] ? 0x00 : 0x7F;
-				mid_add_raw(&mid_data, buf, 3, x);
-			}
-		}
-
-		midiTriggered = ScMidiTriggered;
-		pthread_mutex_unlock(&mtx);
-	}
+	if (diag.exec() == QDialog::Accepted)
+		handle_config_apply_sub(n);
 }
 
 void

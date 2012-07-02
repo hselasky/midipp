@@ -128,7 +128,8 @@ public:
 
 	uint8_t muteProgram[MPP_MAX_DEVS];
 	uint8_t mutePedal[MPP_MAX_DEVS];
-	uint8_t muteLocalKeys[MPP_MAX_DEVS];
+	uint8_t enableLocalKeys[MPP_MAX_DEVS];
+	uint8_t disableLocalKeys[MPP_MAX_DEVS];
 	uint8_t muteAllControl[MPP_MAX_DEVS];
 	uint8_t muteMap[MPP_MAX_DEVS][16];
 	uint8_t inputEvents[MPP_MAX_QUEUE];
@@ -337,6 +338,7 @@ public slots:
 	void handle_rewind();
 	void handle_midi_trigger();
 	void handle_config_apply();
+	void handle_config_apply_sub(int);
 	void handle_config_revert();
 	void handle_config_reload();
 	void handle_config_fontsel();
