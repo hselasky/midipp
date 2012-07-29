@@ -44,6 +44,7 @@
 #include <QTextCursor>
 #include <QTimer>
 #include <QKeyEvent>
+#include <QWheelEvent>
 #include <QFile>
 #include <QFileDialog>
 #include <QCheckBox>

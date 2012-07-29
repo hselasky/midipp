@@ -237,7 +237,8 @@ mpp_get_key(char *ptr, char **pp)
 }
 
 uint8_t
-MppDecode :: parseScoreChord(struct MppScoreEntry *ps, const char *chord)
+MppDecode :: parseScoreChord(struct MppScoreEntry *ps,
+    const char *chord, uint8_t allow_var)
 {
 	QString out;
 
@@ -249,8 +250,11 @@ MppDecode :: parseScoreChord(struct MppScoreEntry *ps, const char *chord)
 	uint8_t var_min;
 	uint8_t var_max;
 	uint8_t fkey;
+	uint8_t match_curr;
+	uint8_t match_max;
+	uint8_t match_var;
+	uint8_t match_trans;
 
-	int n;
 	int x;
 	int y;
 	int z;
@@ -290,27 +294,43 @@ MppDecode :: parseScoreChord(struct MppScoreEntry *ps, const char *chord)
 	if (foot_len == 0)
 		return (1);
 
+	match_max = 255;	/* smaller is better */
+	match_var = var_min;
+	match_trans = 0;
+
 	for (x = 0; x != 12; x++) {
 		for (y = var_min; y != var_max; y++) {
-			n = foot_len;
+			uint8_t p = 0;
+			uint8_t q = 0;
+
 			for (z = 0; z != MPP_MAX_VAR_OFF; z++) {
 				key = mpp_score_variant[y].offset[z];
 
 				if (key != 0) {
+					p++;
+
 					if (foot_print[(key + x) % 12])
-						n--;
-					else
-						break;
+						q++;
 				}
 			}
-			if (z == MPP_MAX_VAR_OFF && n == 0)
-				break;
+
+			if (p < foot_len)
+				p = foot_len;
+
+			if (p > q)
+				match_curr = p - q;
+			else
+				match_curr = q - p;
+
+			if (match_curr < match_max) {
+				match_max = match_curr;
+				match_var = y;
+				match_trans = x;
+			}
 		}
-		if (y != var_max && n == 0)
-			break;
 	}
 
-	if (x == 12) {
+	if (match_max != 0 && allow_var == 0) {
 		if (min == 255)
 			return (1);
 		z = MPP_MAX_VAR_OFF;
@@ -319,6 +339,9 @@ MppDecode :: parseScoreChord(struct MppScoreEntry *ps, const char *chord)
 		spn_base->setValue(C5);
 		spn_rol->setValue(0);
 	} else {
+		y = match_var;
+		x = match_trans;
+
 		for (z = 0; z != MPP_MAX_VAR_OFF; z++) {
 			key = mpp_score_variant[y].offset[z];
 
@@ -397,7 +420,8 @@ mpp_find_chord(const char *input, uint8_t *pbase,
 
 uint8_t
 mpp_parse_chord(const char *input, uint8_t trans,
-    int8_t rol, uint8_t *pout, uint8_t *pn)
+    int8_t rol, uint8_t *pout, uint8_t *pn,
+    uint8_t *pvar, int change_var)
 {
 	uint8_t error = 0;
 	uint8_t base;
@@ -409,7 +433,24 @@ mpp_parse_chord(const char *input, uint8_t trans,
 	error = mpp_find_chord(input, &base, &key, &x);
 	if (error) {
 		*pn = 0;
+		*pvar = 0;
 		return (1);
+	}
+
+	if (change_var != 0) {
+		while (change_var > 0) {
+			x++;
+			x %= mpp_max_variant;
+			if (mpp_score_variant[x].offset[0] != 0)
+				change_var--;
+		}
+		while (change_var < 0) {
+			x--;
+			x += mpp_max_variant;
+			x %= mpp_max_variant;
+			if (mpp_score_variant[x].offset[0] != 0)
+				change_var++;
+		}
 	}
 
 	n = 0;
@@ -429,6 +470,7 @@ mpp_parse_chord(const char *input, uint8_t trans,
 	mid_trans(pout + 1, n - 1, rol);
 
 	*pn = n;
+	*pvar = x;
 
 	return (0);
 }
@@ -579,7 +621,7 @@ MppDecode :: handle_parse_text(const QString &x)
 }
 
 void
-MppDecode :: handle_parse()
+MppDecode :: handle_parse(int change_var)
 {
 	QString out;
 
@@ -592,6 +634,7 @@ MppDecode :: handle_parse()
 	int x;
 
 	uint8_t n;
+	uint8_t var;
 
 	ptr = MppQStringToAscii(lin_edit->text().trimmed());
 	if (ptr == NULL)
@@ -606,9 +649,33 @@ MppDecode :: handle_parse()
 	memset(auto_base, 0, sizeof(auto_base));
 
 	n = sizeof(current_score) / sizeof(current_score[0]);
-	error = mpp_parse_chord(ptr, base, rol, current_score, &n);
+	error = mpp_parse_chord(ptr, base, rol, current_score,
+	    &n, &var, change_var);
 
 	if (error == 0) {
+		if (change_var && ptr[0] != 0) {
+			const char *pslash = strstr(ptr, "/");
+
+			if (pslash == NULL)
+				pslash = "";
+
+			switch (ptr[1]) {
+			case 'b':
+			case 'B':
+				lin_edit->setText(QString(ptr[0]) + QString("b") + 
+				    mpp_score_variant[var].keyword + QString(pslash));
+				break;
+			case '#':
+				lin_edit->setText(QString(ptr[0]) + QString("#") + 
+				    mpp_score_variant[var].keyword + QString(pslash));
+				break;
+			default:
+				lin_edit->setText(QString(ptr[0]) +
+				    mpp_score_variant[var].keyword + QString(pslash));
+				break;
+			}
+		}
+
 		lbl_status->setText(tr("OK"));
 	} else {
 		lbl_status->setText(tr("ERROR"));
@@ -661,4 +728,32 @@ MppDecode :: setText(const char *ptr)
 	lin_edit->setText(QString(ptr));
 
 	handle_parse();
+}
+
+void
+MppDecode :: keyPressEvent(QKeyEvent *event)
+{
+	switch (event->key()) {
+	case Qt::Key_Up:
+		handle_parse(1);
+		break;
+	case Qt::Key_Down:
+		handle_parse(-1);
+		break;
+	default:
+		break;
+	}
+}
+
+void
+MppDecode :: wheelEvent(QWheelEvent *event)
+{
+	int num = event->delta();
+
+	if (event->orientation() == Qt::Vertical && num != 0) {
+		handle_parse(num / (8 * 15));
+		event->accept();
+	} else {
+		event->ignore();
+	}
 }

@@ -2954,12 +2954,12 @@ MppScoreMain :: handleEditLine(void)
 			if (isValidChordInfo(x) && ptr[0] == '(' && ptr[len-1] == ')') {
 				ptr[len-1] = 0;
 				update_chord = 1;
-				if (dlg.parseScoreChord(scores[x], ptr + 1)) {
+				if (dlg.parseScoreChord(scores[x], ptr + 1, 1)) {
 					break;
 				}
 			} else {
 				update_chord = 0;
-				if (dlg.parseScoreChord(scores[x], "")) {
+				if (dlg.parseScoreChord(scores[x], "", 1)) {
 					break;
 				}
 			}
