@@ -1240,6 +1240,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 	memset(timer_ticks_pre, 0, sizeof(timer_ticks_pre));
 	memset(timer_ticks_post, 0, sizeof(timer_ticks_post));
 	active_channels = 1;
+	num_base = 2;
 
 	if (pstr.isNull() || pstr.isEmpty())
 		goto done;
@@ -1480,7 +1481,19 @@ parse_transpose:
 parse_command:
 	command = getIntValue(1);
 
-	if (command == 4) {
+	if (command == 5) {
+		c = getChar(1);
+		if (c == '.') {
+			parseAdv(1);
+			num_base = getIntValue(1);
+			if (num_base > 12)
+				num_base = 12;
+		} else {
+			num_base = 2;
+		}
+		goto next_char;
+
+	} else if (command == 4) {
 		c = getChar(1);
 		if (c == '.') {
 			parseAdv(1);
@@ -1909,16 +1922,10 @@ MppScoreMain :: handleChordsLoad(void)
 	mid_sort(score, ns);
 
 	for (x = 0; x != ns; x++) {
-
-		if (x == 0) {
-			base[nb++] = score[0];
-		} else if (score[x] == score[x - 1]) {
-			continue;
-		} else if (x == 1 && (score[0] + 12) == score[1]) {
-			continue;
-		} else {
+		if (x < num_base)
+			base[nb++] = score[x];
+		else
 			key[nk++] = score[x];
-		}
 	}
 
 	if (nb != 0) {
@@ -1939,6 +1946,7 @@ MppScoreMain :: handleChordsLoad(void)
 		score_future[3].channel = chan;
 		mid_trans(base, nb, 1);
 	}
+
 	if (nk != 0) {
 		score_future[5].dur = 1;
 		score_future[5].key = key[0];

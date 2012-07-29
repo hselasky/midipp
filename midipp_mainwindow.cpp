@@ -123,6 +123,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " * K2 - unlock play key.\n"
 	    " * K3.<bpm>.<period_ms> - set reference BPM and period in ms.\n"
 	    " * K4.<number> - enable automatic melody effect on the N-th note, if non-zero.\n"
+	    " * K5.<number> - set number of base scores for chord mode. Default value is 2.\n"
 	    " * M<number> - macro inline the given label.\n"
 	    " * L<number> - defines a label (0..31).\n"
 	    " * J<R><P><number> - jumps to the given label (0..31) or \n"

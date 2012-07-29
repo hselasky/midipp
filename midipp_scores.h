@@ -171,6 +171,7 @@ public:
 	uint8_t timer_was_active;
 	uint8_t keyMode;
 	uint8_t pressed_future;
+	uint8_t num_base;
 
 protected:
 
