@@ -1532,8 +1532,11 @@ parse_command:
 
 		/* update BPM timer */
 
+		pthread_mutex_lock(&mainWindow->mtx);
 		mainWindow->dlg_bpm->ref = ref;
 		mainWindow->dlg_bpm->period = per;
+		mainWindow->dlg_bpm->handle_update();
+		pthread_mutex_unlock(&mainWindow->mtx);
 
 		goto next_char;
 	}
