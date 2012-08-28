@@ -292,8 +292,8 @@ public:
 	QGridLayout *tab_volume_gl;
 	QWidget *tab_volume_wg;
 
-	QSpinBox *spn_volume_play[16];
-	QSpinBox *spn_volume_synth[16];
+	MppVolume *spn_volume_play[16];
+	MppVolume *spn_volume_synth[16];
 
 	QLabel *lbl_volume_title[2];
 	QLabel *lbl_volume_play[16];

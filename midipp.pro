@@ -15,6 +15,7 @@ HEADERS		+= midipp_mutemap.h
 HEADERS		+= midipp_scores.h
 HEADERS		+= midipp_spinbox.h
 HEADERS		+= midipp_pattern.h
+HEADERS		+= midipp_volume.h
 SOURCES		+= midipp.cpp
 SOURCES		+= midipp_bpm.cpp
 SOURCES		+= midipp_button.cpp
@@ -30,6 +31,7 @@ SOURCES		+= midipp_mutemap.cpp
 SOURCES		+= midipp_scores.cpp
 SOURCES		+= midipp_pattern.cpp
 SOURCES		+= midipp_spinbox.cpp
+SOURCES		+= midipp_volume.cpp
 
 RESOURCES	+= midipp.qrc
 

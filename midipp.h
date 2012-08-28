@@ -112,6 +112,7 @@ class MppButton;
 class MppGPro;
 class MppMidi;
 class MppMode;
+class MppVolume;
 
 struct MppChordInfo {
 	int chord_line;

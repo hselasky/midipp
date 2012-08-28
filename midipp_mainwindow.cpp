@@ -36,6 +36,7 @@
 #include <midipp_gpro.h>
 #include <midipp_midi.h>
 #include <midipp_mode.h>
+#include <midipp_volume.h>
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -669,12 +670,12 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		lbl_volume_play[n] = new QLabel(tr(buf));
 		lbl_volume_synth[n] = new QLabel(tr(buf));
 
-		spn_volume_synth[n] = new QSpinBox();
-		spn_volume_synth[n]->setRange(0, 511);
+		spn_volume_synth[n] = new MppVolume();
+		spn_volume_synth[n]->setRange(0, 511, MPP_VOLUME_UNIT);
 		connect(spn_volume_synth[n], SIGNAL(valueChanged(int)), this, SLOT(handle_volume_changed(int)));
 
-		spn_volume_play[n] = new QSpinBox();
-		spn_volume_play[n]->setRange(0, 511);
+		spn_volume_play[n] = new MppVolume();
+		spn_volume_play[n]->setRange(0, 511, MPP_VOLUME_UNIT);
 		connect(spn_volume_play[n], SIGNAL(valueChanged(int)), this, SLOT(handle_volume_changed(int)));
 
 		tab_volume_gl->addWidget(lbl_volume_play[n], (n & 7) + x, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);

@@ -1,0 +1,175 @@
+/*-
+ * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#include <midipp_volume.h>
+
+MppVolume :: MppVolume(QWidget *parent)
+  : QWidget(parent)
+{
+	y_pos = moving = focus = curr_delta =
+	    curr_pos = min = max = 0;
+	mid = 1;
+
+	setMinimumSize(QSize(40,40));
+	setMaximumSize(QSize(40,40));
+}
+
+MppVolume :: ~MppVolume()
+{
+
+}
+
+void
+MppVolume :: mousePressEvent(QMouseEvent *event)
+{
+	if (event->button() == Qt::LeftButton) {
+		moving = 1;
+		curr_delta = 0;
+		y_pos = event->y();
+	}
+}
+
+void
+MppVolume :: mouseReleaseEvent(QMouseEvent *event)
+{
+	if (event->button() == Qt::LeftButton) {
+		moving = 0;
+		y_pos = 0;
+		curr_pos += curr_delta;
+		curr_delta = 0;
+
+		emit valueChanged(curr_pos);
+		repaint();
+	}
+}
+
+void
+MppVolume :: mouseMoveEvent(QMouseEvent *event)
+{
+	if (moving) {
+		curr_delta = ((y_pos - event->y()) * (max - min + 1)) / 128;
+
+		if ((curr_delta + curr_pos) > max)
+			curr_delta = max - curr_pos;
+		else if ((curr_delta + curr_pos) < min)
+			curr_delta = min - curr_pos;
+
+		emit valueChanged(curr_pos + curr_delta);
+
+		repaint();
+	}
+}
+
+void
+MppVolume :: setRange(int from, int to, int middle)
+{
+	curr_pos = from;
+	min = from;
+	max = to;
+	mid = middle;
+}
+
+int
+MppVolume :: value(void) const
+{
+	return (curr_pos + curr_delta);
+}
+
+void
+MppVolume :: setValue(int value)
+{
+	if (value > max)
+		curr_pos = max;
+	else if (value < min)
+		curr_pos = min;
+	else
+		curr_pos = value;
+
+	curr_delta = 0;
+
+	emit valueChanged(curr_pos);
+
+	repaint();
+}
+
+void
+MppVolume :: enterEvent(QEvent *event)
+{
+	focus = 1;
+	repaint();
+}
+
+void
+MppVolume :: leaveEvent(QEvent *event)
+{
+	focus = 0;
+	repaint();
+}
+
+void
+MppVolume :: paintEvent(QPaintEvent *event)
+{
+	QPainter paint(this);
+	QFont fnt = font_fixed;
+	char buffer[16];
+	const int m = 4;
+	int w = width();
+	int h = height();
+	int angle = ((value() - min) * 270 * 16) / (max - min + 1);
+	int color = ((value() - min) * (255 - 128)) / (max - min + 1);
+
+	paint.setRenderHints(QPainter::Antialiasing, 1);
+
+	QColor black(0,0,0);
+	QColor button(128,128,128);
+	QColor button_focus(128,192,128);
+	QColor active(128+color,128,128);
+	QColor background(255,255,255);
+
+	fnt.setPixelSize(3*m);
+
+	snprintf(buffer, sizeof(buffer), "-%d.%d+",
+	    value() / mid, ((value() * 10) / mid) % 10 );
+	QString descr(buffer);
+
+	paint.fillRect(QRectF(0,0,w,h), background);
+
+	paint.setPen(QPen(black, 1));
+	paint.setBrush(active);
+	paint.drawPie(QRectF(m,m,w-(2*m),h-(2*m)),(180+45)*16, -angle);
+
+	if (focus)
+		paint.setBrush(button_focus);
+	else
+		paint.setBrush(button);
+
+	paint.drawEllipse(QRectF((w/4)+m,(h/4)+m,(w/2)-(2*m), (h/2)-(2*m)));
+
+	paint.setFont(fnt);
+
+	QRectF sz = paint.boundingRect(QRectF(0,0,0,0), descr);
+
+	paint.drawText(QPointF((w - sz.width()) / 2.0, h), descr);
+}
