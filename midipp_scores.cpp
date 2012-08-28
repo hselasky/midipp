@@ -2706,7 +2706,7 @@ parse_string:
 			if (c == ')') 
 				break;
 		}
-		if (getChar(y + 1) == '.') {
+		if (is_dot == 0 && getChar(y + 1) == '.') {
 			is_dot = 1;
 			y++;
 		}
@@ -2716,7 +2716,8 @@ parse_string:
 			continue;
 		}
 
-		y = ps.x + y;
+		/* compute end of chord information */
+		y = ps.x + y + 1;
 		break;
 	}
 
@@ -2743,6 +2744,10 @@ parse_string:
 	case 'G':
 		key = G0;
 		break;
+	case ')':
+		out += ".()";
+		ps.x = y;
+		goto parse_string;
 	default:
 		out += ".(?)";
 		ps.x = y;
@@ -2773,13 +2778,10 @@ parse_string:
 		out += (char)c;
 		ps.x++;
 
-		if (c == ')') {
-			if (getChar(0) == '.')
-				ps.x++;
-			goto parse_string;
-		} else if (c == '/') {
+		if (c == ')')
+			goto parse_string_rem;
+		else if (c == '/')
 			break;
-		}
 	}
 
 	switch (getChar(0)) {
@@ -2829,7 +2831,8 @@ parse_string:
 
 	out += MppBaseKeyToString(key, sharp);
 
-	while (ps.x != y) {
+parse_string_rem:
+	while (ps.x < y) {
 		c = getChar(0);
 		if (c != '.')
 			out += (char)c;
