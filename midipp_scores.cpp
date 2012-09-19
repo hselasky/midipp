@@ -2476,50 +2476,34 @@ MppScoreMain :: handleAlign(uint8_t *ptr, int nak, int limit)
 {
 	int x;
 	int y;
-	int z;
 	int temp;
 	int min;
+	int map[12];
 
 	/* sort scores by value */
 
 	mid_sort(ptr, nak);
 
-	/* align scores */
+	for (x = 0; x != 12; x++)
+		map[x] = limit;
 
-	min = 12;
-	z = nak - 1;
-
-	for (x = nak; x--; ) {
-		y = (12 + (limit % 12) - (ptr[x] % 12)) % 12;
-		if (y != 0 && y < min) {
-			min = y;
-			z = x;
-		}
-	}
-
-	/* swap */
-	temp = ptr[z];
-	ptr[z] = ptr[nak - 1];
-	ptr[nak - 1] = temp;
-
-	min = limit;
-
-	for (x = nak; x--; ) {
+	for (x = nak - 1; x != -1; x--) {
 
 		temp = ptr[x];
+		y = temp % 12;
 
-		while (temp < min) {
+		while (temp < map[y])
 			temp += 12;
-		}
-		while (temp >= min) {
+		while (temp >= map[y])
 			temp -= 12;
-		}
+
 		if (temp < 0) {
 			min = 0;
 			ptr[x] = 255;
 		} else {
 			min = temp;
 			ptr[x] = temp;
+			map[y] = temp;
 		}
 	}
 }
