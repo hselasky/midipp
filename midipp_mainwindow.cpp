@@ -33,6 +33,7 @@
 #include <midipp_spinbox.h>
 #include <midipp_bpm.h>
 #include <midipp_button.h>
+#include <midipp_buttonmap.h>
 #include <midipp_gpro.h>
 #include <midipp_midi.h>
 #include <midipp_mode.h>
@@ -298,14 +299,12 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* <Play> Tab */
 
-	but_bpm = new QPushButton(tr("BPM"));
+	but_bpm = new QPushButton(tr("BP&M"));
 	connect(but_bpm, SIGNAL(released()), this, SLOT(handle_bpm()));
 
 	dlg_bpm = new MppBpm(this);
 
-	lbl_bpm_max = new QLabel(tr("Max"));
-	lbl_bpm_min = new QLabel(tr("Min"));
-	lbl_bpm_avg = new QLabel(tr("Average BPM"));
+	lbl_bpm_avg = new QLabel(tr("Average Beats Per Minute, BPM:"));
 
 	lbl_curr_time_val = new QLCDNumber(8);
 	lbl_curr_time_val->setMode(QLCDNumber::Dec);
@@ -313,31 +312,15 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_curr_time_val->setSegmentStyle(QLCDNumber::Flat);
 	lbl_curr_time_val->setAutoFillBackground(1);
 
-	lbl_bpm_min_val = new QLCDNumber(4);
-	lbl_bpm_min_val->setMode(QLCDNumber::Dec);
-	lbl_bpm_min_val->setFrameShape(QLCDNumber::NoFrame);
-	lbl_bpm_min_val->setSegmentStyle(QLCDNumber::Flat);
-	lbl_bpm_min_val->setAutoFillBackground(1);
-
 	lbl_bpm_avg_val = new QLCDNumber(4);
 	lbl_bpm_avg_val->setMode(QLCDNumber::Dec);
 	lbl_bpm_avg_val->setFrameShape(QLCDNumber::NoFrame);
 	lbl_bpm_avg_val->setSegmentStyle(QLCDNumber::Flat);
 	lbl_bpm_avg_val->setAutoFillBackground(1);
 
-	lbl_bpm_max_val = new QLCDNumber(4);
-	lbl_bpm_max_val->setMode(QLCDNumber::Dec);
-	lbl_bpm_max_val->setFrameShape(QLCDNumber::NoFrame);
-	lbl_bpm_max_val->setSegmentStyle(QLCDNumber::Flat);
-	lbl_bpm_max_val->setAutoFillBackground(1);
-
-	lbl_score_record = new QLabel(QString());
-	lbl_midi_record = new QLabel(QString());
-	lbl_midi_play = new QLabel(QString());
-
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
 		dlg_mode[n] = new MppMode(n);
-		but_mode[n] = new MppButton(tr("View ") + QChar('A' + n) + tr(" mode"), n);
+		but_mode[n] = new MppButton(tr("View &") + QChar('A' + n) + tr(" mode"), n);
 		connect(but_mode[n], SIGNAL(released(int)), this, SLOT(handle_mode(int)));
 	}
 
@@ -347,16 +330,26 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		but_jump[n] = new MppButton(tr(buf), n);
 	}
 
-	but_insert_chord = new QPushButton(tr("&Insert Chord"));
-	but_edit_chord = new QPushButton(tr("&Edit Chord"));
-	but_compile = new QPushButton(tr("Compile"));
-	but_score_record = new QPushButton(tr("Scores"));
-	but_midi_record = new QPushButton(tr("MIDI"));
+	but_insert_chord = new QPushButton(tr("&Insert"));
+	but_edit_chord = new QPushButton(tr("&Edit"));
+	but_replace = new QPushButton(tr("&ReplaceAll"));
+	but_compile = new QPushButton(tr("Com&pile"));
 
-	but_midi_play = new QPushButton(tr("MIDI"));
-	but_midi_pause = new QPushButton(tr("Pause"));
-	but_midi_trigger = new QPushButton(tr("Trigger"));
-	but_midi_rewind = new QPushButton(tr("Rewind"));
+	but_midi_pause = new QPushButton(tr("Pau&se"));
+	but_midi_trigger = new QPushButton(tr("Tri&gger"));
+	but_midi_rewind = new QPushButton(tr("Re&wind"));
+
+	mbm_midi_play = new MppButtonMap("MIDI playback\0" "OFF\0" "ON\0", 2, 2);
+	connect(mbm_midi_play, SIGNAL(selectionChanged(int)), this, SLOT(handle_midi_play(int)));
+
+	mbm_midi_record = new MppButtonMap("MIDI recording\0" "OFF\0" "ON\0", 2, 2);
+	connect(mbm_midi_record, SIGNAL(selectionChanged(int)), this, SLOT(handle_midi_record(int)));
+
+	mbm_score_record = new MppButtonMap("Score recording\0" "OFF\0" "ON\0", 2, 2);
+	connect(mbm_score_record, SIGNAL(selectionChanged(int)), this, SLOT(handle_score_record(int)));
+
+	mbm_key_mode = new MppButtonMap("\0" "ALL\0" "MIXED\0" "FIXED\0" "TRANSP\0" "CHORD\0", 5, 3);
+	connect(mbm_key_mode, SIGNAL(selectionChanged(int)), this, SLOT(handle_key_mode(int)));
 
 	but_play = new QPushButton(tr("Shift+Play"));
 	but_play->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -369,13 +362,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	lbl_time_counter = new QLabel(tr(" - Time Counter -"));
 	lbl_synth = new QLabel(tr("- Synth Play -"));
-	lbl_playback = new QLabel(tr("- Playback -"));
-	lbl_recording = new QLabel(tr("- Recording -"));
-	lbl_scores = new QLabel(tr("- Scores -"));
-
-	lbl_key_mode = new QLabel(QString());
-	but_key_mode = new QPushButton(QString());
-	connect(but_key_mode, SIGNAL(released()), this, SLOT(handle_key_mode()));
+	lbl_playback = new QLabel(tr("- Controls -"));
 
 	n = 0;
 
@@ -391,11 +378,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_midi_play, n, 3, 1, 1);
-	tab_play_gl->addWidget(but_midi_play, n, 0, 1, 3);
-
-	n++;
-
 	tab_play_gl->addWidget(but_midi_pause, n, 0, 1, 4);
 
 	n++;
@@ -408,30 +390,20 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_scores, n, 0, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	n++;
-
 	tab_play_gl->addWidget(but_compile, n, 0, 1, 4);
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_recording, n, 0, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_play_gl->addWidget(mbm_midi_play, n, 0, 1, 4);
+	tab_play_gl->addWidget(mbm_score_record, n, 4, 1, 4);
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_score_record, n, 3, 1, 1);
-	tab_play_gl->addWidget(but_score_record, n, 0, 1, 3);
+	tab_play_gl->addWidget(mbm_midi_record, n, 0, 1, 4);
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_midi_record, n, 3, 1, 1);
-	tab_play_gl->addWidget(but_midi_record, n, 0, 1, 3);
-
-	n++;
-
-	tab_play_gl->addWidget(lbl_key_mode, n, 3, 1, 1);
-	tab_play_gl->addWidget(but_key_mode, n, 0, 1, 3);
+	tab_play_gl->addWidget(mbm_key_mode, n, 0, 1, 4);
 
 	n = 0;
 
@@ -439,46 +411,38 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_play_key, n, 4, 1, 1);
-	tab_play_gl->addWidget(spn_play_key, n, 5, 1, 1);
+	tab_play_gl->addWidget(but_bpm, n, 4, 1, 2);
+
+	tab_play_gl->addWidget(lbl_play_key, n, 6, 1, 1);
+	tab_play_gl->addWidget(spn_play_key, n, 7, 1, 1);
 
 	n++;
-
-	tab_play_gl->addWidget(but_bpm, n, 4, 1, 2);
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++)
 		tab_play_gl->addWidget(but_mode[x], n + x, 6, 1, 2);
 
-	n++;
-
-	tab_play_gl->addWidget(but_insert_chord, n, 4, 1, 2);
+	tab_play_gl->addWidget(but_insert_chord, n, 4, 1, 1);
 
 	n++;
 
-	tab_play_gl->addWidget(but_edit_chord, n, 6, 1, 2);
-
-	for (x = 0; x != (MPP_MAX_LBUTTON / 2); x++) {
-		tab_play_gl->addWidget(but_jump[x + (MPP_MAX_LBUTTON / 2)], n + x, 5, 1, 1);
-		tab_play_gl->addWidget(but_jump[x], n + x, 4, 1, 1);
-	}
-
-	n += x;
-
-	tab_play_gl->addWidget(lbl_bpm_max, n, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_play_gl->addWidget(lbl_bpm_avg, n, 5, 1, 2, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_play_gl->addWidget(lbl_bpm_min, n, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_play_gl->addWidget(but_edit_chord, n, 4, 1, 1);
+	tab_play_gl->addWidget(but_replace, n, 5, 1, 1);
 
 	n++;
 
-	tab_play_gl->addWidget(lbl_bpm_max_val, n, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_play_gl->addWidget(lbl_bpm_avg_val, n, 5, 1, 2, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_play_gl->addWidget(lbl_bpm_min_val, n, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	for (x = 0; x != MPP_MAX_LBUTTON; x++)
+		tab_play_gl->addWidget(but_jump[x], n + (x / 4), 4 + (x % 4), 1, 1);
+
+	n += 4;
+
+	tab_play_gl->addWidget(lbl_bpm_avg, n, 4, 1, 3, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_play_gl->addWidget(lbl_bpm_avg_val, n, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	n++;
 
-	tab_play_gl->addWidget(but_play, n, 4, 3, 4);
+	tab_play_gl->addWidget(but_play, n, 4, 1, 4);
 
-	n += 3;
+	n++;
 
 	tab_play_gl->setRowStretch(n, 4);
 
@@ -490,11 +454,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_config_synth = new QLabel(tr("Synth"));
 	lbl_config_mm = new QLabel(tr("MuteMap"));
 	lbl_config_dv = new QLabel(tr("DevSel"));
-	lbl_bpm_count = new QLabel(tr("BPM average length (0..32)"));
-
-	spn_bpm_length = new QSpinBox();
-	spn_bpm_length->setRange(0, MPP_MAX_BPM);
-	spn_bpm_length->setValue(0);
 
 	but_config_apply = new QPushButton(tr("Apply"));
 	but_config_revert = new QPushButton(tr("Revert"));
@@ -544,11 +503,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 		x++;
 	}
-
-	tab_config_gl->addWidget(lbl_bpm_count, x, 0, 1, 6, Qt::AlignLeft|Qt::AlignVCenter);
-	tab_config_gl->addWidget(spn_bpm_length, x, 6, 1, 2, Qt::AlignRight|Qt::AlignVCenter);
-
-	x++;
 
 	tab_config_gl->addWidget(lbl_config_insert, x, 0, 1, 4);
 	tab_config_gl->addWidget(led_config_insert, x, 4, 1, 4);
@@ -696,14 +650,12 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	connect(but_insert_chord, SIGNAL(released()), this, SLOT(handle_insert_chord()));
 	connect(but_edit_chord, SIGNAL(released()), this, SLOT(handle_edit_chord()));
+	connect(but_replace, SIGNAL(released()), this, SLOT(handle_replace()));
 
 	for (n = 0; n != MPP_MAX_LBUTTON; n++)
 		connect(but_jump[n], SIGNAL(pressed(int)), this, SLOT(handle_jump(int)));
 
 	connect(but_compile, SIGNAL(pressed()), this, SLOT(handle_compile()));
-	connect(but_score_record, SIGNAL(pressed()), this, SLOT(handle_score_record()));
-	connect(but_midi_record, SIGNAL(pressed()), this, SLOT(handle_midi_record()));
-	connect(but_midi_play, SIGNAL(pressed()), this, SLOT(handle_midi_play()));
 	connect(but_play, SIGNAL(pressed()), this, SLOT(handle_play_press()));
 	connect(but_play, SIGNAL(released()), this, SLOT(handle_play_release()));
 	connect(but_quit, SIGNAL(released()), this, SLOT(handle_quit()));
@@ -777,7 +729,7 @@ MppMainWindow :: handle_jump_locked(int index)
 void
 MppMainWindow :: handle_insert_chord()
 {
-	MppDecode dlg(this, this, 0);
+	MppDecode dlg(this, 0);
 
         if(dlg.exec() == QDialog::Accepted) {
 		QTextCursor cursor(currScoreMain()->editWidget->textCursor());
@@ -800,6 +752,14 @@ MppMainWindow :: handle_edit_chord()
 
 	if (sm->handleEditLine() == 0)
 		handle_compile();
+}
+
+void
+MppMainWindow :: handle_replace()
+{
+	MppScoreMain *sm = currScoreMain();
+
+	sm->handleReplace();
 }
 
 void
@@ -832,16 +792,11 @@ MppMainWindow :: handle_compile()
 }
 
 void
-MppMainWindow :: handle_score_record()
+MppMainWindow :: handle_score_record(int value)
 {
 	pthread_mutex_lock(&mtx);
-	scoreRecordOff = !scoreRecordOff;
+	scoreRecordOff = value ? 0 : 1;
 	pthread_mutex_unlock(&mtx);
-
-	if (scoreRecordOff == 0)
-		lbl_score_record->setText(tr("ON"));
-	else
-		lbl_score_record->setText(tr("OFF"));
 }
 
 void
@@ -871,20 +826,15 @@ MppMainWindow :: handle_midi_pause()
 }
 
 void
-MppMainWindow :: handle_midi_play()
+MppMainWindow :: handle_midi_play(int value)
 {
 	uint8_t triggered;
 
 	pthread_mutex_lock(&mtx);
-	midiPlayOff = !midiPlayOff;
+	midiPlayOff = value ? 0 : 1;
 	triggered = midiTriggered;
 	update_play_device_no();
 	pthread_mutex_unlock(&mtx);
-
-	if (midiPlayOff == 0)
-		lbl_midi_play->setText(tr("ON"));
-	else
-		lbl_midi_play->setText(tr("OFF"));
 
 	handle_midi_pause();
 
@@ -893,20 +843,15 @@ MppMainWindow :: handle_midi_play()
 }
 
 void
-MppMainWindow :: handle_midi_record()
+MppMainWindow :: handle_midi_record(int value)
 {
 	uint8_t triggered;
 
 	pthread_mutex_lock(&mtx);
-	midiRecordOff = !midiRecordOff;
+	midiRecordOff = value ? 0 : 1;
 	triggered = midiTriggered;
 	update_play_device_no();
 	pthread_mutex_unlock(&mtx);
-
-	if (midiRecordOff == 0)
-		lbl_midi_record->setText(tr("ON"));
-	else
-		lbl_midi_record->setText(tr("OFF"));
 
 	handle_midi_pause();
 
@@ -927,6 +872,7 @@ MppMainWindow :: handle_play_press()
 	} else {
 		output_key(sm->synthChannel, playKey, 90, 0, 0);
 	}
+	do_update_bpm();
 	pthread_mutex_unlock(&mtx);
 }
 
@@ -1469,8 +1415,6 @@ MppMainWindow :: handle_config_revert()
 		cbx_config_dev[(3*n)+2]->setChecked(
 		    (deviceBits & (1UL << ((3*n)+2))) ? 1 : 0);
 	}
-
-	spn_bpm_length->setValue(bpmAvgLength);
 }
 
 void
@@ -1502,12 +1446,6 @@ MppMainWindow :: handle_config_apply_sub(int devno)
 		if (cbx_config_dev[(3*n)+2]->isChecked())
 			deviceBits |= 1UL << ((3*n)+2);
 	}
-
-	n = spn_bpm_length->value();
-
-	pthread_mutex_lock(&mtx);
-	bpmAvgLength = n;
-	pthread_mutex_unlock(&mtx);
 
 	handle_config_reload();
 
@@ -1770,8 +1708,6 @@ MppMainWindow :: do_clock_stats(void)
 void
 MppMainWindow :: do_bpm_stats(void)
 {
-	uint32_t min = 0xFFFFFFFFUL;
-	uint32_t max = 0;
 	uint32_t sum = 0;
 	uint32_t val;
 	uint8_t x;
@@ -1788,34 +1724,18 @@ MppMainWindow :: do_bpm_stats(void)
 		val = bpmData[x];
 
 		sum += val;
-		if (val > max)
-			max = val;
-		if (val < min)
-			min = val;
 	}
 
 	pthread_mutex_unlock(&mtx);
 
 	if (sum == 0)
 		sum = 1;
-	if (max == 0)
-		max = 1;
-	if (min == 0)
-		min = 1;
 
 	sum = (len * UMIDI20_BPM) / sum;
-	max = UMIDI20_BPM / max;
-	min = UMIDI20_BPM / min;
 
 	if (sum > 9999)
 		sum = 9999;
-	if (min > 9999)
-		min = 9999;
-	if (max > 9999)
-		max = 9999;
 
-	lbl_bpm_max_val->display((int)min);
-	lbl_bpm_min_val->display((int)max);
 	lbl_bpm_avg_val->display((int)sum);
 }
 
@@ -2770,9 +2690,9 @@ MppMainWindow :: MidiInit(void)
 	deviceName[3] = strdup("D:/dev/umidi2.0");
 	bpmAvgLength = 4;
 
-	handle_midi_record();
-	handle_midi_play();
-	handle_score_record();
+	handle_midi_record(0);
+	handle_midi_play(0);
+	handle_score_record(0);
 	handle_instr_reset();
 	handle_volume_reset();
 
@@ -3012,12 +2932,12 @@ MppMainWindow :: handle_mode(int index)
 }
 
 void
-MppMainWindow :: handle_key_mode()
+MppMainWindow :: handle_key_mode(int value)
 {
 	MppScoreMain *sm = currScoreMain();
 	MppMode *cm = currModeDlg();
 
-	cm->handle_mode();
+	cm->update_mode(value);
 
 	pthread_mutex_lock(&mtx);
 	sm->keyMode = cm->key_mode;
@@ -3029,8 +2949,8 @@ MppMainWindow :: handle_key_mode()
 void
 MppMainWindow :: sync_key_mode()
 {
-	lbl_key_mode->setText(currModeDlg()->lbl_mode->text());
-	but_key_mode->setText(tr("Key Mode ") + QChar('A' + currViewIndex));
+	mbm_key_mode->setSelection(currModeDlg()->but_mode->currSelection);
+	mbm_key_mode->setTitle(tr("Key Mode for view ") + QChar('A' + currViewIndex));
 }
 
 MppScoreMain *

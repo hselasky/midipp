@@ -80,6 +80,8 @@ public:
 	void outputChanPressure(uint8_t chan, uint8_t pressure);
 	void outputPitch(uint16_t val);
 
+	void handleReplace(void);
+
 	uint8_t handleEditLine(void);
 	uint8_t isValidChordInfo(uint32_t line);
 

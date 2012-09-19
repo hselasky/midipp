@@ -41,14 +41,16 @@ static const struct score_variant score_internal[] = {
   { "minor", {C5, E5B, G5} },
 
   { "maj7", {C5, E5, G5, H5} },
-  { "maj9", {C5, E5, G5, A5, C6} },
+  { "maj8", {C5, E5, G5, H5B} },
+  { "maj9", {C5, E5, G5, A5} },
+  { "maj10", {C5, E5, G5, A5B} },
 
   { "7b5", {C5, E5, G5B, H5B} },
   { "7#5", {C5, E5, A5B, H5B} },
-  { "7b9", {C5, E5, G5, H5B, D6B} },
-  { "7#9", {C5, E5, G5, H5B, E6B} },
+  { "7b9", {C5, D5B, E5, G5, H5B} },
+  { "7#9", {C5, E5B, E5, G5, H5B} },
 
-  { "69", {C5, E5, G5, A5, D6} },
+  { "69", {C5, D5, E5, G5, A5} },
 
   { "add3", {C5, E5, G5, H5 - 3} },
   { "add5", {C5, E5, G5, H5 - 5} },
@@ -63,9 +65,9 @@ static const struct score_variant score_internal[] = {
   { "5", {C5, G5} },
   { "6", {C5, E5, G5, A5} },
   { "7", {C5, E5, G5, H5B} },
-  { "9", {C5, E5, G5, H5B, D6} },
-  { "11", {C5, E5, G5, H5B, D6, F6} },
-  { "13", {C5, H5B, D6, F6, A6} },
+  { "9", {C5, D5, E5, G5, H5B} },
+  { "11", {C5, D5, E5, F5, G5, H5B} },
+  { "13", {C5, D5, F5, A5, H5B} },
 };
 
 #define	MAX_VAR (sizeof(score_internal)/sizeof(score_internal[0]))
@@ -475,8 +477,8 @@ mpp_parse_chord(const char *input, uint8_t trans,
 	return (0);
 }
 
-MppDecode :: MppDecode(QWidget *parent, MppMainWindow *_mw, int is_edit)
-  : QDialog(parent)
+MppDecode :: MppDecode(MppMainWindow *_mw, int is_edit)
+  : QDialog(0)
 {
 	int n;
 
@@ -723,9 +725,9 @@ MppDecode :: getText()
 }
 
 void
-MppDecode :: setText(const char *ptr)
+MppDecode :: setText(QString str)
 {
-	lin_edit->setText(QString(ptr));
+	lin_edit->setText(str);
 
 	handle_parse();
 }

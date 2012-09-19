@@ -236,7 +236,7 @@ midipp_import_parse(struct midipp_import *ps)
 uint8_t
 midipp_import(QString str, struct midipp_import *ps, MppScoreMain *sm)
 {
-	MppDecode dlg(sm->mainWindow, sm->mainWindow, 0);
+	MppDecode dlg(sm->mainWindow, 0);
 	char ch;
 	int off;
 	char *ptr;

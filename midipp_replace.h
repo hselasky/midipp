@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,80 +23,35 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _MIDIPP_MODE_H_
-#define	_MIDIPP_MODE_H_
+#ifndef _MIDIPP_REPLACE_H_
+#define	_MIDIPP_REPLACE_H_
 
 #include <midipp.h>
 
-enum {
-	MM_PASS_ALL,
-	MM_PASS_ONE_MIXED,
-	MM_PASS_NONE_FIXED,
-	MM_PASS_NONE_TRANS,
-	MM_PASS_NONE_CHORD,
-	MM_PASS_MAX,
-};
-
-class MppMode : public QDialog
+class MppReplace : public QDialog
 {
 	Q_OBJECT;
-
 public:
-	MppMode(uint8_t _vi);
-	~MppMode();
+	MppReplace(MppMainWindow *, QString, QString);
+	~MppReplace();
 
-	void update_mode(int);
+	QString match;
+	QString replace;
 
-	/* input device mask */
-	uint32_t input_mask;
+	MppMainWindow *mw;
 
-	/* base key, if set */
-	uint8_t base_key;
-
-	/* command key, if set */
-	uint8_t cmd_key;
-
-	/* key delay */
-	uint8_t key_delay;
-
-	/* view number */
-	uint8_t view_index;
-
-	/* key mode */
-	uint8_t key_mode;
-
-	/* synth channel */
-	uint8_t channel;
-
-public:
 	QGridLayout *gl;
-
-	QLabel *lbl_chan;
-	QLabel *lbl_input;
-	QLabel *lbl_base;
-	QLabel *lbl_cmd;
-	QLabel *lbl_delay;
-	QLabel *lbl_dev[MPP_MAX_DEVS];
-
-	QCheckBox *cbx_dev[MPP_MAX_DEVS];
-
-	MppButtonMap *but_mode;
-	QPushButton *but_done;
-	QPushButton *but_set_all;
-	QPushButton *but_clear_all;
-
-	MppSpinBox *spn_cmd;
-	MppSpinBox *spn_base;
-
-	QSpinBox *spn_chan;
-	QSpinBox *spn_delay;
+	QLabel *lbl_replace;
+	QLabel *lbl_with;
+	QLineEdit *led_replace;
+	QLineEdit *led_with;
+	QPushButton *but_ok;
+	QPushButton *but_cancel;
+	QPushButton *but_edit;
 
 public slots:
-
-	void handle_done();
-	void handle_mode(int);
-	void handle_set_all_devs();
-	void handle_clear_all_devs();
+	void accept(void);
+	void edit(void);
 };
 
-#endif		/* _MIDIPP_MODE_H_ */
+#endif			/* _MIDIPP_REPLACE_H_ */

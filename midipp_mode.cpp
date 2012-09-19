@@ -23,6 +23,7 @@
  * SUCH DAMAGE.
  */
 
+#include <midipp_buttonmap.h>
 #include <midipp_mode.h>
 #include <midipp_spinbox.h>
 
@@ -48,7 +49,6 @@ MppMode :: MppMode(uint8_t _vi)
 	lbl_base = new QLabel(tr("Base play key"));
 	lbl_cmd = new QLabel(tr("Base command key"));
 	lbl_delay = new QLabel(tr("Random key delay (0..255)"));
-	lbl_mode = new QLabel(tr("ALL"));
 	lbl_chan = new QLabel(tr("Synth channel"));
 
 	for (x = 0; x != MPP_MAX_DEVS; x++) {
@@ -61,14 +61,16 @@ MppMode :: MppMode(uint8_t _vi)
 		lbl_dev[x] = new QLabel(tr(buf));
 	}
 
-	but_mode = new QPushButton(tr("Key Press Mode"));
-	but_done = new QPushButton(tr("Close"));
-	but_set_all = new QPushButton(tr("All devs"));
-	but_clear_all = new QPushButton(tr("No devs"));
+	but_mode = new MppButtonMap("Key mode\0" "ALL\0" "MIXED\0" "FIXED\0" "TRANSP\0" "CHORD\0", 5, 3);
+	connect(but_mode, SIGNAL(selectionChanged(int)), this, SLOT(handle_mode(int)));
 
-	connect(but_mode, SIGNAL(released()), this, SLOT(handle_mode()));
+	but_done = new QPushButton(tr("Close"));
 	connect(but_done, SIGNAL(released()), this, SLOT(handle_done()));
+
+	but_set_all = new QPushButton(tr("All devs"));
 	connect(but_set_all, SIGNAL(released()), this, SLOT(handle_set_all_devs()));
+
+	but_clear_all = new QPushButton(tr("No devs"));
 	connect(but_clear_all, SIGNAL(released()), this, SLOT(handle_clear_all_devs()));
 
 	spn_cmd = new MppSpinBox();
@@ -107,9 +109,7 @@ MppMode :: MppMode(uint8_t _vi)
 	gl->addWidget(lbl_chan, 3, 2, 1, 1);
 	gl->addWidget(spn_chan, 3, 3, 1, 1);
 
-	gl->addWidget(but_mode, 4, 2, 1, 1);
-	gl->addWidget(lbl_mode, 4, 3, 1, 1);
-
+	gl->addWidget(but_mode, 4, 2, 3, 2);
 	gl->addWidget(but_set_all, MPP_MAX_DEVS + 1, 0, 1, 1);
 	gl->addWidget(but_clear_all, MPP_MAX_DEVS + 1, 1, 1, 1);
 
@@ -122,32 +122,19 @@ MppMode :: ~MppMode()
 }
 
 void
-MppMode :: handle_mode()
+MppMode :: update_mode(int value)
 {
-	key_mode++;
-	if (key_mode >= MM_PASS_MAX)
-		key_mode = 0;
+	handle_mode(value);
+	but_mode->handle_pressed(value);
+}
 
-	switch (key_mode) {
-	case MM_PASS_ALL:
-		lbl_mode->setText(tr("ALL"));
-		break;
-	case MM_PASS_NONE_FIXED:
-		lbl_mode->setText(tr("FIXED"));
-		break;
-	case MM_PASS_ONE_MIXED:
-		lbl_mode->setText(tr("MIXED"));
-		break;
-	case MM_PASS_NONE_TRANS:
-		lbl_mode->setText(tr("TRANSP"));
-		break;
-	case MM_PASS_NONE_CHORD:
-		lbl_mode->setText(tr("CHORD"));
-		break;
-	default:
-		lbl_mode->setText(tr("UNKNOWN"));
-		break;
-	}
+void
+MppMode :: handle_mode(int value)
+{
+	if (value < 0 || value >= MM_PASS_MAX)
+		key_mode = 0;
+	else
+		key_mode = value;
 }
 
 void

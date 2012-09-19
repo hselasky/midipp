@@ -31,6 +31,7 @@
 #include <midipp_mode.h>
 #include <midipp_decode.h>
 #include <midipp_import.h>
+#include <midipp_replace.h>
 #include <midipp_spinbox.h>
 
 MppScoreView :: MppScoreView(MppScoreMain *parent)
@@ -2924,7 +2925,7 @@ MppScoreMain :: handleEditLine(void)
 
 			QTextCursor chord;
 
-			MppDecode dlg(mainWindow, mainWindow, 1);
+			MppDecode dlg(mainWindow, 1);
 
 			if (isValidChordInfo(x)) {
 
@@ -2979,6 +2980,30 @@ MppScoreMain :: handleEditLine(void)
 	free(ptr);
 
 	return (retval);
+}
+
+void
+MppScoreMain :: handleReplace(void)
+{
+	QTextCursor cursor(editWidget->textCursor());
+
+	MppReplace dlg(mainWindow, cursor.selectedText(),
+	    cursor.selectedText());
+
+	if (dlg.exec() == QDialog::Accepted) {
+
+		editWidget->moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
+
+		while (editWidget->find(dlg.match)) {
+
+			cursor = editWidget->textCursor();
+
+			cursor.beginEditBlock();
+			cursor.removeSelectedText();
+			cursor.insertText(dlg.replace);
+			cursor.endEditBlock();
+		}
+	}
 }
 
 /* must be called locked */

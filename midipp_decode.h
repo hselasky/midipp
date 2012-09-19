@@ -40,11 +40,11 @@ class MppDecode : public QDialog
 	Q_OBJECT;
 
 public:
-	MppDecode(QWidget *parent, MppMainWindow *, int);
+	MppDecode(MppMainWindow *, int);
 	~MppDecode();
 
 	QString getText();
-	void setText(const char *ptr);
+	void setText(QString);
 	uint8_t parseScoreChord(struct MppScoreEntry *, const char *, uint8_t);
 	void keyPressEvent(QKeyEvent *);
 	void wheelEvent(QWheelEvent *);

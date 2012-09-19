@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,80 +23,78 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _MIDIPP_MODE_H_
-#define	_MIDIPP_MODE_H_
+#include <midipp_button.h>
+#include <midipp_buttonmap.h>
 
-#include <midipp.h>
-
-enum {
-	MM_PASS_ALL,
-	MM_PASS_ONE_MIXED,
-	MM_PASS_NONE_FIXED,
-	MM_PASS_NONE_TRANS,
-	MM_PASS_NONE_CHORD,
-	MM_PASS_MAX,
-};
-
-class MppMode : public QDialog
+MppButtonMap :: MppButtonMap(const char *title, int max,
+    int width) : QGroupBox()
 {
-	Q_OBJECT;
+	int x;
+	int w;
+	int h;
 
-public:
-	MppMode(uint8_t _vi);
-	~MppMode();
+	if (max < 1)
+		return;
+	if (max > MPP_MAX_BUTTON_MAP)
+		max = MPP_MAX_BUTTON_MAP;
 
-	void update_mode(int);
+	nButtons = max;
+	currSelection = 0;
 
-	/* input device mask */
-	uint32_t input_mask;
+	for (x = 0; x != MPP_MAX_BUTTON_MAP; x++)
+		but[x] = 0;
 
-	/* base key, if set */
-	uint8_t base_key;
+	setTitle(QString(title));
 
-	/* command key, if set */
-	uint8_t cmd_key;
+	grid = new QGridLayout(this);
 
-	/* key delay */
-	uint8_t key_delay;
+	for (x = 0; x != nButtons; x++) {
 
-	/* view number */
-	uint8_t view_index;
+		w = (x % width);
+		h = (x / width);
 
-	/* key mode */
-	uint8_t key_mode;
+		title = title + strlen(title) + 1;
 
-	/* synth channel */
-	uint8_t channel;
+		but[x] = new MppButton(QString(title), x);
 
-public:
-	QGridLayout *gl;
+		connect(but[x], SIGNAL(pressed(int)), this, SLOT(handle_pressed(int)));
+		connect(but[x], SIGNAL(released(int)), this, SLOT(handle_released(int)));
 
-	QLabel *lbl_chan;
-	QLabel *lbl_input;
-	QLabel *lbl_base;
-	QLabel *lbl_cmd;
-	QLabel *lbl_delay;
-	QLabel *lbl_dev[MPP_MAX_DEVS];
+		grid->addWidget(but[x], h, w, 1, 1,
+		    Qt::AlignHCenter | Qt::AlignVCenter);
+	}
 
-	QCheckBox *cbx_dev[MPP_MAX_DEVS];
+	handle_pressed(0);
+}
 
-	MppButtonMap *but_mode;
-	QPushButton *but_done;
-	QPushButton *but_set_all;
-	QPushButton *but_clear_all;
+MppButtonMap :: ~MppButtonMap()
+{
 
-	MppSpinBox *spn_cmd;
-	MppSpinBox *spn_base;
+}
 
-	QSpinBox *spn_chan;
-	QSpinBox *spn_delay;
+void
+MppButtonMap :: setSelection(int id)
+{
+	if (id == currSelection)
+		return;
 
-public slots:
+	handle_pressed(id);
+	handle_released(id);
+}
 
-	void handle_done();
-	void handle_mode(int);
-	void handle_set_all_devs();
-	void handle_clear_all_devs();
-};
+void
+MppButtonMap :: handle_released(int id)
+{
+	selectionChanged(currSelection);
+}
 
-#endif		/* _MIDIPP_MODE_H_ */
+void
+MppButtonMap :: handle_pressed(int id)
+{
+	int x;
+
+	currSelection = id;
+
+	for (x = 0; x != nButtons; x++)
+		but[x]->setFlat(x != id);
+}

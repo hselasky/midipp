@@ -68,9 +68,11 @@
 #include <QCloseEvent>
 #include <QMessageBox>
 #include <QDir>
+#include <QGroupBox>
 
 #include <umidi20.h>
 
+#define	MPP_MAX_BUTTON_MAP	8
 #define	MPP_MAX_MERGE	1024
 #define	MPP_MAX_VIEWS	2
 #define	MPP_MAX_LINES	8192
@@ -79,7 +81,7 @@
 #define	MPP_MAX_QUEUE	32
 #define	MPP_MAX_DEVS	6
 #define	MPP_MAX_BPM	32
-#define	MPP_MAX_LBUTTON	8
+#define	MPP_MAX_LBUTTON	12
 #define	MPP_MIN_POS	4	/* ticks */
 #define	MPP_PRESSED_MAX	128
 #define	MPP_MAX_DURATION 255	/* inclusive */
@@ -109,10 +111,12 @@ class MppSpinBox;
 class MppPattern;
 class MppBpm;
 class MppButton;
+class MppButtonMap;
 class MppGPro;
 class MppMidi;
 class MppMode;
 class MppVolume;
+class MppReplace;
 
 struct MppChordInfo {
 	int chord_line;

@@ -188,20 +188,14 @@ public:
 
 	/* tab <Play> */
 
-	QLabel *lbl_bpm_min;
 	QLabel *lbl_bpm_avg;
-	QLabel *lbl_bpm_max;
 
 	QLCDNumber *lbl_curr_time_val;
-	QLCDNumber *lbl_bpm_min_val;
 	QLCDNumber *lbl_bpm_avg_val;
-	QLCDNumber *lbl_bpm_max_val;
 
 	QLabel *lbl_synth;
 	QLabel *lbl_time_counter;
 	QLabel *lbl_playback;
-	QLabel *lbl_recording;
-	QLabel *lbl_scores;
 
 	QWidget *tab_play_wg;
 	QGridLayout *tab_play_gl;
@@ -209,24 +203,21 @@ public:
 	QLabel	*lbl_play_key;
 	MppSpinBox *spn_play_key;
 
-	QLabel	*lbl_score_record;
-	QLabel	*lbl_midi_record;
-	QLabel	*lbl_midi_play;
-	QLabel	*lbl_key_mode;
+	MppButtonMap *mbm_midi_play;
+	MppButtonMap *mbm_midi_record;
+	MppButtonMap *mbm_score_record;
+	MppButtonMap *mbm_key_mode;
 
 	QPushButton *but_insert_chord;
 	QPushButton *but_edit_chord;
+	QPushButton *but_replace;
 	QPushButton *but_jump[MPP_MAX_LBUTTON];
 	QPushButton *but_compile;
-	QPushButton *but_score_record;
 	QPushButton *but_play;
 	QPushButton *but_midi_pause;
-	QPushButton *but_midi_record;
-	QPushButton *but_midi_play;
 	QPushButton *but_midi_trigger;
 	QPushButton *but_midi_rewind;
 	QPushButton *but_bpm;
-	QPushButton *but_key_mode;
 
 	MppButton *but_mode[MPP_MAX_VIEWS];
 	MppMode *dlg_mode[MPP_MAX_VIEWS];
@@ -245,9 +236,6 @@ public:
 	QLabel *lbl_config_mm;
 	QLabel *lbl_config_dv;
 	QLabel *lbl_config_dev[MPP_MAX_DEVS];
-	QLabel *lbl_bpm_count;
-
-	QSpinBox *spn_bpm_length;
 
 	MppButton *but_config_dev[MPP_MAX_DEVS];
 	MppButton *but_config_mm[MPP_MAX_DEVS];
@@ -321,12 +309,13 @@ public slots:
 	void handle_play_key_changed(int);
 	void handle_insert_chord();
 	void handle_edit_chord();
+	void handle_replace();
 	void handle_jump(int index);
 	void handle_compile();
-	void handle_score_record();
-	void handle_midi_record();
+	void handle_score_record(int);
+	void handle_midi_record(int);
 	void handle_midi_pause();
-	void handle_midi_play();
+	void handle_midi_play(int);
 	void handle_play_press();
 	void handle_play_release();
 	void handle_watchdog();
@@ -367,7 +356,7 @@ public slots:
 	void handle_bpm();
 	void handle_mode(int);
 
-	void handle_key_mode();
+	void handle_key_mode(int);
 };
 
 #endif		/* _MIDIPP_MAINWINDOW_H_ */
