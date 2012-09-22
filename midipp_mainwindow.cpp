@@ -692,7 +692,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	sync_key_mode();
 
-	version = tr("MIDI Player Pro v1.0.16");
+	version = tr("MIDI Player Pro v1.0.17");
 
 	setWindowTitle(version);
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
