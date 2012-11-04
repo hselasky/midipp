@@ -1159,7 +1159,7 @@ MppScoreMain :: resolveJump(uint32_t line)
 			jump = 0;
 	}
 	/* clip */
-	if (jump != 0 && jump > (uint32_t)ps.line)
+	if (jump != 0 && jump > (uint32_t)linesMax)
 		jump = 1;
 	return (jump);
 }
