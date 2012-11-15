@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2010 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2012 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,6 +69,7 @@
 #include <QMessageBox>
 #include <QDir>
 #include <QGroupBox>
+#include <QSettings>
 
 #include <umidi20.h>
 
@@ -93,30 +94,33 @@
 #define	MPP_VISUAL_R_MAX	8
 #define	MPP_VISUAL_C_MAX	20
 #define	MPP_VOLUME_UNIT		127
+#define	MPP_VOLUME_MAX		511	/* inclusivly */
 
 #define	STRLCPY(a,b,c) do { \
     strncpy(a,b,c); ((char *)(a))[(c)-1] = 0; \
 } while (0)
 
-class MppMainWindow;
-class MppScoreView;
-class MppDecode;
-class MppScoreMain;
-class MppLoopTab;
-class MppEchoTab;
-class MppScoreHighLighter;
-class MppImportTab;
-class MppDevices;
-class MppSpinBox;
-class MppPattern;
 class MppBpm;
 class MppButton;
 class MppButtonMap;
+class MppDecode;
+class MppDevices;
+class MppEchoTab;
 class MppGPro;
+class MppImportTab;
+class MppLoopTab;
+class MppMainWindow;
 class MppMidi;
 class MppMode;
-class MppVolume;
+class MppPattern;
 class MppReplace;
+class MppScoreHighLighter;
+class MppScoreMain;
+class MppScoreView;
+class MppSettings;
+class MppSettingsWhat;
+class MppSpinBox;
+class MppVolume;
 
 struct MppChordInfo {
 	int chord_line;

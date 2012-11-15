@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,63 +23,79 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _MIDIPP_MODE_H_
-#define	_MIDIPP_MODE_H_
+#ifndef _MIDIPP_SETTINGS_H_
+#define	_MIDIPP_SETTINGS_H_
 
 #include <midipp.h>
 
-enum {
-	MM_PASS_ALL,
-	MM_PASS_ONE_MIXED,
-	MM_PASS_NONE_FIXED,
-	MM_PASS_NONE_TRANS,
-	MM_PASS_NONE_CHORD,
-	MM_PASS_MAX,
-};
-
-class MppMode : public QDialog
+class MppSettings : public QSettings 
 {
 	Q_OBJECT;
 
 public:
-	MppMode(MppScoreMain *_parent, uint8_t _vi);
-	~MppMode();
+	MppSettings(MppMainWindow *_parent, const QString & fname);
+	~MppSettings(void);
 
-	MppScoreMain *sm;
+	int save_volume;
+	int save_instruments;
+	int save_viewmode;
+	int save_devices;
 
-	void update_all(void);
+	QString stringDefault(const QString &, const QString &);
 
-	/* view number */
-	uint8_t view_index;
+	int valueDefault(const QString &, int);
 
-public:
-	QGridLayout *gl;
+	QString concat(const char *, int = 0, int = 0);
 
-	QLabel *lbl_chan;
-	QLabel *lbl_input;
-	QLabel *lbl_base;
-	QLabel *lbl_cmd;
-	QLabel *lbl_delay;
-	QLabel *lbl_dev[MPP_MAX_DEVS];
+	void doSave(void);
+	void doLoad(void);
 
-	QCheckBox *cbx_dev[MPP_MAX_DEVS];
+	MppSettingsWhat *mpp_what;
 
-	MppButtonMap *but_mode;
-	QPushButton *but_done;
-	QPushButton *but_set_all;
-	QPushButton *but_clear_all;
+	QPushButton *but_config_save;
+	QPushButton *but_config_clean;
+	QPushButton *but_config_what;
+	QPushButton *but_config_load;
 
-	MppSpinBox *spn_cmd;
-	MppSpinBox *spn_base;
-
-	QSpinBox *spn_chan;
-	QSpinBox *spn_delay;
+	MppMainWindow *mw;
 
 public slots:
 
-	void handle_done();
-	void handle_set_all_devs();
-	void handle_clear_all_devs();
+	void handle_save(void);
+	void handle_clean(void);
+	void handle_what(void);
+	void handle_load(void);
 };
 
-#endif		/* _MIDIPP_MODE_H_ */
+class MppSettingsWhat : public QDialog
+{
+	Q_OBJECT;
+
+public:
+	MppSettingsWhat(MppSettings *_parent);
+	~MppSettingsWhat(void);
+
+	void doShow(void);
+
+	MppSettings *ms;
+
+	QGridLayout *gl;
+
+	QPushButton *but_reset;
+	QPushButton *but_ok;
+
+	QLabel *lbl_volume;
+	QLabel *lbl_instruments;
+	QLabel *lbl_viewmode;
+	QLabel *lbl_deviceconfig;
+
+	QCheckBox *cbx_volume;
+	QCheckBox *cbx_instruments;
+	QCheckBox *cbx_viewmode;
+	QCheckBox *cbx_deviceconfig;
+
+public slots:
+	void handle_reset(void);
+};
+
+#endif			/* _MIDIPP_SETTINGS_H_ */

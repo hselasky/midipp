@@ -26,21 +26,18 @@
 #include <midipp_buttonmap.h>
 #include <midipp_mode.h>
 #include <midipp_spinbox.h>
+#include <midipp_scores.h>
+#include <midipp_mainwindow.h>
 
-MppMode :: MppMode(uint8_t _vi)
+MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 {
 	uint32_t x;
 	char buf[64];
 
-	gl = new QGridLayout(this);
-
-	input_mask = 0;
-	base_key = 0;
-	cmd_key = 0;
-	key_delay = 0;
+	sm = _parent;
 	view_index = _vi;
-	key_mode = 0;
-	channel = 0;
+
+	gl = new QGridLayout(this);
 
 	setWindowTitle(tr("View ") + QChar('A' + _vi) + tr(" mode"));
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
@@ -62,7 +59,6 @@ MppMode :: MppMode(uint8_t _vi)
 	}
 
 	but_mode = new MppButtonMap("Key mode\0" "ALL\0" "MIXED\0" "FIXED\0" "TRANSP\0" "CHORD\0", 5, 3);
-	connect(but_mode, SIGNAL(selectionChanged(int)), this, SLOT(handle_mode(int)));
 
 	but_done = new QPushButton(tr("Close"));
 	connect(but_done, SIGNAL(released()), this, SLOT(handle_done()));
@@ -75,15 +71,15 @@ MppMode :: MppMode(uint8_t _vi)
 
 	spn_cmd = new MppSpinBox();
 	spn_cmd->setRange(0, 127);
-	spn_cmd->setValue(C3);
+	spn_cmd->setValue(0);
 
 	spn_base = new MppSpinBox();
 	spn_base->setRange(0, 127);
-	spn_base->setValue(C4);
+	spn_base->setValue(0);
 
 	spn_delay = new QSpinBox();
 	spn_delay->setRange(0, 255);
-	spn_delay->setValue(25);
+	spn_delay->setValue(0);
 	spn_delay->setSuffix(tr(" ms"));
 
 	spn_chan = new QSpinBox();
@@ -122,19 +118,33 @@ MppMode :: ~MppMode()
 }
 
 void
-MppMode :: update_mode(int value)
+MppMode :: update_all(void)
 {
-	handle_mode(value);
-	but_mode->handle_pressed(value);
-}
+	int base_key;
+	int cmd_key;
+	int key_delay;
+	int channel;
+	int key_mode;
+	int input_mask;
+	int x;
 
-void
-MppMode :: handle_mode(int value)
-{
-	if (value < 0 || value >= MM_PASS_MAX)
-		key_mode = 0;
-	else
-		key_mode = value;
+	pthread_mutex_lock(&sm->mainWindow->mtx);
+	base_key = sm->baseKey;
+	cmd_key = sm->cmdKey;
+	key_delay = sm->delayNoise;
+	channel = sm->synthChannel;
+	key_mode = sm->keyMode;
+	input_mask = sm->devInputMask;
+	pthread_mutex_unlock(&sm->mainWindow->mtx);
+
+	for (x = 0; x != MPP_MAX_DEVS; x++)
+		cbx_dev[x]->setChecked((input_mask >> x) & 1);
+
+	spn_base->setValue(base_key);
+	spn_cmd->setValue(cmd_key);
+	spn_delay->setValue(key_delay);
+	spn_chan->setValue(channel);
+	but_mode->handle_pressed(key_mode);
 }
 
 void
@@ -158,7 +168,13 @@ MppMode :: handle_clear_all_devs()
 void
 MppMode :: handle_done()
 {
-	uint32_t x;
+	int base_key;
+	int cmd_key;
+	int key_delay;
+	int channel;
+	int key_mode;
+	int input_mask;
+	int x;
 
 	input_mask = 0;
 
@@ -171,6 +187,19 @@ MppMode :: handle_done()
 	cmd_key = spn_cmd->value();
 	key_delay = spn_delay->value();
 	channel = spn_chan->value();
+	key_mode = but_mode->currSelection;
+
+	if (key_mode < 0 || key_mode >= MM_PASS_MAX)
+		key_mode = 0;
+
+	pthread_mutex_lock(&sm->mainWindow->mtx);
+	sm->baseKey = base_key;
+	sm->cmdKey = cmd_key;
+	sm->delayNoise = key_delay;
+	sm->synthChannel = channel;
+	sm->keyMode = key_mode;
+	sm->devInputMask = input_mask;
+	pthread_mutex_unlock(&sm->mainWindow->mtx);
 
 	accept();
 }

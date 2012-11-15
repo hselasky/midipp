@@ -38,6 +38,7 @@
 #include <midipp_midi.h>
 #include <midipp_mode.h>
 #include <midipp_volume.h>
+#include <midipp_settings.h>
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -319,7 +320,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	lbl_bpm_avg_val->setAutoFillBackground(1);
 
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
-		dlg_mode[n] = new MppMode(n);
+		dlg_mode[n] = new MppMode(scores_main[n], n);
 		but_mode[n] = new MppButton(tr("View &") + QChar('A' + n) + tr(" mode"), n);
 		connect(but_mode[n], SIGNAL(released(int)), this, SLOT(handle_mode(int)));
 	}
@@ -448,6 +449,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* <Configuration> Tab */
 
+	mpp_settings = new MppSettings(this, "midipp");
+
 	lbl_config_title = new QLabel(tr("- Device configuration -"));
 	lbl_config_play = new QLabel(tr("Play"));
 	lbl_config_rec = new QLabel(tr("Rec."));
@@ -484,9 +487,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 		led_config_dev[n] = new QLineEdit(QString());
 
-		cbx_config_dev[(3*n)+0] = new QCheckBox();
-		cbx_config_dev[(3*n)+1] = new QCheckBox();
-		cbx_config_dev[(3*n)+2] = new QCheckBox();
+		cbx_config_dev[n][0] = new QCheckBox();
+		cbx_config_dev[n][1] = new QCheckBox();
+		cbx_config_dev[n][2] = new QCheckBox();
 
 		snprintf(buf, sizeof(buf), "Dev%d:", n);
 
@@ -495,9 +498,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		tab_config_gl->addWidget(lbl_config_dev[n], x, 0, 1, 1, Qt::AlignHCenter|Qt::AlignLeft);
 		tab_config_gl->addWidget(led_config_dev[n], x, 1, 1, 2, Qt::AlignHCenter|Qt::AlignLeft);
 
-		tab_config_gl->addWidget(cbx_config_dev[(3*n)+0], x, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		tab_config_gl->addWidget(cbx_config_dev[(3*n)+1], x, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		tab_config_gl->addWidget(cbx_config_dev[(3*n)+2], x, 5, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		tab_config_gl->addWidget(cbx_config_dev[n][0], x, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		tab_config_gl->addWidget(cbx_config_dev[n][1], x, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		tab_config_gl->addWidget(cbx_config_dev[n][2], x, 5, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 		tab_config_gl->addWidget(but_config_mm[n], x, 6, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 		tab_config_gl->addWidget(but_config_dev[n], x, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
@@ -510,6 +513,22 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	x++;
 
 	tab_config_gl->setRowStretch(x, 1);
+
+	x++;
+
+	tab_config_gl->addWidget(mpp_settings->but_config_save, x, 0, 1, 2, Qt::AlignLeft|Qt::AlignVCenter);
+
+	x++;
+
+	tab_config_gl->addWidget(mpp_settings->but_config_clean, x, 0, 1, 2, Qt::AlignLeft|Qt::AlignVCenter);
+
+	x++;
+
+	tab_config_gl->addWidget(mpp_settings->but_config_what, x, 0, 1, 2, Qt::AlignLeft|Qt::AlignVCenter);
+
+	x++;
+
+	tab_config_gl->addWidget(mpp_settings->but_config_load, x, 0, 1, 2, Qt::AlignLeft|Qt::AlignVCenter);
 
 	x++;
 
@@ -625,11 +644,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		lbl_volume_synth[n] = new QLabel(tr(buf));
 
 		spn_volume_synth[n] = new MppVolume();
-		spn_volume_synth[n]->setRange(0, 511, MPP_VOLUME_UNIT);
+		spn_volume_synth[n]->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
 		connect(spn_volume_synth[n], SIGNAL(valueChanged(int)), this, SLOT(handle_volume_changed(int)));
 
 		spn_volume_play[n] = new MppVolume();
-		spn_volume_play[n]->setRange(0, 511, MPP_VOLUME_UNIT);
+		spn_volume_play[n]->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
 		connect(spn_volume_play[n], SIGNAL(valueChanged(int)), this, SLOT(handle_volume_changed(int)));
 
 		tab_volume_gl->addWidget(lbl_volume_play[n], (n & 7) + x, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
@@ -698,6 +717,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
 	watchdog->start(250);
+
+	mpp_settings->handle_load();
 }
 
 MppMainWindow :: ~MppMainWindow()
@@ -1406,13 +1427,13 @@ MppMainWindow :: handle_config_revert()
 		else
 			led_config_dev[n]->setText(QString());
 
-		cbx_config_dev[(3*n)+0]->setChecked(
+		cbx_config_dev[n][0]->setChecked(
 		    (deviceBits & (1UL << ((3*n)+0))) ? 1 : 0);
 
-		cbx_config_dev[(3*n)+1]->setChecked(
+		cbx_config_dev[n][1]->setChecked(
 		    (deviceBits & (1UL << ((3*n)+1))) ? 1 : 0);
 
-		cbx_config_dev[(3*n)+2]->setChecked(
+		cbx_config_dev[n][2]->setChecked(
 		    (deviceBits & (1UL << ((3*n)+2))) ? 1 : 0);
 	}
 }
@@ -1439,11 +1460,11 @@ MppMainWindow :: handle_config_apply_sub(int devno)
 
 		deviceName[n] = MppQStringToAscii(led_config_dev[n]->text());
 
-		if (cbx_config_dev[(3*n)+0]->isChecked())
+		if (cbx_config_dev[n][0]->isChecked())
 			deviceBits |= 1UL << ((3*n)+0);
-		if (cbx_config_dev[(3*n)+1]->isChecked())
+		if (cbx_config_dev[n][1]->isChecked())
 			deviceBits |= 1UL << ((3*n)+1);
-		if (cbx_config_dev[(3*n)+2]->isChecked())
+		if (cbx_config_dev[n][2]->isChecked())
 			deviceBits |= 1UL << ((3*n)+2);
 	}
 
@@ -2917,16 +2938,8 @@ MppMainWindow :: handle_bpm()
 void
 MppMainWindow :: handle_mode(int index)
 {
+	dlg_mode[index]->update_all();
 	dlg_mode[index]->exec();
-
-	pthread_mutex_lock(&mtx);
-	scores_main[index]->baseKey = dlg_mode[index]->base_key;
-	scores_main[index]->cmdKey = dlg_mode[index]->cmd_key;
-	scores_main[index]->delayNoise = dlg_mode[index]->key_delay;
-	scores_main[index]->devInputMask = dlg_mode[index]->input_mask;
-	scores_main[index]->keyMode = dlg_mode[index]->key_mode;
-	scores_main[index]->synthChannel = dlg_mode[index]->channel;
-	pthread_mutex_unlock(&mtx);
 
 	sync_key_mode();
 }
@@ -2937,11 +2950,14 @@ MppMainWindow :: handle_key_mode(int value)
 	MppScoreMain *sm = currScoreMain();
 	MppMode *cm = currModeDlg();
 
-	cm->update_mode(value);
+	if (value < 0 || value >= MM_PASS_MAX)
+		value = 0;
 
 	pthread_mutex_lock(&mtx);
-	sm->keyMode = cm->key_mode;
+	sm->keyMode = value;
 	pthread_mutex_unlock(&mtx);
+
+	cm->update_all();
 
 	sync_key_mode();
 }

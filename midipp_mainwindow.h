@@ -229,6 +229,8 @@ public:
 	QGridLayout *tab_config_gl;
 	QWidget *tab_config_wg;
 
+	MppSettings *mpp_settings;
+
 	QLabel *lbl_config_title;
 	QLabel *lbl_config_play;
 	QLabel *lbl_config_rec;
@@ -240,7 +242,7 @@ public:
 	MppButton *but_config_dev[MPP_MAX_DEVS];
 	MppButton *but_config_mm[MPP_MAX_DEVS];
 	QLineEdit *led_config_dev[MPP_MAX_DEVS];
-	QCheckBox *cbx_config_dev[3 * MPP_MAX_DEVS];
+	QCheckBox *cbx_config_dev[MPP_MAX_DEVS][3];
 
 	QPushButton *but_config_apply;
 	QPushButton *but_config_revert;
