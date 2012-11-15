@@ -163,6 +163,7 @@ error:
 	box.setText(QObject::tr("Could not read from file!"));
 	box.setStandardButtons(QMessageBox::Ok);
 	box.setIcon(QMessageBox::Critical);
+	box.setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 	box.exec();
 	return (QString());
 }
@@ -192,6 +193,7 @@ error:
 	box.setText(QObject::tr("Could not write to file!"));
 	box.setStandardButtons(QMessageBox::Ok);
 	box.setIcon(QMessageBox::Critical);
+	box.setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 	box.exec();
 }
 
@@ -289,6 +291,7 @@ main(int argc, char **argv)
 		    "the JACK subsystem!"));
 		box.setStandardButtons(QMessageBox::Ok);
 		box.setIcon(QMessageBox::Critical);
+		box.setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 		box.exec();
 	}
 

@@ -174,7 +174,7 @@ MppSettings :: doLoad(void)
 			int baseKey = valueDefault(concat("view%d/basekey", x), C4);
 			int cmdKey = valueDefault(concat("view%d/cmdkey", x), C3);
 			int delayNoise = valueDefault(concat("view%d/delay", x), 25);
-			int devInputMask = valueDefault(concat("view%d/inmask", x), -1);
+			int devInputMask = valueDefault(concat("view%d/inmask", x), x ? 0 : -1);
 			int keyMode = valueDefault(concat("view%d/keymode", x), 0);
 			int synthChannel = valueDefault(concat("view%d/synthchannel", x), 0);
 
@@ -268,8 +268,30 @@ MppSettings :: handle_save(void)
 void
 MppSettings :: handle_clean(void)
 {
+	QMessageBox mbox;
+
+	mbox.setText("Do you want to clear the configuration?");
+	mbox.setInformativeText("This step cannot be undone!");
+	mbox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+	mbox.setDefaultButton(QMessageBox::No);
+	mbox.setIcon(QMessageBox::Critical);
+	mbox.setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+
+	int ret = mbox.exec();
+
+	if (ret != QMessageBox::Yes)
+		return;
+
 	clear();
-	sync();
+
+	beginGroup("global");
+	setValue("save_volume", 1);
+	setValue("save_instruments", 1);
+	setValue("save_viewmode", 1);
+	setValue("save_devices", 1);
+	endGroup();
+
+	doLoad();
 }
 
 void

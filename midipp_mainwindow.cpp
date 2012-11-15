@@ -520,10 +520,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x++;
 
-	tab_config_gl->addWidget(mpp_settings->but_config_clean, x, 0, 1, 2, Qt::AlignLeft|Qt::AlignVCenter);
-
-	x++;
-
 	tab_config_gl->addWidget(mpp_settings->but_config_what, x, 0, 1, 2, Qt::AlignLeft|Qt::AlignVCenter);
 
 	x++;
@@ -535,6 +531,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_config_gl->addWidget(but_config_fontsel, x, 0, 1, 2, Qt::AlignLeft|Qt::AlignVCenter);
 	tab_config_gl->addWidget(but_config_apply, x, 4, 1, 2);
 	tab_config_gl->addWidget(but_config_revert, x, 6, 1, 2);
+
+	tab_config_gl->addWidget(mpp_settings->but_config_clean, x, 2, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
 
 	/* <Instrument> tab */
 
@@ -1107,6 +1105,7 @@ MppMainWindow :: handle_midi_file_open(int merge)
 				box.setText(tr("Invalid MIDI file!"));
 				box.setStandardButtons(QMessageBox::Ok);
 				box.setIcon(QMessageBox::Information);
+				box.setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 				box.exec();
 			} else {
 				goto load_file;
@@ -1234,6 +1233,7 @@ MppMainWindow :: handle_midi_file_save()
 				box.setText(tr("Could not write MIDI file!"));
 				box.setStandardButtons(QMessageBox::Ok);
 				box.setIcon(QMessageBox::Information);
+				box.setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 				box.exec();
 			}
 		} else {
@@ -1242,6 +1242,8 @@ MppMainWindow :: handle_midi_file_save()
 			box.setText(tr("Could not get MIDI data!"));
 			box.setStandardButtons(QMessageBox::Ok);
 			box.setIcon(QMessageBox::Information);
+			box.setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+
 			box.exec();
 		}
 	} else {
@@ -2672,6 +2674,8 @@ MppMainWindow :: handle_gpro_file_import()
 			box.setText(tr("Could not read MIDI file!"));
 			box.setStandardButtons(QMessageBox::Ok);
 			box.setIcon(QMessageBox::Information);
+			box.setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+
 			box.exec();
 		} else {
 			goto load_file;
