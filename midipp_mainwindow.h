@@ -62,6 +62,8 @@ public:
 	void handle_midi_file_instr_prepend(void);
 	void handle_midi_file_instr_delete(void);
 	void handle_jump_locked(int index);
+	void handle_tab_changed_all(void);
+	void handle_tab_changed(QWidget *);
 
 	QString get_midi_score_duration(uint32_t *psum = 0);
 	int log_midi_score_duration();
@@ -154,6 +156,14 @@ public:
 	QTabWidget *main_tw;
 
 	QTabWidget *scores_tw;
+
+	/* main <> */
+
+	QPushButton *mwRight;
+	QPushButton *mwLeft;
+	QPushButton *mwRewind;
+	QPushButton *mwPlay;
+	QPushButton *mwReload;
 
 	/* tab <Scores> */
 
@@ -313,7 +323,7 @@ public slots:
 	void handle_edit_chord();
 	void handle_replace();
 	void handle_jump(int index);
-	void handle_compile();
+	void handle_compile(int force = 0);
 	void handle_score_record(int);
 	void handle_midi_record(int);
 	void handle_midi_pause();
@@ -346,7 +356,8 @@ public slots:
 	void handle_volume_changed(int);
 	void handle_volume_reset();
 
-	void handle_tab_changed(int index);
+	void handle_tab_changed_scores(int index);
+	void handle_tab_changed_main(int index);
 
 	void handle_midi_file_import();
 
@@ -359,6 +370,9 @@ public slots:
 	void handle_mode(int);
 
 	void handle_key_mode(int);
+
+	void handle_move_right();
+	void handle_move_left();
 };
 
 #endif		/* _MIDIPP_MAINWINDOW_H_ */

@@ -139,6 +139,8 @@ public:
 	struct MppVisualScore visual[MPP_MAX_LINES];
 	struct MppMergeEntry merge[MPP_MAX_MERGE];
 
+	int visual_y_max;
+
 	uint32_t pressedKeys[MPP_PRESSED_MAX];
 	uint32_t realLine[MPP_MAX_LINES];
 	uint32_t timer_ticks_pre[MPP_MAX_LINES];
@@ -203,7 +205,7 @@ protected:
 
 public slots:
 
-	void handleCompile();
+	void handleCompile(int force = 0);
 	void handleScoreFileNew();
 	void handleScoreFileOpen();
 	void handleScoreFileSave();

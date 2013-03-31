@@ -160,7 +160,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 
 	/* Initial compile */
 
-	handleCompile();
+	handleCompile(1);
 
 	QPainter paint;
 
@@ -230,10 +230,10 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 	pic = NULL;
 
 	fnt_a = mainWindow->defaultFont;
-	fnt_a.setPixelSize(20);
+	fnt_a.setPixelSize(mainWindow->defaultFont.pixelSize());
 
 	fnt_b = mainWindow->defaultFont;
-	fnt_b.setPixelSize(24);
+	fnt_b.setPixelSize(mainWindow->defaultFont.pixelSize() + 4);
 
 	maxScoresWidth = 0;
 
@@ -264,7 +264,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 
 		if (y_max != 0) {
 			scale_min = ((float)(pd->height() - (2 * orig.y()))) / 
-			    (((float)y_max) * MPP_VISUAL_Y_MAX);
+			    (((float)y_max) * visual_y_max);
 
 			if (scale_min < 0)
 				scale_f = 0.5;	/* dummy */
@@ -275,7 +275,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 		paint.begin(pd);
 		paint.translate(orig);
 		paint.scale(scale_f, scale_f);
-		paint.translate(QPoint(0, -MPP_VISUAL_Y_MAX));
+		paint.translate(QPoint(0, -visual_y_max));
 	}
 
 	y_max = 0;
@@ -293,7 +293,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 			if (pageNext[x] != 0) {
 				pd->newPage();
 				while (y_max--)
-					paint.translate(QPoint(0, -MPP_VISUAL_Y_MAX));
+					paint.translate(QPoint(0, -visual_y_max));
 				y_max = 0;
 			}
 		}
@@ -306,7 +306,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 			pic = new QPicture();
 			paint.begin(pic);
 		} else {
-			paint.translate(QPoint(0,MPP_VISUAL_Y_MAX));
+			paint.translate(QPoint(0,visual_y_max));
 			y_max++;
 		}
 
@@ -386,7 +386,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 					uint32_t foff;
 
 					visual[z].x_off = text_x + adj_x;
-					visual[z].y_off = (MPP_VISUAL_Y_MAX/3);
+					visual[z].y_off = (visual_y_max / 3);
 
 					parseMax(&maxScoresWidth, 
 					    visual[z].x_off + MPP_VISUAL_R_MAX);
@@ -437,8 +437,8 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 			paint.setBrush(QColor(color_black));
 
 			if (draw_chord) {
-				paint.drawText(QPointF(chord_x, MPP_VISUAL_MARGIN + 
-				    (MPP_VISUAL_Y_MAX/6)), temp);
+				paint.drawText(QPointF(chord_x,
+				    (visual_y_max / 3) - (MPP_VISUAL_C_MAX / 4)), temp);
 
 				chord_x += temp_size.width();
 
@@ -497,8 +497,8 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 
 				text_x += temp_space;
 
-				paint.drawText(QPointF(text_x, MPP_VISUAL_Y_MAX -
-				    (MPP_VISUAL_Y_MAX/4) - MPP_VISUAL_MARGIN), temp);
+				paint.drawText(QPointF(text_x, visual_y_max -
+				    (visual_y_max / 3)), temp);
 
 				text_x += temp_space;
 				text_x += temp_size.width();
@@ -516,7 +516,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 			int h;
 
 			w = x_max;
-			h = MPP_VISUAL_Y_MAX;
+			h = visual_y_max;
 
 			paint.end();
 
@@ -632,10 +632,12 @@ MppScoreMain :: viewMousePressEvent(QMouseEvent *e)
 	int yi;
 	uint16_t max;
 
-	yi = e->y() / MPP_VISUAL_Y_MAX;
+	yi = e->y() / visual_y_max;
 
 	if ((yi < 0) || (yi >= MPP_MAX_LINES))
 		return;
+
+	mainWindow->handle_tab_changed(&viewWidget);
 
 	pthread_mutex_lock(&mainWindow->mtx);
 
@@ -680,7 +682,7 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 	scroll = picScroll;
 	pthread_mutex_unlock(&mainWindow->mtx);
 
-	y_blocks = (viewWidgetSub->height() / MPP_VISUAL_Y_MAX);
+	y_blocks = (viewWidgetSub->height() / visual_y_max);
 	if (y_blocks == 0)
 		y_blocks = 1;
 	y_div = 0;
@@ -769,7 +771,7 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 					z++;
 				}
 				paint.drawPixmap(
-				     QPoint(0, ((y - y_rem) % y_blocks) * MPP_VISUAL_Y_MAX),
+				     QPoint(0, ((y - y_rem) % y_blocks) * visual_y_max),
 				    *(visual[x].pic));
 			}
 			y++;
@@ -790,7 +792,7 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 		paint.setPen(QPen(color_green, 4));
 		paint.setBrush(QColor(color_green));
 		paint.drawEllipse(QRect(visual[opos].x_off,
-		    visual[opos].y_off + (yo_rem * MPP_VISUAL_Y_MAX),
+		    visual[opos].y_off + (yo_rem * visual_y_max),
 		    MPP_VISUAL_R_MAX, MPP_VISUAL_R_MAX));
 
 	}
@@ -801,7 +803,7 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 		paint.setPen(QPen(color_logo, 4));
 		paint.setBrush(QColor(color_logo));
 		paint.drawEllipse(QRect(visual[pos].x_off,
-		    visual[pos].y_off + (yc_rem * MPP_VISUAL_Y_MAX),
+		    visual[pos].y_off + (yc_rem * visual_y_max),
 		    MPP_VISUAL_R_MAX, MPP_VISUAL_R_MAX));
 	}
 
@@ -1771,7 +1773,7 @@ MppScoreMain :: handleScoreFileNew()
 		currScoreFileName = NULL;
 	}
 
-	mainWindow->handle_tab_changed(mainWindow->scores_tw->currentIndex());
+	mainWindow->handle_tab_changed_all();
 }
 
 int
@@ -1789,7 +1791,7 @@ MppScoreMain :: handleScoreFileOpenSub(QString fname)
 
 	handleCompile();
 
-	mainWindow->handle_tab_changed(mainWindow->scores_tw->currentIndex());
+	mainWindow->handle_tab_changed_all();
 
 	return (scores.isNull() || scores.isEmpty());
 }
@@ -1839,7 +1841,7 @@ MppScoreMain :: handleScoreFileSaveAs()
 		if (currScoreFileName != NULL)
 			handleScoreFileSave();
 
-		mainWindow->handle_tab_changed(mainWindow->scores_tw->currentIndex());
+		mainWindow->handle_tab_changed_all();
 	}
 
 	delete diag;
@@ -2332,7 +2334,7 @@ MppScoreMain :: handleScorePrint(void)
 		orig = QPoint(printer.logicalDpiX() * 0.5,
 			      printer.logicalDpiY() * 0.5);
 
-		scale_f = ((qreal)printer.logicalDpiY()) / (qreal)MPP_VISUAL_Y_MAX;
+		scale_f = ((qreal)printer.logicalDpiY()) / (qreal)visual_y_max;
 
 		handleParseSub(&printer, orig, scale_f);
 	}
@@ -2386,14 +2388,17 @@ MppScoreMain :: setPressedKey(int chan, int out_key, int dur, int delay)
 }
 
 void
-MppScoreMain :: handleCompile()
+MppScoreMain :: handleCompile(int force)
 {
 	QString temp;
 
 	temp = editWidget->toPlainText();
 
-	if (temp != editText) {
+	if (temp != editText || force != 0) {
 		editText = temp;
+
+		visual_y_max = MPP_VISUAL_C_MAX +
+		  (3 * mainWindow->defaultFont.pixelSize());
 
 		pthread_mutex_lock(&mainWindow->mtx);
 
@@ -2440,7 +2445,7 @@ MppScoreMain :: watchdog()
 
 	/* Compute alignment factor */
 
-	y_blocks = (viewWidgetSub->height() / MPP_VISUAL_Y_MAX);
+	y_blocks = (viewWidgetSub->height() / visual_y_max);
 	if (y_blocks == 0)
 		y_blocks = 1;
 

@@ -59,6 +59,7 @@
 #include <QPrintDialog>
 #include <QPrinter>
 #include <QFontDialog>
+#include <QFontInfo>
 #include <QFileInfo>
 #include <QPixmap>
 #include <QMouseEvent>
@@ -70,6 +71,7 @@
 #include <QDir>
 #include <QGroupBox>
 #include <QSettings>
+#include <QStyle>
 
 #include <umidi20.h>
 
@@ -90,7 +92,6 @@
 #define	MPP_ICON_FILE	":/midipp.png"
 
 #define	MPP_VISUAL_MARGIN	8
-#define	MPP_VISUAL_Y_MAX	80
 #define	MPP_VISUAL_R_MAX	8
 #define	MPP_VISUAL_C_MAX	20
 #define	MPP_VOLUME_UNIT		127

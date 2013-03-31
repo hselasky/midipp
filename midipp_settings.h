@@ -40,6 +40,7 @@ public:
 	int save_instruments;
 	int save_viewmode;
 	int save_devices;
+	int save_font;
 
 	QString stringDefault(const QString &, const QString &);
 
@@ -88,11 +89,13 @@ public:
 	QLabel *lbl_instruments;
 	QLabel *lbl_viewmode;
 	QLabel *lbl_deviceconfig;
+	QLabel *lbl_font;
 
 	QCheckBox *cbx_volume;
 	QCheckBox *cbx_instruments;
 	QCheckBox *cbx_viewmode;
 	QCheckBox *cbx_deviceconfig;
+	QCheckBox *cbx_font;
 
 public slots:
 	void handle_reset(void);

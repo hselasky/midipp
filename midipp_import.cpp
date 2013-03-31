@@ -323,7 +323,7 @@ MppImportTab :: MppImportTab(MppMainWindow *parent)
 
 	butImportFileNew = new QPushButton(tr("New"));
 	butImportFileOpen = new QPushButton(tr("Open"));
-	butImport = new QPushButton(tr("To A/B-Scores"));
+	butImport = new QPushButton();
 
 	connect(butImportFileNew, SIGNAL(pressed()), this, SLOT(handleImportNew()));
 	connect(butImportFileOpen, SIGNAL(pressed()), this, SLOT(handleImportOpen()));

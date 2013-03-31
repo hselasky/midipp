@@ -77,7 +77,27 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	noiseRem = 1;
 
-	defaultFont.fromString(QString("Sans Serif,12,-1,5,75,0,0,0,0,0"));
+	defaultFont.fromString(QString("Sans Serif,-1,20,5,75,0,0,0,0,0"));
+
+	/* Main GUI */
+
+	mwRight = new QPushButton();
+	mwLeft = new QPushButton();
+	mwRewind = new QPushButton();
+	mwPlay = new QPushButton();
+	mwReload = new QPushButton();
+
+	mwRight->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
+	mwLeft->setIcon(style()->standardIcon(QStyle::SP_ArrowLeft));
+	mwRewind->setIcon(style()->standardIcon(QStyle::SP_MediaStop));
+	mwPlay->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
+	mwReload->setIcon(style()->standardIcon(QStyle::SP_BrowserReload));
+
+	connect(mwRight, SIGNAL(released()), this, SLOT(handle_move_right()));
+	connect(mwLeft, SIGNAL(released()), this, SLOT(handle_move_left()));
+	connect(mwRewind, SIGNAL(released()), this, SLOT(handle_rewind()));
+	connect(mwPlay, SIGNAL(released()), this, SLOT(handle_midi_trigger()));
+	connect(mwReload, SIGNAL(released()), this, SLOT(handle_compile()));
 
 	/* Setup GUI */
 
@@ -92,8 +112,14 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* Tabs */
 
-	main_gl->addWidget(scores_tw,0,0,1,1);
-	main_gl->addWidget(main_tw,0,1,1,1);
+	main_gl->addWidget(scores_tw,0,0,8,1);
+	main_gl->addWidget(main_tw,0,2,8,1);
+
+	main_gl->addWidget(mwPlay,1,1,1,1);
+	main_gl->addWidget(mwRewind,2,1,1,1);
+	main_gl->addWidget(mwRight,3,1,1,1);
+	main_gl->addWidget(mwLeft,4,1,1,1);
+	main_gl->addWidget(mwReload,6,1,1,1);
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++)
 		scores_main[x] = new MppScoreMain(this);
@@ -187,10 +213,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_midi_file_merge = new QPushButton(tr("Merge"));
 	but_midi_file_save = new QPushButton(tr("Save"));
 	but_midi_file_save_as = new QPushButton(tr("Save As"));
-	but_midi_file_import = new QPushButton(tr("To A/B-Scores"));
+	but_midi_file_import = new QPushButton();
 
 	lbl_gpro_title = new QLabel(tr("- GPro v3/4 -"));
-	but_gpro_file_import = new QPushButton(tr("Open In A/B-Scores"));
+	but_gpro_file_import = new QPushButton();
 
 	n = 0;
 
@@ -703,16 +729,17 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	connect(but_midi_pause, SIGNAL(pressed()), this, SLOT(handle_midi_pause()));
 
-	connect(scores_tw, SIGNAL(currentChanged(int)), this, SLOT(handle_tab_changed(int)));
+	connect(scores_tw, SIGNAL(currentChanged(int)), this, SLOT(handle_tab_changed_scores(int)));
+	connect(main_tw, SIGNAL(currentChanged(int)), this, SLOT(handle_tab_changed_main(int)));
 
 	MidiInit();
-
-	sync_key_mode();
 
 	version = tr("MIDI Player Pro v1.0.18");
 
 	setWindowTitle(version);
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+
+	handle_tab_changed_all();
 
 	watchdog->start(250);
 
@@ -798,7 +825,7 @@ MppMainWindow :: handle_play_key_changed(int key)
 }
 
 void
-MppMainWindow :: handle_compile()
+MppMainWindow :: handle_compile(int force)
 {
 	int x;
 
@@ -807,7 +834,7 @@ MppMainWindow :: handle_compile()
 	pthread_mutex_unlock(&mtx);
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++)
-		scores_main[x]->handleCompile();
+		scores_main[x]->handleCompile(force);
 }
 
 void
@@ -1523,10 +1550,12 @@ MppMainWindow :: handle_config_fontsel()
 	QFont font = QFontDialog::getFont(&success, defaultFont, this);
 
 	if (success) {
+		font.setPixelSize(QFontInfo(font).pixelSize());
+
 		defaultFont = font;
 
 		for (x = 0; x != MPP_MAX_VIEWS; x++)
-			scores_main[x]->handleCompile();
+			scores_main[x]->handleCompile(1);
 	}
 }
 
@@ -2279,13 +2308,35 @@ MppMainWindow :: handle_volume_changed(int dummy)
 }
 
 void
-MppMainWindow :: handle_tab_changed(int index)
+MppMainWindow :: handle_tab_changed_scores(int index)
 {
 	QWidget *pw;
+	pw = scores_tw->widget(index);
+	if (pw != 0)
+		handle_tab_changed(pw);
+}
+
+void
+MppMainWindow :: handle_tab_changed_main(int index)
+{
+	QWidget *pw;
+	pw = main_tw->widget(index);
+	if (pw != 0)
+		handle_tab_changed(pw);
+}
+
+void
+MppMainWindow :: handle_tab_changed_all(void)
+{
+	handle_tab_changed_scores(scores_tw->currentIndex());
+	handle_tab_changed_main(main_tw->currentIndex());
+}
+
+void
+MppMainWindow :: handle_tab_changed(QWidget *pw)
+{
 	int x;
 	int compile = 0;
-
-	pw = scores_tw->widget(index);
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
 		if (pw == &scores_main[x]->viewWidget) {
@@ -2312,6 +2363,15 @@ MppMainWindow :: handle_tab_changed(int index)
 
 	if (compile)
 		handle_compile();
+
+	but_midi_file_import->setText(tr("To ") +
+	    QChar('A' + currViewIndex) + tr("-Scores"));
+
+	but_gpro_file_import->setText(tr("Open In ") +
+	    QChar('A' + currViewIndex) + tr("-Scores"));
+
+	tab_import->butImport->setText(tr("To ") +
+	    QChar('A' + currViewIndex) + tr("-Scores"));
 
 	sync_key_mode();
 }
@@ -2983,4 +3043,40 @@ MppMode *
 MppMainWindow :: currModeDlg()
 {
 	return (dlg_mode[currViewIndex]);
+}
+
+void
+MppMainWindow :: handle_move_right()
+{
+	QWidget *pw;
+	int index;
+
+	index = scores_tw->currentIndex();
+	if (index < 0)
+		return;
+
+	QString desc = scores_tw->tabText(index);
+	pw = scores_tw->widget(index);
+	scores_tw->removeTab(index);
+
+	main_tw->addTab(pw, desc);
+	main_tw->setCurrentWidget(pw);
+}
+
+void
+MppMainWindow :: handle_move_left()
+{
+	QWidget *pw;
+	int index;
+
+	index = main_tw->currentIndex();
+	if (index < 0)
+		return;
+
+	QString desc = main_tw->tabText(index);
+	pw = main_tw->widget(index);
+	main_tw->removeTab(index);
+
+	scores_tw->addTab(pw, desc);
+	scores_tw->setCurrentWidget(pw);
 }

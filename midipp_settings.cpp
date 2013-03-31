@@ -38,6 +38,7 @@ MppSettings :: MppSettings(MppMainWindow *_parent, const QString & fname)
 	save_instruments = -1;
 	save_viewmode = -1;
 	save_devices = -1;
+	save_font = -1;
 
 	but_config_save = new QPushButton(tr("Cfg Save"));
 	but_config_clean = new QPushButton(tr("Cfg Clean"));
@@ -104,6 +105,7 @@ MppSettings :: doSave(void)
 	setValue("save_instruments", save_instruments ? 1 : 0);
 	setValue("save_viewmode", save_viewmode ? 1 : 0);
 	setValue("save_devices", save_devices ? 1 : 0);
+	setValue("save_font", save_font ? 1 : 0);
 	endGroup();
 
 	if (save_viewmode) {
@@ -156,6 +158,11 @@ MppSettings :: doSave(void)
 			endGroup();
 		}
 	}
+	if (save_font) {
+		beginGroup("font");
+		setValue("default", mw->defaultFont.toString());
+		endGroup();
+	}
 }
 
 void
@@ -168,6 +175,7 @@ MppSettings :: doLoad(void)
 	save_instruments = valueDefault("global/save_instruments", -1);
 	save_viewmode = valueDefault("global/save_viewmode", -1);
 	save_devices = valueDefault("global/save_devices", -1);
+	save_font = valueDefault("global/save_font", -1);
 
 	if (save_viewmode > 0) {
 		for (x = 0; x != MPP_MAX_VIEWS; x++) {
@@ -256,6 +264,14 @@ MppSettings :: doLoad(void)
 			pthread_mutex_unlock(&mw->mtx);
 		}
 	}
+	if (save_font > 0) {
+		mw->defaultFont.fromString(
+		    stringDefault("font/default",
+		    "Sans Serif,-1,20,5,75,0,0,0,0,0"));
+		if (mw->defaultFont.pixelSize() < 1)
+			mw->defaultFont.setPixelSize(20);
+		mw->handle_compile(1);
+	}
 }
 
 void
@@ -289,6 +305,7 @@ MppSettings :: handle_clean(void)
 	setValue("save_instruments", 1);
 	setValue("save_viewmode", 1);
 	setValue("save_devices", 1);
+	setValue("save_font", 1);
 	endGroup();
 
 	doLoad();
@@ -319,11 +336,13 @@ MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
 	lbl_instruments = new QLabel(tr("Save instrument settings"));
 	lbl_viewmode = new QLabel(tr("Save view mode"));
 	lbl_deviceconfig = new QLabel(tr("Save device configuration"));
+	lbl_font = new QLabel(tr("Save font selection"));
 
 	cbx_volume = new QCheckBox();
 	cbx_instruments = new QCheckBox();
 	cbx_viewmode = new QCheckBox();
 	cbx_deviceconfig = new QCheckBox();
+	cbx_font = new QCheckBox();
 
 	but_ok = new QPushButton(tr("Close"));
 	but_reset = new QPushButton(tr("Reset"));
@@ -338,14 +357,16 @@ MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
 	gl->addWidget(lbl_instruments, 1, 0, 1, 1);
 	gl->addWidget(lbl_viewmode, 2, 0, 1, 1);
 	gl->addWidget(lbl_deviceconfig, 3, 0, 1, 1);
+	gl->addWidget(lbl_font, 4, 0, 1, 1);
 
 	gl->addWidget(cbx_volume, 0, 2, 1, 2);
 	gl->addWidget(cbx_instruments, 1, 2, 1, 2);
 	gl->addWidget(cbx_viewmode, 2, 2, 1, 2);
 	gl->addWidget(cbx_deviceconfig, 3, 2, 1, 2);
+	gl->addWidget(cbx_font, 4, 2, 1, 2);
 
-	gl->addWidget(but_reset, 4,1, 1, 1);
-	gl->addWidget(but_ok, 4,2, 1, 1);
+	gl->addWidget(but_reset, 5, 1, 1, 1);
+	gl->addWidget(but_ok, 5, 2, 1, 1);
 }
 
 MppSettingsWhat :: ~MppSettingsWhat(void)
@@ -360,6 +381,7 @@ MppSettingsWhat :: doShow(void)
 	cbx_instruments->setChecked(ms->save_instruments ? 1 : 0);
 	cbx_viewmode->setChecked(ms->save_viewmode ? 1 : 0);
 	cbx_deviceconfig->setChecked(ms->save_devices ? 1 : 0);
+	cbx_font->setChecked(ms->save_font ? 1 : 0);
 
 	exec();
 
@@ -367,6 +389,7 @@ MppSettingsWhat :: doShow(void)
 	ms->save_instruments = cbx_instruments->isChecked() ? 1 : 0;
 	ms->save_viewmode = cbx_viewmode->isChecked() ? 1 : 0;
 	ms->save_devices = cbx_deviceconfig->isChecked() ? 1 : 0;
+	ms->save_font = cbx_font->isChecked() ? 1 : 0;
 }
 
 void
@@ -376,4 +399,5 @@ MppSettingsWhat :: handle_reset(void)
 	cbx_instruments->setChecked(1);
 	cbx_viewmode->setChecked(1);
 	cbx_deviceconfig->setChecked(1);
+	cbx_font->setChecked(1);
 }
