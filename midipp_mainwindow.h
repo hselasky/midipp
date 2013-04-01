@@ -85,6 +85,8 @@ public:
 	uint8_t check_record(uint8_t chan, uint32_t off);
 	uint8_t check_synth(uint8_t device_no, uint8_t chan, uint32_t off);
 
+	void handle_watchdog_sub(MppScoreMain *, int);
+
 	MppScoreMain *currScoreMain();
 	MppMode *currModeDlg();
 

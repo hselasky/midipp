@@ -937,29 +937,15 @@ MppMainWindow :: handle_play_release()
 }
 
 void
-MppMainWindow :: handle_watchdog()
+MppMainWindow :: handle_watchdog_sub(MppScoreMain *sm, int update_cursor)
 {
-	MppScoreMain *sm = currScoreMain();
 	QTextCursor cursor(sm->editWidget->textCursor());
-	uint32_t delta;
-	char buf[32];
-	uint8_t events_copy[MPP_MAX_QUEUE];
-	uint8_t num_events;
-	uint8_t x;
-	uint8_t y;
-	uint8_t z;
-	uint8_t last_duration;
-	uint8_t instr_update;
-	uint8_t cursor_update;
 	uint32_t play_line;
 	uint32_t play_pos;
+	uint32_t x;
 
 	pthread_mutex_lock(&mtx);
-	cursor_update = cursorUpdate;
-	cursorUpdate = 0;
-	instr_update = instrUpdated;
-	instrUpdated = 0;
-	num_events = numInputEvents;
+
 	play_pos = sm->currPos;
 
 	/* skip any jumps */
@@ -971,8 +957,42 @@ MppMainWindow :: handle_watchdog()
 		else
 			break;
 	}
-
 	play_line = sm->realLine[play_pos];
+
+	pthread_mutex_unlock(&mtx);
+
+	if (update_cursor) {
+		cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor, 1);
+		cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, play_line);
+		cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor, 1);
+		sm->editWidget->setTextCursor(cursor);
+		sm->watchdog();
+	}
+
+	sm->viewWidgetSub->repaint();
+}
+
+void
+MppMainWindow :: handle_watchdog()
+{
+	uint32_t delta;
+	char buf[32];
+	uint8_t events_copy[MPP_MAX_QUEUE];
+	uint8_t num_events;
+	uint8_t x;
+	uint8_t y;
+	uint8_t z;
+	uint8_t last_duration;
+	uint8_t instr_update;
+	uint8_t cursor_update;
+
+	pthread_mutex_lock(&mtx);
+	cursor_update = cursorUpdate;
+	cursorUpdate = 0;
+	instr_update = instrUpdated;
+	instrUpdated = 0;
+	num_events = numInputEvents;
+
 	if (num_events != 0) {
 		delta =  umidi20_get_curr_position() - lastInputEvent;
 		if (delta >= ((UMIDI20_BPM + 60 - 1) / 60)) {
@@ -986,6 +1006,9 @@ MppMainWindow :: handle_watchdog()
 	pthread_mutex_unlock(&mtx);
 
 	if (num_events != 0) {
+		MppScoreMain *sm = currScoreMain();
+		QTextCursor cursor(sm->editWidget->textCursor());
+
 		mid_sort(events_copy, num_events);
 
 		last_duration = 0;
@@ -1029,15 +1052,8 @@ MppMainWindow :: handle_watchdog()
 
 	do_clock_stats();
 
-	if (cursor_update) {
-		cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor, 1);
-		cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, play_line);
-		cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor, 1);
-		sm->editWidget->setTextCursor(cursor);
-		sm->watchdog();
-	}
-
-	sm->viewWidgetSub->repaint();
+	for (x = 0; x != MPP_MAX_VIEWS; x++)
+		handle_watchdog_sub(scores_main[x], cursor_update);
 
 	tab_loop->watchdog();
 }
