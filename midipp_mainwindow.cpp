@@ -87,11 +87,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mwPlay = new QPushButton();
 	mwReload = new QPushButton();
 
-	mwRight->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
-	mwLeft->setIcon(style()->standardIcon(QStyle::SP_ArrowLeft));
-	mwRewind->setIcon(style()->standardIcon(QStyle::SP_MediaStop));
-	mwPlay->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
-	mwReload->setIcon(style()->standardIcon(QStyle::SP_BrowserReload));
+	mwRight->setIcon(QIcon(QString(":/right_arrow.png")));
+	mwLeft->setIcon(QIcon(QString(":/left_arrow.png")));
+	mwRewind->setIcon(QIcon(QString(":/stop.png")));
+	mwPlay->setIcon(QIcon(QString(":/play.png")));
+	mwReload->setIcon(QIcon(QString(":/reload.png")));
 
 	connect(mwRight, SIGNAL(released()), this, SLOT(handle_move_right()));
 	connect(mwLeft, SIGNAL(released()), this, SLOT(handle_move_left()));
@@ -112,14 +112,14 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* Tabs */
 
-	main_gl->addWidget(scores_tw,0,0,8,1);
-	main_gl->addWidget(main_tw,0,2,8,1);
+	main_gl->addWidget(scores_tw,0,0,9,1);
+	main_gl->addWidget(main_tw,0,2,9,1);
 
 	main_gl->addWidget(mwPlay,1,1,1,1);
 	main_gl->addWidget(mwRewind,2,1,1,1);
-	main_gl->addWidget(mwRight,3,1,1,1);
-	main_gl->addWidget(mwLeft,4,1,1,1);
-	main_gl->addWidget(mwReload,6,1,1,1);
+	main_gl->addWidget(mwReload,4,1,1,1);
+	main_gl->addWidget(mwRight,6,1,1,1);
+	main_gl->addWidget(mwLeft,7,1,1,1);
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++)
 		scores_main[x] = new MppScoreMain(this);
