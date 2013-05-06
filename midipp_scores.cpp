@@ -2208,7 +2208,6 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 
 	pn = &scores[currPos][0];
 
-
 	for (x = y = 0; x != MPP_MAX_SCORES; x++, pn++) {
 		if (pn->dur != 0)
 			y++;
@@ -2240,6 +2239,9 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 		else if (vel_other < 0)
 			vel_other = 0;
 	}
+
+	pn = &scores[currPos][0];
+
 	for (x = 0; x != MPP_MAX_SCORES; x++, pn++) {
 
 		if (pn->dur != 0) {
