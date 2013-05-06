@@ -54,32 +54,45 @@ public:
 
 public:
 	QGridLayout *gl;
+	QGridLayout *gl_idev;
+	QGridLayout *gl_contrast;
+	QGridLayout *gl_delay;
 
+	QGroupBox *gb_idev;
+	QGroupBox *gb_contrast;
+	QGroupBox *gb_delay;
+
+	QLabel *lbl_norm;
 	QLabel *lbl_chan;
-	QLabel *lbl_input;
 	QLabel *lbl_base;
 	QLabel *lbl_cmd;
-	QLabel *lbl_delay;
 	QLabel *lbl_dev[MPP_MAX_DEVS];
 
+	QCheckBox *cbx_norm;
 	QCheckBox *cbx_dev[MPP_MAX_DEVS];
 
 	MppButtonMap *but_mode;
 	QPushButton *but_done;
 	QPushButton *but_set_all;
 	QPushButton *but_clear_all;
+	QPushButton *but_reset;
+
+	QSlider *sli_contrast;
+	QSlider *sli_delay;
 
 	MppSpinBox *spn_cmd;
 	MppSpinBox *spn_base;
 
 	QSpinBox *spn_chan;
-	QSpinBox *spn_delay;
 
 public slots:
 
 	void handle_done();
+	void handle_reset();
 	void handle_set_all_devs();
 	void handle_clear_all_devs();
+	void handle_contrast_changed(int);
+	void handle_delay_changed(int);
 };
 
 #endif		/* _MIDIPP_MODE_H_ */

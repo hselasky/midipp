@@ -72,6 +72,7 @@
 #include <QGroupBox>
 #include <QSettings>
 #include <QStyle>
+#include <QSlider>
 
 #include <umidi20.h>
 

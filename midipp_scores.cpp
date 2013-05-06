@@ -91,6 +91,8 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	baseKey = C4;
 	cmdKey = C3;
 	delayNoise = 25;
+	chordContrast = 128;
+	chordNormalize = 1;
 
 	/* Set parent */
 
@@ -2147,9 +2149,12 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 	uint32_t t_pre;
 	uint32_t t_post;
 	int out_key;
+	int vel_other;
 	uint16_t pos;
 	uint8_t chan;
 	uint8_t x;
+	uint8_t y;
+	uint8_t z;
 	uint8_t delay;
 
  repeat:
@@ -2203,9 +2208,46 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 
 	pn = &scores[currPos][0];
 
+
+	for (x = y = 0; x != MPP_MAX_SCORES; x++, pn++) {
+		if (pn->dur != 0)
+			y++;
+	}
+
+	if (y >= 6) {
+		z = y - 1;
+		y = 3;
+	} else if (y >= 3) {
+		z = y - 1;
+		y = 2;
+	} else if (y >= 1) {
+		y = 1;
+		z = 0;
+	} else {
+		z = 0;
+		y = 0;
+	}
+
+	if (y == 0) {
+		/* fallthrough */
+		vel_other = 0;
+	} else {
+		if (chordNormalize == 0)
+			y = 1;
+		vel_other = (vel * chordContrast) / (y * 128);
+		if (vel_other > 127)
+			vel_other = 127;
+		else if (vel_other < 0)
+			vel_other = 0;
+	}
 	for (x = 0; x != MPP_MAX_SCORES; x++, pn++) {
 
 		if (pn->dur != 0) {
+			if (z == 0)
+				vel = vel_other;
+			else
+				z--;
+
 			out_key = (int)pn->key + (int)in_key - (int)baseKey;
 
 			if (out_key < 0 || out_key > 127)

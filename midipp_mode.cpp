@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011,2013 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,14 +39,26 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 
 	gl = new QGridLayout(this);
 
+	gb_contrast = new QGroupBox();
+	gb_delay = new QGroupBox();
+
+	gb_idev = new QGroupBox();
+	gb_idev->setTitle(tr("Input devices"));
+
+	gl_contrast = new QGridLayout(gb_contrast);
+	gl_delay = new QGridLayout(gb_delay);
+	gl_idev = new QGridLayout(gb_idev);
+
 	setWindowTitle(tr("View ") + QChar('A' + _vi) + tr(" mode"));
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
-	lbl_input = new QLabel(tr(" - Input devices - "));
+	lbl_norm = new QLabel(tr("Normalize chord"));
 	lbl_base = new QLabel(tr("Base play key"));
 	lbl_cmd = new QLabel(tr("Base command key"));
-	lbl_delay = new QLabel(tr("Random key delay (0..255)"));
 	lbl_chan = new QLabel(tr("Synth channel"));
+
+	cbx_norm = new QCheckBox();
+	cbx_norm->setChecked(1);
 
 	for (x = 0; x != MPP_MAX_DEVS; x++) {
 
@@ -58,7 +70,19 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 		lbl_dev[x] = new QLabel(tr(buf));
 	}
 
+	sli_contrast = new QSlider();
+	sli_contrast->setRange(0, 255);
+	sli_contrast->setOrientation(Qt::Horizontal);
+	sli_contrast->setValue(128);
+	connect(sli_contrast, SIGNAL(valueChanged(int)),
+	    this, SLOT(handle_contrast_changed(int)));
+	handle_contrast_changed(sli_contrast->value());
+	gl_contrast->addWidget(sli_contrast,0,0,1,1);
+
 	but_mode = new MppButtonMap("Key mode\0" "ALL\0" "MIXED\0" "FIXED\0" "TRANSP\0" "CHORD\0", 5, 3);
+
+	but_reset = new QPushButton(tr("Reset"));
+	connect(but_reset, SIGNAL(released()), this, SLOT(handle_reset()));
 
 	but_done = new QPushButton(tr("Close"));
 	connect(but_done, SIGNAL(released()), this, SLOT(handle_done()));
@@ -77,21 +101,25 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	spn_base->setRange(0, 127);
 	spn_base->setValue(0);
 
-	spn_delay = new QSpinBox();
-	spn_delay->setRange(0, 255);
-	spn_delay->setValue(0);
-	spn_delay->setSuffix(tr(" ms"));
+	sli_delay = new QSlider();
+	sli_delay->setRange(0, 256);
+	sli_delay->setValue(0);
+	sli_delay->setOrientation(Qt::Horizontal);
+	connect(sli_delay, SIGNAL(valueChanged(int)),
+	    this, SLOT(handle_delay_changed(int)));
+	handle_delay_changed(sli_delay->value());
+	gl_delay->addWidget(sli_delay,0,0,1,1);
 
 	spn_chan = new QSpinBox();
 	spn_chan->setRange(0, 15);
 	spn_chan->setValue(0);
 
 	for (x = 0; x != MPP_MAX_DEVS; x++) {
-		gl->addWidget(lbl_dev[x], x + 1, 0, 1, 1);
-		gl->addWidget(cbx_dev[x], x + 1, 1, 1, 1);
+		gl_idev->addWidget(lbl_dev[x], x, 0, 1, 1);
+		gl_idev->addWidget(cbx_dev[x], x, 1, 1, 1);
 	}
 
-	gl->addWidget(lbl_input, 0, 0, 1, 2);
+	gl->addWidget(gb_idev, 0, 0, 8, 2);
 
 	gl->addWidget(lbl_cmd, 0, 2, 1, 1);
 	gl->addWidget(spn_cmd, 0, 3, 1, 1);
@@ -99,17 +127,22 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	gl->addWidget(lbl_base, 1, 2, 1, 1);
 	gl->addWidget(spn_base, 1, 3, 1, 1);
 
-	gl->addWidget(lbl_delay, 2, 2, 1, 1);
-	gl->addWidget(spn_delay, 2, 3, 1, 1);
+	gl->addWidget(lbl_chan, 2, 2, 1, 1);
+	gl->addWidget(spn_chan, 2, 3, 1, 1);
 
-	gl->addWidget(lbl_chan, 3, 2, 1, 1);
-	gl->addWidget(spn_chan, 3, 3, 1, 1);
+	gl->addWidget(lbl_norm, 3, 2, 1, 1);
+	gl->addWidget(cbx_norm, 3, 3, 1, 1);
 
-	gl->addWidget(but_mode, 4, 2, 3, 2);
-	gl->addWidget(but_set_all, MPP_MAX_DEVS + 1, 0, 1, 1);
-	gl->addWidget(but_clear_all, MPP_MAX_DEVS + 1, 1, 1, 1);
+	gl->addWidget(gb_delay, 4, 2, 1, 2);
 
-	gl->addWidget(but_done, MPP_MAX_DEVS + 1, 3, 1, 1);
+	gl->addWidget(gb_contrast, 5, 2, 1, 2);
+
+	gl->addWidget(but_mode, 6, 2, 2, 2);
+
+	gl->addWidget(but_set_all, 8, 0, 1, 1);
+	gl->addWidget(but_clear_all, 8, 1, 1, 1);
+	gl->addWidget(but_reset, 8, 2, 1, 1);
+	gl->addWidget(but_done, 8, 3, 1, 1);
 }
 
 MppMode :: ~MppMode()
@@ -126,6 +159,8 @@ MppMode :: update_all(void)
 	int channel;
 	int key_mode;
 	int input_mask;
+	int chord_contrast;
+	int chord_norm;
 	int x;
 
 	pthread_mutex_lock(&sm->mainWindow->mtx);
@@ -135,6 +170,8 @@ MppMode :: update_all(void)
 	channel = sm->synthChannel;
 	key_mode = sm->keyMode;
 	input_mask = sm->devInputMask;
+	chord_contrast = sm->chordContrast;
+	chord_norm = sm->chordNormalize;
 	pthread_mutex_unlock(&sm->mainWindow->mtx);
 
 	for (x = 0; x != MPP_MAX_DEVS; x++)
@@ -142,9 +179,11 @@ MppMode :: update_all(void)
 
 	spn_base->setValue(base_key);
 	spn_cmd->setValue(cmd_key);
-	spn_delay->setValue(key_delay);
+	sli_delay->setValue(key_delay);
+	sli_contrast->setValue(chord_contrast);
 	spn_chan->setValue(channel);
 	but_mode->handle_pressed(key_mode);
+	cbx_norm->setChecked(chord_norm);
 }
 
 void
@@ -166,6 +205,46 @@ MppMode :: handle_clear_all_devs()
 }
 
 void
+MppMode :: handle_contrast_changed(int v)
+{
+	char buf[32];
+	v = ((v - 128) * 100) / 127;
+
+	if (v > 100)
+		v = 100;
+	else if (v < -100)
+		v = -100;
+
+	snprintf(buf, sizeof(buf),
+	    "Chord(-) vs Melody(+) (%d%%)", v);
+	gb_contrast->setTitle(tr(buf));
+}
+
+void
+MppMode :: handle_delay_changed(int v)
+{
+	char buf[32];
+	snprintf(buf, sizeof(buf), "Random key delay (%dms)", v);
+	gb_delay->setTitle(tr(buf));
+}
+
+void
+MppMode :: handle_reset()
+{
+	uint32_t x;
+
+	sli_contrast->setValue(128);
+	sli_delay->setValue(25);
+	spn_cmd->setValue(C3);
+	spn_base->setValue(C4);
+	spn_chan->setValue(0);
+	cbx_norm->setChecked(1);
+
+	for (x = 0; x != MPP_MAX_DEVS; x++)
+		cbx_dev[x]->setChecked(1);
+}
+
+void
 MppMode :: handle_done()
 {
 	int base_key;
@@ -174,6 +253,8 @@ MppMode :: handle_done()
 	int channel;
 	int key_mode;
 	int input_mask;
+	int chord_contrast;
+	int chord_norm;
 	int x;
 
 	input_mask = 0;
@@ -185,8 +266,10 @@ MppMode :: handle_done()
 
 	base_key = spn_base->value();
 	cmd_key = spn_cmd->value();
-	key_delay = spn_delay->value();
+	key_delay = sli_delay->value();
 	channel = spn_chan->value();
+	chord_contrast = sli_contrast->value();
+	chord_norm = cbx_norm->isChecked();
 	key_mode = but_mode->currSelection;
 
 	if (key_mode < 0 || key_mode >= MM_PASS_MAX)
@@ -199,6 +282,8 @@ MppMode :: handle_done()
 	sm->synthChannel = channel;
 	sm->keyMode = key_mode;
 	sm->devInputMask = input_mask;
+	sm->chordContrast = chord_contrast;
+	sm->chordNormalize = chord_norm;
 	pthread_mutex_unlock(&sm->mainWindow->mtx);
 
 	accept();

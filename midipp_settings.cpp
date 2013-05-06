@@ -117,6 +117,8 @@ MppSettings :: doSave(void)
 			setValue("inmask", mw->scores_main[x]->devInputMask);
 			setValue("keymode", mw->scores_main[x]->keyMode);
 			setValue("synthchannel", mw->scores_main[x]->synthChannel);
+			setValue("chordcontrast", mw->scores_main[x]->chordContrast);
+			setValue("chordnormalize", mw->scores_main[x]->chordNormalize);
 			endGroup();
 		}
 	}
@@ -185,6 +187,8 @@ MppSettings :: doLoad(void)
 			int devInputMask = valueDefault(concat("view%d/inmask", x), x ? 0 : -1);
 			int keyMode = valueDefault(concat("view%d/keymode", x), 0);
 			int synthChannel = valueDefault(concat("view%d/synthchannel", x), 0);
+			int chordContrast = valueDefault(concat("view%d/chordcontrast", x), 128);
+			int chordNormalize = valueDefault(concat("view%d/chordnormalize", x), 128);
 
 			if (baseKey < 0 || baseKey > 127)
 				baseKey = 0;
@@ -196,6 +200,10 @@ MppSettings :: doLoad(void)
 				keyMode = 0;
 			if (synthChannel < 0 || synthChannel > 15)
 				synthChannel = 0;
+			if (chordContrast < 0 || chordContrast > 255)
+				chordContrast = 128;
+			if (chordNormalize < 0 || chordNormalize > 1)
+				chordNormalize = 1;
 
 			pthread_mutex_lock(&mw->mtx);
 			mw->scores_main[x]->baseKey = baseKey;
@@ -204,6 +212,8 @@ MppSettings :: doLoad(void)
 			mw->scores_main[x]->devInputMask = devInputMask;
 			mw->scores_main[x]->keyMode = keyMode;
 			mw->scores_main[x]->synthChannel = synthChannel;
+			mw->scores_main[x]->chordContrast = chordContrast;
+			mw->scores_main[x]->chordNormalize = chordNormalize;
 			pthread_mutex_unlock(&mw->mtx);
 
 			mw->dlg_mode[x]->update_all();

@@ -176,6 +176,8 @@ public:
 	uint8_t keyMode;
 	uint8_t pressed_future;
 	uint8_t num_base;
+	uint8_t chordContrast;
+	uint8_t chordNormalize;
 
 protected:
 
