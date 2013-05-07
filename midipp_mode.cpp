@@ -52,7 +52,7 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	setWindowTitle(tr("View ") + QChar('A' + _vi) + tr(" mode"));
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
-	lbl_norm = new QLabel(tr("Normalize chord"));
+	lbl_norm = new QLabel(tr("Normalize chord pressure"));
 	lbl_base = new QLabel(tr("Base play key"));
 	lbl_cmd = new QLabel(tr("Base command key"));
 	lbl_chan = new QLabel(tr("Synth channel"));
