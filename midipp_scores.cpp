@@ -639,7 +639,7 @@ MppScoreMain :: viewMousePressEvent(QMouseEvent *e)
 	if ((yi < 0) || (yi >= MPP_MAX_LINES))
 		return;
 
-	mainWindow->handle_tab_changed(&viewWidget);
+	mainWindow->handle_tab_changed(1);
 
 	pthread_mutex_lock(&mainWindow->mtx);
 
@@ -1775,7 +1775,7 @@ MppScoreMain :: handleScoreFileNew()
 		currScoreFileName = NULL;
 	}
 
-	mainWindow->handle_tab_changed_all();
+	mainWindow->handle_tab_changed(1);
 }
 
 int
@@ -1793,7 +1793,7 @@ MppScoreMain :: handleScoreFileOpenSub(QString fname)
 
 	handleCompile();
 
-	mainWindow->handle_tab_changed_all();
+	mainWindow->handle_tab_changed(1);
 
 	return (scores.isNull() || scores.isEmpty());
 }
@@ -1843,7 +1843,7 @@ MppScoreMain :: handleScoreFileSaveAs()
 		if (currScoreFileName != NULL)
 			handleScoreFileSave();
 
-		mainWindow->handle_tab_changed_all();
+		mainWindow->handle_tab_changed(1);
 	}
 
 	delete diag;

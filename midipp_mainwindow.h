@@ -62,8 +62,6 @@ public:
 	void handle_midi_file_instr_prepend(void);
 	void handle_midi_file_instr_delete(void);
 	void handle_jump_locked(int index);
-	void handle_tab_changed_all(void);
-	void handle_tab_changed(QWidget *);
 
 	QString get_midi_score_duration(uint32_t *psum = 0);
 	int log_midi_score_duration();
@@ -200,14 +198,18 @@ public:
 
 	/* tab <Play> */
 
-	QLabel *lbl_bpm_avg;
+	QGroupBox *gb_ctrl;
+	QGroupBox *gb_time;
+	QGroupBox *gb_bpm;
+	QGroupBox *gb_synth_play;
+
+	QGridLayout *gl_ctrl;
+	QGridLayout *gl_time;
+	QGridLayout *gl_bpm;
+	QGridLayout *gl_synth_play;
 
 	QLCDNumber *lbl_curr_time_val;
 	QLCDNumber *lbl_bpm_avg_val;
-
-	QLabel *lbl_synth;
-	QLabel *lbl_time_counter;
-	QLabel *lbl_playback;
 
 	QWidget *tab_play_wg;
 	QGridLayout *tab_play_gl;
@@ -225,7 +227,7 @@ public:
 	QPushButton *but_replace;
 	QPushButton *but_jump[MPP_MAX_LBUTTON];
 	QPushButton *but_compile;
-	QPushButton *but_play;
+	MppButton *but_play[2];
 	QPushButton *but_midi_pause;
 	QPushButton *but_midi_trigger;
 	QPushButton *but_midi_rewind;
@@ -330,8 +332,8 @@ public slots:
 	void handle_midi_record(int);
 	void handle_midi_pause();
 	void handle_midi_play(int);
-	void handle_play_press();
-	void handle_play_release();
+	void handle_play_press(int);
+	void handle_play_release(int);
 	void handle_watchdog();
 	void handle_midi_file_new();
 	void handle_midi_file_merge_open();
@@ -358,9 +360,6 @@ public slots:
 	void handle_volume_changed(int);
 	void handle_volume_reset();
 
-	void handle_tab_changed_scores(int index);
-	void handle_tab_changed_main(int index);
-
 	void handle_midi_file_import();
 
 	void handle_gpro_file_import();
@@ -375,6 +374,8 @@ public slots:
 
 	void handle_move_right();
 	void handle_move_left();
+
+	void handle_tab_changed(int force = 0);
 };
 
 #endif		/* _MIDIPP_MAINWINDOW_H_ */

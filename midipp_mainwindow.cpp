@@ -135,7 +135,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_help->setLineWrapMode(QPlainTextEdit::NoWrap);
 	tab_help->setPlainText(tr(
 	    "/*\n"
-	    " * Copyright (c) 2009-2012 Hans Petter Selasky. All rights reserved.\n"
+	    " * Copyright (c) 2009-2013 Hans Petter Selasky. All rights reserved.\n"
 	    " */\n"
 
 	    "\n"
@@ -153,7 +153,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " * K3.<bpm>.<period_ms> - set reference BPM and period in ms.\n"
 	    " * K4.<number> - enable automatic melody effect on the N-th note, if non-zero.\n"
 	    " * K5.<number> - set number of base scores for chord mode. Default value is 2.\n"
-	    " * M<number> - macro inline the given label.\n"
+	    " * M<number> - macro inline the given label. Label definition must come before any references.\n"
 	    " * L<number> - defines a label (0..31).\n"
 	    " * J<R><P><number> - jumps to the given label (0..31) or \n"
 	    " *     Relative(R) line (0..31) and starts a new page(P).\n"
@@ -178,6 +178,16 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_config_gl = new QGridLayout(tab_config_wg);
 	tab_instr_gl = new QGridLayout(tab_instr_wg);
 	tab_volume_gl = new QGridLayout(tab_volume_wg);
+
+	gb_ctrl = new QGroupBox(tr("Main controls"));
+	gb_time = new QGroupBox(tr("Time counter"));
+	gb_bpm = new QGroupBox(tr("Average Beats Per Minute, BPM"));
+	gb_synth_play = new QGroupBox(tr("Synth and Play controls"));
+
+	gl_ctrl = new QGridLayout(gb_ctrl);
+	gl_time = new QGridLayout(gb_time);
+	gl_bpm = new QGridLayout(gb_bpm);
+	gl_synth_play = new QGridLayout(gb_synth_play);
 
 	scores_tw->addTab(&scores_main[0]->viewWidget, tr("View A-Scores"));
 	scores_tw->addTab(scores_main[0]->editWidget, tr("Edit A-Scores"));
@@ -331,9 +341,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	dlg_bpm = new MppBpm(this);
 
-	lbl_bpm_avg = new QLabel(tr("Average Beats Per Minute, BPM:"));
-
-	lbl_curr_time_val = new QLCDNumber(8);
+	lbl_curr_time_val = new QLCDNumber(12);
 	lbl_curr_time_val->setMode(QLCDNumber::Dec);
 	lbl_curr_time_val->setFrameShape(QLCDNumber::NoFrame);
 	lbl_curr_time_val->setSegmentStyle(QLCDNumber::Flat);
@@ -378,8 +386,15 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mbm_key_mode = new MppButtonMap("\0" "ALL\0" "MIXED\0" "FIXED\0" "TRANSP\0" "CHORD\0", 5, 3);
 	connect(mbm_key_mode, SIGNAL(selectionChanged(int)), this, SLOT(handle_key_mode(int)));
 
-	but_play = new QPushButton(tr("Shift+Play"));
-	but_play->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+	but_play[0] = new MppButton(tr("Shift+Play+A"), 0);
+	but_play[0]->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+	connect(but_play[0], SIGNAL(pressed(int)), this, SLOT(handle_play_press(int)));
+	connect(but_play[0], SIGNAL(released(int)), this, SLOT(handle_play_release(int)));
+
+	but_play[1] = new MppButton(tr("Shift+Play+B"), 1);
+	but_play[1]->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+	connect(but_play[1], SIGNAL(pressed(int)), this, SLOT(handle_play_press(int)));
+	connect(but_play[1], SIGNAL(released(int)), this, SLOT(handle_play_release(int)));
 
 	lbl_play_key = new QLabel(tr("Play Key"));
 	spn_play_key = new MppSpinBox();
@@ -387,91 +402,48 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_play_key->setRange(0, 127);
 	spn_play_key->setValue(C4);
 
-	lbl_time_counter = new QLabel(tr(" - Time Counter -"));
-	lbl_synth = new QLabel(tr("- Synth Play -"));
-	lbl_playback = new QLabel(tr("- Controls -"));
+	/* First column */
 
-	n = 0;
+	tab_play_gl->addWidget(gb_time,0,0,1,1);
+	tab_play_gl->addWidget(gb_ctrl,1,0,1,1);
+	tab_play_gl->addWidget(mbm_midi_play, 2,0,1,1);
+	tab_play_gl->addWidget(mbm_midi_record, 3,0,1,1);
+	tab_play_gl->addWidget(mbm_key_mode, 4,0,1,1);
 
-	tab_play_gl->addWidget(lbl_time_counter, n, 0, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
+	/* Second column */
 
-	n++;
+	tab_play_gl->addWidget(gb_synth_play,0,1,2,2);
+	tab_play_gl->addWidget(mbm_score_record, 2,1,1,2);
+	tab_play_gl->addWidget(gb_bpm, 3,1,1,2);
 
-	tab_play_gl->addWidget(lbl_curr_time_val, n, 0, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_play_gl->addWidget(but_play[0], 4, 1, 1, 1);
+	tab_play_gl->addWidget(but_play[1], 4, 2, 1, 1);
 
-	n++;
+	tab_play_gl->setRowStretch(5, 4);
 
-	tab_play_gl->addWidget(lbl_playback, n, 0, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl_bpm->addWidget(lbl_bpm_avg_val, 0, 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
-	n++;
+	gl_time->addWidget(lbl_curr_time_val, 0, 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
-	tab_play_gl->addWidget(but_midi_pause, n, 0, 1, 4);
+	gl_ctrl->addWidget(but_midi_pause, 0, 0, 1, 1);
+	gl_ctrl->addWidget(but_midi_trigger, 1, 0, 1, 1);
+	gl_ctrl->addWidget(but_midi_rewind, 2, 0, 1, 1);
+	gl_ctrl->addWidget(but_compile, 3, 0, 1, 1);
 
-	n++;
-
-	tab_play_gl->addWidget(but_midi_trigger, n, 0, 1, 4);
-
-	n++;
-
-	tab_play_gl->addWidget(but_midi_rewind, n, 0, 1, 4);
-
-	n++;
-
-	tab_play_gl->addWidget(but_compile, n, 0, 1, 4);
-
-	n++;
-
-	tab_play_gl->addWidget(mbm_midi_play, n, 0, 1, 4);
-	tab_play_gl->addWidget(mbm_score_record, n, 4, 1, 4);
-
-	n++;
-
-	tab_play_gl->addWidget(mbm_midi_record, n, 0, 1, 4);
-
-	n++;
-
-	tab_play_gl->addWidget(mbm_key_mode, n, 0, 1, 4);
-
-	n = 0;
-
-	tab_play_gl->addWidget(lbl_synth, n, 4, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	n++;
-
-	tab_play_gl->addWidget(but_bpm, n, 4, 1, 2);
-
-	tab_play_gl->addWidget(lbl_play_key, n, 6, 1, 1);
-	tab_play_gl->addWidget(spn_play_key, n, 7, 1, 1);
-
-	n++;
+	gl_synth_play->addWidget(but_bpm, 0, 0, 1, 2);
+	gl_synth_play->addWidget(lbl_play_key, 0, 2, 1, 1);
+	gl_synth_play->addWidget(spn_play_key, 0, 3, 1, 1);
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++)
-		tab_play_gl->addWidget(but_mode[x], n + x, 6, 1, 2);
+		gl_synth_play->addWidget(but_mode[x], 1 + x, 2, 1, 2);
 
-	tab_play_gl->addWidget(but_insert_chord, n, 4, 1, 1);
+	gl_synth_play->addWidget(but_insert_chord, 1, 0, 1, 1);
 
-	n++;
-
-	tab_play_gl->addWidget(but_edit_chord, n, 4, 1, 1);
-	tab_play_gl->addWidget(but_replace, n, 5, 1, 1);
-
-	n++;
+	gl_synth_play->addWidget(but_edit_chord, 2, 0, 1, 1);
+	gl_synth_play->addWidget(but_replace, 2, 1, 1, 1);
 
 	for (x = 0; x != MPP_MAX_LBUTTON; x++)
-		tab_play_gl->addWidget(but_jump[x], n + (x / 4), 4 + (x % 4), 1, 1);
-
-	n += 4;
-
-	tab_play_gl->addWidget(lbl_bpm_avg, n, 4, 1, 3, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_play_gl->addWidget(lbl_bpm_avg_val, n, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	n++;
-
-	tab_play_gl->addWidget(but_play, n, 4, 1, 4);
-
-	n++;
-
-	tab_play_gl->setRowStretch(n, 4);
+		gl_synth_play->addWidget(but_jump[x], 1 + MPP_MAX_VIEWS + (x / 4), (x % 4), 1, 1);
 
 	/* <Configuration> Tab */
 
@@ -699,8 +671,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		connect(but_jump[n], SIGNAL(pressed(int)), this, SLOT(handle_jump(int)));
 
 	connect(but_compile, SIGNAL(pressed()), this, SLOT(handle_compile()));
-	connect(but_play, SIGNAL(pressed()), this, SLOT(handle_play_press()));
-	connect(but_play, SIGNAL(released()), this, SLOT(handle_play_release()));
 	connect(but_quit, SIGNAL(released()), this, SLOT(handle_quit()));
 
 	connect(but_midi_file_new, SIGNAL(pressed()), this, SLOT(handle_midi_file_new()));
@@ -729,8 +699,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	connect(but_midi_pause, SIGNAL(pressed()), this, SLOT(handle_midi_pause()));
 
-	connect(scores_tw, SIGNAL(currentChanged(int)), this, SLOT(handle_tab_changed_scores(int)));
-	connect(main_tw, SIGNAL(currentChanged(int)), this, SLOT(handle_tab_changed_main(int)));
+	connect(scores_tw, SIGNAL(currentChanged(int)), this, SLOT(handle_tab_changed()));
+	connect(main_tw, SIGNAL(currentChanged(int)), this, SLOT(handle_tab_changed()));
 
 	MidiInit();
 
@@ -739,7 +709,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	setWindowTitle(version);
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
-	handle_tab_changed_all();
+	handle_tab_changed(1);
 
 	watchdog->start(250);
 
@@ -906,9 +876,12 @@ MppMainWindow :: handle_midi_record(int value)
 }
 
 void
-MppMainWindow :: handle_play_press()
+MppMainWindow :: handle_play_press(int which)
 {
-	MppScoreMain *sm = currScoreMain();
+	if (which < 0 || which >= MPP_MAX_VIEWS)
+		which = 0;
+
+	MppScoreMain *sm = scores_main[which];
 
 	pthread_mutex_lock(&mtx);
 	if (tab_loop->handle_trigN(playKey, 90)) {
@@ -923,9 +896,12 @@ MppMainWindow :: handle_play_press()
 }
 
 void
-MppMainWindow :: handle_play_release()
+MppMainWindow :: handle_play_release(int which)
 {
-	MppScoreMain *sm = currScoreMain();
+	if (which < 0 || which >= MPP_MAX_VIEWS)
+		which = 0;
+
+	MppScoreMain *sm = scores_main[which];
 
 	pthread_mutex_lock(&mtx);
 	if (sm->keyMode != MM_PASS_ALL) {
@@ -985,6 +961,9 @@ MppMainWindow :: handle_watchdog()
 	uint8_t last_duration;
 	uint8_t instr_update;
 	uint8_t cursor_update;
+
+	/* update focus if any */
+	handle_tab_changed();
 
 	pthread_mutex_lock(&mtx);
 	cursor_update = cursorUpdate;
@@ -1765,12 +1744,15 @@ void
 MppMainWindow :: do_clock_stats(void)
 {
 	uint32_t time_offset;
+	char buf[32];
 
 	pthread_mutex_lock(&mtx);
 	time_offset = get_time_offset();
 	pthread_mutex_unlock(&mtx);
 
-	lbl_curr_time_val->display((int)time_offset);
+	snprintf(buf, sizeof(buf), "%u.%03u", time_offset / 1000, time_offset % 1000);
+
+	lbl_curr_time_val->display(QString(buf));
 }
 
 void
@@ -2324,60 +2306,44 @@ MppMainWindow :: handle_volume_changed(int dummy)
 }
 
 void
-MppMainWindow :: handle_tab_changed_scores(int index)
-{
-	QWidget *pw;
-	pw = scores_tw->widget(index);
-	if (pw != 0)
-		handle_tab_changed(pw);
-}
-
-void
-MppMainWindow :: handle_tab_changed_main(int index)
-{
-	QWidget *pw;
-	pw = main_tw->widget(index);
-	if (pw != 0)
-		handle_tab_changed(pw);
-}
-
-void
-MppMainWindow :: handle_tab_changed_all(void)
-{
-	handle_tab_changed_scores(scores_tw->currentIndex());
-	handle_tab_changed_main(main_tw->currentIndex());
-}
-
-void
-MppMainWindow :: handle_tab_changed(QWidget *pw)
+MppMainWindow :: handle_tab_changed(int force)
 {
 	int x;
 	int compile = 0;
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
-		if (pw == &scores_main[x]->viewWidget) {
-			compile = 1;
-			break;
-		}
-		if (pw == scores_main[x]->editWidget)
+		if (scores_main[x]->editWidget->hasFocus())
 			break;
 	}
-
 	if (x == MPP_MAX_VIEWS) {
-		currViewIndex = 0;
-		setWindowTitle(version);
-	} else {
-		currViewIndex = x;
-		QString *ps = scores_main[x]->currScoreFileName;
-		if (ps != NULL)
-			setWindowTitle(version + " - " + MppBaseName(*ps));
-		else
-			setWindowTitle(version);
+		for (x = 0; x != MPP_MAX_VIEWS; x++) {
+			if (scores_tw->currentWidget() == &scores_main[x]->viewWidget ||
+			    main_tw->currentWidget() == &scores_main[x]->viewWidget) {
+				compile = 1;
+				break;
+			}
+			if (scores_tw->currentWidget() == scores_main[x]->editWidget ||
+			    main_tw->currentWidget() == scores_main[x]->editWidget) {
+				break;
+			}
+		}
 	}
+	if (x == MPP_MAX_VIEWS)
+		x = 0;
+
+	if (currViewIndex == x && force == 0)
+		return;
+
+	currViewIndex = x;
+	QString *ps = scores_main[x]->currScoreFileName;
+	if (ps != NULL)
+		setWindowTitle(version + " - " + MppBaseName(*ps));
+	else
+		setWindowTitle(version);
 
 	handle_instr_channel_changed(currScoreMain()->synthChannel);
 
-	if (compile)
+	if (compile != 0 || force != 0)
 		handle_compile();
 
 	but_midi_file_import->setText(tr("To ") +
@@ -2875,8 +2841,11 @@ MppPlayWidget :: keyPressEvent(QKeyEvent *event)
 	switch (event->key()) {
 	case Qt::Key_Shift:
 		pthread_mutex_lock(&mw->mtx);
-		if (mw->midiTriggered != 0)
-			mw->currScoreMain()->outputControl(0x40, 127);
+		if (mw->midiTriggered != 0) {
+			unsigned int x;
+			for (x = 0; x != MPP_MAX_VIEWS; x++)
+				mw->scores_main[x]->outputControl(0x40, 127);
+		}
 		pthread_mutex_unlock(&mw->mtx);
 		break;
 	case Qt::Key_0:
@@ -2902,8 +2871,11 @@ MppPlayWidget :: keyReleaseEvent(QKeyEvent *event)
 	/* fake pedal up event */
 	if (event->key() == Qt::Key_Shift) {
 		pthread_mutex_lock(&mw->mtx);
-		if (mw->midiTriggered != 0)
-			mw->currScoreMain()->outputControl(0x40, 0);
+		if (mw->midiTriggered != 0) {
+			unsigned int x;
+			for (x = 0; x != MPP_MAX_VIEWS; x++)
+				mw->scores_main[x]->outputControl(0x40, 0);
+		}
 		pthread_mutex_unlock(&mw->mtx);
 	}
 }
