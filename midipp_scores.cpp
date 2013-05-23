@@ -2149,6 +2149,7 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 	uint32_t t_pre;
 	uint32_t t_post;
 	int out_key;
+	int vel_old;
 	int vel_other;
 	uint16_t pos;
 	uint8_t chan;
@@ -2156,6 +2157,8 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 	uint8_t y;
 	uint8_t z;
 	uint8_t delay;
+
+	vel_old = vel;
 
  repeat:
 	for (x = 0; x != 128; x++) {
@@ -2233,7 +2236,7 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 	} else {
 		if (chordNormalize == 0)
 			y = 1;
-		vel_other = (vel * chordContrast) / (y * 128);
+		vel_other = (vel_old * chordContrast) / (y * 128);
 		if (vel_other > 127)
 			vel_other = 127;
 		else if (vel_other < 0)
@@ -2245,10 +2248,12 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 	for (x = 0; x != MPP_MAX_SCORES; x++, pn++) {
 
 		if (pn->dur != 0) {
-			if (z == 0)
+			if (z == 0) {
 				vel = vel_other;
-			else
+			} else {
+				vel = vel_old;
 				z--;
+			}
 
 			out_key = (int)pn->key + (int)in_key - (int)baseKey;
 
