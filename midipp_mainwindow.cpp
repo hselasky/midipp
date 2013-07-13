@@ -163,6 +163,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " */\n"
 	    "\n"
 	    "/*\n"
+	    " * By double clicking on a score line in the editor window,\n"
+	    " * a chord editor will pop up.\n"
+	    " */\n"
+	    "\n"
+	    "/*\n"
 	    " * List of supported chords:\n"
 	    " * =========================\n"
 	    " */\n") + MppVariantList + tr("\n"));
@@ -704,7 +709,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	MidiInit();
 
-	version = tr("MIDI Player Pro v1.0.20");
+	version = tr("MIDI Player Pro v1.0.21");
 
 	setWindowTitle(version);
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));

@@ -281,6 +281,12 @@ MppDecode :: parseScoreChord(struct MppScoreEntry *ps,
 	for (x = 0; x != MPP_MAX_SCORES; x++) {
 		if (ps[x].dur != 0) {
 			key = ps[x].key % 12;
+			/*
+			 * When the base score is unknown, we look for
+			 * a score that occurs more than once:
+			 */
+			if (foot_print[key] != 0 && min == 255)
+				min = key;
 			foot_print[key] = 1;
 			if (foot_max[key] < ps[x].key)
 				foot_max[key] = ps[x].key;
