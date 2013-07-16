@@ -23,10 +23,10 @@
  * SUCH DAMAGE.
  */
 
-#include <midipp_decode.h>
-#include <midipp_mainwindow.h>
-#include <midipp_scores.h>
-#include <midipp_button.h>
+#include "midipp_decode.h"
+#include "midipp_mainwindow.h"
+#include "midipp_scores.h"
+#include "midipp_button.h"
 
 /* The list is sorted by priority. C5 is base. */
 

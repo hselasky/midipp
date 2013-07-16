@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_REPLACE_H_
 #define	_MIDIPP_REPLACE_H_
 
-#include <midipp.h>
+#include "midipp.h"
 
 class MppReplace : public QDialog
 {

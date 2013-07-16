@@ -30,7 +30,7 @@
  * Matthieu Wipliez
  */
 
-#include <midipp_gpro.h>
+#include "midipp_gpro.h"
 
 #include <stdio.h>
 #include <stdint.h>

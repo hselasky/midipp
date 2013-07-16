@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_LOOPTAB_H_
 #define	_MIDIPP_LOOPTAB_H_
 
-#include <midipp.h>
+#include "midipp.h"
 
 #define	MIDIPP_LOOP_MAX		8U
 

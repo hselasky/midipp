@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_MAINWINDOW_H_
 #define	_MIDIPP_MAINWINDOW_H_
 
-#include <midipp.h>
+#include "midipp.h"
 
 class MppPlayWidget : public QWidget
 {

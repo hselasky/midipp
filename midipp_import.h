@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_IMPORT_H_
 #define	_MIDIPP_IMPORT_H_
 
-#include <midipp.h>
+#include "midipp.h"
 
 #define	MIDIPP_IMPORT_LB	256
 #define	MIDIPP_IMPORT_MW	64

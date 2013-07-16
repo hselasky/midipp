@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_VOLUME_H_
 #define	_MIDIPP_VOLUME_H_
 
-#include <midipp.h>
+#include "midipp.h"
 
 class MppVolume : public QWidget
 {

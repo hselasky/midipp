@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_SCORES_H_
 #define	_MIDIPP_SCORES_H_
 
-#include <midipp.h>
+#include "midipp.h"
 
 class MppScoreView : public QWidget
 {

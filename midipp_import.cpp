@@ -23,10 +23,10 @@
  * SUCH DAMAGE.
  */
 
-#include <midipp_decode.h>
-#include <midipp_mainwindow.h>
-#include <midipp_scores.h>
-#include <midipp_import.h>
+#include "midipp_decode.h"
+#include "midipp_mainwindow.h"
+#include "midipp_scores.h"
+#include "midipp_import.h"
 
 static uint8_t
 midipp_import_flush(struct midipp_import *ps, int i_txt, int i_score)

@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_SETTINGS_H_
 #define	_MIDIPP_SETTINGS_H_
 
-#include <midipp.h>
+#include "midipp.h"
 
 class MppSettings : public QSettings 
 {

@@ -43,8 +43,6 @@ RESOURCES	+= midipp.qrc
 
 TARGET		= midipp
 
-INCLUDEPATH	+= .
-
 isEmpty(STATIC_BUILD) {
 LIBS		+= -L$${PREFIX}/lib -lumidi20
 INCLUDEPATH	+= $${PREFIX}/include

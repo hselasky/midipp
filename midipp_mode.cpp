@@ -23,11 +23,11 @@
  * SUCH DAMAGE.
  */
 
-#include <midipp_buttonmap.h>
-#include <midipp_mode.h>
-#include <midipp_spinbox.h>
-#include <midipp_scores.h>
-#include <midipp_mainwindow.h>
+#include "midipp_buttonmap.h"
+#include "midipp_mode.h"
+#include "midipp_spinbox.h"
+#include "midipp_scores.h"
+#include "midipp_mainwindow.h"
 
 MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 {

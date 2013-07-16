@@ -23,7 +23,7 @@
  * SUCH DAMAGE.
  */
 
-#include <midipp_midi.h>
+#include "midipp_midi.h"
 
 MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
     : QDialog()

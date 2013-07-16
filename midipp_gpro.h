@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_GPRO_H_
 #define	_MIDIPP_GPRO_H_
 
-#include <midipp.h>
+#include "midipp.h"
 
 #define	GPRO_LHZ 10
 #define	GPRO_HZ (1U << GPRO_LHZ)

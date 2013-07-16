@@ -23,8 +23,8 @@
  * SUCH DAMAGE.
  */
 
-#include <midipp_mainwindow.h>
-#include <midipp_mutemap.h>
+#include "midipp_mainwindow.h"
+#include "midipp_mutemap.h"
 
 MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
   : QDialog(parent)

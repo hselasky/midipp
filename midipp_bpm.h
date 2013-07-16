@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_BPM_H_
 #define	_MIDIPP_BPM_H_
 
-#include <midipp.h>
+#include "midipp.h"
 
 class MppBpm : public QDialog
 {

@@ -23,7 +23,7 @@
  * SUCH DAMAGE.
  */
 
-#include <midipp.h>
+#include "midipp.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,8 +31,8 @@
 #include <signal.h>
 #include <err.h>
 
-#include <midipp_mainwindow.h>
-#include <midipp_scores.h>
+#include "midipp_mainwindow.h"
+#include "midipp_scores.h"
 
 QColor color_black   (0x00, 0x00, 0x00, 0xff);
 QColor color_white   (0xff, 0xff, 0xff, 0xff);

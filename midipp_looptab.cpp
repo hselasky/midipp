@@ -23,14 +23,14 @@
  * SUCH DAMAGE.
  */
 
-#include <midipp.h>
+#include "midipp.h"
 
-#include <midipp_mainwindow.h>
-#include <midipp_scores.h>
-#include <midipp_looptab.h>
-#include <midipp_spinbox.h>
-#include <midipp_button.h>
-#include <midipp_midi.h>
+#include "midipp_mainwindow.h"
+#include "midipp_scores.h"
+#include "midipp_looptab.h"
+#include "midipp_spinbox.h"
+#include "midipp_button.h"
+#include "midipp_midi.h"
 
 MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
   : QWidget(parent)

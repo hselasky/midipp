@@ -23,8 +23,8 @@
  * SUCH DAMAGE.
  */
 
-#include <midipp_mainwindow.h>
-#include <midipp_devices.h>
+#include "midipp_mainwindow.h"
+#include "midipp_devices.h"
 
 MppDevices :: MppDevices(QWidget *parent)
   : QDialog(parent)

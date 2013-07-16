@@ -23,7 +23,7 @@
  * SUCH DAMAGE.
  */
 
-#include <midipp_pattern.h>
+#include "midipp_pattern.h"
 
 MppPattern :: MppPattern(QWidget *parent)
   : QLineEdit(parent)

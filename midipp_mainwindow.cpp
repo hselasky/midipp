@@ -23,22 +23,22 @@
  * SUCH DAMAGE.
  */
 
-#include <midipp_mainwindow.h>
-#include <midipp_scores.h>
-#include <midipp_mutemap.h>
-#include <midipp_looptab.h>
-#include <midipp_decode.h>
-#include <midipp_import.h>
-#include <midipp_devices.h>
-#include <midipp_spinbox.h>
-#include <midipp_bpm.h>
-#include <midipp_button.h>
-#include <midipp_buttonmap.h>
-#include <midipp_gpro.h>
-#include <midipp_midi.h>
-#include <midipp_mode.h>
-#include <midipp_volume.h>
-#include <midipp_settings.h>
+#include "midipp_mainwindow.h"
+#include "midipp_scores.h"
+#include "midipp_mutemap.h"
+#include "midipp_looptab.h"
+#include "midipp_decode.h"
+#include "midipp_import.h"
+#include "midipp_devices.h"
+#include "midipp_spinbox.h"
+#include "midipp_bpm.h"
+#include "midipp_button.h"
+#include "midipp_buttonmap.h"
+#include "midipp_gpro.h"
+#include "midipp_midi.h"
+#include "midipp_mode.h"
+#include "midipp_volume.h"
+#include "midipp_settings.h"
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)

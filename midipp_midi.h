@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_MIDI_H_
 #define	_MIDIPP_MIDI_H_
 
-#include <midipp.h>
+#include "midipp.h"
 
 #define	MIDI_MAX_TRACKS 16
 

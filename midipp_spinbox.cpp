@@ -23,7 +23,7 @@
  * SUCH DAMAGE.
  */
 
-#include <midipp_spinbox.h>
+#include "midipp_spinbox.h"
 
 MppSpinBox :: MppSpinBox(QWidget *parent)
   : QSpinBox(parent)

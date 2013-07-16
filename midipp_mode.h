@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_MODE_H_
 #define	_MIDIPP_MODE_H_
 
-#include <midipp.h>
+#include "midipp.h"
 
 enum {
 	MM_PASS_ALL,

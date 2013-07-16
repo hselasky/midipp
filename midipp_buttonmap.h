@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_BUTTONMAP_H_
 #define	_MIDIPP_BUTTONMAP_H_
 
-#include <midipp.h>
+#include "midipp.h"
 
 class MppButtonMap : public QGroupBox
 {

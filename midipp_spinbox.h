@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_SPINBOX_H_
 #define	_MIDIPP_SPINBOX_H_
 
-#include <midipp.h>
+#include "midipp.h"
 
 class MppSpinBox : public QSpinBox
 {

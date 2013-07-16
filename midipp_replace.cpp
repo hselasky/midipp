@@ -23,9 +23,9 @@
  * SUCH DAMAGE.
  */
 
-#include <midipp_decode.h>
-#include <midipp_mainwindow.h>
-#include <midipp_replace.h>
+#include "midipp_decode.h"
+#include "midipp_mainwindow.h"
+#include "midipp_replace.h"
 
 MppReplace :: MppReplace(MppMainWindow *_mw, QString _match, QString _replace)
   : QDialog(0)

@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_DECODE_H_
 #define	_MIDIPP_DECODE_H_
 
-#include <midipp.h>
+#include "midipp.h"
 
 #define	MPP_MAX_VAR_OFF 12
 

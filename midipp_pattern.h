@@ -27,7 +27,7 @@
 #ifndef _MIDIPP_PATTERN_H_
 #define	_MIDIPP_PATTERN_H_
 
-#include <midipp.h>
+#include "midipp.h"
 
 #define	MPP_PATTERN_MAX	16
 

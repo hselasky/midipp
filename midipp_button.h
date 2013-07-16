@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_BUTTON_H_
 #define	_MIDIPP_BUTTON_H_
 
-#include <midipp.h>
+#include "midipp.h"
 
 class MppButton : public QPushButton
 {

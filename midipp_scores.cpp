@@ -23,16 +23,16 @@
  * SUCH DAMAGE.
  */
 
-#include <midipp_mainwindow.h>
-#include <midipp_scores.h>
-#include <midipp_looptab.h>
-#include <midipp_pattern.h>
-#include <midipp_bpm.h>
-#include <midipp_mode.h>
-#include <midipp_decode.h>
-#include <midipp_import.h>
-#include <midipp_replace.h>
-#include <midipp_spinbox.h>
+#include "midipp_mainwindow.h"
+#include "midipp_scores.h"
+#include "midipp_looptab.h"
+#include "midipp_pattern.h"
+#include "midipp_bpm.h"
+#include "midipp_mode.h"
+#include "midipp_decode.h"
+#include "midipp_import.h"
+#include "midipp_replace.h"
+#include "midipp_spinbox.h"
 
 MppScoreView :: MppScoreView(MppScoreMain *parent)
 {

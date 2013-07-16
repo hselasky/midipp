@@ -23,7 +23,7 @@
  * SUCH DAMAGE.
  */
 
-#include <midipp_button.h>
+#include "midipp_button.h"
 
 MppButton :: MppButton(const QString &txt, int _id) :
     QPushButton(txt)

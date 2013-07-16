@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_MUTEMAP_H_
 #define	_MIDIPP_MUTEMAP_H_
 
-#include <midipp.h>
+#include "midipp.h"
 
 class MppMuteMap : public QDialog
 {

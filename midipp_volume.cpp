@@ -23,7 +23,7 @@
  * SUCH DAMAGE.
  */
 
-#include <midipp_volume.h>
+#include "midipp_volume.h"
 
 MppVolume :: MppVolume(QWidget *parent)
   : QWidget(parent)

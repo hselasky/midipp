@@ -23,8 +23,8 @@
  * SUCH DAMAGE.
  */
 
-#include <midipp_button.h>
-#include <midipp_buttonmap.h>
+#include "midipp_button.h"
+#include "midipp_buttonmap.h"
 
 MppButtonMap :: MppButtonMap(const char *title, int max,
     int width) : QGroupBox()

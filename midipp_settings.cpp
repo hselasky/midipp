@@ -23,11 +23,11 @@
  * SUCH DAMAGE.
  */
 
-#include <midipp_mainwindow.h>
-#include <midipp_scores.h>
-#include <midipp_settings.h>
-#include <midipp_volume.h>
-#include <midipp_mode.h>
+#include "midipp_mainwindow.h"
+#include "midipp_scores.h"
+#include "midipp_settings.h"
+#include "midipp_volume.h"
+#include "midipp_mode.h"
 
 MppSettings :: MppSettings(MppMainWindow *_parent, const QString & fname)
   : QSettings(fname)
