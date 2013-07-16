@@ -3052,8 +3052,12 @@ MppMainWindow :: handle_move_right()
 	pw = scores_tw->widget(index);
 	scores_tw->removeTab(index);
 
+	if (scores_tw->widget(0) == NULL)
+		scores_tw->setVisible(0);
+
 	main_tw->addTab(pw, desc);
 	main_tw->setCurrentWidget(pw);
+	main_tw->setVisible(1);
 }
 
 void
@@ -3070,6 +3074,10 @@ MppMainWindow :: handle_move_left()
 	pw = main_tw->widget(index);
 	main_tw->removeTab(index);
 
+	if (main_tw->widget(0) == NULL)
+		main_tw->setVisible(0);
+
 	scores_tw->addTab(pw, desc);
 	scores_tw->setCurrentWidget(pw);
+	scores_tw->setVisible(1);
 }
