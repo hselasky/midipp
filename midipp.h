@@ -73,6 +73,9 @@
 #include <QSettings>
 #include <QStyle>
 #include <QSlider>
+#ifdef HAVE_PRINTSUPPORT
+#include <QtPrintSupport/QPrinter>
+#endif
 
 #include <umidi20.h>
 
