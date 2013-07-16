@@ -45,7 +45,7 @@ MppSpinBox :: valueFromText(const QString &n) const
 	int neg = 0;
 	int error = minimum() - 1;
 
-	c = ch->toAscii();
+	c = ch->toLatin1();
 
 	switch (c) {
 	case '-':
@@ -56,7 +56,7 @@ MppSpinBox :: valueFromText(const QString &n) const
 		break;
 	}
 
-	c = ch->toAscii();
+	c = ch->toLatin1();
 
 	switch (c) {
 	case 'C':
@@ -97,7 +97,7 @@ MppSpinBox :: valueFromText(const QString &n) const
 		return (error);
 	}
 
-	c = ch->toAscii();
+	c = ch->toLatin1();
 
 	switch (c) {
 	case '0':
@@ -118,7 +118,7 @@ MppSpinBox :: valueFromText(const QString &n) const
 		break;
 	}
 
-	c = ch->toAscii();
+	c = ch->toLatin1();
 
 	switch (c) {
 	case '0':
@@ -151,7 +151,7 @@ MppSpinBox :: valueFromText(const QString &n) const
 		return (error);
 	}
 
-	c = ch->toAscii();
+	c = ch->toLatin1();
 
 	if (c != 0)
 		return (error);

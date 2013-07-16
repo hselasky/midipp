@@ -64,7 +64,7 @@ MppQStringToAscii(QString s)
 	len = 1;		/* reserve space for NUL character */
 
 	while (1) {
-		c = ch->toAscii();
+		c = ch->toLatin1();
 		if (ch->isNull())
 			break;
 		len++;
@@ -79,7 +79,7 @@ MppQStringToAscii(QString s)
 	len = 0;
 
 	while (1) {
-		c = ch->toAscii();
+		c = ch->toLatin1();
 		if (ch->isNull())
 			break;
 		if (c == 0)
@@ -179,7 +179,7 @@ MppWriteFile(QString fname, QString text)
 		goto error;
 	}
 
-	file.write(text.toAscii());
+	file.write(text.toLatin1());
 
 	if (file.error()) {
 		file.close();

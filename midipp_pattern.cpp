@@ -85,7 +85,7 @@ MppPattern :: handleChanged(const QString &text)
 	any = 0;
 
 	while (ch->isNull() == 0) {
-		c = ch->toAscii();
+		c = ch->toLatin1();
 		if (c >= 'a' && c <= 'z') {
 			temp |= 1 << (c - 'a');
 			any = 1;

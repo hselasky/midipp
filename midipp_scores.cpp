@@ -1082,7 +1082,7 @@ MppScoreMain :: getChar(uint32_t offset)
 	if (offset >= (uint32_t)ps.ps->size())
 		return (0);
 
-	c = (*(ps.ps))[offset].toAscii();
+	c = (*(ps.ps))[offset].toLatin1();
 
 	/* convert non-printable characters into space */
 	if (c == 0)
