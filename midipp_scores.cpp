@@ -244,7 +244,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 	}
 
 	if (pd != NULL) {
-
+#ifndef QT_NO_PRINTER
 		/* count number of lines */
 		for (x = y_max = y = 0; x != MPP_MAX_LINES; x++) {
 
@@ -278,6 +278,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 		paint.translate(orig);
 		paint.scale(scale_f, scale_f);
 		paint.translate(QPoint(0, -visual_y_max));
+#endif
 	}
 
 	y_max = 0;
@@ -291,13 +292,14 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 				visual[x].pic = NULL;
 			}
 		} else {
-
+#ifndef QT_NO_PRINTER
 			if (pageNext[x] != 0) {
 				pd->newPage();
 				while (y_max--)
 					paint.translate(QPoint(0, -visual_y_max));
 				y_max = 0;
 			}
+#endif
 		}
 
 		ptr = visual[x].pstr;
@@ -308,8 +310,10 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 			pic = new QPicture();
 			paint.begin(pic);
 		} else {
+#ifndef QT_NO_PRINTER
 			paint.translate(QPoint(0,visual_y_max));
 			y_max++;
+#endif
 		}
 
 		draw_chord = 0;
