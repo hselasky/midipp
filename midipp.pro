@@ -3,7 +3,6 @@ CONFIG		+= qt warn_on release
 QT		+= core gui
 greaterThan(QT_MAJOR_VERSION, 4) {
 QT += widgets printsupport
-DEFINES		+= HAVE_PRINTSUPPORT
 }
 HEADERS		+= midipp.h
 HEADERS		+= midipp_bpm.h

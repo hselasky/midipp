@@ -73,9 +73,6 @@
 #include <QSettings>
 #include <QStyle>
 #include <QSlider>
-#ifdef HAVE_PRINTSUPPORT
-#include <QtPrintSupport/QPrinter>
-#endif
 
 #include <umidi20.h>
 
@@ -126,6 +123,7 @@ class MppSettings;
 class MppSettingsWhat;
 class MppSpinBox;
 class MppVolume;
+class QPrinter;
 
 struct MppChordInfo {
 	int chord_line;

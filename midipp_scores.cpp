@@ -2349,6 +2349,7 @@ MppScoreMain :: handleKeyRelease(int in_key, uint32_t key_delay)
 void
 MppScoreMain :: handleScorePrint(void)
 {
+#ifndef QT_NO_PRINTER
 	QPrinter printer(QPrinter::HighResolution);
 	QPrintDialog *dlg;
 	QPoint orig;
@@ -2389,6 +2390,7 @@ MppScoreMain :: handleScorePrint(void)
 	}
 
 	delete dlg;
+#endif
 }
 
 int
