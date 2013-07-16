@@ -43,8 +43,16 @@ RESOURCES	+= midipp.qrc
 
 TARGET		= midipp
 
+isEmpty(STATIC_BUILD) {
 LIBS		+= -L$${PREFIX}/lib -lumidi20
 INCLUDEPATH	+= $${PREFIX}/include
+} else {
+SOURCES		+= ../libumidi20/umidi20.c
+SOURCES		+= ../libumidi20/umidi20_file.c
+SOURCES		+= ../libumidi20/umidi20_gen.c
+SOURCES		+= ../libumidi20/umidi20_jack_dummy.c
+INCLUDEPATH	+= ../libumidi20
+}
 
 target.path	= $${PREFIX}/bin
 INSTALLS	+= target
