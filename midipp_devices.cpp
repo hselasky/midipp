@@ -67,47 +67,53 @@ MppDevices :: MppDevices(QWidget *parent)
 	QFileInfoList list = dir.entryInfoList();
 
 	new QListWidgetItem(tr("No recording device"), lw_rec);
-	n_rec_umidi = 1;
 
 	for (n = 0; n != list.size(); n++) {
 		QFileInfo fileInfo = list.at(n);
 		if (fileInfo.fileName() == QString("midistat"))
 			continue;
 		new QListWidgetItem(QString("D:/dev/") + fileInfo.fileName(), lw_rec);
-		n_rec_umidi++;
 	}
 
 	new QListWidgetItem(tr("No playback device"), lw_play);
-	n_play_umidi = 1;
 
 	for (n = 0; n != list.size(); n++) {
 		QFileInfo fileInfo = list.at(n);
 		if (fileInfo.fileName() == QString("midistat"))
 			continue;
 		new QListWidgetItem(QString("D:/dev/") + fileInfo.fileName(), lw_play);
-		n_play_umidi++;
 	}
 
-	rec_dev_str = umidi20_jack_alloc_outputs();
-	if (rec_dev_str != NULL) {
-		for (n = 0; rec_dev_str[n] != NULL; n++) {
-			if (rec_dev_str[n][0] != 0)
-				new QListWidgetItem(QString("A:") + QString(rec_dev_str[n]), lw_rec);
+	rec_jack_str = umidi20_jack_alloc_outputs();
+	if (rec_jack_str != NULL) {
+		for (n = 0; rec_jack_str[n] != NULL; n++) {
+			if (rec_jack_str[n][0] != 0)
+				new QListWidgetItem(QString("A:") + QString(rec_jack_str[n]), lw_rec);
 		}
-		n_rec_jack = n;
-	} else {
-		n_rec_jack = 0;
 	}
 
-	play_dev_str = umidi20_jack_alloc_inputs();
-	if (play_dev_str != NULL) {
-		for (n = 0; play_dev_str[n] != NULL; n++) {
-			if (play_dev_str[n][0] != 0)
-				new QListWidgetItem(QString("A:") + QString(play_dev_str[n]), lw_play);
+	play_jack_str = umidi20_jack_alloc_inputs();
+	if (play_jack_str != NULL) {
+		for (n = 0; play_jack_str[n] != NULL; n++) {
+			if (play_jack_str[n][0] != 0)
+				new QListWidgetItem(QString("A:") + QString(play_jack_str[n]), lw_play);
 		}
-		n_play_jack = n;
-	} else {
-		n_play_jack = 0;
+	}
+
+	rec_coremidi_str = umidi20_coremidi_alloc_outputs();
+	if (rec_coremidi_str != NULL) {
+		for (n = 0; rec_coremidi_str[n] != NULL; n++) {
+			if (rec_coremidi_str[n][0] != 0)
+				new QListWidgetItem(QString("C:") + QString(rec_coremidi_str[n]), lw_rec);
+		}
+	}
+
+	play_coremidi_str = umidi20_coremidi_alloc_inputs();
+	if (play_coremidi_str != NULL) {
+		for (n = 0; play_coremidi_str[n] != NULL; n++) {
+			if (play_coremidi_str[n][0] != 0)
+				new QListWidgetItem(QString("C:") + QString(play_coremidi_str[n]), lw_play);
+		}
 	}
 
 	lw_rec->setCurrentRow(0);
@@ -116,8 +122,11 @@ MppDevices :: MppDevices(QWidget *parent)
 
 MppDevices :: ~MppDevices()
 {
-	free(rec_dev_str);
-	free(play_dev_str);
+	umidi20_jack_free_outputs(rec_jack_str);
+	umidi20_jack_free_inputs(play_jack_str);
+
+	umidi20_coremidi_free_outputs(rec_coremidi_str);
+	umidi20_coremidi_free_inputs(play_coremidi_str);
 }
 
 void

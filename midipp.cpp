@@ -282,11 +282,26 @@ main(int argc, char **argv)
 
 	umidi20_init();
 
-	if (umidi20_jack_init("midipp") != 0 && mpp_pdf_print == 0) {
+	c = umidi20_jack_init("midipp");
+
+	if (c != 0 && c != -2 && mpp_pdf_print == 0) {
 		QMessageBox box;
 
 		box.setText(QObject::tr("Could not connect to "
 		    "the JACK subsystem!"));
+		box.setStandardButtons(QMessageBox::Ok);
+		box.setIcon(QMessageBox::Critical);
+		box.setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+		box.exec();
+	}
+
+	c = umidi20_coremidi_init("midipp");
+
+	if (c != 0 && c != -2 && mpp_pdf_print == 0) {
+		QMessageBox box;
+
+		box.setText(QObject::tr("Could not connect to "
+		    "the COREMIDI subsystem!"));
 		box.setStandardButtons(QMessageBox::Ok);
 		box.setIcon(QMessageBox::Critical);
 		box.setWindowIcon(QIcon(QString(MPP_ICON_FILE)));

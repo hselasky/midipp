@@ -1274,6 +1274,11 @@ MppMainWindow :: handle_config_reload()
 				    sizeof(cfg.cfg_dev[n].rec_fname));
 				cfg.cfg_dev[n].rec_enabled_cfg = UMIDI20_ENABLED_CFG_JACK;
 				break;
+			case 'C':
+				STRLCPY(cfg.cfg_dev[n].rec_fname, p_rec + 2,
+				    sizeof(cfg.cfg_dev[n].rec_fname));
+				cfg.cfg_dev[n].rec_enabled_cfg = UMIDI20_ENABLED_CFG_COREMIDI;
+				break;
 			case 'D':
 				STRLCPY(cfg.cfg_dev[n].rec_fname, p_rec + 2,
 				    sizeof(cfg.cfg_dev[n].rec_fname));
@@ -1295,6 +1300,11 @@ MppMainWindow :: handle_config_reload()
 				STRLCPY(cfg.cfg_dev[n].play_fname, p_play + 2,
 				    sizeof(cfg.cfg_dev[n].play_fname));
 				cfg.cfg_dev[n].play_enabled_cfg = UMIDI20_ENABLED_CFG_JACK;
+				break;
+			case 'C':
+				STRLCPY(cfg.cfg_dev[n].play_fname, p_play + 2,
+				    sizeof(cfg.cfg_dev[n].play_fname));
+				cfg.cfg_dev[n].play_enabled_cfg = UMIDI20_ENABLED_CFG_COREMIDI;
 				break;
 			case 'D':
 				STRLCPY(cfg.cfg_dev[n].play_fname, p_play + 2,

@@ -58,8 +58,19 @@ INCLUDEPATH	+= $${PREFIX}/include
 SOURCES		+= ../libumidi20/umidi20.c
 SOURCES		+= ../libumidi20/umidi20_file.c
 SOURCES		+= ../libumidi20/umidi20_gen.c
-SOURCES		+= ../libumidi20/umidi20_jack_dummy.c
 INCLUDEPATH	+= ../libumidi20
+ isEmpty(HAVE_JACK) {
+ SOURCES	+= ../libumidi20/umidi20_jack_dummy.c
+ } else {
+ LIBS		+= -L${PREFIX}/lib -ljack
+ INCLUDEPATH	+= -I${PREFIX}/include
+ SOURCES	+= ../libumidi20/umidi20_jack.c
+ }
+ isEmpty(HAVE_COREMIDI) {
+ SOURCES	+= ../libumidi20/umidi20_coremidi_dummy.c
+ } else {
+ SOURCES	+= ../libumidi20/umidi20_coremidi.c
+ }
 }
 
 target.path	= $${PREFIX}/bin

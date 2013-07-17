@@ -43,14 +43,11 @@ public:
 	QPushButton *but_ok;
 	QPushButton *but_cancel;
 
-	const char **rec_dev_str;
-	const char **play_dev_str;
+	const char **rec_jack_str;
+	const char **play_jack_str;
 
-	int n_rec_umidi;
-	int n_play_umidi;
-
-	int n_rec_jack;
-	int n_play_jack;
+	const char **rec_coremidi_str;
+	const char **play_coremidi_str;
 
 	QString rec_dev;
 	QString play_dev;
