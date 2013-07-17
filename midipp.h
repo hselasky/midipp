@@ -109,6 +109,8 @@ class MppDecode;
 class MppDevices;
 class MppEchoTab;
 class MppGPro;
+class MppGroupBox;
+class MppGridLayout;
 class MppImportTab;
 class MppLoopTab;
 class MppMainWindow;
@@ -123,6 +125,7 @@ class MppSettings;
 class MppSettingsWhat;
 class MppSpinBox;
 class MppVolume;
+
 class QPrinter;
 
 struct MppChordInfo {

@@ -56,8 +56,7 @@ class MppScoreMain : public QObject
 	Q_OBJECT;
 
 public:
-
-	MppScoreMain(MppMainWindow *parent);
+	MppScoreMain(MppMainWindow *parent, int unit);
 	~MppScoreMain();
 
 	void decrementDuration(uint32_t timeout = 0);
@@ -115,6 +114,9 @@ public:
 
 	MppMainWindow *mainWindow;
 	MppScoreTextEdit *editWidget;
+
+	MppGroupBox *gbScoreFile;
+
 	QPushButton *butScoreFileNew;
 	QPushButton *butScoreFileOpen;
 	QPushButton *butScoreFileSave;

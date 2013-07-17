@@ -26,6 +26,7 @@
 #include "midipp_decode.h"
 #include "midipp_mainwindow.h"
 #include "midipp_scores.h"
+#include "midipp_groupbox.h"
 #include "midipp_import.h"
 
 static uint8_t
@@ -324,6 +325,11 @@ MppImportTab :: MppImportTab(MppMainWindow *parent)
 	butImportFileNew = new QPushButton(tr("New"));
 	butImportFileOpen = new QPushButton(tr("Open"));
 	butImport = new QPushButton();
+
+	gbImport = new MppGroupBox(tr("Lyrics"));
+	gbImport->addWidget(butImportFileNew, 0, 0, 1, 1);
+	gbImport->addWidget(butImportFileOpen, 1, 0, 1, 1);
+	gbImport->addWidget(butImport, 2, 0, 1, 1);
 
 	connect(butImportFileNew, SIGNAL(pressed()), this, SLOT(handleImportNew()));
 	connect(butImportFileOpen, SIGNAL(pressed()), this, SLOT(handleImportOpen()));

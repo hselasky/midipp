@@ -35,6 +35,8 @@
 #include "midipp_button.h"
 #include "midipp_buttonmap.h"
 #include "midipp_gpro.h"
+#include "midipp_groupbox.h"
+#include "midipp_gridlayout.h"
 #include "midipp_midi.h"
 #include "midipp_mode.h"
 #include "midipp_volume.h"
@@ -122,7 +124,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_gl->addWidget(mwLeft,7,1,1,1);
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++)
-		scores_main[x] = new MppScoreMain(this);
+		scores_main[x] = new MppScoreMain(this, x);
 
 	currScoreMain()->devInputMask = -1U;
 
@@ -172,27 +174,16 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " * =========================\n"
 	    " */\n") + MppVariantList + tr("\n"));
 
-	tab_file_wg = new QWidget();
-	tab_play_wg = new MppPlayWidget(this);
-	tab_config_wg = new QWidget();
-	tab_instr_wg = new QWidget();
-	tab_volume_wg = new QWidget();
+	tab_file_gl = new MppGridLayout();
+	tab_play_gl = new MppPlayGridLayout();
+	tab_config_gl = new MppGridLayout();
+	tab_instr_gl = new MppGridLayout();
+	tab_volume_gl = new MppGridLayout();
 
-	tab_file_gl = new QGridLayout(tab_file_wg);
-	tab_play_gl = new QGridLayout(tab_play_wg);
-	tab_config_gl = new QGridLayout(tab_config_wg);
-	tab_instr_gl = new QGridLayout(tab_instr_wg);
-	tab_volume_gl = new QGridLayout(tab_volume_wg);
-
-	gb_ctrl = new QGroupBox(tr("Main controls"));
-	gb_time = new QGroupBox(tr("Time counter"));
-	gb_bpm = new QGroupBox(tr("Average Beats Per Minute, BPM"));
-	gb_synth_play = new QGroupBox(tr("Synth and Play controls"));
-
-	gl_ctrl = new QGridLayout(gb_ctrl);
-	gl_time = new QGridLayout(gb_time);
-	gl_bpm = new QGridLayout(gb_bpm);
-	gl_synth_play = new QGridLayout(gb_synth_play);
+	gl_ctrl = new MppGroupBox(tr("Main controls"));
+	gl_time = new MppGroupBox(tr("Time counter"));
+	gl_bpm = new MppGroupBox(tr("Average Beats Per Minute, BPM"));
+	gl_synth_play = new MppGroupBox(tr("Synth and Play controls"));
 
 	scores_tw->addTab(&scores_main[0]->viewWidget, tr("View A-Scores"));
 	scores_tw->addTab(scores_main[0]->editWidget, tr("Edit A-Scores"));
@@ -202,24 +193,16 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	scores_tw->addTab(tab_import->editWidget, tr("Lyrics"));
 
-	main_tw->addTab(tab_file_wg, tr("File"));
-	main_tw->addTab(tab_play_wg, tr("Play"));
-	main_tw->addTab(tab_config_wg, tr("Config"));
-	main_tw->addTab(tab_instr_wg, tr("Instrument"));
-	main_tw->addTab(tab_volume_wg, tr("Volume"));
+	main_tw->addTab(tab_file_gl, tr("File"));
+	main_tw->addTab(tab_play_gl, tr("Play"));
+	main_tw->addTab(tab_config_gl, tr("Config"));
+	main_tw->addTab(tab_instr_gl, tr("Instrument"));
+	main_tw->addTab(tab_volume_gl, tr("Volume"));
 	main_tw->addTab(tab_loop, tr("Loop"));
 
 	main_tw->addTab(tab_help, tr("Help"));
 
 	/* <File> Tab */
-
-	lbl_score_Afile = new QLabel(tr("- A-Scores -"));
-
-	lbl_score_Bfile = new QLabel(tr("- B-Scores -"));
-
-	lbl_import_file = new QLabel(tr("- Lyrics -"));
-
-	lbl_midi_file = new QLabel(tr("- MIDI File -"));
 
 	but_quit = new QPushButton(tr("Quit"));
 
@@ -230,114 +213,28 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_midi_file_save_as = new QPushButton(tr("Save As"));
 	but_midi_file_import = new QPushButton();
 
-	lbl_gpro_title = new QLabel(tr("- GPro v3/4 -"));
+	gb_midi_file = new MppGroupBox(tr("MIDI File"));
+	gb_midi_file->addWidget(but_midi_file_new, 0, 0, 1, 1);
+	gb_midi_file->addWidget(but_midi_file_open, 1, 0, 1, 1);
+	gb_midi_file->addWidget(but_midi_file_merge, 2, 0, 1, 1);
+	gb_midi_file->addWidget(but_midi_file_save, 3, 0, 1, 1);
+	gb_midi_file->addWidget(but_midi_file_save_as, 4, 0, 1, 1);
+	gb_midi_file->addWidget(but_midi_file_import, 5, 0, 1, 1);
+
 	but_gpro_file_import = new QPushButton();
 
-	n = 0;
+	gb_gpro_file_import = new MppGroupBox(tr("GPro v3/4"));
+	gb_gpro_file_import->addWidget(but_gpro_file_import, 0, 0, 1, 1);
 
-	tab_file_gl->addWidget(lbl_score_Afile, n, 0, 1, 2, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_file_gl->addWidget(lbl_score_Bfile, n, 2, 1, 2, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_file_gl->addWidget(lbl_import_file, n, 4, 1, 2, Qt::AlignHCenter|Qt::AlignVCenter);
+	tab_file_gl->addWidget(scores_main[0]->gbScoreFile, 0, 0, 2, 1);
+	tab_file_gl->addWidget(scores_main[1]->gbScoreFile, 0, 1, 2, 1);
+	tab_file_gl->addWidget(tab_import->gbImport, 0, 2, 1, 1);
+	tab_file_gl->addWidget(gb_gpro_file_import, 1, 2, 1, 1);
+	tab_file_gl->addWidget(gb_midi_file, 0, 3, 2, 1);
 
-	n++;
+	tab_file_gl->setRowStretch(2, 3);
 
-	tab_file_gl->addWidget(scores_main[0]->butScoreFileNew, n, 0, 1, 2);
-	tab_file_gl->addWidget(scores_main[1]->butScoreFileNew, n, 2, 1, 2);
-	tab_file_gl->addWidget(tab_import->butImportFileNew, n, 4, 1, 2);
-
-	n++;
-
-	tab_file_gl->addWidget(scores_main[0]->butScoreFileOpen, n, 0, 1, 2);
-	tab_file_gl->addWidget(scores_main[1]->butScoreFileOpen, n, 2, 1, 2);
-	tab_file_gl->addWidget(tab_import->butImportFileOpen, n, 4, 1, 2);
-
-	n++;
-
-	tab_file_gl->addWidget(scores_main[0]->butScoreFileSave, n, 0, 1, 2);
-	tab_file_gl->addWidget(scores_main[1]->butScoreFileSave, n, 2, 1, 2);
-	tab_file_gl->addWidget(tab_import->butImport, n, 4, 1, 2);
-
-	n++;
-
-	tab_file_gl->addWidget(scores_main[0]->butScoreFileSaveAs, n, 0, 1, 2);
-	tab_file_gl->addWidget(scores_main[1]->butScoreFileSaveAs, n, 2, 1, 2);
-	tab_file_gl->addWidget(lbl_gpro_title, n, 4, 1, 2, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	n++;
-
-	tab_file_gl->addWidget(scores_main[0]->butScoreFilePrint, n, 0, 1, 2);
-	tab_file_gl->addWidget(scores_main[1]->butScoreFilePrint, n, 2, 1, 2);
-	tab_file_gl->addWidget(but_gpro_file_import, n, 4, 1, 2);
-
-	n++;
-
-	tab_file_gl->addWidget(scores_main[0]->butScoreFileAlign, n, 0, 1, 1);
-	tab_file_gl->addWidget(scores_main[1]->butScoreFileAlign, n, 2, 1, 1);
-
-	tab_file_gl->addWidget(scores_main[0]->spnScoreFileAlign, n, 1, 1, 1);
-	tab_file_gl->addWidget(scores_main[1]->spnScoreFileAlign, n, 3, 1, 1);
-
-	n++;
-
-	tab_file_gl->addWidget(scores_main[0]->butScoreFileStepUp, n, 0, 1, 2);
-	tab_file_gl->addWidget(scores_main[1]->butScoreFileStepUp, n, 2, 1, 2);
-
-	n++;
-
-	tab_file_gl->addWidget(scores_main[0]->butScoreFileStepDown, n, 0, 1, 2);
-	tab_file_gl->addWidget(scores_main[1]->butScoreFileStepDown, n, 2, 1, 2);
-
-	n++;
-
-	tab_file_gl->addWidget(scores_main[0]->butScoreFileSetFlat, n, 0, 1, 1);
-	tab_file_gl->addWidget(scores_main[1]->butScoreFileSetFlat, n, 2, 1, 1);
-
-	tab_file_gl->addWidget(scores_main[0]->butScoreFileSetSharp, n, 1, 1, 1);
-	tab_file_gl->addWidget(scores_main[1]->butScoreFileSetSharp, n, 3, 1, 1);
-
-	n++;
-
-	tab_file_gl->addWidget(scores_main[0]->butScoreFileExport, n, 0, 1, 2);
-	tab_file_gl->addWidget(scores_main[1]->butScoreFileExport, n, 2, 1, 2);
-
-	n++;
-	n++;
-
-	tab_file_gl->setRowStretch(n, 3);
-
-	n++;
-
-	tab_file_gl->addWidget(but_quit, n, 0, 1, 8);
-
-	n = 0;
-
-	tab_file_gl->addWidget(lbl_midi_file, n, 6, 1, 2, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	n++;
-
-	tab_file_gl->addWidget(but_midi_file_new, n, 6, 1, 2);
-
-	n++;
-
-	tab_file_gl->addWidget(but_midi_file_open, n, 6, 1, 2);
-
-	n++;
-
-	tab_file_gl->addWidget(but_midi_file_merge, n, 6, 1, 2);
-
-	n++;
-
-	tab_file_gl->addWidget(but_midi_file_save, n, 6, 1, 2);
-
-	n++;
-
-	tab_file_gl->addWidget(but_midi_file_save_as, n, 6, 1, 2);
-
-	n++;
-
-	tab_file_gl->addWidget(but_midi_file_import, n, 6, 1, 2);
-
-	n++;
+	tab_file_gl->addWidget(but_quit, 3, 0, 1, 4);
 
 	/* <Play> Tab */
 
@@ -409,17 +306,17 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* First column */
 
-	tab_play_gl->addWidget(gb_time,0,0,1,1);
-	tab_play_gl->addWidget(gb_ctrl,1,0,1,1);
+	tab_play_gl->addWidget(gl_time,0,0,1,1);
+	tab_play_gl->addWidget(gl_ctrl,1,0,1,1);
 	tab_play_gl->addWidget(mbm_midi_play, 2,0,1,1);
 	tab_play_gl->addWidget(mbm_midi_record, 3,0,1,1);
 	tab_play_gl->addWidget(mbm_key_mode, 4,0,1,1);
 
 	/* Second column */
 
-	tab_play_gl->addWidget(gb_synth_play,0,1,2,2);
+	tab_play_gl->addWidget(gl_synth_play,0,1,2,2);
 	tab_play_gl->addWidget(mbm_score_record, 2,1,1,2);
-	tab_play_gl->addWidget(gb_bpm, 3,1,1,2);
+	tab_play_gl->addWidget(gl_bpm, 3,1,1,2);
 
 	tab_play_gl->addWidget(but_play[0], 4, 1, 1, 1);
 	tab_play_gl->addWidget(but_play[1], 4, 2, 1, 1);
@@ -454,30 +351,20 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	mpp_settings = new MppSettings(this, "midipp");
 
-	lbl_config_title = new QLabel(tr("- Device configuration -"));
-	lbl_config_play = new QLabel(tr("Play"));
-	lbl_config_rec = new QLabel(tr("Rec."));
-	lbl_config_synth = new QLabel(tr("Synth"));
-	lbl_config_mm = new QLabel(tr("MuteMap"));
-	lbl_config_dv = new QLabel(tr("DevSel"));
-
 	but_config_apply = new QPushButton(tr("Apply"));
 	but_config_revert = new QPushButton(tr("Revert"));
 	but_config_fontsel = new QPushButton(tr("Select Font"));
 
-	lbl_config_insert = new QLabel(tr("Scores record prefix string"));
-	led_config_insert = new QLineEdit(QString());
+	gb_config_device = new MppGroupBox(tr("Device configuration"));
 
-	x = 0;
+	gb_config_device->addWidget(new QLabel(tr("Device Name")), 0, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb_config_device->addWidget(new QLabel(tr("Play")), 0, 2, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb_config_device->addWidget(new QLabel(tr("Rec.")), 0, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb_config_device->addWidget(new QLabel(tr("Synth")), 0, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb_config_device->addWidget(new QLabel(tr("Mute Map")), 0, 5, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb_config_device->addWidget(new QLabel(tr("DevSel")), 0, 6, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
-	tab_config_gl->addWidget(lbl_config_title, x, 0, 1, 3, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_config_gl->addWidget(lbl_config_play, x, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_config_gl->addWidget(lbl_config_rec, x, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_config_gl->addWidget(lbl_config_synth, x, 5, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_config_gl->addWidget(lbl_config_mm, x, 6, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_config_gl->addWidget(lbl_config_dv, x, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	x++;
+	gb_config_device->setColumnStretch(1, 1);
 
 	for (n = 0; n != MPP_MAX_DEVS; n++) {
 		char buf[16];
@@ -496,22 +383,27 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 		snprintf(buf, sizeof(buf), "Dev%d:", n);
 
-		lbl_config_dev[n] = new QLabel(tr(buf));
-
-		tab_config_gl->addWidget(lbl_config_dev[n], x, 0, 1, 1, Qt::AlignHCenter|Qt::AlignLeft);
-		tab_config_gl->addWidget(led_config_dev[n], x, 1, 1, 2, Qt::AlignHCenter|Qt::AlignLeft);
-
-		tab_config_gl->addWidget(cbx_config_dev[n][0], x, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		tab_config_gl->addWidget(cbx_config_dev[n][1], x, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		tab_config_gl->addWidget(cbx_config_dev[n][2], x, 5, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		tab_config_gl->addWidget(but_config_mm[n], x, 6, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		tab_config_gl->addWidget(but_config_dev[n], x, 7, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-
-		x++;
+		gb_config_device->addWidget(new QLabel(tr(buf)), n + 1, 0, 1, 1, Qt::AlignHCenter|Qt::AlignLeft);
+		gb_config_device->addWidget(led_config_dev[n], n + 1, 1, 1, 1);
+		gb_config_device->addWidget(cbx_config_dev[n][0], n + 1, 2, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		gb_config_device->addWidget(cbx_config_dev[n][1], n + 1, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		gb_config_device->addWidget(cbx_config_dev[n][2], n + 1, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		gb_config_device->addWidget(but_config_mm[n], n + 1, 5, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		gb_config_device->addWidget(but_config_dev[n], n + 1, 6, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	}
 
-	tab_config_gl->addWidget(lbl_config_insert, x, 0, 1, 4);
-	tab_config_gl->addWidget(led_config_insert, x, 4, 1, 4);
+	led_config_insert = new QLineEdit(QString());
+
+	gb_config_insert = new MppGroupBox(tr("Scores recording prefix string"));
+	gb_config_insert->addWidget(led_config_insert, 0, 0, 1, 1);
+
+	x = 0;
+
+	tab_config_gl->addWidget(gb_config_device, x, 0, 1, 8);
+
+	x++;
+
+	tab_config_gl->addWidget(gb_config_insert, x, 0, 1, 8);
 
 	x++;
 
@@ -539,11 +431,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* <Instrument> tab */
 
-	lbl_instr_title[0] = new QLabel(tr("- Bank/Program/Mute -"));
-	lbl_instr_title[1] = new QLabel(tr("- Bank/Program/Mute -"));
-
-	lbl_instr_prog = new QLabel(tr("- Synth/Record Channel and Selected Bank/Program -"));
-
 	but_instr_program = new QPushButton(tr("Program One"));
 	but_instr_program_all = new QPushButton(tr("Program All"));
 	but_instr_reset = new QPushButton(tr("Reset"));
@@ -564,24 +451,25 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_instr_curr_prog->setRange(0, 127);
 	spn_instr_curr_prog->setValue(0);
 
-	x = 0;
+	gb_instr_select = new MppGroupBox(tr("Synth and Recording Instrument Selector"));
+	gb_instr_select->addWidget(new QLabel(tr("Channel")), 0, 0, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+	gb_instr_select->addWidget(new QLabel(tr("Bank")), 0, 1, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+	gb_instr_select->addWidget(new QLabel(tr("Program")), 0, 2, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+	gb_instr_select->addWidget(spn_instr_curr_chan, 1, 0, 1, 1);
+	gb_instr_select->addWidget(spn_instr_curr_bank, 1, 1, 1, 1);
+	gb_instr_select->addWidget(spn_instr_curr_prog, 1, 2, 1, 1);
+	gb_instr_select->addWidget(but_instr_program, 1, 3, 1, 3);
+	gb_instr_select->addWidget(but_instr_program_all, 1, 6, 1, 2);
 
-	tab_instr_gl->addWidget(lbl_instr_prog, x, 0, 1, 8, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb_instr_table = new MppGroupBox(tr("Synth and Recording Instrument Table"));
 
-	x++;
+	gb_instr_table->addWidget(new QLabel(tr("Bank")), 0, 1, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+	gb_instr_table->addWidget(new QLabel(tr("Program")), 0, 2, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+	gb_instr_table->addWidget(new QLabel(tr("Mute")), 0, 3, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
 
-	tab_instr_gl->addWidget(spn_instr_curr_chan, x, 0, 1, 1);
-	tab_instr_gl->addWidget(spn_instr_curr_bank, x, 1, 1, 1);
-	tab_instr_gl->addWidget(spn_instr_curr_prog, x, 2, 1, 1);
-	tab_instr_gl->addWidget(but_instr_program, x, 3, 1, 3);
-	tab_instr_gl->addWidget(but_instr_program_all, x, 6, 1, 2);
-
-	x++;
-
-	tab_instr_gl->addWidget(lbl_instr_title[0], x, 0, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_instr_gl->addWidget(lbl_instr_title[1], x, 4, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	x++;
+	gb_instr_table->addWidget(new QLabel(tr("Bank")), 0, 5, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+	gb_instr_table->addWidget(new QLabel(tr("Program")), 0, 6, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+	gb_instr_table->addWidget(new QLabel(tr("Mute")), 0, 7, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
 
 	for (n = 0; n != 16; n++) {
 		int y_off = (n & 8) ? 4 : 0;
@@ -589,8 +477,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		char buf[16];
 
 		snprintf(buf, sizeof(buf), "Ch%X", n);
-
-		lbl_instr_desc[n] = new QLabel(tr(buf));
 
 		spn_instr_bank[n] = new QSpinBox();
 		spn_instr_bank[n]->setRange(0, 16383);
@@ -603,36 +489,29 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		cbx_instr_mute[n] = new QCheckBox();
 		connect(cbx_instr_mute[n], SIGNAL(stateChanged(int)), this, SLOT(handle_instr_changed(int)));
 
-		tab_instr_gl->addWidget(lbl_instr_desc[n], (n & 7) + x, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
-		tab_instr_gl->addWidget(spn_instr_bank[n], (n & 7) + x, 1 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
-		tab_instr_gl->addWidget(spn_instr_prog[n], (n & 7) + x, 2 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-		tab_instr_gl->addWidget(cbx_instr_mute[n], (n & 7) + x, 3 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+		gb_instr_table->addWidget(new QLabel(tr(buf)), (n & 7) + 1, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
+		gb_instr_table->addWidget(spn_instr_bank[n], (n & 7) + 1, 1 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
+		gb_instr_table->addWidget(spn_instr_prog[n], (n & 7) + 1, 2 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+		gb_instr_table->addWidget(cbx_instr_mute[n], (n & 7) + 1, 3 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
 	}
 
-	x += 8;
 
-	tab_instr_gl->setRowStretch(x, 3);
+	tab_instr_gl->addWidget(gb_instr_select, 0, 0, 1, 8);
+	tab_instr_gl->addWidget(gb_instr_table, 1, 0, 1, 8);
 
-	x++;
+	tab_instr_gl->setRowStretch(2, 1);
 
-	tab_instr_gl->addWidget(but_instr_mute_all, x, 0, 1, 2);
-	tab_instr_gl->addWidget(but_instr_unmute_all, x, 2, 1, 2);
- 	tab_instr_gl->addWidget(but_instr_rem, x, 4, 1, 2);
-	tab_instr_gl->addWidget(but_instr_reset, x, 6, 1, 2);
+	tab_instr_gl->addWidget(but_instr_mute_all, 3, 0, 1, 2);
+	tab_instr_gl->addWidget(but_instr_unmute_all, 3, 2, 1, 2);
+ 	tab_instr_gl->addWidget(but_instr_rem, 3, 4, 1, 2);
+	tab_instr_gl->addWidget(but_instr_reset, 3, 6, 1, 2);
 
 	/* <Volume> tab */
 
-	lbl_volume_title[0] = new QLabel(tr("- Playback -"));
-	lbl_volume_title[1] = new QLabel(tr("- Synth/Record -"));
+	gb_volume_play = new MppGroupBox(tr("Playback"));
+	gb_volume_synth = new MppGroupBox(tr("Synth and Recording"));
 
 	but_volume_reset = new QPushButton(tr("Reset"));
-
-	x = 0;
-
-	tab_volume_gl->addWidget(lbl_volume_title[0], x, 0, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
-	tab_volume_gl->addWidget(lbl_volume_title[1], x, 4, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	x++;
 
 	for (n = 0; n != 16; n++) {
 		int y_off = (n & 8) ? 2 : 0;
@@ -640,9 +519,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		char buf[16];
 
 		snprintf(buf, sizeof(buf), "Ch%X", n);
-
-		lbl_volume_play[n] = new QLabel(tr(buf));
-		lbl_volume_synth[n] = new QLabel(tr(buf));
 
 		spn_volume_synth[n] = new MppVolume();
 		spn_volume_synth[n]->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
@@ -652,19 +528,19 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		spn_volume_play[n]->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
 		connect(spn_volume_play[n], SIGNAL(valueChanged(int)), this, SLOT(handle_volume_changed(int)));
 
-		tab_volume_gl->addWidget(lbl_volume_play[n], (n & 7) + x, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
-		tab_volume_gl->addWidget(spn_volume_play[n], (n & 7) + x, 1 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-		tab_volume_gl->addWidget(lbl_volume_synth[n], (n & 7) + x, 4 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
-		tab_volume_gl->addWidget(spn_volume_synth[n], (n & 7) + x, 5 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+		gb_volume_play->addWidget(new QLabel(buf), (n & 7) + x, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
+		gb_volume_play->addWidget(spn_volume_play[n], (n & 7) + x, 1 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+
+		gb_volume_synth->addWidget(new QLabel(buf), (n & 7) + x, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
+		gb_volume_synth->addWidget(spn_volume_synth[n], (n & 7) + x, 1 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
 	}
 
-	x += 8;
+	tab_volume_gl->addWidget(gb_volume_play, 0, 0, 1, 1);
+	tab_volume_gl->addWidget(gb_volume_synth, 0, 1, 1, 1);
 
-	tab_volume_gl->setRowStretch(x, 4);
+	tab_volume_gl->setRowStretch(1, 1);
 
-	x++;
-
-	tab_volume_gl->addWidget(but_volume_reset, x, 6, 1, 2);
+	tab_volume_gl->addWidget(but_volume_reset, 2, 0, 1, 2);
 
 	/* Connect all */
 
@@ -2829,18 +2705,18 @@ MppMainWindow :: MidiUnInit(void)
 	}
 }
 
-MppPlayWidget :: MppPlayWidget(MppMainWindow *parent)
-  : QWidget(parent)
+MppPlayGridLayout :: MppPlayGridLayout(MppMainWindow *parent)
+  : QWidget(parent), QGridLayout(this)
 {
 	mw = parent;
 }
 
-MppPlayWidget :: ~MppPlayWidget()
+MppPlayGridLayout :: ~MppPlayGridLayout()
 {
 }
 
 void
-MppPlayWidget :: keyPressEvent(QKeyEvent *event)
+MppPlayGridLayout :: keyPressEvent(QKeyEvent *event)
 {
 	/* fake pedal down event */
 	switch (event->key()) {
@@ -2871,7 +2747,7 @@ MppPlayWidget :: keyPressEvent(QKeyEvent *event)
 }
 
 void
-MppPlayWidget :: keyReleaseEvent(QKeyEvent *event)
+MppPlayGridLayout :: keyReleaseEvent(QKeyEvent *event)
 {
 	/* fake pedal up event */
 	if (event->key() == Qt::Key_Shift) {

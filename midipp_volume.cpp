@@ -32,8 +32,8 @@ MppVolume :: MppVolume(QWidget *parent)
 	    curr_pos = min = max = 0;
 	mid = 1;
 
-	setMinimumSize(QSize(40,40));
-	setMaximumSize(QSize(40,40));
+	setMinimumSize(QSize(50,50));
+	setMaximumSize(QSize(50,50));
 }
 
 MppVolume :: ~MppVolume()
@@ -146,12 +146,12 @@ MppVolume :: paintEvent(QPaintEvent *event)
 	QColor button(128,128,128);
 	QColor button_focus(128,192,128);
 	QColor active(128+color,128,128);
-	QColor background(255,255,255);
+	QColor background(0,0,0,0);
 
 	fnt.setPixelSize(3*m);
 
-	snprintf(buffer, sizeof(buffer), "-%d.%d+",
-	    value() / mid, ((value() * 10) / mid) % 10 );
+	snprintf(buffer, sizeof(buffer), "-%d.%02d+",
+	    value() / mid, ((value() * 100) / mid) % 100);
 	QString descr(buffer);
 
 	paint.fillRect(QRectF(0,0,w,h), background);

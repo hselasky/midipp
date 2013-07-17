@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,58 +23,16 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _MIDIPP_IMPORT_H_
-#define	_MIDIPP_IMPORT_H_
+#ifndef _MIDIPP_GRIDLAYOUT_H_
+#define	_MIDIPP_GRIDLAYOUT_H_
 
 #include "midipp.h"
 
-#define	MIDIPP_IMPORT_LB	256
-#define	MIDIPP_IMPORT_MW	64
-
-struct midipp_word {
-	uint16_t off;
-	char name[32];
-};
-
-struct midipp_import {
-	char line_buffer[MIDIPP_IMPORT_LB];
-
-	struct midipp_word d_word[2][MIDIPP_IMPORT_MW];
-	uint8_t d_chords[2];
-
-	MppScoreMain *sm;
-
-	MppDecode *dlg;
-
-	uint16_t n_word[2];
-
-	uint8_t index;
-	uint8_t load_more;
-};
-
-class MppImportTab : public QObject
+class MppGridLayout : public QWidget, public QGridLayout
 {
-	Q_OBJECT;
 public:
-
-	MppImportTab(MppMainWindow *parent);
-	~MppImportTab();
-
-	MppMainWindow *mainWindow;
-
-	QPlainTextEdit *editWidget;
-	QPushButton *butImportFileNew;
-	QPushButton *butImportFileOpen;
-	QPushButton *butImport;
-	MppGroupBox *gbImport;
-
-public slots:
-
-	void handleImportNew();
-	void handleImportOpen();
-	void handleImport();
+	MppGridLayout();
+	~MppGridLayout();
 };
 
-extern uint8_t midipp_import(QString str, struct midipp_import *ps, MppScoreMain *sm);
-
-#endif		/* _MIDIPP_IMPORT_H_ */
+#endif		/* _MIDIPP_GRIDLAYOUT_H_ */

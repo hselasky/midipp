@@ -28,15 +28,13 @@
 
 #include "midipp.h"
 
-class MppPlayWidget : public QWidget
+class MppPlayGridLayout : public QWidget, public QGridLayout
 {
-	Q_OBJECT;
-
 	MppMainWindow *mw;
 
 public:
-	MppPlayWidget(MppMainWindow *parent = 0);
-	~MppPlayWidget();
+	MppPlayGridLayout(MppMainWindow *parent = 0);
+	~MppPlayGridLayout();
 
 
 protected:
@@ -177,15 +175,11 @@ public:
 
 	/* tab <File> */
 
-	QWidget *tab_file_wg;
-	QGridLayout *tab_file_gl;
-	QLabel *lbl_score_Afile;
-	QLabel *lbl_score_Bfile;
-	QLabel *lbl_import_file;
-	QLabel *lbl_midi_file;
+	MppGridLayout *tab_file_gl;
 
 	QPushButton *but_quit;
 
+	MppGroupBox *gb_midi_file;
 	QPushButton *but_midi_file_new;
 	QPushButton *but_midi_file_open;
 	QPushButton *but_midi_file_merge;
@@ -193,26 +187,20 @@ public:
 	QPushButton *but_midi_file_save_as;
 	QPushButton *but_midi_file_import;
 
-	QLabel *lbl_gpro_title;
+	MppGroupBox *gb_gpro_file_import;
 	QPushButton *but_gpro_file_import;
 
 	/* tab <Play> */
 
-	QGroupBox *gb_ctrl;
-	QGroupBox *gb_time;
-	QGroupBox *gb_bpm;
-	QGroupBox *gb_synth_play;
-
-	QGridLayout *gl_ctrl;
-	QGridLayout *gl_time;
-	QGridLayout *gl_bpm;
-	QGridLayout *gl_synth_play;
+	MppGroupBox *gl_ctrl;
+	MppGroupBox *gl_time;
+	MppGroupBox *gl_bpm;
+	MppGroupBox *gl_synth_play;
 
 	QLCDNumber *lbl_curr_time_val;
 	QLCDNumber *lbl_bpm_avg_val;
 
-	QWidget *tab_play_wg;
-	QGridLayout *tab_play_gl;
+	MppPlayGridLayout *tab_play_gl;
 
 	QLabel	*lbl_play_key;
 	MppSpinBox *spn_play_key;
@@ -240,18 +228,11 @@ public:
 
 	/* tab <Configuration> */
 
-	QGridLayout *tab_config_gl;
-	QWidget *tab_config_wg;
+	MppGridLayout *tab_config_gl;
+
+	MppGroupBox *gb_config_device;
 
 	MppSettings *mpp_settings;
-
-	QLabel *lbl_config_title;
-	QLabel *lbl_config_play;
-	QLabel *lbl_config_rec;
-	QLabel *lbl_config_synth;
-	QLabel *lbl_config_mm;
-	QLabel *lbl_config_dv;
-	QLabel *lbl_config_dev[MPP_MAX_DEVS];
 
 	MppButton *but_config_dev[MPP_MAX_DEVS];
 	MppButton *but_config_mm[MPP_MAX_DEVS];
@@ -262,25 +243,23 @@ public:
 	QPushButton *but_config_revert;
 	QPushButton *but_config_fontsel;
 
-	QLabel *lbl_config_insert;
+	MppGroupBox *gb_config_insert;
 	QLineEdit *led_config_insert;
 
 	QString *CurrMidiFileName;
 
 	/* tab <Instrument> */
 
-	QGridLayout *tab_instr_gl;
-	QWidget *tab_instr_wg;
+	MppGridLayout *tab_instr_gl;
+
+	MppGroupBox *gb_instr_select;
+	MppGroupBox *gb_instr_table;
 
 	QSpinBox *spn_instr_curr_chan;
 	QSpinBox *spn_instr_curr_bank;
 	QSpinBox *spn_instr_curr_prog;
 	QSpinBox *spn_instr_bank[16];
 	QSpinBox *spn_instr_prog[16];
-
-	QLabel *lbl_instr_title[2];
-	QLabel *lbl_instr_prog;
-	QLabel *lbl_instr_desc[16];
 
 	QCheckBox *cbx_instr_mute[16];
 
@@ -293,15 +272,13 @@ public:
 
 	/* tab <Volume> */
 
-	QGridLayout *tab_volume_gl;
-	QWidget *tab_volume_wg;
+	MppGridLayout *tab_volume_gl;
+
+	MppGroupBox *gb_volume_play;
+	MppGroupBox *gb_volume_synth;
 
 	MppVolume *spn_volume_play[16];
 	MppVolume *spn_volume_synth[16];
-
-	QLabel *lbl_volume_title[2];
-	QLabel *lbl_volume_play[16];
-	QLabel *lbl_volume_synth[16];
 
 	QPushButton *but_volume_reset;
 

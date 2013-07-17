@@ -33,6 +33,7 @@
 #include "midipp_import.h"
 #include "midipp_replace.h"
 #include "midipp_spinbox.h"
+#include "midipp_groupbox.h"
 
 MppScoreView :: MppScoreView(MppScoreMain *parent)
 {
@@ -68,9 +69,13 @@ MppScoreTextEdit :: mouseDoubleClickEvent(QMouseEvent *e)
 		sm->mainWindow->handle_compile();
 }
 
-MppScoreMain :: MppScoreMain(MppMainWindow *parent)
+MppScoreMain :: MppScoreMain(MppMainWindow *parent, int unit)
 {
-	QString defaultText = tr(
+	QString defaultText;
+	char buf[32];
+
+	if (unit == 0) {
+	  defaultText = tr(
 	    "S\"L0 - verse: \"\n"
 	    "\n"
 	    "S\".(C)Welcome .(C)to .(D)MIDI .(E)Player .(C)Pro! \"\n"
@@ -80,6 +85,9 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	    "U1 D3 D4 D5 G5B A5 /* D */\n"
 	    "U1 E3 E4 E5 A5B H5 /* E */\n"
 	    "U1 C3 C4 C5 E5 G5 /* C */\n");
+	}
+
+	snprintf(buf, sizeof(buf), "%c-scores", 'A' + unit);
 
 	/* set memory default */
 
@@ -107,12 +115,26 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent)
 	butScoreFilePrint = new QPushButton(tr("Print"));
 	butScoreFileAlign = new QPushButton(tr("Align"));
 	spnScoreFileAlign = new MppSpinBox();
-	spnScoreFileAlign->setValue(C6);
+	spnScoreFileAlign->setValue(F5);
 	butScoreFileStepUp = new QPushButton(tr("Step Up"));
 	butScoreFileStepDown = new QPushButton(tr("Step Down"));
 	butScoreFileSetSharp = new QPushButton(tr("Set #"));
 	butScoreFileSetFlat = new QPushButton(tr("Set b"));
 	butScoreFileExport = new QPushButton(tr("To Lyrics"));
+
+	gbScoreFile = new MppGroupBox(tr(buf));
+	gbScoreFile->addWidget(butScoreFileNew, 0, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileOpen, 1, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileSave, 2, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileSaveAs, 3, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFilePrint, 4, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileAlign, 5, 0, 1, 1);
+	gbScoreFile->addWidget(spnScoreFileAlign, 5, 1, 1, 1);
+	gbScoreFile->addWidget(butScoreFileStepUp, 6, 0, 1, 1);
+	gbScoreFile->addWidget(butScoreFileStepDown, 6, 1, 1, 1);
+	gbScoreFile->addWidget(butScoreFileSetSharp, 7, 0, 1, 1);
+	gbScoreFile->addWidget(butScoreFileSetFlat, 7, 1, 1, 1);
+	gbScoreFile->addWidget(butScoreFileExport, 8, 0, 1, 2);
 
 	connect(butScoreFileNew, SIGNAL(pressed()), this, SLOT(handleScoreFileNew()));
 	connect(butScoreFileOpen, SIGNAL(pressed()), this, SLOT(handleScoreFileOpen()));
