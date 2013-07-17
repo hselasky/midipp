@@ -132,7 +132,7 @@ void
 MppVolume :: paintEvent(QPaintEvent *event)
 {
 	QPainter paint(this);
-	QFont fnt = font_fixed;
+	QFont fnt;
 	char buffer[16];
 	const int m = 4;
 	int w = width();

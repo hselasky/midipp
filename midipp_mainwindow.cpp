@@ -81,6 +81,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	defaultFont.fromString(QString("Sans Serif,-1,20,5,75,0,0,0,0,0"));
 
+	editFont.fromString(QString("Monospace,-1,14,5,50,0,0,0,0,0"));
+
 	/* Main GUI */
 
 	mwRight = new QPushButton();
@@ -133,7 +135,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_loop = new MppLoopTab(this, this);
 
 	tab_help = new QPlainTextEdit();
-	tab_help->setFont(font_fixed);
+	tab_help->setFont(editFont);
 	tab_help->setLineWrapMode(QPlainTextEdit::NoWrap);
 	tab_help->setPlainText(tr(
 	    "/*\n"
@@ -353,7 +355,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	but_config_apply = new QPushButton(tr("Apply"));
 	but_config_revert = new QPushButton(tr("Revert"));
-	but_config_fontsel = new QPushButton(tr("Select Font"));
+	but_config_view_fontsel = new QPushButton(tr("Change View Font"));
+	but_config_edit_fontsel = new QPushButton(tr("Change Editor Font"));
 
 	gb_config_device = new MppGroupBox(tr("Device configuration"));
 
@@ -411,19 +414,20 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x++;
 
-	tab_config_gl->addWidget(mpp_settings->but_config_save, x, 0, 1, 2, Qt::AlignLeft|Qt::AlignVCenter);
+	tab_config_gl->addWidget(mpp_settings->but_config_save, x, 0, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
+	tab_config_gl->addWidget(but_config_view_fontsel, x, 1, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
 
 	x++;
 
-	tab_config_gl->addWidget(mpp_settings->but_config_what, x, 0, 1, 2, Qt::AlignLeft|Qt::AlignVCenter);
+	tab_config_gl->addWidget(mpp_settings->but_config_what, x, 0, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
+	tab_config_gl->addWidget(but_config_edit_fontsel, x, 1, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
 
 	x++;
 
-	tab_config_gl->addWidget(mpp_settings->but_config_load, x, 0, 1, 2, Qt::AlignLeft|Qt::AlignVCenter);
+	tab_config_gl->addWidget(mpp_settings->but_config_load, x, 0, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
 
 	x++;
 
-	tab_config_gl->addWidget(but_config_fontsel, x, 0, 1, 2, Qt::AlignLeft|Qt::AlignVCenter);
 	tab_config_gl->addWidget(but_config_apply, x, 4, 1, 2);
 	tab_config_gl->addWidget(but_config_revert, x, 6, 1, 2);
 
@@ -567,7 +571,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_midi_rewind, SIGNAL(pressed()), this, SLOT(handle_rewind()));
 	connect(but_config_apply, SIGNAL(pressed()), this, SLOT(handle_config_apply()));
 	connect(but_config_revert, SIGNAL(pressed()), this, SLOT(handle_config_revert()));
-	connect(but_config_fontsel, SIGNAL(pressed()), this, SLOT(handle_config_fontsel()));
+	connect(but_config_view_fontsel, SIGNAL(pressed()), this, SLOT(handle_config_view_fontsel()));
+	connect(but_config_edit_fontsel, SIGNAL(pressed()), this, SLOT(handle_config_edit_fontsel()));
 
 	connect(but_instr_rem, SIGNAL(pressed()), this, SLOT(handle_instr_rem()));
 	connect(but_instr_program, SIGNAL(pressed()), this, SLOT(handle_instr_program()));
@@ -1418,7 +1423,7 @@ MppMainWindow :: handle_config_apply_sub(int devno)
 }
 
 void
-MppMainWindow :: handle_config_fontsel()
+MppMainWindow :: handle_config_view_fontsel()
 {
 	bool success;
 	int x;
@@ -1432,6 +1437,27 @@ MppMainWindow :: handle_config_fontsel()
 
 		for (x = 0; x != MPP_MAX_VIEWS; x++)
 			scores_main[x]->handleCompile(1);
+	}
+}
+
+void
+MppMainWindow :: handle_config_edit_fontsel()
+{
+	bool success;
+	int x;
+
+	QFont font = QFontDialog::getFont(&success, editFont, this);
+
+	if (success) {
+		font.setPixelSize(QFontInfo(font).pixelSize());
+
+		editFont = font;
+
+		for (x = 0; x != MPP_MAX_VIEWS; x++)
+			scores_main[x]->editWidget->setFont(font);
+
+		tab_help->setFont(font);
+		tab_import->editWidget->setFont(font);
 	}
 }
 

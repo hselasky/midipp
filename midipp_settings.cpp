@@ -28,6 +28,7 @@
 #include "midipp_settings.h"
 #include "midipp_volume.h"
 #include "midipp_mode.h"
+#include "midipp_import.h"
 
 MppSettings :: MppSettings(MppMainWindow *_parent, const QString & fname)
   : QSettings(fname)
@@ -163,6 +164,7 @@ MppSettings :: doSave(void)
 	if (save_font) {
 		beginGroup("font");
 		setValue("default", mw->defaultFont.toString());
+		setValue("editor", mw->editFont.toString());
 		endGroup();
 	}
 }
@@ -281,6 +283,18 @@ MppSettings :: doLoad(void)
 		if (mw->defaultFont.pixelSize() < 1)
 			mw->defaultFont.setPixelSize(20);
 		mw->handle_compile(1);
+
+		mw->editFont.fromString(
+		    stringDefault("font/editor",
+		    "Monospace,-1,14,5,50,0,0,0,0,0"));
+		if (mw->editFont.pixelSize() < 1)
+			mw->editFont.setPixelSize(14);
+
+		for (x = 0; x != MPP_MAX_VIEWS; x++)
+			mw->scores_main[x]->editWidget->setFont(mw->editFont);
+
+		mw->tab_help->setFont(mw->editFont);
+		mw->tab_import->editWidget->setFont(mw->editFont);
 	}
 }
 

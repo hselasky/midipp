@@ -167,8 +167,6 @@ extern QColor color_grey;
 extern QColor color_logo;
 extern QColor color_green;
 
-extern QFont font_fixed;
-
 extern QString MppVariantList;
 
 extern QString MppBaseName(QString fname);

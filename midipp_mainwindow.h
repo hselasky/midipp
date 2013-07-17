@@ -91,6 +91,7 @@ public:
 	pthread_mutex_t mtx;
 
 	QFont defaultFont;
+	QFont editFont;
 	QString version;
 
 	uint8_t auto_zero_start[0];
@@ -241,7 +242,8 @@ public:
 
 	QPushButton *but_config_apply;
 	QPushButton *but_config_revert;
-	QPushButton *but_config_fontsel;
+	QPushButton *but_config_view_fontsel;
+	QPushButton *but_config_edit_fontsel;
 
 	MppGroupBox *gb_config_insert;
 	QLineEdit *led_config_insert;
@@ -323,7 +325,8 @@ public slots:
 	void handle_config_apply_sub(int);
 	void handle_config_revert();
 	void handle_config_reload();
-	void handle_config_fontsel();
+	void handle_config_view_fontsel();
+	void handle_config_edit_fontsel();
 
 	void handle_instr_changed(int);
 	void handle_instr_reset();

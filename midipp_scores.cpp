@@ -130,11 +130,11 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int unit)
 	gbScoreFile->addWidget(butScoreFilePrint, 4, 0, 1, 2);
 	gbScoreFile->addWidget(butScoreFileAlign, 5, 0, 1, 1);
 	gbScoreFile->addWidget(spnScoreFileAlign, 5, 1, 1, 1);
-	gbScoreFile->addWidget(butScoreFileStepUp, 6, 0, 1, 1);
-	gbScoreFile->addWidget(butScoreFileStepDown, 6, 1, 1, 1);
-	gbScoreFile->addWidget(butScoreFileSetSharp, 7, 0, 1, 1);
-	gbScoreFile->addWidget(butScoreFileSetFlat, 7, 1, 1, 1);
-	gbScoreFile->addWidget(butScoreFileExport, 8, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileStepUp, 6, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileStepDown, 7, 1, 1, 2);
+	gbScoreFile->addWidget(butScoreFileSetSharp, 8, 0, 1, 1);
+	gbScoreFile->addWidget(butScoreFileSetFlat, 8, 1, 1, 1);
+	gbScoreFile->addWidget(butScoreFileExport, 9, 0, 1, 2);
 
 	connect(butScoreFileNew, SIGNAL(pressed()), this, SLOT(handleScoreFileNew()));
 	connect(butScoreFileOpen, SIGNAL(pressed()), this, SLOT(handleScoreFileOpen()));
@@ -156,7 +156,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int unit)
 
 	editWidget = new MppScoreTextEdit(this);
 
-	editWidget->setFont(font_fixed);
+	editWidget->setFont(parent->editFont);
 	editWidget->setPlainText(defaultText);
 	editWidget->setCursorWidth(4);
 	editWidget->setLineWrapMode(QPlainTextEdit::NoWrap);

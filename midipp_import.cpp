@@ -315,7 +315,7 @@ MppImportTab :: MppImportTab(MppMainWindow *parent)
 	mainWindow = parent;
 
 	editWidget = new QPlainTextEdit();
-	editWidget->setFont(font_fixed);
+	editWidget->setFont(mainWindow->editFont);
 	editWidget->setLineWrapMode(QPlainTextEdit::NoWrap);
 	editWidget->setPlainText(tr(
 	    "Example song:" "\n\n"

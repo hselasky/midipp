@@ -40,8 +40,6 @@ QColor color_grey    (0xc0, 0xc0, 0xc0, 0xff);
 QColor color_logo    (0xc4, 0x40, 0x20, 0xff);
 QColor color_green   (0x40, 0xc4, 0x20, 0xff);
 
-QFont font_fixed (QString("Courier New"));
-
 QString
 MppBaseName(QString fname)
 {
