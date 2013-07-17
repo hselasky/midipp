@@ -41,10 +41,10 @@ MppSettings :: MppSettings(MppMainWindow *_parent, const QString & fname)
 	save_devices = -1;
 	save_font = -1;
 
-	but_config_save = new QPushButton(tr("Cfg Save"));
-	but_config_clean = new QPushButton(tr("Cfg Clean"));
-	but_config_what = new QPushButton(tr("Cfg What"));
-	but_config_load = new QPushButton(tr("Cfg Load"));
+	but_config_save = new QPushButton(tr("Config Save"));
+	but_config_clean = new QPushButton(tr("Config Clean"));
+	but_config_what = new QPushButton(tr("Config What"));
+	but_config_load = new QPushButton(tr("Config Load"));
 
 	connect(but_config_save, SIGNAL(released()), this, SLOT(handle_save()));
 	connect(but_config_clean, SIGNAL(released()), this, SLOT(handle_clean()));
