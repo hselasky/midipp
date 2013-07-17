@@ -82,6 +82,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	defaultFont.fromString(QString("Sans Serif,-1,20,5,75,0,0,0,0,0"));
 
 	editFont.fromString(QString("Monospace,-1,14,5,50,0,0,0,0,0"));
+	editFont.setStyleHint(QFont::TypeWriter);
 
 	/* Main GUI */
 
