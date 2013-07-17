@@ -131,7 +131,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int unit)
 	gbScoreFile->addWidget(butScoreFileAlign, 5, 0, 1, 1);
 	gbScoreFile->addWidget(spnScoreFileAlign, 5, 1, 1, 1);
 	gbScoreFile->addWidget(butScoreFileStepUp, 6, 0, 1, 2);
-	gbScoreFile->addWidget(butScoreFileStepDown, 7, 1, 1, 2);
+	gbScoreFile->addWidget(butScoreFileStepDown, 7, 0, 1, 2);
 	gbScoreFile->addWidget(butScoreFileSetSharp, 8, 0, 1, 1);
 	gbScoreFile->addWidget(butScoreFileSetFlat, 8, 1, 1, 1);
 	gbScoreFile->addWidget(butScoreFileExport, 9, 0, 1, 2);
