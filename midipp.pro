@@ -69,6 +69,7 @@ INCLUDEPATH	+= ../libumidi20
  isEmpty(HAVE_COREMIDI) {
  SOURCES	+= ../libumidi20/umidi20_coremidi_dummy.c
  } else {
+ LIBS		+= -framework CoreMIDI
  SOURCES	+= ../libumidi20/umidi20_coremidi.c
  }
 }
