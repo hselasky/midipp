@@ -65,6 +65,9 @@ MppScoreTextEdit :: ~MppScoreTextEdit(void)
 void
 MppScoreTextEdit :: mouseDoubleClickEvent(QMouseEvent *e)
 {
+	/* make sure the compiled version is up to date */
+	sm->mainWindow->handle_compile();
+	/* edit the line */
 	if (sm->handleEditLine() == 0)
 		sm->mainWindow->handle_compile();
 }

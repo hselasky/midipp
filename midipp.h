@@ -93,6 +93,7 @@
 #define	MPP_MAX_DURATION 255	/* inclusive */
 #define	MPP_MAGIC_DEVNO	(UMIDI20_N_DEVICES - 1)
 #define	MPP_ICON_FILE	":/midipp.png"
+#define	MPP_DEFAULT_URL "http://home.selasky.org:8192/midipp/database.tar.gz"
 
 #define	MPP_VISUAL_MARGIN	8
 #define	MPP_VISUAL_R_MAX	8

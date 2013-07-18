@@ -33,7 +33,6 @@
 #include "midipp_scores.h"
 
 #define	MIDIPP_FILTER_MAX 32
-#define	MIDIPP_DEFAULT_URL "http://home.selasky.org:8192/midipp/database.tar.gz"
 
 struct filter {
 	const char *match_word[MIDIPP_FILTER_MAX];
@@ -255,7 +254,7 @@ MppDataBase :: MppDataBase(MppMainWindow *mw)
 
 	gl = new QGridLayout(this);
 
-	location = new QLineEdit(QString(MIDIPP_DEFAULT_URL));
+	location = new QLineEdit(QString(MPP_DEFAULT_URL));
 	search = new QLineEdit();
 	result = new QListWidget();
 
@@ -269,8 +268,8 @@ MppDataBase :: MppDataBase(MppMainWindow *mw)
 	connect(filter, SIGNAL(selectionChanged(int)), this, SLOT(handle_filter(int)));
 	connect(search, SIGNAL(textChanged(const QString &)), this, SLOT(handle_search_changed(const QString &)));
 
-	open_a = new QPushButton(tr("Open-A"));
-	open_b = new QPushButton(tr("Open-B"));
+	open_a = new QPushButton(tr("Open In A-Scores"));
+	open_b = new QPushButton(tr("Open In B-Scores"));
 
 	connect(open_a, SIGNAL(released()), this, SLOT(handle_open_a()));
 	connect(open_b, SIGNAL(released()), this, SLOT(handle_open_b()));
@@ -280,6 +279,8 @@ MppDataBase :: MppDataBase(MppMainWindow *mw)
 	connect(clear, SIGNAL(released()), this, SLOT(handle_clear()));
 
 	reset = new QPushButton(tr("Reset"));
+
+	connect(reset, SIGNAL(released()), this, SLOT(handle_reset()));
 
 	gl->addWidget(new QLabel(tr("Location:")), 0, 0, 1, 1);
 	gl->addWidget(location, 0, 1, 1, 3);
@@ -381,7 +382,7 @@ MppDataBase :: handle_open_b()
 void
 MppDataBase :: handle_reset()
 {
-	location->setText(QString(MIDIPP_DEFAULT_URL));
+	location->setText(QString(MPP_DEFAULT_URL));
 	search->setText(QString());
 	filter->setSelection(0);
 	update_list_view();
