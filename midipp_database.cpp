@@ -425,7 +425,7 @@ MppDataBase :: handle_download_progress(qint64 curr, qint64 total)
 		total = 1;
 	if (curr < 0)
 		curr = 0;
-	download->setText(tr("Download %1%2").arg(((100 * curr) + total - 1) / total).arg("%"));
+	download->setText(tr("Download %1kb").arg((curr + 1023) / 1024));
 }
 
 void
