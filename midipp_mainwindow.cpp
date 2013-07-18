@@ -27,6 +27,7 @@
 #include "midipp_scores.h"
 #include "midipp_mutemap.h"
 #include "midipp_looptab.h"
+#include "midipp_database.h"
 #include "midipp_decode.h"
 #include "midipp_import.h"
 #include "midipp_devices.h"
@@ -135,6 +136,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_loop = new MppLoopTab(this, this);
 
+	tab_database = 	new MppDataBase(this);
+
 	tab_help = new QPlainTextEdit();
 	tab_help->setFont(editFont);
 	tab_help->setLineWrapMode(QPlainTextEdit::NoWrap);
@@ -202,7 +205,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_tw->addTab(tab_instr_gl, tr("Instrument"));
 	main_tw->addTab(tab_volume_gl, tr("Volume"));
 	main_tw->addTab(tab_loop, tr("Loop"));
-
+	main_tw->addTab(tab_database, tr("Database"));
 	main_tw->addTab(tab_help, tr("Help"));
 
 	/* <File> Tab */

@@ -1804,6 +1804,18 @@ MppScoreMain :: handleScoreFileNew()
 	mainWindow->handle_tab_changed(1);
 }
 
+void
+MppScoreMain :: handleScoreFileOpenRaw(char *data, uint32_t len)
+{
+	handleScoreFileNew();
+
+	editWidget->setPlainText(QString(QByteArray(data, len)));
+
+	handleCompile();
+
+	mainWindow->handle_tab_changed(1);
+}
+
 int
 MppScoreMain :: handleScoreFileOpenSub(QString fname)
 {

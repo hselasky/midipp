@@ -73,6 +73,8 @@
 #include <QSettings>
 #include <QStyle>
 #include <QSlider>
+#include <QtNetwork>
+#include <QUrl>
 
 #include <umidi20.h>
 
@@ -105,6 +107,7 @@
 class MppBpm;
 class MppButton;
 class MppButtonMap;
+class MppDataBase;
 class MppDecode;
 class MppDevices;
 class MppEchoTab;

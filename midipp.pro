@@ -1,6 +1,6 @@
 TEMPLATE	= app
 CONFIG		+= qt warn_on release
-QT		+= core gui
+QT		+= core gui network
 greaterThan(QT_MAJOR_VERSION, 4) {
 QT += widgets printsupport
 }
@@ -8,6 +8,7 @@ HEADERS		+= midipp.h
 HEADERS		+= midipp_bpm.h
 HEADERS		+= midipp_button.h
 HEADERS		+= midipp_buttonmap.h
+HEADERS		+= midipp_database.h
 HEADERS		+= midipp_decode.h
 HEADERS		+= midipp_devices.h
 HEADERS		+= midipp_gpro.h
@@ -29,6 +30,7 @@ SOURCES		+= midipp.cpp
 SOURCES		+= midipp_bpm.cpp
 SOURCES		+= midipp_button.cpp
 SOURCES		+= midipp_buttonmap.cpp
+SOURCES		+= midipp_database.cpp
 SOURCES		+= midipp_decode.cpp
 SOURCES		+= midipp_devices.cpp
 SOURCES		+= midipp_gpro.cpp

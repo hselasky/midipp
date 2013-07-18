@@ -69,6 +69,7 @@ public:
 	void handleKeyRelease(int key, uint32_t key_delay = 0);
 	void handleParse(const QString &ps);
 	uint8_t handleKeyRemovePast(struct MppScoreEntry *pn, uint32_t key_delay = 0);
+	void handleScoreFileOpenRaw(char *, uint32_t);
 	void handleParseSub(QPrinter *pd, QPoint orig, float scale_f);
 	int handleScoreFileOpenSub(QString fname);
 	void handleAlign(uint8_t *ptr, int nak, int limit);

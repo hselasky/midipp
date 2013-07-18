@@ -288,6 +288,10 @@ public:
 
 	MppLoopTab *tab_loop;
 
+	/* tab <DataBase> */
+
+	MppDataBase *tab_database;
+
 	/* tab <Help> */
 
 	QPlainTextEdit *tab_help;
