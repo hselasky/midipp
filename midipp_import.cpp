@@ -32,8 +32,8 @@
 static uint8_t
 midipp_import_flush(struct midipp_import *ps, int i_txt, int i_score)
 {
-	QString out;
-	QString scs;
+	QByteArray out;
+	QByteArray scs;
 
 	uint16_t x;
 	uint16_t ai;
@@ -42,7 +42,7 @@ midipp_import_flush(struct midipp_import *ps, int i_txt, int i_score)
 
 	uint8_t any;
 	
-	out += QString("S\"");
+	out += QByteArray("S\"");
 
 	for (ai = bi = x = 0; x != MIDIPP_IMPORT_LB; x++) {
 
@@ -56,14 +56,15 @@ midipp_import_flush(struct midipp_import *ps, int i_txt, int i_score)
 				const char *ptr = ps->d_word[i_score][ai].name;
 
 				if (mpp_find_chord(ptr, NULL, NULL, NULL) == 0) {
-					out += QString(".(") + QString(ptr) +
-					    QString(")");
+					out += QByteArray(".(") + QByteArray(ptr) +
+					    QByteArray(")");
 
 					ps->dlg->setText(ptr);
 
 					scs += ps->sm->mainWindow->
-					    led_config_insert->text() +
-					    ps->dlg->getText() + QString("\n");
+					    led_config_insert->text().toUtf8() +
+					    ps->dlg->getText().toUtf8() +
+					    QByteArray("\n");
 				}
 				ai++;
 			}
@@ -74,32 +75,33 @@ midipp_import_flush(struct midipp_import *ps, int i_txt, int i_score)
 			off = ps->d_word[i_txt][bi].off;
 
 			if (x >= off) {
-				char ch;
-				ch = ps->d_word[i_txt][bi].name[x - off];
-				if (ch == 0) {
+				char ch[2];
+				ch[0] = ps->d_word[i_txt][bi].name[x - off];
+				ch[1] = 0;
+				if (ch[0] == 0) {
 					bi++;
 					goto next_word;
 				} else {
-					out += QString(ch);
+					out += QByteArray(ch);
 				}
 			} else {
 				if (!any)
 					break;
 
-				out += QString(" ");
+				out += QByteArray(" ");
 			}
 		} else {
 			if (!any)
 				break;
 
-			out += QString(" ");
+			out += QByteArray(" ");
 		}
 	}
-	out += QString("\"\n\n") + scs + QString("\n");
+	out += QByteArray("\"\n\n") + scs + QByteArray("\n");
 
 	QTextCursor cursor(ps->sm->editWidget->textCursor());
 	cursor.beginEditBlock();
-	cursor.insertText(out);
+	cursor.insertText(QString::fromUtf8(out));
 	cursor.endEditBlock();
 
 	return (0);

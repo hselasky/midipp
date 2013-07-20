@@ -50,42 +50,16 @@ MppBaseName(QString fname)
 char *
 MppQStringToAscii(QString s)
 {
-        QChar *ch;
+	QByteArray temp = s.toUtf8();
+	int len = temp.size();
+	char *data = temp.data();
 	char *ptr;
-	int len;
-	int c;
 
-	ch = s.data();
-	if (ch == NULL)
-		return (NULL);
-
-	len = 1;		/* reserve space for NUL character */
-
-	while (1) {
-		c = ch->toLatin1();
-		if (ch->isNull())
-			break;
-		len++;
-		ch++;
-	}
-
-	ptr = (char *)malloc(len);
+	ptr = (char *)malloc(len + 1);
 	if (ptr == NULL)
 		return (NULL);
 
-	ch = s.data();
-	len = 0;
-
-	while (1) {
-		c = ch->toLatin1();
-		if (ch->isNull())
-			break;
-		if (c == 0)
-			c = ' ';
-		ptr[len] = c;
-		len++;
-		ch++;
-	}
+	memcpy(ptr, data, len);
 	ptr[len] = 0;		/* NUL terminate */
 	return (ptr);
 }
@@ -148,7 +122,7 @@ MppReadFile(QString fname)
 	if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
 		goto error;
 
-	retval = file.readAll();
+	retval = QString::fromUtf8(file.readAll());
 	if (file.error()) {
 		file.close();
 		goto error;
@@ -177,7 +151,7 @@ MppWriteFile(QString fname, QString text)
 		goto error;
 	}
 
-	file.write(text.toLatin1());
+	file.write(text.toUtf8());
 
 	if (file.error()) {
 		file.close();
