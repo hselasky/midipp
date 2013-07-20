@@ -187,7 +187,7 @@ protected:
 	/* parse state */
 	struct {
 		uint8_t am_keys[12];
-		const QString *ps;
+		QByteArray *ba;
 		int x;
 		int line;
 		int index;

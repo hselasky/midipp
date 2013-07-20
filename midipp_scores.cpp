@@ -233,13 +233,13 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 {
 	QPainter paint;
 	QPicture *pic;
+	QString str;
 	uint16_t x;
 	uint16_t y;
 	uint16_t z;
 	uint16_t y_max;
 	uint16_t x_max;
 	uint16_t check_x;
-	char *ptr;
 	uint8_t draw_chord;
 	uint8_t last_dot;
 	uint16_t duration;
@@ -279,10 +279,9 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 				y = 0;
 			}
 
-			ptr = visual[x].pstr;
-			if (ptr == NULL)
+			if (visual[x].pstr == NULL)
 				continue;
-
+			str = QString::fromUtf8(visual[x].pstr);
 			y++;
 		}
 
@@ -327,9 +326,9 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 #endif
 		}
 
-		ptr = visual[x].pstr;
-		if (ptr == NULL)
+		if (visual[x].pstr == NULL)
 			continue;
+		str = QString::fromUtf8(visual[x].pstr);
 
 		if (pd == NULL) {
 			pic = new QPicture();
@@ -350,14 +349,14 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 		z = x;
 		x_max = 0;
 
-		for (y = 0; ptr[y] != 0; y++) {
+		for (y = 0; ((int)y) != str.size(); y++) {
 
 			if (draw_chord)
 				paint.setFont(fnt_b);
 			else
 				paint.setFont(fnt_a);
 
-			QString temp(ptr[y]);
+			QString temp(str[y]);
 			QRectF temp_size = 
 			    paint.boundingRect(QRectF(0,0,0,0), temp);
 			QRectF space_size = paint.boundingRect(
@@ -366,28 +365,28 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 			if (temp_size.width() == 0.0)
 				temp_size = space_size;
 
-			if (ptr[y] == '(') {
+			if (str[y] == '(') {
 				draw_chord = 1;
 				continue;
-			} else if (ptr[y] == ')') {
+			} else if (str[y] == ')') {
 				draw_chord = 0;
 				continue;
-			} else if (ptr[y] == '.') {
+			} else if (str[y] == '.') {
 
-				if (ptr[y+1] == '[') {
-					if ((ptr[y+2] >= '0') && (ptr[y+2] <= '9')) {
-						if ((ptr[y+3] >= '0') && (ptr[y+3] <= '9')) {
+				if (str[y+1] == '[') {
+					if ((str[y+2] >= '0') && (str[y+2] <= '9')) {
+						if ((str[y+3] >= '0') && (str[y+3] <= '9')) {
 							duration = 9;
 						} else {
-							duration = ptr[y+2] - '0';
+							duration = str[y+2].digitValue();
 						}
 					} else {
 						duration = 0;
 					}
-					while ((ptr[y+1] != ']') && (ptr[y+1] != 0))
+					while ((str[y+1] != ']') && (str[y+1] != 0))
 						y++;
 
-					if (ptr[y+1] != 0)
+					if (str[y+1] != 0)
 						y++;
 				} else {
 					duration = 0;
@@ -400,9 +399,9 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 					text_x += 2 * MPP_VISUAL_R_MAX;
 				}
 
-				if (ptr[y+1] != 0) {
+				if (str[y+1] != 0) {
 					adj_x = paint.boundingRect(QRectF(0,0,0,0),
-					    QString(ptr[y+1])).width();
+					    QString(str[y+1])).width();
 					if (adj_x == 0) {
 						paint.boundingRect(QRectF(0,0,0,0),
 						   QString("-")).width();
@@ -460,7 +459,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 				last_dot = 1;
 				z++;
 				continue;
-			} else if (ptr[y] == '\n' || ptr[y] == '\r') {
+			} else if (str[y] == '\n' || str[y] == '\r') {
 				continue;
 			}
 
@@ -495,25 +494,25 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 					sum_x = text_x;
 					u = 0;
 
-					for (t = y; ptr[t]; t++) {
+					for (t = y; ((int)t) != str.size(); t++) {
 						QRectF check_size = 
 						  paint.boundingRect(QRectF(0,0,0,0),
-						  QString(ptr[t]));
+						  QString(str[t]));
 
 						if (check_size.width() == 0.0)
 							check_size = space_size;
 
-						if (ptr[t] == '(')
+						if (str[t] == '(')
 							break;
-						if (ptr[t] == '.')
+						if (str[t] == '.')
 							continue;
-						if (ptr[t] == ' ' || ptr[t] == '-')
+						if (str[t] == ' ' || str[t] == '-')
 							u++;
 
 						sum_x += check_size.width();
 					}
 
-					if ((u != 0) && (ptr[t] == '(') && (sum_x < chord_x_last))
+					if ((u != 0) && (str[t] == '(') && (sum_x < chord_x_last))
 						spacing = (chord_x_last - sum_x) / (2.0 * (float)u);
 					else
 						spacing = 0;
@@ -521,7 +520,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 					check_x = t;
 				}
 
-				if (ptr[y] == '-' || ptr[y] == ' ')
+				if (str[y] == '-' || str[y] == ' ')
 					temp_space = spacing;
 				else
 					temp_space = 0;
@@ -1108,10 +1107,10 @@ MppScoreMain :: getChar(uint32_t offset)
 
 	offset += ps.x;
 
-	if (offset >= (uint32_t)ps.ps->size())
+	if (offset >= (uint32_t)ps.ba->size())
 		return (0);
 
-	c = (*(ps.ps))[offset].toLatin1();
+	c = (*(ps.ba))[offset];
 
 	/* convert non-printable characters into space */
 	if (c == 0)
@@ -1261,7 +1260,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 	memset(&ps, 0, sizeof(ps));
 
 	ps.x = -1;
-	ps.ps = &pstr;
+	ps.ba = new QByteArray(pstr.toUtf8());
 
 	memset(chord_info, 0, sizeof(chord_info));
 	memset(scores, 0, sizeof(scores));
@@ -1790,6 +1789,7 @@ done:
 		viewScroll->setValue(0);
 		viewScroll->setMaximum(picMax - 1);
 	}
+	delete ps.ba;
 }
 
 void
@@ -2623,7 +2623,7 @@ MppScoreMain :: handleTextTranspose(const QString &str, int level, int sharp, in
 	memset(&ps, 0, sizeof(ps));
 
 	ps.x = 0;
-	ps.ps = &str;
+	ps.ba = new QByteArray(str.toUtf8());
 
 top:
 	while ((c = getChar(0)) != 0) {
@@ -2727,6 +2727,7 @@ top:
 		}
 		nak = 0;
 	}
+	delete ps.ba;
 	return (out);
 
 parse_score:
