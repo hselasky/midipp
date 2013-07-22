@@ -1812,7 +1812,7 @@ MppScoreMain :: handleScoreFileOpenRaw(char *data, uint32_t len)
 {
 	handleScoreFileNew();
 
-	editWidget->setPlainText(QString(QByteArray(data, len)));
+	editWidget->setPlainText(QString::fromUtf8(QByteArray(data, len)));
 
 	handleCompile();
 
