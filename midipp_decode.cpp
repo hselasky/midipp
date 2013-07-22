@@ -297,6 +297,8 @@ MppDecode :: parseScoreChord(struct MppScoreEntry *ps,
 	for (x = 0; x != 12; x++) {
 		if (foot_print[x])
 			foot_len++;
+		else
+			foot_max[x] = max;
 	}
 
 	if (foot_len == 0)
