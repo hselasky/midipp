@@ -2609,7 +2609,7 @@ MppScoreMain :: handleAlign(uint8_t *ptr, int nak, int limit)
 QString
 MppScoreMain :: handleTextTranspose(const QString &str, int level, int sharp, int align)
 {
-	QString out;
+	QByteArray out;
 
 	char c;
 	uint8_t score[MPP_MAX_SCORES];
@@ -2728,7 +2728,7 @@ top:
 		nak = 0;
 	}
 	delete ps.ba;
-	return (out);
+	return (QString::fromUtf8(out));
 
 parse_score:
 
