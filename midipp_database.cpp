@@ -146,8 +146,13 @@ tar_match(void *arg, const char *str)
 	return (1);
 }
 
+#ifdef __linux__
+static int
+tar_compare_r(const void *_pa, const void *_pb, void *arg)
+#else
 static int
 tar_compare_r(void *arg, const void *_pa, const void *_pb)
+#endif
 {
 	const union record *const *pa = (const union record *const *)_pa;
 	const union record *const *pb = (const union record *const *)_pb;
@@ -337,8 +342,15 @@ MppDataBase :: update_list_view()
 			break;
 	}
 
-	if (record_count != 0)
-		qsort_r(record_ptr, record_count, sizeof(void *), &filter, &tar_compare_r);
+	if (record_count != 0) {
+#ifdef __linux__
+		qsort_r(record_ptr, record_count, sizeof(void *),
+		    &tar_compare_r, &filter);
+#else
+		qsort_r(record_ptr, record_count, sizeof(void *),
+		    &filter, &tar_compare_r);
+#endif
+	}
 
 	result->clear();
 
