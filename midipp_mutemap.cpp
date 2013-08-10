@@ -39,7 +39,7 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 
 	gl = new QGridLayout(this);
 
-	snprintf(buf, sizeof(buf), "- Mute Map For Output Device %d -", _devno);
+	snprintf(buf, sizeof(buf), "- MIDI Output Mute Map For Device %d -", _devno);
 
 	setWindowTitle(tr(buf));
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));

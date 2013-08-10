@@ -2678,9 +2678,8 @@ MppMainWindow :: MidiInit(void)
 {
 	int n;
 
-	deviceBits = MPP_DEV0_SYNTH | MPP_DEV0_PLAY | 
-	  MPP_DEV1_RECORD | MPP_DEV2_RECORD | MPP_DEV3_RECORD;
-	deviceName[0] = strdup("D:/midi");
+	deviceBits = MPP_DEV0_SYNTH | MPP_DEV0_PLAY | MPP_DEV0_RECORD;
+	deviceName[0] = strdup("X:");
 	deviceName[1] = strdup("D:/dev/umidi0.0");
 	deviceName[2] = strdup("D:/dev/umidi1.0");
 	deviceName[3] = strdup("D:/dev/umidi2.0");
@@ -2809,24 +2808,34 @@ MppPlayGridLayout :: keyReleaseEvent(QKeyEvent *event)
 	}
 }
 
-void
+int
 MppMainWindow :: handle_mute_map(int n)
 {
-	/* mutemap dialog */
+	int retval;
 
 	MppMuteMap diag(this, this, n);
 
-	if (diag.exec() == QDialog::Accepted)
+	retval = diag.exec();
+
+	if (retval == QDialog::Accepted)
 		handle_config_apply_sub(n);
+
+	return (retval);
 }
 
-void
+int
 MppMainWindow :: handle_config_dev(int n)
 {
+	int retval;
+
 	MppDevices diag(this);
-	if (diag.exec() == QDialog::Accepted) {
+
+	retval = diag.exec();
+
+	if (retval == QDialog::Accepted)
 		led_config_dev[n]->setText(diag.result_dev);
-	}
+
+	return (retval);
 }
 
 void

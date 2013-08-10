@@ -348,8 +348,8 @@ public slots:
 
 	void handle_gpro_file_import();
 
-	void handle_mute_map(int);
-	void handle_config_dev(int);
+	int handle_mute_map(int);
+	int handle_config_dev(int);
 
 	void handle_bpm();
 	void handle_mode(int);

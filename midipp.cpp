@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <string.h>
 #include <err.h>
 
 #include "midipp_mainwindow.h"
@@ -297,8 +298,14 @@ main(int argc, char **argv)
 		main.scores_main[0]->handleScorePrint();
 		exit(0);
 	} else {
+		/* show configuration window by default */
+		if (strcmp(main.deviceName[0], "X:") == 0) {
+			if (main.handle_config_dev(0) == QDialog::Accepted) {
+				if (main.handle_mute_map(0) != QDialog::Accepted)
+					main.handle_config_apply_sub(0);
+			}
+		}
 		main.show();
 	}
-
 	return (app.exec());
 }
