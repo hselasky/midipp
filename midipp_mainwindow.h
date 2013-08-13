@@ -151,6 +151,7 @@ public:
 	uint8_t midiTriggered;
 	uint8_t midiPaused;
 	uint8_t currViewIndex;
+	uint8_t currViewSubIndex; /* 0: EDIT, 1: VIEW */
 
 	char *deviceName[MPP_MAX_DEVS];
 

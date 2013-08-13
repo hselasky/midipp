@@ -2488,7 +2488,7 @@ MppScoreMain :: setPressedKey(int chan, int out_key, int dur, int delay)
 	}
 }
 
-void
+int
 MppScoreMain :: handleCompile(int force)
 {
 	QString temp;
@@ -2509,7 +2509,9 @@ MppScoreMain :: handleCompile(int force)
 #if 0
 		viewWidgetSub->setMinimumWidth(maxScoresWidth);
 #endif
+		return (1);
 	}
+	return (0);
 }
 
 void

@@ -210,7 +210,7 @@ protected:
 
 public slots:
 
-	void handleCompile(int force = 0);
+	int handleCompile(int force = 0);
 	void handleScoreFileNew();
 	void handleScoreFileOpen();
 	void handleScoreFileSave();

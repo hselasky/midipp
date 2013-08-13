@@ -672,7 +672,6 @@ MppMainWindow :: handle_insert_chord()
 		cursor.insertText(dlg.getText());
 		cursor.insertText(QString("\n"));
 		cursor.endEditBlock();
-
 		handle_compile();
 	}
 }
@@ -683,7 +682,6 @@ MppMainWindow :: handle_edit_chord()
 	MppScoreMain *sm = currScoreMain();
 
 	handle_compile();
-
 	if (sm->handleEditLine() == 0)
 		handle_compile();
 }
@@ -716,13 +714,16 @@ void
 MppMainWindow :: handle_compile(int force)
 {
 	int x;
+	int y;
 
-	pthread_mutex_lock(&mtx);
-	handle_stop();
-	pthread_mutex_unlock(&mtx);
+	for (y = x = 0; x != MPP_MAX_VIEWS; x++)
+		y += scores_main[x]->handleCompile(force);
 
-	for (x = 0; x != MPP_MAX_VIEWS; x++)
-		scores_main[x]->handleCompile(force);
+	if (y != 0) {
+		pthread_mutex_lock(&mtx);
+		handle_stop();
+		pthread_mutex_unlock(&mtx);
+	}
 }
 
 void
@@ -2293,36 +2294,39 @@ MppMainWindow :: handle_make_tab_visible(QWidget *widget)
 void
 MppMainWindow :: handle_tab_changed(int force)
 {
+	int y;
 	int x;
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
-		if (scores_main[x]->editWidget->hasFocus())
-			break;
-	}
-	if (x == MPP_MAX_VIEWS) {
-		for (x = 0; x != MPP_MAX_VIEWS; x++) {
-			if (scores_tw->currentWidget() == &scores_main[x]->viewWidget ||
-			    main_tw->currentWidget() == &scores_main[x]->viewWidget) {
-				force = 1;
-				break;
-			}
+		if (scores_main[x]->editWidget->hasFocus()) {
+			y = 0;
+			goto found;
 		}
 	}
-	if (x == MPP_MAX_VIEWS) {
-		for (x = 0; x != MPP_MAX_VIEWS; x++) {
-			if (scores_tw->currentWidget() == scores_main[x]->editWidget ||
-			    main_tw->currentWidget() == scores_main[x]->editWidget) {
-				break;
-			}
+	for (x = 0; x != MPP_MAX_VIEWS; x++) {
+		if (scores_tw->currentWidget() == &scores_main[x]->viewWidget ||
+		    main_tw->currentWidget() == &scores_main[x]->viewWidget) {
+			y = 1;
+			goto found;
+		}
+		if (scores_tw->currentWidget() == scores_main[x]->editWidget ||
+		    main_tw->currentWidget() == scores_main[x]->editWidget) {
+			y = 0;
+			goto found;
 		}
 	}
-	if (x == MPP_MAX_VIEWS)
-		x = 0;
 
-	if (currViewIndex == x && force == 0)
+	/* set some defaults */
+	x = 0;
+	y = 0;
+found:
+	if (currViewIndex == x &&
+	    currViewSubIndex == y &&
+	    force == 0)
 		return;
 
 	currViewIndex = x;
+	currViewSubIndex = y;
 	QString *ps = scores_main[x]->currScoreFileName;
 	if (ps != NULL)
 		setWindowTitle(version + " - " + MppBaseName(*ps));
@@ -2331,7 +2335,7 @@ MppMainWindow :: handle_tab_changed(int force)
 
 	handle_instr_channel_changed(currScoreMain()->synthChannel);
 
-	if (force != 0)
+	if (force != 0 || y != 0)
 		handle_compile();
 
 	but_midi_file_import->setText(tr("To ") +
