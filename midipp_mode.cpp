@@ -235,8 +235,8 @@ MppMode :: handle_reset()
 
 	sli_contrast->setValue(128);
 	sli_delay->setValue(25);
-	spn_cmd->setValue(C3);
-	spn_base->setValue(C4);
+	spn_cmd->setValue(MPP_DEFAULT_CMD_KEY);
+	spn_base->setValue(MPP_DEFAULT_BASE_KEY);
 	spn_chan->setValue(0);
 	cbx_norm->setChecked(1);
 

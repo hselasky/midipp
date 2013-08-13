@@ -336,7 +336,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_play_key = new MppSpinBox();
 	connect(spn_play_key, SIGNAL(valueChanged(int)), this, SLOT(handle_play_key_changed(int)));
 	spn_play_key->setRange(0, 127);
-	spn_play_key->setValue(C4);
+	spn_play_key->setValue(MPP_DEFAULT_BASE_KEY);
 
 	/* First column */
 

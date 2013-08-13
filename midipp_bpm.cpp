@@ -216,7 +216,7 @@ MppBpm :: handle_reset_all()
 	duty = 50;
 	duty_ticks = 0;
 	amp = 96;
-	key = C4;
+	key = MPP_DEFAULT_BASE_KEY;
 	ref = 120;
 	period = 0;
 

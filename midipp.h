@@ -94,7 +94,8 @@
 #define	MPP_MAGIC_DEVNO	(UMIDI20_N_DEVICES - 1)
 #define	MPP_ICON_FILE	":/midipp.png"
 #define	MPP_DEFAULT_URL "http://home.selasky.org:8192/midipp/database.tar.gz"
-
+#define	MPP_DEFAULT_CMD_KEY C3
+#define	MPP_DEFAULT_BASE_KEY C5
 #define	MPP_VISUAL_MARGIN	8
 #define	MPP_VISUAL_R_MAX	8
 #define	MPP_VISUAL_C_MAX	20
