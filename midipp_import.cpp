@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010,2012 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010,2012-2013 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -356,13 +356,16 @@ MppImportTab :: handleImportOpen()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(mainWindow, tr("Select Chord Tabular File"), 
-		QString(), QString("Chord Tabular File (*.txt; *.TXT)"));
+		MppHomeDirTxt,
+		QString("Chord Tabular File (*.txt; *.TXT)"));
 	QString scores;
 
 	diag->setAcceptMode(QFileDialog::AcceptOpen);
 	diag->setFileMode(QFileDialog::ExistingFile);
 
 	if (diag->exec()) {
+
+		MppHomeDirTxt = diag->directory().path();
 
 		handleImportNew();
 

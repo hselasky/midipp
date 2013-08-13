@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2012 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2013 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -1853,13 +1853,16 @@ MppScoreMain :: handleScoreFileOpen()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(mainWindow, tr("Select Score File"), 
-		QString(), QString("Score File (*.txt *.TXT)"));
+		MppHomeDirTxt,
+		QString("Score File (*.txt *.TXT)"));
 
 	diag->setAcceptMode(QFileDialog::AcceptOpen);
 	diag->setFileMode(QFileDialog::ExistingFile);
 
-	if (diag->exec())
+	if (diag->exec()) {
+		MppHomeDirTxt = diag->directory().path();
 		handleScoreFileOpenSub(diag->selectedFiles()[0]);
+	}
 
 	delete diag;
 }
@@ -1878,13 +1881,16 @@ MppScoreMain :: handleScoreFileSaveAs()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(mainWindow, tr("Select Score File"), 
-		QString(), QString("Score File (*.txt *.TXT)"));
+		MppHomeDirTxt,
+		QString("Score File (*.txt *.TXT)"));
 
 	diag->setAcceptMode(QFileDialog::AcceptSave);
 	diag->setFileMode(QFileDialog::AnyFile);
 	diag->setDefaultSuffix(QString("txt"));
 
 	if (diag->exec()) {
+		MppHomeDirTxt = diag->directory().path();
+
 		if (currScoreFileName != NULL)
 			delete (currScoreFileName);
 

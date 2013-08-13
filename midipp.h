@@ -173,6 +173,9 @@ extern QColor color_logo;
 extern QColor color_green;
 
 extern QString MppVariantList;
+extern QString MppHomeDirTxt;
+extern QString MppHomeDirMid;
+extern QString MppHomeDirGp3;
 
 extern QString MppBaseName(QString fname);
 extern char *MppQStringToAscii(QString s);

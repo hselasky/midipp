@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2012 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2013 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -1012,7 +1012,8 @@ MppMainWindow :: handle_midi_file_open(int merge)
 {
 	QFileDialog *diag = 
 	  new QFileDialog(this, tr("Select MIDI File"), 
-		QString(), QString("MIDI File (*.mid *.MID)"));
+		MppHomeDirMid,
+		QString("MIDI File (*.mid *.MID)"));
 	struct umidi20_song *song_copy;
 	struct umidi20_track *track_copy;
 	struct umidi20_event *event;
@@ -1023,6 +1024,8 @@ MppMainWindow :: handle_midi_file_open(int merge)
 	diag->setFileMode(QFileDialog::ExistingFile);
 
 	if (diag->exec()) {
+
+		MppHomeDirMid = diag->directory().path();
 
 		if (merge) {
 			handle_midi_file_clear_name();
@@ -1197,13 +1200,17 @@ MppMainWindow :: handle_midi_file_save_as()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(this, tr("Select MIDI File"), 
-		QString(), QString("MIDI File (*.mid *.MID)"));
+		MppHomeDirMid,
+		QString("MIDI File (*.mid *.MID)"));
 
 	diag->setAcceptMode(QFileDialog::AcceptSave);
 	diag->setFileMode(QFileDialog::AnyFile);
 	diag->setDefaultSuffix(QString("mid"));
 
 	if (diag->exec()) {
+
+		MppHomeDirMid = diag->directory().path();
+
 		if (CurrMidiFileName != NULL)
 			delete (CurrMidiFileName);
 
@@ -2690,7 +2697,8 @@ MppMainWindow :: handle_gpro_file_import()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(this, tr("Select GPro v3 or v4 File"), 
-		QString(), QString("GPro File (*.gp *.gp3 *.gp4 *.GP *.GP3 *.GP4)"));
+		MppHomeDirGp3,
+		QString("GPro File (*.gp *.gp3 *.gp4 *.GP *.GP3 *.GP4)"));
 	QByteArray data;
 	MppGPro *gpro;
 	QTextCursor *cursor;
@@ -2699,6 +2707,8 @@ MppMainWindow :: handle_gpro_file_import()
 	diag->setFileMode(QFileDialog::ExistingFile);
 
 	if (diag->exec()) {
+
+		MppHomeDirGp3 = diag->directory().path();
 
 		QString fname(diag->selectedFiles()[0]);
 
