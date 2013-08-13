@@ -220,6 +220,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	gl_synth_play = new MppGroupBox(tr("Synth and Play controls"));
 
 	scores_tw->setVisible(0);
+	main_tw->setVisible(1);
 
 	main_tw->addTab(&scores_main[0]->viewWidget, tr("View A"));
 	main_tw->addTab(scores_main[0]->editWidget, tr("Edit A"));
