@@ -673,6 +673,7 @@ MppMainWindow :: handle_insert_chord()
 		cursor.insertText(QString("\n"));
 		cursor.endEditBlock();
 		handle_compile();
+		handle_make_tab_visible(currScoreMain()->editWidget);
 	}
 }
 
@@ -2684,6 +2685,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 	cursor.insertText(output);
 	
 	handle_compile();
+	handle_make_tab_visible(currScoreMain()->editWidget);
 }
 
 void
@@ -2741,7 +2743,6 @@ load_file:
 	delete cursor;
 
 	handle_compile();
-
 	handle_make_scores_visible(currScoreMain());
 
 done:
