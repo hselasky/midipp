@@ -91,7 +91,7 @@ public:
 	char getChar(uint32_t offset);
 	int32_t getIntValue(uint32_t offset);
 	void parseAdv(uint8_t delta);
-	void parseMax(uint16_t *pmax, float value);
+	void parseMax(int *pmax, float value);
 	void resetAutoMelody(void);
 	void computeAutoMelody(void);
 	void newLine(uint8_t force, uint8_t label, uint8_t new_page);
@@ -143,6 +143,7 @@ public:
 	struct MppMergeEntry merge[MPP_MAX_MERGE];
 
 	int visual_y_max;
+	int maxScoresWidth;
 
 	uint32_t pressedKeys[MPP_PRESSED_MAX];
 	uint32_t realLine[MPP_MAX_LINES];
@@ -157,7 +158,6 @@ public:
 	uint16_t currPos;
 	uint16_t lastPos;
 	uint16_t picScroll;
-	uint16_t maxScoresWidth;
 	uint16_t active_channels;
 
 	uint8_t jumpLabel[MPP_MAX_LINES];

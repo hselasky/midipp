@@ -347,6 +347,8 @@ void
 MppImportTab :: handleImportNew()
 {
 	editWidget->setPlainText(QString());
+
+	mainWindow->handle_make_tab_visible(editWidget);
 }
 
 void

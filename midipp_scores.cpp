@@ -214,7 +214,7 @@ MppScoreMain :: ~MppScoreMain()
 }
 
 void
-MppScoreMain :: parseMax(uint16_t *pmax, float value)
+MppScoreMain :: parseMax(int *pmax, float value)
 {
 	value += MPP_VISUAL_MARGIN;
 
@@ -224,7 +224,7 @@ MppScoreMain :: parseMax(uint16_t *pmax, float value)
 	if (value < 0.0)
 		value = 0.0;
 
-	if ((uint16_t)value > *pmax)
+	if ((int)value > *pmax)
 		*pmax = value;
 }
 
@@ -234,12 +234,12 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 	QPainter paint;
 	QPicture *pic;
 	QString str;
-	uint16_t x;
-	uint16_t y;
-	uint16_t z;
-	uint16_t y_max;
-	uint16_t x_max;
-	uint16_t check_x;
+	int x;
+	int y;
+	int z;
+	int y_max;
+	int x_max;
+	int check_x;
 	uint8_t draw_chord;
 	uint8_t last_dot;
 	uint16_t duration;
@@ -349,7 +349,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 		z = x;
 		x_max = 0;
 
-		for (y = 0; ((int)y) != str.size(); y++) {
+		for (y = 0; y != str.size(); y++) {
 
 			if (draw_chord)
 				paint.setFont(fnt_b);
@@ -494,7 +494,7 @@ MppScoreMain :: handleParseSub(QPrinter *pd, QPoint orig, float scale_f)
 					sum_x = text_x;
 					u = 0;
 
-					for (t = y; ((int)t) != str.size(); t++) {
+					for (t = y; t != str.size(); t++) {
 						QRectF check_size = 
 						  paint.boundingRect(QRectF(0,0,0,0),
 						  QString(str[t]));
@@ -579,14 +579,15 @@ MppScoreMain :: doExport(void)
 {
 	QString out;
 	const char *ptr;
-	uint16_t x;
-	uint16_t y;
-	uint16_t z;
-	uint16_t t;
-	char linebuf[2][MAX_LINE_BUF];
-	char c;
+	int x;
+	int y;
+	int z;
+	int t;
+	QString linebuf[2];
+	QChar c;
 	uint8_t draw_chord;
 	uint8_t do_skip;
+	uint8_t any_chord;
 
 	for (x = 0; x != MPP_MAX_LINES; x++) {
 
@@ -594,26 +595,30 @@ MppScoreMain :: doExport(void)
 		if (ptr == NULL)
 			continue;
 
-		memset(linebuf, 0, sizeof(linebuf));
+		QString str = QString::fromUtf8(visual[x].pstr);
+
+		linebuf[0] = QString();
+		linebuf[1] = QString();
 
 		draw_chord = 0;
 		do_skip = 0;
+		any_chord = 0;
 
-		for (z = t = y = 0; ptr[y] != 0; y++) {
+		for (z = t = y = 0; y != str.size(); y++) {
 
-			c = ptr[y];
+			c = str[y];
 
 			if (c == '(') {
 				draw_chord = 1;
 				continue;
 			} else if (c == ')') {
 				draw_chord = 0;
-				if (z < (MAX_LINE_BUF - 1)) {
-					linebuf[0][z] = ' ';
+				if (z < MAX_LINE_BUF) {
+					linebuf[0] += ' ';
 					z++;
 				}
 				continue;
-			} else if (c == '.' && ptr[y+1] == '[') {
+			} else if (c == '.' && str[y+1] == '[') {
 				do_skip = 1;
 				continue;
 			} else if (do_skip) {
@@ -627,28 +632,29 @@ MppScoreMain :: doExport(void)
 			}
 
 			if (draw_chord) {
-				if (z < (MAX_LINE_BUF - 1)) {
+				any_chord = 1;
+
+				if (z < MAX_LINE_BUF) {
 					linebuf[0][z] = c;
 					z++;
 				}
 			} else {
-				if (t < (MAX_LINE_BUF - 1)) {
+				if (t < MAX_LINE_BUF) {
 					linebuf[1][t] = c;
 					t++;
 				}
 			}
 
 			while (z < t) {
-				linebuf[0][z] = ' ';
+				linebuf[0] += ' ';
 				z++;
 			}
 		}
 
-		linebuf[0][z] = 0;
-		linebuf[1][t] = 0;
-
-		out += linebuf[0];
-		out += "\n";
+		if (any_chord != 0) {
+			out += linebuf[0];
+			out += "\n";
+		}
 
 		out += linebuf[1];
 		out += "\n";
@@ -1805,6 +1811,7 @@ MppScoreMain :: handleScoreFileNew()
 	}
 
 	mainWindow->handle_tab_changed(1);
+	mainWindow->handle_make_scores_visible(this);
 }
 
 void
@@ -1817,6 +1824,7 @@ MppScoreMain :: handleScoreFileOpenRaw(char *data, uint32_t len)
 	handleCompile();
 
 	mainWindow->handle_tab_changed(1);
+	mainWindow->handle_make_scores_visible(this);
 }
 
 int
@@ -1835,6 +1843,7 @@ MppScoreMain :: handleScoreFileOpenSub(QString fname)
 	handleCompile();
 
 	mainWindow->handle_tab_changed(1);
+	mainWindow->handle_make_scores_visible(this);
 
 	return (scores.isNull() || scores.isEmpty());
 }
@@ -2497,8 +2506,9 @@ MppScoreMain :: handleCompile(int force)
 		handleParse(editText);
 
 		pthread_mutex_unlock(&mainWindow->mtx);
-
+#if 0
 		viewWidgetSub->setMinimumWidth(maxScoresWidth);
+#endif
 	}
 }
 
@@ -2989,6 +2999,8 @@ MppScoreMain :: handleScoreFileExport(void)
 	cursor.beginEditBlock();
 	cursor.insertText(doExport());
 	cursor.endEditBlock();
+
+	mainWindow->handle_make_tab_visible(mainWindow->tab_import->editWidget);
 }
 
 uint8_t

@@ -60,6 +60,8 @@ public:
 	void handle_midi_file_instr_prepend(void);
 	void handle_midi_file_instr_delete(void);
 	void handle_jump_locked(int index);
+	void handle_make_scores_visible(MppScoreMain *);
+	void handle_make_tab_visible(QWidget *);
 
 	QString get_midi_score_duration(uint32_t *psum = 0);
 	int log_midi_score_duration();
@@ -84,6 +86,8 @@ public:
 	void handle_watchdog_sub(MppScoreMain *, int);
 
 	MppScoreMain *currScoreMain();
+	QPlainTextEdit *currEditor();
+
 	MppMode *currModeDlg();
 
 	void sync_key_mode();
@@ -163,6 +167,10 @@ public:
 	QPushButton *mwRewind;
 	QPushButton *mwPlay;
 	QPushButton *mwReload;
+	QPushButton *mwPaste;
+	QPushButton *mwCopy;
+	QPushButton *mwUndo;
+	QPushButton *mwRedo;
 
 	/* tab <Scores> */
 
@@ -360,6 +368,11 @@ public slots:
 	void handle_move_left();
 
 	void handle_tab_changed(int force = 0);
+
+	void handle_copy();
+	void handle_paste();
+	void handle_redo();
+	void handle_undo();
 };
 
 #endif		/* _MIDIPP_MAINWINDOW_H_ */

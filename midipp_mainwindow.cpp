@@ -92,18 +92,30 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mwRewind = new QPushButton();
 	mwPlay = new QPushButton();
 	mwReload = new QPushButton();
+	mwPaste = new QPushButton();
+	mwCopy = new QPushButton();
+	mwUndo = new QPushButton();
+	mwRedo = new QPushButton();
 
 	mwRight->setIcon(QIcon(QString(":/right_arrow.png")));
 	mwLeft->setIcon(QIcon(QString(":/left_arrow.png")));
 	mwRewind->setIcon(QIcon(QString(":/stop.png")));
 	mwPlay->setIcon(QIcon(QString(":/play.png")));
 	mwReload->setIcon(QIcon(QString(":/reload.png")));
+	mwPaste->setIcon(QIcon(QString(":/paste.png")));
+	mwCopy->setIcon(QIcon(QString(":/copy.png")));
+	mwUndo->setIcon(QIcon(QString(":/undo.png")));
+	mwRedo->setIcon(QIcon(QString(":/redo.png")));
 
 	connect(mwRight, SIGNAL(released()), this, SLOT(handle_move_right()));
 	connect(mwLeft, SIGNAL(released()), this, SLOT(handle_move_left()));
 	connect(mwRewind, SIGNAL(released()), this, SLOT(handle_rewind()));
 	connect(mwPlay, SIGNAL(released()), this, SLOT(handle_midi_trigger()));
 	connect(mwReload, SIGNAL(released()), this, SLOT(handle_compile()));
+	connect(mwPaste, SIGNAL(released()), this, SLOT(handle_paste()));
+	connect(mwCopy, SIGNAL(released()), this, SLOT(handle_copy()));
+	connect(mwUndo, SIGNAL(released()), this, SLOT(handle_undo()));
+	connect(mwRedo, SIGNAL(released()), this, SLOT(handle_redo()));
 
 	/* Setup GUI */
 
@@ -118,14 +130,22 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* Tabs */
 
-	main_gl->addWidget(scores_tw,0,0,9,1);
-	main_gl->addWidget(main_tw,0,2,9,1);
+	main_gl->addWidget(scores_tw,0,0,15,1);
+	main_gl->addWidget(main_tw,0,2,15,1);
 
 	main_gl->addWidget(mwPlay,1,1,1,1);
 	main_gl->addWidget(mwRewind,2,1,1,1);
-	main_gl->addWidget(mwReload,4,1,1,1);
-	main_gl->addWidget(mwRight,6,1,1,1);
-	main_gl->addWidget(mwLeft,7,1,1,1);
+
+	main_gl->addWidget(mwCopy,4,1,1,1);
+	main_gl->addWidget(mwPaste,5,1,1,1);
+
+	main_gl->addWidget(mwUndo,7,1,1,1);
+	main_gl->addWidget(mwRedo,8,1,1,1);
+
+	main_gl->addWidget(mwReload,10,1,1,1);
+
+	main_gl->addWidget(mwRight,12,1,1,1);
+	main_gl->addWidget(mwLeft,13,1,1,1);
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++)
 		scores_main[x] = new MppScoreMain(this, x);
@@ -199,14 +219,13 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	gl_bpm = new MppGroupBox(tr("Average Beats Per Minute, BPM"));
 	gl_synth_play = new MppGroupBox(tr("Synth and Play controls"));
 
-	scores_tw->addTab(&scores_main[0]->viewWidget, tr("View A-Scores"));
-	scores_tw->addTab(scores_main[0]->editWidget, tr("Edit A-Scores"));
+	scores_tw->setVisible(0);
 
-	scores_tw->addTab(&scores_main[1]->viewWidget, tr("View B-Scores"));
-	scores_tw->addTab(scores_main[1]->editWidget, tr("Edit B-Scores"));
-
-	scores_tw->addTab(tab_import->editWidget, tr("Lyrics"));
-
+	main_tw->addTab(&scores_main[0]->viewWidget, tr("View A-Scores"));
+	main_tw->addTab(scores_main[0]->editWidget, tr("Edit A-Scores"));
+	main_tw->addTab(&scores_main[1]->viewWidget, tr("View B-Scores"));
+	main_tw->addTab(scores_main[1]->editWidget, tr("Edit B-Scores"));
+	main_tw->addTab(tab_import->editWidget, tr("Lyrics"));
 	main_tw->addTab(tab_file_gl, tr("File"));
 	main_tw->addTab(tab_play_gl, tr("Play"));
 	main_tw->addTab(tab_config_gl, tr("Config"));
@@ -2235,6 +2254,42 @@ MppMainWindow :: handle_volume_changed(int dummy)
 }
 
 void
+MppMainWindow :: handle_make_scores_visible(MppScoreMain *sm)
+{
+	if (sm->maxScoresWidth == 0)
+		handle_make_tab_visible(sm->editWidget);
+	else
+		handle_make_tab_visible(&sm->viewWidget);
+}
+
+void
+MppMainWindow :: handle_make_tab_visible(QWidget *widget)
+{
+	int x;
+
+	for (x = 0; ; x++) {
+		QWidget *tab = scores_tw->widget(x);
+		if (tab == NULL)
+			break;
+		if (tab == widget) {
+			if (scores_tw->currentWidget() != widget)
+				scores_tw->setCurrentWidget(widget);
+			break;
+		}
+	}
+	for (x = 0; ; x++) {
+		QWidget *tab = main_tw->widget(x);
+		if (tab == NULL)
+			break;
+		if (tab == widget) {
+			if (main_tw->currentWidget() != widget)
+				main_tw->setCurrentWidget(widget);
+			break;
+		}
+	}
+}
+
+void
 MppMainWindow :: handle_tab_changed(int force)
 {
 	int x;
@@ -2669,6 +2724,8 @@ load_file:
 
 	handle_compile();
 
+	handle_make_scores_visible(currScoreMain());
+
 done:
 	delete diag;
 }
@@ -3013,4 +3070,61 @@ MppMainWindow :: handle_move_left()
 	scores_tw->addTab(pw, desc);
 	scores_tw->setCurrentWidget(pw);
 	scores_tw->setVisible(1);
+}
+
+QPlainTextEdit *
+MppMainWindow :: currEditor()
+{
+	QPlainTextEdit *qedit;
+
+	qedit = currScoreMain()->editWidget;
+	if (scores_tw->currentWidget() == qedit ||
+	    main_tw->currentWidget() == qedit)
+		goto done;
+
+	qedit = tab_import->editWidget;
+	if (scores_tw->currentWidget() == qedit ||
+	    main_tw->currentWidget() == qedit)
+		goto done;
+
+	qedit = tab_help;
+	if (scores_tw->currentWidget() == qedit ||
+	    main_tw->currentWidget() == qedit)
+		goto done;
+
+	qedit = 0;
+ done:
+	return (qedit);
+}
+
+void
+MppMainWindow :: handle_copy()
+{
+	QPlainTextEdit *qedit = currEditor();
+	if (qedit != 0)
+		qedit->copy();
+}
+
+void
+MppMainWindow :: handle_paste()
+{
+	QPlainTextEdit *qedit = currEditor();
+	if (qedit != 0)
+		qedit->paste();
+}
+
+void
+MppMainWindow :: handle_redo()
+{
+	QPlainTextEdit *qedit = currEditor();
+	if (qedit != 0)
+		qedit->redo();
+}
+
+void
+MppMainWindow :: handle_undo()
+{
+	QPlainTextEdit *qedit = currEditor();
+	if (qedit != 0)
+		qedit->undo();
 }

@@ -6,6 +6,10 @@
 <file>reload.png</file>
 <file>right_arrow.png</file>
 <file>stop.png</file>
+<file>paste.png</file>
+<file>copy.png</file>
+<file>redo.png</file>
+<file>undo.png</file>
 </qresource>
 </RCC>
 
