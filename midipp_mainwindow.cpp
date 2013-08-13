@@ -2294,7 +2294,6 @@ void
 MppMainWindow :: handle_tab_changed(int force)
 {
 	int x;
-	int compile = 0;
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
 		if (scores_main[x]->editWidget->hasFocus())
@@ -2304,9 +2303,13 @@ MppMainWindow :: handle_tab_changed(int force)
 		for (x = 0; x != MPP_MAX_VIEWS; x++) {
 			if (scores_tw->currentWidget() == &scores_main[x]->viewWidget ||
 			    main_tw->currentWidget() == &scores_main[x]->viewWidget) {
-				compile = 1;
+				force = 1;
 				break;
 			}
+		}
+	}
+	if (x == MPP_MAX_VIEWS) {
+		for (x = 0; x != MPP_MAX_VIEWS; x++) {
 			if (scores_tw->currentWidget() == scores_main[x]->editWidget ||
 			    main_tw->currentWidget() == scores_main[x]->editWidget) {
 				break;
@@ -2328,7 +2331,7 @@ MppMainWindow :: handle_tab_changed(int force)
 
 	handle_instr_channel_changed(currScoreMain()->synthChannel);
 
-	if (compile != 0 || force != 0)
+	if (force != 0)
 		handle_compile();
 
 	but_midi_file_import->setText(tr("To ") +
