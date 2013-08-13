@@ -221,10 +221,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	scores_tw->setVisible(0);
 
-	main_tw->addTab(&scores_main[0]->viewWidget, tr("View A-Scores"));
-	main_tw->addTab(scores_main[0]->editWidget, tr("Edit A-Scores"));
-	main_tw->addTab(&scores_main[1]->viewWidget, tr("View B-Scores"));
-	main_tw->addTab(scores_main[1]->editWidget, tr("Edit B-Scores"));
+	main_tw->addTab(&scores_main[0]->viewWidget, tr("View A"));
+	main_tw->addTab(scores_main[0]->editWidget, tr("Edit A"));
+	main_tw->addTab(&scores_main[1]->viewWidget, tr("View B"));
+	main_tw->addTab(scores_main[1]->editWidget, tr("Edit B"));
 	main_tw->addTab(tab_import->editWidget, tr("Lyrics"));
 	main_tw->addTab(tab_file_gl, tr("File"));
 	main_tw->addTab(tab_play_gl, tr("Play"));
