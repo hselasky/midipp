@@ -82,7 +82,12 @@ target.path	= $${PREFIX}/bin
 INSTALLS	+= target
 
 icons.path	= $${PREFIX}/share/pixmaps
-icons.files	= midipp.png
+isEmpty(IOS_ICONS) {
+  icons.files	= midipp.png
+} else {
+  icons.files	= midipp_ios.png midipp_ios_retina.png
+  QMAKE_BUNDLE_DATA += icons
+}
 INSTALLS	+= icons
 
 desktop.path	= $${PREFIX}/share/applications
