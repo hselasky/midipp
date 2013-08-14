@@ -193,8 +193,8 @@ MppSettings :: doLoad(void)
 
 	if (save_viewmode > 0) {
 		for (x = 0; x != MPP_MAX_VIEWS; x++) {
-			int baseKey = valueDefault(concat("view%d/basekey", x), C4);
-			int cmdKey = valueDefault(concat("view%d/cmdkey", x), C3);
+			int baseKey = valueDefault(concat("view%d/basekey", x), MPP_DEFAULT_BASE_KEY);
+			int cmdKey = valueDefault(concat("view%d/cmdkey", x), MPP_DEFAULT_CMD_KEY);
 			int delayNoise = valueDefault(concat("view%d/delay", x), 25);
 			int devInputMask = valueDefault(concat("view%d/inmask", x), x ? 0 : -1);
 			int keyMode = valueDefault(concat("view%d/keymode", x), 0);

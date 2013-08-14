@@ -99,8 +99,8 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int unit)
 	/* all devices are input */
 
 	devInputMask = 0;
-	baseKey = C4;
-	cmdKey = C3;
+	baseKey = MPP_DEFAULT_BASE_KEY;
+	cmdKey = MPP_DEFAULT_CMD_KEY;
 	delayNoise = 25;
 	chordContrast = 128;
 	chordNormalize = 1;
