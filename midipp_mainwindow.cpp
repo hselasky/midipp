@@ -1523,13 +1523,16 @@ MppMainWindow :: check_synth(uint8_t device_no, uint8_t chan, uint32_t off)
 
 	if (deviceBits & (MPP_DEV0_SYNTH << (3 * device_no))) {
 
-		chan &= 0xF;
-
 		handle_midi_trigger();
 
-		pos = umidi20_get_curr_position() - startPosition + 1 + off;
+		/* compute relative time distance */
+		pos = umidi20_get_curr_position() - startPosition + off;
 
-		mid_set_channel(d, chan);
+		/* compensate for processing delay */
+		if (pos != 0)
+			pos--;
+
+		mid_set_channel(d, chan & 0xF);
 		mid_set_position(d, pos);
 		mid_set_device_no(d, device_no);
 
