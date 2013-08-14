@@ -25,31 +25,35 @@
 
 #include "midipp_mainwindow.h"
 #include "midipp_mutemap.h"
+#include "midipp_groupbox.h"
 
 MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
   : QDialog(parent)
 {
 	char buf[64];
 	int n;
-	int x_off;
-	int y_off;
 
 	mw = _mw;
 	devno = _devno;
 
 	gl = new QGridLayout(this);
 
-	snprintf(buf, sizeof(buf), "- MIDI Output Mute Map For Device %d -", _devno);
+	gb_mute = new MppGroupBox("Mute Map");
+	gb_other = new MppGroupBox("Other controls");
+
+	snprintf(buf, sizeof(buf), "- MIDI Output Mute "
+	    "Map For Device %d -", _devno);
 
 	setWindowTitle(tr(buf));
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
-	lbl_title[0] = new QLabel(tr("- Channel Mute -"));
-	lbl_title[1] = new QLabel(tr("- Channel Mute -"));
-	lbl_title[2] = new QLabel(tr("- - - - Other - - - -"));
+	gb_mute->addWidget(new QLabel(tr("Mute enable")),
+	    0, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb_mute->addWidget(new QLabel(tr("Mute enable")),
+	    0, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
-	gl->addWidget(lbl_title[0], 1, 0, 1, 3, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(lbl_title[1], 1, 3, 1, 3, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(gb_mute, 0, 0, 1, 5);
+	gl->addWidget(gb_other, 1, 0, 1, 5);
 
 	but_set_all = new QPushButton(tr("Set All"));
 	but_clear_all = new QPushButton(tr("Clear All"));
@@ -57,12 +61,11 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 	but_apply_all = new QPushButton(tr("Apply"));
 	but_cancel_all = new QPushButton(tr("Cancel"));
 
-	gl->addWidget(but_set_all, 16 + 2, 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(but_clear_all, 16 + 2, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	gl->addWidget(but_revert_all, 16 + 2, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(but_apply_all, 16 + 2, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(but_cancel_all, 16 + 2, 5, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(but_set_all, 2, 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(but_clear_all, 2, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(but_revert_all, 2, 2, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(but_apply_all, 2, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(but_cancel_all, 2, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	connect(but_set_all, SIGNAL(pressed()), this, SLOT(handle_set_all()));
 	connect(but_clear_all, SIGNAL(pressed()), this, SLOT(handle_clear_all()));
@@ -71,17 +74,20 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 	connect(but_cancel_all, SIGNAL(released()), this, SLOT(handle_cancel_all()));
 
 	for (n = 0; n != 16; n++) {
+		int x_off;
+		int y_off;
 
 		snprintf(buf, sizeof(buf), "Ch%X", n);
 
-		lbl_chan[n] = new QLabel(tr(buf));
 		cbx_mute[n] = new QCheckBox();
 
-		x_off = (n & 8) ? 3: 0;
-		y_off = (n & 7) + 2;
+		x_off = (n & 8) ? 2: 0;
+		y_off = (n & 7) + 1;
 
-		gl->addWidget(lbl_chan[n], y_off, x_off + 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		gl->addWidget(cbx_mute[n], y_off, x_off + 1, 1, 2, Qt::AlignHCenter|Qt::AlignVCenter);
+		gb_mute->addWidget(new QLabel(tr(buf)),
+		    y_off, x_off + 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		gb_mute->addWidget(cbx_mute[n],
+		    y_off, x_off + 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	}
 
 	cbx_mute_program = new QCheckBox();
@@ -90,41 +96,30 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 	cbx_mute_local_keys_disable = new QCheckBox();
 	cbx_mute_all_control = new QCheckBox();
 
-	lbl_mute_program = new QLabel(tr("Mute all bank and program change events"));
-	lbl_mute_pedal = new QLabel(tr("Mute all pedal events"));
-	lbl_mute_local_keys_enable = new QLabel(tr("Local keys enabled on non-muted channels"));
-	lbl_mute_local_keys_disable = new QLabel(tr("Local keys disabled on non-muted channels"));
-	lbl_mute_all_control = new QLabel(tr("Mute all control events"));
+	gb_other->addWidget(new QLabel(tr("Mute all bank and program change events")),
+	    0, 0, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
+	gb_other->addWidget(cbx_mute_program,
+	    0, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
-	y_off = 10;
+	gb_other->addWidget(new QLabel(tr("Mute all pedal events")),
+	    1, 0, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
+	gb_other->addWidget(cbx_mute_pedal,
+	    1, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
-	gl->addWidget(lbl_title[2], y_off, 0, 1, 4, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb_other->addWidget(new QLabel(tr("Local keys enabled on non-muted channels")),
+	    2, 0, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
+	gb_other->addWidget(cbx_mute_local_keys_enable,
+	    2, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
-	y_off++;
+	gb_other->addWidget(new QLabel(tr("Local keys disabled on non-muted channels")),
+	    3, 0, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
+	gb_other->addWidget(cbx_mute_local_keys_disable,
+	    3, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
-	gl->addWidget(lbl_mute_program, y_off, 0, 1, 3, Qt::AlignLeft|Qt::AlignVCenter);
-	gl->addWidget(cbx_mute_program, y_off, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	y_off++;
-
-	gl->addWidget(lbl_mute_pedal, y_off, 0, 1, 3, Qt::AlignLeft|Qt::AlignVCenter);
-	gl->addWidget(cbx_mute_pedal, y_off, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	y_off++;
-
-	gl->addWidget(lbl_mute_local_keys_enable, y_off, 0, 1, 3, Qt::AlignLeft|Qt::AlignVCenter);
-	gl->addWidget(cbx_mute_local_keys_enable, y_off, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	y_off++;
-
-	gl->addWidget(lbl_mute_local_keys_disable, y_off, 0, 1, 3, Qt::AlignLeft|Qt::AlignVCenter);
-	gl->addWidget(cbx_mute_local_keys_disable, y_off, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	y_off++;
-
-	gl->addWidget(lbl_mute_all_control, y_off, 0, 1, 3, Qt::AlignLeft|Qt::AlignVCenter);
-	gl->addWidget(cbx_mute_all_control, y_off, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-
+	gb_other->addWidget(new QLabel(tr("Mute all control events")),
+	    4, 0, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
+	gb_other->addWidget(cbx_mute_all_control,
+	    4, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	handle_revert_all();
 }

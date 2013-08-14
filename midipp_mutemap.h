@@ -41,13 +41,9 @@ public:
 
 	QGridLayout *gl;
 
-	QLabel *lbl_title[3];
-	QLabel *lbl_chan[16];
-	QLabel *lbl_mute_program;
-	QLabel *lbl_mute_pedal;
-	QLabel *lbl_mute_local_keys_enable;
-	QLabel *lbl_mute_local_keys_disable;
-	QLabel *lbl_mute_all_control;
+	MppGroupBox *gb_mute;
+	MppGroupBox *gb_other;
+
 	QCheckBox *cbx_mute[16];
 	QCheckBox *cbx_mute_program;
 	QCheckBox *cbx_mute_pedal;
