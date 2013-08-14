@@ -26,6 +26,7 @@
 #include "midipp_mainwindow.h"
 #include "midipp_mutemap.h"
 #include "midipp_groupbox.h"
+#include "midipp_checkbox.h"
 
 MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
   : QDialog(parent)
@@ -79,7 +80,7 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 
 		snprintf(buf, sizeof(buf), "Ch%X", n);
 
-		cbx_mute[n] = new QCheckBox();
+		cbx_mute[n] = new MppCheckBox();
 
 		x_off = (n & 8) ? 2: 0;
 		y_off = (n & 7) + 1;
@@ -90,11 +91,11 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 		    y_off, x_off + 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	}
 
-	cbx_mute_program = new QCheckBox();
-	cbx_mute_pedal = new QCheckBox();
-	cbx_mute_local_keys_enable = new QCheckBox();
-	cbx_mute_local_keys_disable = new QCheckBox();
-	cbx_mute_all_control = new QCheckBox();
+	cbx_mute_program = new MppCheckBox();
+	cbx_mute_pedal = new MppCheckBox();
+	cbx_mute_local_keys_enable = new MppCheckBox();
+	cbx_mute_local_keys_disable = new MppCheckBox();
+	cbx_mute_all_control = new MppCheckBox();
 
 	gb_other->addWidget(new QLabel(tr("Mute all bank and program change events")),
 	    0, 0, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);

@@ -24,6 +24,7 @@
  */
 
 #include "midipp_midi.h"
+#include "midipp_checkbox.h"
 
 MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
     : QDialog()
@@ -82,7 +83,7 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 			snprintf(line_buf, sizeof(line_buf),
 			    "Track%d: <%s>", (int)x, (x == 9) ? "Drums" : "");
 
-			cbx_import[x] = new QCheckBox();
+			cbx_import[x] = new MppCheckBox();
 
 			lbl_info[x] = new QLabel(tr(line_buf));
 
@@ -95,7 +96,7 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 
 	y += ((z + 1) / 2);
 
-	cbx_single_track = new QCheckBox();
+	cbx_single_track = new MppCheckBox();
 	lbl_single_track = new QLabel(tr("Output like a single track"));
 
 	if (!(flags & MIDI_FLAG_MULTI_CHAN))
@@ -106,7 +107,7 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 
 	y++;
 
-	cbx_have_strings = new QCheckBox();
+	cbx_have_strings = new MppCheckBox();
 	lbl_have_strings = new QLabel(tr("Add tempo strings"));
 
 	if (flags & MIDI_FLAG_STRING)
@@ -117,7 +118,7 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 
 	y++;
 
-	cbx_have_duration = new QCheckBox();
+	cbx_have_duration = new MppCheckBox();
 	lbl_have_duration = new QLabel(tr("Add duration to score lines"));
 
 	if (flags & MIDI_FLAG_DURATION)

@@ -42,6 +42,7 @@
 #include "midipp_mode.h"
 #include "midipp_volume.h"
 #include "midipp_settings.h"
+#include "midipp_checkbox.h"
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -412,9 +413,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 		led_config_dev[n] = new QLineEdit(QString());
 
-		cbx_config_dev[n][0] = new QCheckBox();
-		cbx_config_dev[n][1] = new QCheckBox();
-		cbx_config_dev[n][2] = new QCheckBox();
+		cbx_config_dev[n][0] = new MppCheckBox();
+		cbx_config_dev[n][1] = new MppCheckBox();
+		cbx_config_dev[n][2] = new MppCheckBox();
 
 		snprintf(buf, sizeof(buf), "Dev%d:", n);
 
@@ -522,7 +523,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		spn_instr_prog[n]->setRange(0, 127);
 		connect(spn_instr_prog[n], SIGNAL(valueChanged(int)), this, SLOT(handle_instr_changed(int)));
 
-		cbx_instr_mute[n] = new QCheckBox();
+		cbx_instr_mute[n] = new MppCheckBox();
 		connect(cbx_instr_mute[n], SIGNAL(stateChanged(int)), this, SLOT(handle_instr_changed(int)));
 
 		gb_instr_table->addWidget(new QLabel(tr(buf)), (n & 7) + 1, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);

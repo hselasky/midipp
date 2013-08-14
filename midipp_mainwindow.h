@@ -247,7 +247,7 @@ public:
 	MppButton *but_config_dev[MPP_MAX_DEVS];
 	MppButton *but_config_mm[MPP_MAX_DEVS];
 	QLineEdit *led_config_dev[MPP_MAX_DEVS];
-	QCheckBox *cbx_config_dev[MPP_MAX_DEVS][3];
+	MppCheckBox *cbx_config_dev[MPP_MAX_DEVS][3];
 
 	QPushButton *but_config_apply;
 	QPushButton *but_config_revert;
@@ -272,7 +272,7 @@ public:
 	QSpinBox *spn_instr_bank[16];
 	QSpinBox *spn_instr_prog[16];
 
-	QCheckBox *cbx_instr_mute[16];
+	MppCheckBox *cbx_instr_mute[16];
 
 	QPushButton *but_instr_rem;
 	QPushButton *but_instr_program;

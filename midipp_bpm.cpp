@@ -28,6 +28,7 @@
 #include "midipp_pattern.h"
 #include "midipp_scores.h"
 #include "midipp_spinbox.h"
+#include "midipp_checkbox.h"
 
 static void
 MppTimerCallback(void *arg)
@@ -117,7 +118,7 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 	connect(spn_bpm_period, SIGNAL(valueChanged(int)), this, SLOT(handle_bpm_period(int)));
 
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
-		cbx_view[n] = new QCheckBox();
+		cbx_view[n] = new MppCheckBox();
 		connect(cbx_view[n], SIGNAL(stateChanged(int)), this, SLOT(handle_view_all(int)));
 	}
 

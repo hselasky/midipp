@@ -58,7 +58,7 @@ public:
 	MppSpinBox *spn_bpm_key;
 	QSpinBox *spn_bpm_ref;
 	QSpinBox *spn_bpm_period;
-	QCheckBox *cbx_view[MPP_MAX_VIEWS];
+	MppCheckBox *cbx_view[MPP_MAX_VIEWS];
 
 	QPushButton *but_bpm_enable;
 	QPushButton *but_reset_all;

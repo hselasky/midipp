@@ -44,12 +44,12 @@ public:
 	MppGroupBox *gb_mute;
 	MppGroupBox *gb_other;
 
-	QCheckBox *cbx_mute[16];
-	QCheckBox *cbx_mute_program;
-	QCheckBox *cbx_mute_pedal;
-	QCheckBox *cbx_mute_local_keys_enable;
-	QCheckBox *cbx_mute_local_keys_disable;
-	QCheckBox *cbx_mute_all_control;
+	MppCheckBox *cbx_mute[16];
+	MppCheckBox *cbx_mute_program;
+	MppCheckBox *cbx_mute_pedal;
+	MppCheckBox *cbx_mute_local_keys_enable;
+	MppCheckBox *cbx_mute_local_keys_disable;
+	MppCheckBox *cbx_mute_all_control;
 
 	QPushButton *but_set_all;
 	QPushButton *but_clear_all;

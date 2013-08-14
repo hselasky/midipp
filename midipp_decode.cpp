@@ -27,6 +27,7 @@
 #include "midipp_mainwindow.h"
 #include "midipp_scores.h"
 #include "midipp_button.h"
+#include "midipp_checkbox.h"
 
 /* The list is sorted by priority. C5 is base. */
 
@@ -521,7 +522,7 @@ MppDecode :: MppDecode(MppMainWindow *_mw, int is_edit)
 	spn_base->setMinimum(0);
 	spn_base->setValue(C5);
 
-	cbx_auto_base = new QCheckBox();
+	cbx_auto_base = new MppCheckBox();
 	cbx_auto_base->setChecked(1);
 
 	but_ok = new QPushButton(tr("Ok"));

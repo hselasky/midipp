@@ -62,7 +62,7 @@ public:
 	QLabel *lbl_base;
 	QLabel *lbl_auto_base;
 
-	QCheckBox *cbx_auto_base;
+	MppCheckBox *cbx_auto_base;
 
 	QSpinBox *spn_rol;
 	QSpinBox *spn_base;

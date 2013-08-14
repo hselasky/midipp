@@ -31,6 +31,7 @@
  */
 
 #include "midipp_gpro.h"
+#include "midipp_checkbox.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -1542,7 +1543,7 @@ MppGPro :: MppGPro(const uint8_t *ptr, uint32_t len)
 			snprintf(line_buf, sizeof(line_buf),
 			    "Track%d: %s", (int)x, gpf.track_str[x]);
 
-			cbx_import[x] = new QCheckBox();
+			cbx_import[x] = new MppCheckBox();
 
 			lbl_info[x] = new QLabel(tr(line_buf));
 
@@ -1555,7 +1556,7 @@ MppGPro :: MppGPro(const uint8_t *ptr, uint32_t len)
 
 	y += ((z + 1) / 2);
 
-	cbx_single_track = new QCheckBox();
+	cbx_single_track = new MppCheckBox();
 	lbl_single_track = new QLabel(tr("Output like a single track"));
 
 	gl->addWidget(cbx_single_track,y,3,1,1,Qt::AlignHCenter|Qt::AlignVCenter);

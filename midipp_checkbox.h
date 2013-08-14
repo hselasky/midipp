@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,78 +23,34 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _MIDIPP_SETTINGS_H_
-#define	_MIDIPP_SETTINGS_H_
+#ifndef _MIDIPP_CHECKBOX_H_
+#define	_MIDIPP_CHECKBOX_H_
 
 #include "midipp.h"
 
-class MppSettings : public QSettings 
+class MppCheckBox : public QWidget
 {
 	Q_OBJECT;
 
-public:
-	MppSettings(MppMainWindow *_parent, const QString & fname);
-	~MppSettings(void);
-
-	int save_volume;
-	int save_instruments;
-	int save_viewmode;
-	int save_devices;
-	int save_font;
-	int save_database;
-
-	QString stringDefault(const QString &, const QString &);
-
-	int valueDefault(const QString &, int);
-
-	QString concat(const char *, int = 0, int = 0);
-
-	void doSave(void);
-	void doLoad(void);
-
-	MppSettingsWhat *mpp_what;
-
-	QPushButton *but_config_save;
-	QPushButton *but_config_clean;
-	QPushButton *but_config_what;
-	QPushButton *but_config_load;
-
-	MppMainWindow *mw;
-
-public slots:
-
-	void handle_save(void);
-	void handle_clean(void);
-	void handle_what(void);
-	void handle_load(void);
-};
-
-class MppSettingsWhat : public QDialog
-{
-	Q_OBJECT;
+private:
+	Qt::CheckState state;
+	Qt::CheckState other;
 
 public:
-	MppSettingsWhat(MppSettings *_parent);
-	~MppSettingsWhat(void);
+	MppCheckBox();
+	~MppCheckBox();
 
-	void doShow(void);
+	void setCheckState(Qt::CheckState);
+	Qt::CheckState checkState(void);
 
-	MppSettings *ms;
+	void setChecked(bool);
+	bool isChecked(void);
 
-	QGridLayout *gl;
+	void paintEvent(QPaintEvent *);
+	void mousePressEvent(QMouseEvent *);
 
-	QPushButton *but_reset;
-	QPushButton *but_ok;
-
-	MppCheckBox *cbx_volume;
-	MppCheckBox *cbx_instruments;
-	MppCheckBox *cbx_viewmode;
-	MppCheckBox *cbx_deviceconfig;
-	MppCheckBox *cbx_font;
-	MppCheckBox *cbx_database;
-
-public slots:
-	void handle_reset(void);
+signals:
+	void stateChanged(int);
 };
 
-#endif			/* _MIDIPP_SETTINGS_H_ */
+#endif		/* _MIDIPP_CHECKBOX_H_ */

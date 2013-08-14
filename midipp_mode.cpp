@@ -28,6 +28,7 @@
 #include "midipp_spinbox.h"
 #include "midipp_scores.h"
 #include "midipp_mainwindow.h"
+#include "midipp_checkbox.h"
 
 MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 {
@@ -57,14 +58,14 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	lbl_cmd = new QLabel(tr("Base command key"));
 	lbl_chan = new QLabel(tr("Synth channel"));
 
-	cbx_norm = new QCheckBox();
+	cbx_norm = new MppCheckBox();
 	cbx_norm->setChecked(1);
 
 	for (x = 0; x != MPP_MAX_DEVS; x++) {
 
 		snprintf(buf, sizeof(buf), "Dev%d", x);
 
-		cbx_dev[x] = new QCheckBox();
+		cbx_dev[x] = new MppCheckBox();
 		cbx_dev[x]->setChecked(view_index == 0);
 
 		lbl_dev[x] = new QLabel(tr(buf));

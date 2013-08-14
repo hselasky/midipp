@@ -47,7 +47,6 @@
 #include <QWheelEvent>
 #include <QFile>
 #include <QFileDialog>
-#include <QCheckBox>
 #include <QLineEdit>
 #include <QSpacerItem>
 #include <QLCDNumber>
@@ -106,6 +105,7 @@
     strncpy(a,b,c); ((char *)(a))[(c)-1] = 0; \
 } while (0)
 
+class MppCheckBox;
 class MppBpm;
 class MppButton;
 class MppButtonMap;

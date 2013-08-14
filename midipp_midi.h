@@ -66,10 +66,10 @@ private:
 	QLabel *lbl_have_duration;
 	QLabel *lbl_prefix;
 
-	QCheckBox *cbx_import[MIDI_MAX_TRACKS];
-	QCheckBox *cbx_single_track;
-	QCheckBox *cbx_have_strings;
-	QCheckBox *cbx_have_duration;
+	MppCheckBox *cbx_import[MIDI_MAX_TRACKS];
+	MppCheckBox *cbx_single_track;
+	MppCheckBox *cbx_have_strings;
+	MppCheckBox *cbx_have_duration;
 	QLineEdit *led_prefix;
 
 	QSpinBox *spn_parse_thres;

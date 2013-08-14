@@ -52,8 +52,8 @@ private:
 	QLabel *lbl_info[GPRO_MAX_TRACKS];
 	QLabel *lbl_single_track;
 
-	QCheckBox *cbx_import[GPRO_MAX_TRACKS];
-	QCheckBox *cbx_single_track;
+	MppCheckBox *cbx_import[GPRO_MAX_TRACKS];
+	MppCheckBox *cbx_single_track;
 
 	QPushButton *but_done;
 	QPushButton *but_set_all;

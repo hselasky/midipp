@@ -68,8 +68,8 @@ public:
 	QLabel *lbl_cmd;
 	QLabel *lbl_dev[MPP_MAX_DEVS];
 
-	QCheckBox *cbx_norm;
-	QCheckBox *cbx_dev[MPP_MAX_DEVS];
+	MppCheckBox *cbx_norm;
+	MppCheckBox *cbx_dev[MPP_MAX_DEVS];
 
 	MppButtonMap *but_mode;
 	QPushButton *but_done;

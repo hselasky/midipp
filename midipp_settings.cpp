@@ -30,6 +30,7 @@
 #include "midipp_mode.h"
 #include "midipp_import.h"
 #include "midipp_database.h"
+#include "midipp_checkbox.h"
 
 MppSettings :: MppSettings(MppMainWindow *_parent, const QString & fname)
   : QSettings(fname)
@@ -370,12 +371,12 @@ MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
 
 	gl = new QGridLayout(this);
 
-	cbx_volume = new QCheckBox();
-	cbx_instruments = new QCheckBox();
-	cbx_viewmode = new QCheckBox();
-	cbx_deviceconfig = new QCheckBox();
-	cbx_font = new QCheckBox();
-	cbx_database = new QCheckBox();
+	cbx_volume = new MppCheckBox();
+	cbx_instruments = new MppCheckBox();
+	cbx_viewmode = new MppCheckBox();
+	cbx_deviceconfig = new MppCheckBox();
+	cbx_font = new MppCheckBox();
+	cbx_database = new MppCheckBox();
 
 	but_ok = new QPushButton(tr("Close"));
 	but_reset = new QPushButton(tr("Reset"));
