@@ -224,7 +224,7 @@ void
 MppMode :: handle_delay_changed(int v)
 {
 	char buf[32];
-	snprintf(buf, sizeof(buf), "Random key delay (%dms)", v);
+	snprintf(buf, sizeof(buf), "Random T/F/M key delay (%dms)", v);
 	gb_delay->setTitle(tr(buf));
 }
 
