@@ -24,6 +24,7 @@
  */
 
 #include <zlib.h>
+#include <string.h>
 
 #include "midipp_tar.h"
 #include "midipp_database.h"
@@ -85,7 +86,7 @@ tar_record_size(const union record *prec, uint64_t align)
 
 	size += (-size & (align - 1ULL));
 
-	/* truncate big files */
+	/* safety limit record size to 16MBytes */
 	if (size >= (1ULL << 24))
 		size = (1ULL << 24) - 1ULL;
 
@@ -215,8 +216,16 @@ MppDataBase :: tar_record_foreach(union record **pp)
 		    tar_record_size(curr, RECORDSIZE) + RECORDSIZE);
 	}
 
+	/* check that there is space for record header */
 	if (((uint8_t *)curr) + (RECORDSIZE - 1) >=
 	    (((uint8_t *)input_ptr) + input_len)) {
+		*pp = NULL;
+		return (0);
+	}
+
+	/* check that there is space for record data */
+	if ((((uint8_t *)curr) + tar_record_size(curr, RECORDSIZE) +
+	     (RECORDSIZE - 1)) >= (((uint8_t *)input_ptr) + input_len)) {
 		*pp = NULL;
 		return (0);
 	}
@@ -302,6 +311,7 @@ MppDataBase :: update_list_view()
 {
 	struct filter filter;
 	char *filter_str;
+	char titlebuf[64];
 	uint64_t x;
 	uint64_t y;
 
@@ -346,6 +356,11 @@ MppDataBase :: update_list_view()
 	result->setCurrentRow(0);
 
 	free(filter_str);
+
+	snprintf(titlebuf, sizeof(titlebuf), "Search results: %u match%s",
+	    (unsigned)x, (x == 1) ? "" : "es");
+
+	gb_result->setTitle(tr(titlebuf));
 }
 
 void
@@ -435,8 +450,35 @@ MppDataBase :: handle_download_finished_sub()
 	record_count = 0;
 
 	prec = NULL;
-	while (tar_record_foreach(&prec))
+	while (tar_record_foreach(&prec)) {
+		char name[sizeof(prec->header.name)];
+		char magic[sizeof(prec->header.magic)];
+		char size[sizeof(prec->header.size)];
+		uint32_t off_start;
+		uint32_t off_end;
+
+		/* use space as fill character to save configuration space */
+		memcpy(name, prec->header.name, sizeof(name));
+		memcpy(magic, prec->header.magic, sizeof(magic));
+		memcpy(size, prec->header.size, sizeof(size));
+		memset(prec, ' ', RECORDSIZE);
+
+		/* force terminating zero in name */
+		name[sizeof(name)-1] = 0;
+		strcpy(prec->header.name, name);
+
+		/* copy other fields */
+		memcpy(prec->header.size, size, sizeof(size));
+		memcpy(prec->header.magic, magic, sizeof(magic));
+
+		off_start = tar_record_size(prec, 1);
+		off_end = tar_record_size(prec, RECORDSIZE);
+
+		/* use space as fill character to save configuration space */
+		memset(((char *)(prec + 1)) + off_start, ' ', off_end - off_start);
+
 		record_count++;
+	}
 
 	if (record_count != 0) {
 		record_ptr = (union record **)malloc(sizeof(void *) * record_count);
