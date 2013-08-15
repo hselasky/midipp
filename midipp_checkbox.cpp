@@ -67,6 +67,10 @@ MppCheckBox :: paintEvent(QPaintEvent *event)
 void
 MppCheckBox :: mousePressEvent(QMouseEvent *event)
 {
+	if (event->button() != Qt::LeftButton) {
+		event->ignore();
+		return;
+	}
 	if (state == Qt::Unchecked)
 		state = Qt::Checked;
 	else
@@ -77,6 +81,7 @@ MppCheckBox :: mousePressEvent(QMouseEvent *event)
 		stateChanged(other);
 		repaint();
 	}
+	event->accept();
 }
 
 void

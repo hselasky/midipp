@@ -591,21 +591,21 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_compile, SIGNAL(pressed()), this, SLOT(handle_compile()));
 	connect(but_quit, SIGNAL(released()), this, SLOT(handle_quit()));
 
-	connect(but_midi_file_new, SIGNAL(pressed()), this, SLOT(handle_midi_file_new()));
-	connect(but_midi_file_open, SIGNAL(pressed()), this, SLOT(handle_midi_file_new_open()));
-	connect(but_midi_file_merge, SIGNAL(pressed()), this, SLOT(handle_midi_file_merge_open()));
-	connect(but_midi_file_save, SIGNAL(pressed()), this, SLOT(handle_midi_file_save()));
-	connect(but_midi_file_save_as, SIGNAL(pressed()), this, SLOT(handle_midi_file_save_as()));
-	connect(but_midi_file_import, SIGNAL(pressed()), this, SLOT(handle_midi_file_import()));
+	connect(but_midi_file_new, SIGNAL(released()), this, SLOT(handle_midi_file_new()));
+	connect(but_midi_file_open, SIGNAL(released()), this, SLOT(handle_midi_file_new_open()));
+	connect(but_midi_file_merge, SIGNAL(released()), this, SLOT(handle_midi_file_merge_open()));
+	connect(but_midi_file_save, SIGNAL(released()), this, SLOT(handle_midi_file_save()));
+	connect(but_midi_file_save_as, SIGNAL(released()), this, SLOT(handle_midi_file_save_as()));
+	connect(but_midi_file_import, SIGNAL(released()), this, SLOT(handle_midi_file_import()));
 
-	connect(but_gpro_file_import, SIGNAL(pressed()), this, SLOT(handle_gpro_file_import()));
+	connect(but_gpro_file_import, SIGNAL(released()), this, SLOT(handle_gpro_file_import()));
 
 	connect(but_midi_trigger, SIGNAL(pressed()), this, SLOT(handle_midi_trigger()));
 	connect(but_midi_rewind, SIGNAL(pressed()), this, SLOT(handle_rewind()));
 	connect(but_config_apply, SIGNAL(pressed()), this, SLOT(handle_config_apply()));
 	connect(but_config_revert, SIGNAL(pressed()), this, SLOT(handle_config_revert()));
-	connect(but_config_view_fontsel, SIGNAL(pressed()), this, SLOT(handle_config_view_fontsel()));
-	connect(but_config_edit_fontsel, SIGNAL(pressed()), this, SLOT(handle_config_edit_fontsel()));
+	connect(but_config_view_fontsel, SIGNAL(released()), this, SLOT(handle_config_view_fontsel()));
+	connect(but_config_edit_fontsel, SIGNAL(released()), this, SLOT(handle_config_edit_fontsel()));
 
 	connect(but_instr_rem, SIGNAL(pressed()), this, SLOT(handle_instr_rem()));
 	connect(but_instr_program, SIGNAL(pressed()), this, SLOT(handle_instr_program()));

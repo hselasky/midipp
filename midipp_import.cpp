@@ -333,9 +333,9 @@ MppImportTab :: MppImportTab(MppMainWindow *parent)
 	gbImport->addWidget(butImportFileOpen, 1, 0, 1, 1);
 	gbImport->addWidget(butImport, 2, 0, 1, 1);
 
-	connect(butImportFileNew, SIGNAL(pressed()), this, SLOT(handleImportNew()));
-	connect(butImportFileOpen, SIGNAL(pressed()), this, SLOT(handleImportOpen()));
-	connect(butImport, SIGNAL(pressed()), this, SLOT(handleImport()));
+	connect(butImportFileNew, SIGNAL(released()), this, SLOT(handleImportNew()));
+	connect(butImportFileOpen, SIGNAL(released()), this, SLOT(handleImportOpen()));
+	connect(butImport, SIGNAL(released()), this, SLOT(handleImport()));
 }
 
 MppImportTab :: ~MppImportTab()

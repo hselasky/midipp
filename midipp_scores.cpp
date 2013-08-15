@@ -139,17 +139,17 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int unit)
 	gbScoreFile->addWidget(butScoreFileSetFlat, 8, 1, 1, 1);
 	gbScoreFile->addWidget(butScoreFileExport, 9, 0, 1, 2);
 
-	connect(butScoreFileNew, SIGNAL(pressed()), this, SLOT(handleScoreFileNew()));
-	connect(butScoreFileOpen, SIGNAL(pressed()), this, SLOT(handleScoreFileOpen()));
-	connect(butScoreFileSave, SIGNAL(pressed()), this, SLOT(handleScoreFileSave()));
-	connect(butScoreFileSaveAs, SIGNAL(pressed()), this, SLOT(handleScoreFileSaveAs()));
-	connect(butScoreFilePrint, SIGNAL(pressed()), this, SLOT(handleScorePrint()));
-	connect(butScoreFileAlign, SIGNAL(pressed()), this, SLOT(handleScoreFileAlign()));
-	connect(butScoreFileStepUp, SIGNAL(pressed()), this, SLOT(handleScoreFileStepUp()));
-	connect(butScoreFileStepDown, SIGNAL(pressed()), this, SLOT(handleScoreFileStepDown()));
-	connect(butScoreFileSetSharp, SIGNAL(pressed()), this, SLOT(handleScoreFileSetSharp()));
-	connect(butScoreFileSetFlat, SIGNAL(pressed()), this, SLOT(handleScoreFileSetFlat()));
-	connect(butScoreFileExport, SIGNAL(pressed()), this, SLOT(handleScoreFileExport()));
+	connect(butScoreFileNew, SIGNAL(released()), this, SLOT(handleScoreFileNew()));
+	connect(butScoreFileOpen, SIGNAL(released()), this, SLOT(handleScoreFileOpen()));
+	connect(butScoreFileSave, SIGNAL(released()), this, SLOT(handleScoreFileSave()));
+	connect(butScoreFileSaveAs, SIGNAL(released()), this, SLOT(handleScoreFileSaveAs()));
+	connect(butScoreFilePrint, SIGNAL(released()), this, SLOT(handleScorePrint()));
+	connect(butScoreFileAlign, SIGNAL(released()), this, SLOT(handleScoreFileAlign()));
+	connect(butScoreFileStepUp, SIGNAL(released()), this, SLOT(handleScoreFileStepUp()));
+	connect(butScoreFileStepDown, SIGNAL(released()), this, SLOT(handleScoreFileStepDown()));
+	connect(butScoreFileSetSharp, SIGNAL(released()), this, SLOT(handleScoreFileSetSharp()));
+	connect(butScoreFileSetFlat, SIGNAL(released()), this, SLOT(handleScoreFileSetFlat()));
+	connect(butScoreFileExport, SIGNAL(released()), this, SLOT(handleScoreFileExport()));
 
 	/* Widget */
 
