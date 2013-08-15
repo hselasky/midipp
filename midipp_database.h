@@ -41,6 +41,7 @@ public:
 	uint8_t tar_record_foreach(union record **);
 
 	void handle_open(union record *, MppScoreMain *);
+	void handle_download_finished_sub();
 
 	void update_list_view();
 
@@ -50,8 +51,6 @@ public:
 
 	union record **record_ptr;
 	uint64_t record_count;
-
-	int filter_value;
 
 	MppMainWindow *parent;
 
@@ -63,12 +62,11 @@ public:
 	MppGroupBox *gb_result;
 
 	QPushButton *download;
-	MppButtonMap *filter;
-
 	QPushButton *open_a;
 	QPushButton *open_b;
 	QPushButton *reset;
-	QPushButton *clear;
+	QPushButton *clear_url;
+	QPushButton *clear_search;
 
 	QNetworkAccessManager net;
 
@@ -76,8 +74,8 @@ public slots:
 	void handle_open_a();
 	void handle_open_b();
 	void handle_reset();
-	void handle_filter(int);
-	void handle_clear();
+	void handle_clear_url();
+	void handle_clear_search();
 
 	void handle_search_changed(const QString &);
 	void handle_download();

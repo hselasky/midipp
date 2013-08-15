@@ -41,9 +41,11 @@ public:
 	int save_viewmode;
 	int save_devices;
 	int save_font;
-	int save_database;
+	int save_database_url;
+	int save_database_data;
 
 	QString stringDefault(const QString &, const QString &);
+	QByteArray byteArrayDefault(const QString &, const QByteArray &);
 
 	int valueDefault(const QString &, int);
 
@@ -91,7 +93,8 @@ public:
 	MppCheckBox *cbx_viewmode;
 	MppCheckBox *cbx_deviceconfig;
 	MppCheckBox *cbx_font;
-	MppCheckBox *cbx_database;
+	MppCheckBox *cbx_database_url;
+	MppCheckBox *cbx_database_data;
 
 public slots:
 	void handle_reset(void);

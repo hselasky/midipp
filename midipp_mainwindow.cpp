@@ -2912,9 +2912,10 @@ MppMainWindow :: handle_config_dev(int n)
 
 	retval = diag.exec();
 
-	if (retval == QDialog::Accepted)
+	if (retval == QDialog::Accepted) {
 		led_config_dev[n]->setText(diag.result_dev);
-
+		handle_config_apply_sub(n);
+	}
 	return (retval);
 }
 

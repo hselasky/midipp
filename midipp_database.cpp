@@ -28,7 +28,6 @@
 #include "midipp_tar.h"
 #include "midipp_database.h"
 #include "midipp_groupbox.h"
-#include "midipp_buttonmap.h"
 #include "midipp_mainwindow.h"
 #include "midipp_scores.h"
 
@@ -36,7 +35,6 @@
 
 struct filter {
 	const char *match_word[MIDIPP_FILTER_MAX];
-	uint8_t match_what;
 	uint8_t match_count;
 };
 
@@ -125,19 +123,6 @@ tar_match(void *arg, const char *str)
 {
 	struct filter *filter = (struct filter *)arg;
 	uint8_t x;
-
-	switch (filter->match_what) {
-	case 1:	/* chord */
-		if (strstr(str, " chords txt") == NULL)
-			return (0);
-		break;
-	case 2: /* transp */
-		if (strstr(str, " chords txt") != NULL)
-			return (0);
-		break;
-	default:
-		break;
-	}
 
 	for (x = 0; x != filter->match_count; x++) {
 		if (strstr(str, filter->match_word[x]) == NULL)
@@ -267,10 +252,8 @@ MppDataBase :: MppDataBase(MppMainWindow *mw)
 	gb_result->addWidget(result, 0,0,1,1);
 
 	download = new QPushButton(tr("Download"));
-	filter = new MppButtonMap("Filter\0" "ALL\0" "CHORD\0" "TRANSP\0", 3, 3);
 
 	connect(download, SIGNAL(released()), this, SLOT(handle_download()));
-	connect(filter, SIGNAL(selectionChanged(int)), this, SLOT(handle_filter(int)));
 	connect(search, SIGNAL(textChanged(const QString &)), this, SLOT(handle_search_changed(const QString &)));
 
 	open_a = new QPushButton(tr("Open In A-Scores"));
@@ -279,9 +262,11 @@ MppDataBase :: MppDataBase(MppMainWindow *mw)
 	connect(open_a, SIGNAL(released()), this, SLOT(handle_open_a()));
 	connect(open_b, SIGNAL(released()), this, SLOT(handle_open_b()));
 
-	clear = new QPushButton(tr("Clear"));
+	clear_url = new QPushButton(tr("Clear"));
+	clear_search = new QPushButton(tr("Clear"));
 
-	connect(clear, SIGNAL(released()), this, SLOT(handle_clear()));
+	connect(clear_url, SIGNAL(released()), this, SLOT(handle_clear_url()));
+	connect(clear_search, SIGNAL(released()), this, SLOT(handle_clear_search()));
 
 	reset = new QPushButton(tr("Reset"));
 
@@ -289,12 +274,12 @@ MppDataBase :: MppDataBase(MppMainWindow *mw)
 
 	gl->addWidget(new QLabel(tr("Location:")), 0, 0, 1, 1);
 	gl->addWidget(location, 0, 1, 1, 3);
-	gl->addWidget(clear, 0, 4, 1, 1);
+	gl->addWidget(clear_url, 0, 4, 1, 1);
 	gl->addWidget(download, 0, 5, 1, 1);
 
 	gl->addWidget(new QLabel(tr("Search:")), 1, 0, 1, 1);
-	gl->addWidget(search, 1, 1, 1, 3);
-	gl->addWidget(filter, 1, 4, 1, 2);
+	gl->addWidget(search, 1, 1, 1, 4);
+	gl->addWidget(clear_search, 1, 5, 1, 1);
 
 	gl->addWidget(gb_result, 2, 0, 1, 6);
 
@@ -321,8 +306,6 @@ MppDataBase :: update_list_view()
 	uint64_t y;
 
 	memset(&filter, 0, sizeof(filter));
-
-	filter.match_what = filter_value;
 
 	filter_str = MppQStringToAscii(search->text());
 
@@ -396,8 +379,8 @@ MppDataBase :: handle_reset()
 {
 	location->setText(QString(MPP_DEFAULT_URL));
 	search->setText(QString());
-	filter->setSelection(0);
-	update_list_view();
+	input_data = QByteArray();
+	handle_download_finished_sub();
 }
 
 void
@@ -407,17 +390,15 @@ MppDataBase :: handle_search_changed(const QString &str)
 }
 
 void
-MppDataBase :: handle_filter(int val)
+MppDataBase :: handle_clear_url()
 {
-	filter_value = val;
-
-	update_list_view();
+	location->setText(QString());
 }
 
 void
-MppDataBase :: handle_clear()
+MppDataBase :: handle_clear_search()
 {
-	location->setText(QString());
+	search->setText(QString());
 }
 
 void
@@ -442,10 +423,38 @@ MppDataBase :: handle_download_progress(qint64 curr, qint64 total)
 }
 
 void
-MppDataBase :: handle_download_finished(QNetworkReply *reply)
+MppDataBase :: handle_download_finished_sub()
 {
 	union record *prec;
 
+	input_len = input_data.size();
+	input_ptr = input_data.data();
+
+	free(record_ptr);
+	record_ptr = 0;
+	record_count = 0;
+
+	prec = NULL;
+	while (tar_record_foreach(&prec))
+		record_count++;
+
+	if (record_count != 0) {
+		record_ptr = (union record **)malloc(sizeof(void *) * record_count);
+		if (record_ptr != NULL) {
+			prec = NULL;
+			record_count = 0;
+			while (tar_record_foreach(&prec)) {
+				tar_filter_name(prec->header.name, sizeof(prec->header.name));
+				record_ptr[record_count++] = prec;
+			}
+		}
+	}
+	update_list_view();
+}
+
+void
+MppDataBase :: handle_download_finished(QNetworkReply *reply)
+{
 	download->setEnabled(1);
 
 	if (reply->error()) {
@@ -454,33 +463,13 @@ MppDataBase :: handle_download_finished(QNetworkReply *reply)
 			.arg(reply->errorString()));
 	} else {
 		input_data = do_gunzip(reply->readAll());
-		input_len = input_data.size();
-		input_ptr = input_data.data();
 
-		free(record_ptr);
-		record_ptr = 0;
-		record_count = 0;
-
-		prec = NULL;
-		while (tar_record_foreach(&prec)) {
-			record_count++;
-		}
+		handle_download_finished_sub();
 
 		if (record_count == 0) {
 			QMessageBox::information(this, tr("TAR"),
 			    tr("Database is empty."));
-		} else {
-			record_ptr = (union record **)malloc(sizeof(void *) * record_count);
-			if (record_ptr != NULL) {
-				prec = NULL;
-				record_count = 0;
-				while (tar_record_foreach(&prec)) {
-					tar_filter_name(prec->header.name, sizeof(prec->header.name));
-					record_ptr[record_count++] = prec;
-				}
-			}
 		}
-		update_list_view();
 	}
 
 	reply->deleteLater();
