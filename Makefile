@@ -26,7 +26,7 @@
 # Makefile for MIDI Player Pro
 #
 
-VERSION=1.1.2
+VERSION=1.1.3
 
 PREFIX?=/usr/local
 
@@ -44,6 +44,7 @@ install: Makefile.unix
 
 clean: Makefile.unix
 	make -f Makefile.unix clean
+	rm -f Makefile.unix
 
 package: clean
 
