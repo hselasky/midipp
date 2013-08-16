@@ -124,6 +124,8 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 	gl->addWidget(but_clear_all,6,1,1,1);
 	gl->addWidget(but_done,6,3,1,1);
 
+	gl->setColumnStretch(2, 1);
+
 	exec();
 
 	for (x = 0; x != MIDI_MAX_TRACKS; x++) {
