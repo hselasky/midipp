@@ -58,18 +58,13 @@ public:
 private:
 	QGridLayout *gl;
 
-	QLabel *lbl_import[2];
-	QLabel *lbl_info[MIDI_MAX_TRACKS];
-	QLabel *lbl_single_track;
-	QLabel *lbl_have_strings;
-	QLabel *lbl_parse_thres;
-	QLabel *lbl_have_duration;
-	QLabel *lbl_prefix;
+	MppGroupBox *gb_import;
 
 	MppCheckBox *cbx_import[MIDI_MAX_TRACKS];
 	MppCheckBox *cbx_single_track;
 	MppCheckBox *cbx_have_strings;
 	MppCheckBox *cbx_have_duration;
+
 	QLineEdit *led_prefix;
 
 	QSpinBox *spn_parse_thres;

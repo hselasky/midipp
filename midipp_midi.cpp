@@ -25,14 +25,13 @@
 
 #include "midipp_midi.h"
 #include "midipp_checkbox.h"
+#include "midipp_groupbox.h"
 
 MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
     : QDialog()
 {
 	char line_buf[64];
 	uint32_t x;
-	uint32_t y;
-	uint32_t z;
 	uint32_t t;
 	uint32_t u;
 
@@ -45,11 +44,7 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 	setWindowTitle(tr("MIDI import"));
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
-	lbl_import[0] = new QLabel(tr("Select tracks\nto import"));
-	lbl_import[0]->setAlignment(Qt::AlignCenter);
-
-	lbl_import[1] = new QLabel(tr("Select tracks\nto import"));
-	lbl_import[1]->setAlignment(Qt::AlignCenter);
+	gb_import = new MppGroupBox(tr("Select tracks to import"));
 
 	but_done = new QPushButton(tr("Done"));
 	connect(but_done, SIGNAL(released()), this, SLOT(handle_done()));
@@ -60,101 +55,78 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 	but_clear_all = new QPushButton(tr("No tracks"));
 	connect(but_clear_all, SIGNAL(released()), this, SLOT(handle_clear_all_track()));
 
-	y = 0;
+	gl->addWidget(gb_import, 0, 0, 1, 4);
 
-	gl->addWidget(lbl_import[0],y,1,1,1);
-	gl->addWidget(lbl_import[1],y,3,1,1);
+	for (x = 0; x != MIDI_MAX_TRACKS; x++) {
+		const char *str;
 
-	y++;
+		u = (x >= (MIDI_MAX_TRACKS / 2)) ? 2 : 0;
+		t = x % (MIDI_MAX_TRACKS / 2);
 
-	for (z = x = 0; x != MIDI_MAX_TRACKS; x++) {
-		if (_mask & (1 << x))
-			z++;
-	}
-
-	for (t = u = x = 0; x != MIDI_MAX_TRACKS; x++) {
 		if (_mask & (1 << x)) {
-
-			if (t >= ((z + 1) / 2)) {
-				t = 0;
-				u = 2;
-			}
-
-			snprintf(line_buf, sizeof(line_buf),
-			    "Track%d: <%s>", (int)x, (x == 9) ? "Drums" : "");
-
-			cbx_import[x] = new MppCheckBox();
-
-			lbl_info[x] = new QLabel(tr(line_buf));
-
-			gl->addWidget(cbx_import[x],t+y,1+u,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
-			gl->addWidget(lbl_info[x],t+y,0+u,1,1,Qt::AlignLeft|Qt::AlignVCenter);
-
-			t++;
+			if (x == 9)
+				str = "drums";
+			else
+				str = "valid";
+		} else {
+			str = "empty";
 		}
+		snprintf(line_buf, sizeof(line_buf),
+		    "Track %d is %s", (int)x, str);
+
+		gb_import->addWidget(new QLabel(tr(line_buf)),t,0+u,1,1,Qt::AlignLeft|Qt::AlignVCenter);
+
+		cbx_import[x] = new MppCheckBox();
+		gb_import->addWidget(cbx_import[x],t,1+u,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
 	}
 
-	y += ((z + 1) / 2);
+	gb_import->setColumnStretch(1, 1);
+	gb_import->setColumnStretch(3, 1);
 
 	cbx_single_track = new MppCheckBox();
-	lbl_single_track = new QLabel(tr("Output like a single track"));
 
 	if (!(flags & MIDI_FLAG_MULTI_CHAN))
 		cbx_single_track->setChecked(1);
 
-	gl->addWidget(cbx_single_track,y,3,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(lbl_single_track,y,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
-
-	y++;
+	gl->addWidget(cbx_single_track,1,3,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(new QLabel(tr("Output like a single track")),1,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
 
 	cbx_have_strings = new MppCheckBox();
-	lbl_have_strings = new QLabel(tr("Add tempo strings"));
 
 	if (flags & MIDI_FLAG_STRING)
 		cbx_have_strings->setChecked(1);
 
-	gl->addWidget(cbx_have_strings,y,3,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(lbl_have_strings,y,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
-
-	y++;
+	gl->addWidget(cbx_have_strings,2,3,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(new QLabel(tr("Add tempo strings")),2,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
 
 	cbx_have_duration = new MppCheckBox();
-	lbl_have_duration = new QLabel(tr("Add duration to score lines"));
 
 	if (flags & MIDI_FLAG_DURATION)
 		cbx_have_duration->setChecked(1);
 
-	gl->addWidget(cbx_have_duration,y,3,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(lbl_have_duration,y,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
+	gl->addWidget(cbx_have_duration,3,3,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(new QLabel(tr("Add duration to score lines")),3,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
 
-	y++;
-
-	lbl_parse_thres = new QLabel(tr("New scores line threshold"));
 	spn_parse_thres = new QSpinBox();
 	spn_parse_thres->setRange(0, 10000);
 	spn_parse_thres->setValue(thres);
 	spn_parse_thres->setSuffix(tr(" ms"));
 
-	gl->addWidget(spn_parse_thres,y,3,1,1,Qt::AlignLeft|Qt::AlignVCenter);
-	gl->addWidget(lbl_parse_thres,y,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
+	gl->addWidget(new QLabel(tr("New scores line threshold")),4,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
+	gl->addWidget(spn_parse_thres,4,3,1,1);
 
-	y++;
-
-	lbl_prefix = new QLabel(tr("Line prefix"));
 	led_prefix = new QLineEdit();
 
-	gl->addWidget(led_prefix,y,3,1,1,Qt::AlignLeft|Qt::AlignVCenter);
-	gl->addWidget(lbl_prefix,y,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
+	gl->addWidget(new QLabel(tr("Line prefix")),5,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
+	gl->addWidget(led_prefix,5,3,1,1);
 
-	y++;
-
-	gl->addWidget(but_set_all,y,0,1,1);
-	gl->addWidget(but_clear_all,y,1,1,1);
-	gl->addWidget(but_done,y,3,1,1);
+	gl->addWidget(but_set_all,6,0,1,1);
+	gl->addWidget(but_clear_all,6,1,1,1);
+	gl->addWidget(but_done,6,3,1,1);
 
 	exec();
 
-	for (x = y = 0; x != MIDI_MAX_TRACKS; x++) {
+	for (x = 0; x != MIDI_MAX_TRACKS; x++) {
 		if (_mask & (1 << x)) {
 			if (cbx_import[x]->isChecked()) {
 				chan_mask |= (1 << x);
@@ -214,8 +186,6 @@ MppMidi :: handle_clear_all_track()
 	uint32_t x;
 
 	for (x = 0; x != MIDI_MAX_TRACKS; x++) {
-		if (chan_mask & (1 << x)) {
-			cbx_import[x]->setChecked(0);
-		}
+		cbx_import[x]->setChecked(0);
 	}
 }
