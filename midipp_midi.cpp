@@ -72,7 +72,7 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 			str = "empty";
 		}
 		snprintf(line_buf, sizeof(line_buf),
-		    "Track %d is %s", (int)x, str);
+		    "Channel %d is %s", (int)x, str);
 
 		gb_import->addWidget(new QLabel(tr(line_buf)),t,0+u,1,1,Qt::AlignLeft|Qt::AlignVCenter);
 
