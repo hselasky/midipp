@@ -25,6 +25,7 @@
 
 #include "midipp_mainwindow.h"
 #include "midipp_devices.h"
+#include "midipp_groupbox.h"
 
 MppDevices :: MppDevices(QWidget *parent)
   : QDialog(parent)
@@ -39,23 +40,23 @@ MppDevices :: MppDevices(QWidget *parent)
 	lw_rec = new QListWidget();
 	lw_play = new QListWidget();
 
+	gb_rec = new MppGroupBox(tr("Recording devices"));
+	gb_play = new MppGroupBox(tr("Playback devices"));
+
+	gb_rec->addWidget(lw_rec, 0, 0, 1, 1);
+	gb_play->addWidget(lw_play, 0, 0, 1, 1);
+
 	but_ok = new QPushButton(tr("Ok"));
 	but_cancel = new QPushButton(tr("Cancel"));
-
-	lbl_rec = new QLabel(tr("- Recording devices -"));
-	lbl_play = new QLabel(tr("- Playback devices -"));
 
 	connect(but_ok, SIGNAL(released()), this, SLOT(accept()));
 	connect(but_cancel, SIGNAL(released()), this, SLOT(reject()));
 
-	gl->addWidget(lbl_play, 0,0,1,2, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(lbl_rec, 0,2,1,2, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(gb_play, 0,0,1,2);
+	gl->addWidget(gb_rec, 0,2,1,2);
 
-	gl->addWidget(lw_play, 1,0,1,2, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(lw_rec, 1,2,1,2, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	gl->addWidget(but_ok, 2,2,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(but_cancel, 2,3,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(but_ok, 1,2,1,1);
+	gl->addWidget(but_cancel, 1,3,1,1);
 
 	QDir dir("/dev");
 

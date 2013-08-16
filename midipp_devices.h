@@ -36,10 +36,13 @@ public:
 	~MppDevices();
 
 	QGridLayout *gl;
+
+	MppGroupBox *gb_rec;
+	MppGroupBox *gb_play;
+
 	QListWidget *lw_rec;
 	QListWidget *lw_play;
-	QLabel *lbl_rec;
-	QLabel *lbl_play;
+
 	QPushButton *but_ok;
 	QPushButton *but_cancel;
 

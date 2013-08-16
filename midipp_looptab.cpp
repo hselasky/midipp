@@ -79,9 +79,9 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 
 		connect(spn_chan[n], SIGNAL(valueChanged(int)), this, SLOT(handle_value_changed(int)));
 		connect(spn_key[n], SIGNAL(valueChanged(int)), this, SLOT(handle_value_changed(int)));
-		connect(but_clear[n], SIGNAL(pressed(int)), this, SLOT(handle_clear(int)));
+		connect(but_clear[n], SIGNAL(released(int)), this, SLOT(handle_clear(int)));
 		connect(but_trig[n], SIGNAL(pressed(int)), this, SLOT(handle_trig(int)));
-		connect(but_import[n], SIGNAL(pressed(int)), this, SLOT(handle_import(int)));
+		connect(but_import[n], SIGNAL(released(int)), this, SLOT(handle_import(int)));
 	}
 
 	gl->setRowStretch(2 + MIDIPP_LOOP_MAX, 3);
@@ -98,7 +98,7 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 
 	but_reset = new QPushButton(tr("Reset"));
 
-	connect(but_reset, SIGNAL(pressed()), this, SLOT(handle_reset()));
+	connect(but_reset, SIGNAL(released()), this, SLOT(handle_reset()));
 
 	gl->addWidget(but_reset, 0, 6, 1, 2);
 
@@ -108,12 +108,12 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 	gl->addWidget(but_loop_on, 0, 0, 1, 2);
 	gl->addWidget(lbl_loop_on, 0, 2, 1, 1);
 
-	connect(but_loop_on, SIGNAL(pressed()), this, SLOT(handle_loop()));
+	connect(but_loop_on, SIGNAL(released()), this, SLOT(handle_loop()));
 
 	but_pedal_rec = new QPushButton(tr("Record Pedal"));
 	lbl_pedal_rec = new QLabel(tr("OFF"));
 
-	connect(but_pedal_rec, SIGNAL(pressed()), this, SLOT(handle_pedal()));
+	connect(but_pedal_rec, SIGNAL(released()), this, SLOT(handle_pedal()));
 
 	gl->addWidget(but_pedal_rec, 1, 0, 1, 2);
 	gl->addWidget(lbl_pedal_rec, 1, 2, 1, 1);
@@ -124,7 +124,7 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 	gl->addWidget(but_loop_multi, 0, 3, 1, 1);
 	gl->addWidget(lbl_loop_multi, 0, 4, 1, 1);
 
-	connect(but_loop_multi, SIGNAL(pressed()), this, SLOT(handle_multi()));
+	connect(but_loop_multi, SIGNAL(released()), this, SLOT(handle_multi()));
 
 	pthread_mutex_lock(&mw->mtx);
 

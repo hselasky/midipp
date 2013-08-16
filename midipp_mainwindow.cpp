@@ -447,24 +447,24 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x++;
 
-	tab_config_gl->addWidget(mpp_settings->but_config_save, x, 0, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
-	tab_config_gl->addWidget(but_config_view_fontsel, x, 1, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
+	tab_config_gl->addWidget(mpp_settings->but_config_save, x, 0, 1, 1);
+	tab_config_gl->addWidget(but_config_view_fontsel, x, 1, 1, 1);
 
 	x++;
 
-	tab_config_gl->addWidget(mpp_settings->but_config_what, x, 0, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
-	tab_config_gl->addWidget(but_config_edit_fontsel, x, 1, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
+	tab_config_gl->addWidget(mpp_settings->but_config_what, x, 0, 1, 1);
+	tab_config_gl->addWidget(but_config_edit_fontsel, x, 1, 1, 1);
 
 	x++;
 
-	tab_config_gl->addWidget(mpp_settings->but_config_load, x, 0, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
+	tab_config_gl->addWidget(mpp_settings->but_config_load, x, 0, 1, 1);
 
 	x++;
 
 	tab_config_gl->addWidget(but_config_apply, x, 4, 1, 2);
 	tab_config_gl->addWidget(but_config_revert, x, 6, 1, 2);
 
-	tab_config_gl->addWidget(mpp_settings->but_config_clean, x, 2, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
+	tab_config_gl->addWidget(mpp_settings->but_config_clean, x, 2, 1, 1);
 
 	/* <Instrument> tab */
 
@@ -586,9 +586,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_replace, SIGNAL(released()), this, SLOT(handle_replace()));
 
 	for (n = 0; n != MPP_MAX_LBUTTON; n++)
-		connect(but_jump[n], SIGNAL(pressed(int)), this, SLOT(handle_jump(int)));
+		connect(but_jump[n], SIGNAL(released(int)), this, SLOT(handle_jump(int)));
 
-	connect(but_compile, SIGNAL(pressed()), this, SLOT(handle_compile()));
+	connect(but_compile, SIGNAL(released()), this, SLOT(handle_compile()));
 	connect(but_quit, SIGNAL(released()), this, SLOT(handle_quit()));
 
 	connect(but_midi_file_new, SIGNAL(released()), this, SLOT(handle_midi_file_new()));
@@ -602,19 +602,19 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	connect(but_midi_trigger, SIGNAL(pressed()), this, SLOT(handle_midi_trigger()));
 	connect(but_midi_rewind, SIGNAL(pressed()), this, SLOT(handle_rewind()));
-	connect(but_config_apply, SIGNAL(pressed()), this, SLOT(handle_config_apply()));
-	connect(but_config_revert, SIGNAL(pressed()), this, SLOT(handle_config_revert()));
+	connect(but_config_apply, SIGNAL(released()), this, SLOT(handle_config_apply()));
+	connect(but_config_revert, SIGNAL(released()), this, SLOT(handle_config_revert()));
 	connect(but_config_view_fontsel, SIGNAL(released()), this, SLOT(handle_config_view_fontsel()));
 	connect(but_config_edit_fontsel, SIGNAL(released()), this, SLOT(handle_config_edit_fontsel()));
 
-	connect(but_instr_rem, SIGNAL(pressed()), this, SLOT(handle_instr_rem()));
-	connect(but_instr_program, SIGNAL(pressed()), this, SLOT(handle_instr_program()));
-	connect(but_instr_program_all, SIGNAL(pressed()), this, SLOT(handle_instr_program_all()));
-	connect(but_instr_reset, SIGNAL(pressed()), this, SLOT(handle_instr_reset()));
-	connect(but_instr_mute_all, SIGNAL(pressed()), this, SLOT(handle_instr_mute_all()));
-	connect(but_instr_unmute_all, SIGNAL(pressed()), this, SLOT(handle_instr_unmute_all()));
+	connect(but_instr_rem, SIGNAL(released()), this, SLOT(handle_instr_rem()));
+	connect(but_instr_program, SIGNAL(released()), this, SLOT(handle_instr_program()));
+	connect(but_instr_program_all, SIGNAL(released()), this, SLOT(handle_instr_program_all()));
+	connect(but_instr_reset, SIGNAL(released()), this, SLOT(handle_instr_reset()));
+	connect(but_instr_mute_all, SIGNAL(released()), this, SLOT(handle_instr_mute_all()));
+	connect(but_instr_unmute_all, SIGNAL(released()), this, SLOT(handle_instr_unmute_all()));
 
-	connect(but_volume_reset, SIGNAL(pressed()), this, SLOT(handle_volume_reset()));
+	connect(but_volume_reset, SIGNAL(released()), this, SLOT(handle_volume_reset()));
 
 	connect(but_midi_pause, SIGNAL(pressed()), this, SLOT(handle_midi_pause()));
 
@@ -623,7 +623,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	MidiInit();
 
-	version = tr("MIDI Player Pro v1.1.1");
+	version = tr("MIDI Player Pro v1.1.2");
 
 	setWindowTitle(version);
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
