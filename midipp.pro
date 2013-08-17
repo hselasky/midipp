@@ -17,6 +17,7 @@ QMAKE_BUNDLE_DATA += icons
 !isEmpty(HAVE_MACOSX) {
 HAVE_STATIC=YES
 HAVE_COREMIDI=YES
+HAVE_BUNDLE_ICONS=YES
 icons.path	= $${PREFIX}
 icons.files	= midipp.icns
 QMAKE_BUNDLE_DATA += icons
