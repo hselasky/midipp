@@ -2420,7 +2420,6 @@ MppScoreMain :: handleScorePrint(void)
 	printer.setOutputFormat(QPrinter::NativeFormat);
 #else
 	printer.setOutputFormat(QPrinter::PdfFormat);
-#endif
 	printer.setFontEmbeddingEnabled(true);
 	printer.setFullPage(true);
 	printer.setResolution(600);
@@ -2436,6 +2435,7 @@ MppScoreMain :: handleScorePrint(void)
 	}
 
 	printer.setColorMode(QPrinter::Color);
+#endif
 
 	dlg = new QPrintDialog(&printer, mainWindow);
 
