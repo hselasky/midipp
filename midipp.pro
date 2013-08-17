@@ -4,11 +4,24 @@ QT		+= core gui network
 greaterThan(QT_MAJOR_VERSION, 4) {
 QT += widgets printsupport
 }
-isEmpty(HAVE_IOS) {
-} else {
-STATIC_BUILD=YES
+
+!isEmpty(HAVE_IOS) {
+HAVE_STATIC=YES
 HAVE_COREMIDI=YES
+HAVE_BUNDLE_ICONS=YES
+icons.path	= $${PREFIX}
+icons.files	= midipp_ios.png midipp_ios_retina.png
+QMAKE_BUNDLE_DATA += icons
 }
+
+!isEmpty(HAVE_MACOSX) {
+HAVE_STATIC=YES
+HAVE_COREMIDI=YES
+icons.path	= $${PREFIX}
+icons.files	= midipp.icns
+QMAKE_BUNDLE_DATA += icons
+}
+
 HEADERS		+= midipp.h
 HEADERS		+= midipp_bpm.h
 HEADERS		+= midipp_button.h
@@ -62,7 +75,7 @@ TARGET		= midipp
 
 LIBS		+= -lz
 
-isEmpty(STATIC_BUILD) {
+isEmpty(HAVE_STATIC) {
 LIBS		+= -L$${PREFIX}/lib -lumidi20
 INCLUDEPATH	+= $${PREFIX}/include
 } else {
@@ -88,13 +101,9 @@ INCLUDEPATH	+= ../libumidi20
 target.path	= $${PREFIX}/bin
 INSTALLS	+= target
 
-isEmpty(HAVE_IOS) {
+isEmpty(HAVE_BUNDLE_ICONS) {
   icons.path	= $${PREFIX}/share/pixmaps
   icons.files	= midipp.png
-} else {
-  icons.path	= $${PREFIX}
-  icons.files	= midipp_ios.png midipp_ios_retina.png
-  QMAKE_BUNDLE_DATA += icons
 }
 INSTALLS	+= icons
 
