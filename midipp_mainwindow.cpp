@@ -23,6 +23,8 @@
  * SUCH DAMAGE.
  */
 
+#include <unistd.h>
+
 #include "midipp_mainwindow.h"
 #include "midipp_scores.h"
 #include "midipp_mutemap.h"
