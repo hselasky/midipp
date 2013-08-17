@@ -2416,7 +2416,11 @@ MppScoreMain :: handleScorePrint(void)
 
 	handleCompile();
 
+#ifdef __APPLE__
+	printer.setOutputFormat(QPrinter::NativeFormat);
+#else
 	printer.setOutputFormat(QPrinter::PdfFormat);
+#endif
 	printer.setFontEmbeddingEnabled(true);
 	printer.setFullPage(true);
 	printer.setResolution(600);
