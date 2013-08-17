@@ -31,6 +31,7 @@
 #include <signal.h>
 #include <string.h>
 #include <err.h>
+#include <getopt.h>
 
 #include "midipp_mainwindow.h"
 #include "midipp_scores.h"
@@ -236,6 +237,11 @@ usage(void)
 	exit(1);
 }
 
+static const struct option midipp_opts[] = {
+	{ "NSDocumentRevisionsDebugMode", required_argument, NULL, ' ' },
+	{ NULL, 0, NULL, 0 }
+};
+
 int
 main(int argc, char **argv)
 {
@@ -249,13 +255,16 @@ main(int argc, char **argv)
 
 	signal(SIGPIPE, mask_signal);
 
-	while ((c = getopt(argc, argv, "f:ph")) != -1) {
+	while ((c = getopt_long_only(argc, argv, "f:ph", midipp_opts, NULL)) != -1) {
 		switch (c) {
 		case 'f':
 			mpp_input_file = optarg;
 			break;
 		case 'p':
 			mpp_pdf_print = 1;
+			break;
+		case ' ':
+			/* ignore */
 			break;
 		default:
 			usage();
