@@ -212,7 +212,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " */\n") + MppVariantList + tr("\n"));
 
 	tab_file_gl = new MppGridLayout();
-	tab_play_gl = new MppPlayGridLayout();
+	tab_play_gl = new MppPlayGridLayout(this);
 	tab_config_gl = new MppGridLayout();
 	tab_instr_gl = new MppGridLayout();
 	tab_volume_gl = new MppGridLayout();
