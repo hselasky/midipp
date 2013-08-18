@@ -125,6 +125,9 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int unit)
 	butScoreFileSetFlat = new QPushButton(tr("Set b"));
 	butScoreFileExport = new QPushButton(tr("To Lyrics"));
 
+#ifdef QT_NO_PRINTER
+	butScoreFilePrint->hide();
+#endif
 	gbScoreFile = new MppGroupBox(tr(buf));
 	gbScoreFile->addWidget(butScoreFileNew, 0, 0, 1, 2);
 	gbScoreFile->addWidget(butScoreFileOpen, 1, 0, 1, 2);
