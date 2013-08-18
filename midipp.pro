@@ -105,8 +105,8 @@ INSTALLS	+= target
 isEmpty(HAVE_BUNDLE_ICONS) {
   icons.path	= $${PREFIX}/share/pixmaps
   icons.files	= midipp.png
+  INSTALLS	+= icons
 }
-INSTALLS	+= icons
 
 desktop.path	= $${PREFIX}/share/applications
 desktop.files	= midipp.desktop
