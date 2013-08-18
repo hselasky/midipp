@@ -62,11 +62,11 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 	but_apply_all = new QPushButton(tr("Apply"));
 	but_cancel_all = new QPushButton(tr("Cancel"));
 
+	gl->addWidget(but_apply_all, 2, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(but_cancel_all, 2, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	gl->addWidget(but_set_all, 2, 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	gl->addWidget(but_clear_all, 2, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	gl->addWidget(but_revert_all, 2, 2, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(but_apply_all, 2, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(but_cancel_all, 2, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	connect(but_set_all, SIGNAL(released()), this, SLOT(handle_set_all()));
 	connect(but_clear_all, SIGNAL(released()), this, SLOT(handle_clear_all()));
