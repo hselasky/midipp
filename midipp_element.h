@@ -30,7 +30,7 @@
 
 class MppElement;
 typedef TAILQ_ENTRY(MppElement) MppElementEntryT;
-typedef TAILQ_HEAD(,MppElement) MppElementHeadT;
+typedef TAILQ_HEAD(MppElementHead, MppElement) MppElementHeadT;
 
 enum MppElementType {
 	MPP_T_CHANNEL,
@@ -42,7 +42,8 @@ enum MppElementType {
 	MPP_T_NEWLINE,
 	MPP_T_SCORE,
 	MPP_T_SPACE,
-	MPP_T_STRING,
+	MPP_T_STRING_DESC,
+	MPP_T_STRING_CHORD,
 	MPP_T_TRANSPOSE,
 	MPP_T_TIMER,
 	MPP_T_UNKNOWN,
@@ -80,6 +81,7 @@ public:
 		int comment;
 		int line;
 		int string;
+		int level;
 		MppElement *elem;
 		MppElement *labels[MPP_MAX_LABELS];
 	} state;
@@ -87,13 +89,16 @@ public:
 	MppHead();
 	~MppHead();
 
+	int getChord(int, MppElement **, int *, int *);
+	void optimise(void);
+	void autoMelody(int);
 	void transposeScore(int, int = 0);
 	void limitScore(int);
 	void scaleTime(int);
 	void alignTime(int);
 	int getPlaytime();
 	void flush();
-	QString toPlain();
+	QString toPlain(int = -1);
 	int foreachLine(MppElement **, MppElement **);
 
 	void operator += (QChar);

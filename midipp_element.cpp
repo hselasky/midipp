@@ -39,6 +39,30 @@ MppCompareValue(const void *pa, const void *pb)
 	return (0);
 }
 
+static int
+MppSpaceOnly(QString &str)
+{
+	int x;
+
+	for (x = 0; x != str.size(); x++) {
+		if (str[x] != ' ' && str[x] != '\t')
+			return (0);
+	}
+	return (1);
+}
+
+static int
+MppHasSpace(QString &str)
+{
+	int x;
+
+	for (x = 0; x != str.size(); x++) {
+		if (str[x] == ' ' || str[x] == '\t')
+			return (1);
+	}
+	return (0);
+}
+
 MppElement :: MppElement(MppElementType type, int line, int v0, int v1, int v2)
 {
 	memset(&entry, 0, sizeof(entry));
@@ -276,6 +300,7 @@ MppHead :: operator += (MppElement *elem)
 				elem->value[1] = 0xffffff;
 		}
 		break;
+
 	default:
 		break;
 	}
@@ -339,7 +364,7 @@ MppHead :: operator += (QChar ch)
 				state.elem = new MppElement(MPP_T_DURATION, state.line);
 			} else if (ch == 'S') {
 				*this += state.elem;
-				state.elem = new MppElement(MPP_T_STRING, state.line);
+				state.elem = new MppElement(MPP_T_STRING_DESC, state.line);
 			} else if (ch == 'W') {
 				*this += state.elem;
 				state.elem = new MppElement(MPP_T_TIMER, state.line);
@@ -372,8 +397,11 @@ MppHead :: operator += (QChar ch)
 	}
 	if (state.elem == 0)
 		state.elem = new MppElement(MPP_T_SPACE, state.line);
-	if (state.comment == 0 && ch == '"')
+	if (state.comment == 0 && ch == '"') {
 		state.string ^= 1;
+		if (state.string != 0)
+			state.level = 0;
+	}
 	if (state.string == 0) {
 		if (ch == '/' && last == '*') {
 			state.comment--;
@@ -382,6 +410,26 @@ MppHead :: operator += (QChar ch)
 			state.comment++;
 			state.command = 0;
 		}
+	} else {
+		if (state.level == 0) {
+			/* flush previous chord */
+			if (state.elem->type == MPP_T_STRING_CHORD) {
+				*this += state.elem;
+				state.elem = new MppElement(MPP_T_STRING_DESC, state.line);
+			}
+		}
+		if (ch == '(')
+			state.level ++;
+
+		if (state.level != 0) {
+			/* start new chord */
+			if (state.elem->type == MPP_T_STRING_DESC) {
+				*this += state.elem;
+				state.elem = new MppElement(MPP_T_STRING_CHORD, state.line);
+			}
+		}
+		if (ch == ')')
+			state.level --;
 	}
 	state.elem->txt += ch;
 	last = ch;
@@ -399,14 +447,15 @@ MppHead :: flush()
 }
 
 QString
-MppHead :: toPlain()
+MppHead :: toPlain(int line)
 {
 	MppElement *elem;
 	QString retval;
 
-	TAILQ_FOREACH(elem, &head, entry)
-		retval += elem->txt;
-
+	TAILQ_FOREACH(elem, &head, entry) {
+		if (line < 0 || elem->line == line)
+			retval += elem->txt;
+	}
 	return (retval);
 }
 
@@ -428,45 +477,338 @@ MppHead :: getPlaytime()
 	return (retval);
 }
 
+int
+MppHead :: getChord(int line, MppElement **ppelm, int *pinfo, int *pmax)
+{
+	MppElement *ptr;
+	MppElement *start;
+	MppElement *stop;
+	MppElement *last = 0;
+	int counter = 0;
+
+	memset(pinfo, 0, 12 * sizeof(pinfo[0]));
+	*ppelm = 0;
+	*pmax = 0;
+
+	while (foreachLine(&start, &stop) != 0) {
+
+		for (ptr = start; ptr != stop;
+		    ptr = TAILQ_NEXT(ptr, entry)) {
+			if (ptr->type == MPP_T_STRING_CHORD &&
+			    MppHasSpace(ptr->txt) == 0) {
+				last = ptr;
+				counter = 0;
+				break;
+			}
+		}
+		for (ptr = start; ptr != stop;
+		    ptr = TAILQ_NEXT(ptr, entry)) {
+			if (ptr->type == MPP_T_SCORE)
+				break;
+		}
+
+		/* if no scores, continue */
+		if (ptr == stop)
+			continue;
+
+		if (start->line == line) {
+			/* compute pointer to chord info, if any */
+			while (counter--) {
+				while (last != 0) {
+					last = TAILQ_NEXT(last, entry);
+					if (last == 0)
+						break;
+					if (last->type == MPP_T_STRING_CHORD)
+						break;
+				}
+			}
+			*ppelm = last;
+			*pmax = 0;
+
+			/* compute chord profile */
+			for (ptr = start; ptr != stop;
+			     ptr = TAILQ_NEXT(ptr, entry)) {
+				int key;
+				if (ptr->type != MPP_T_SCORE)
+					continue;
+				key = ptr->value[0];
+				pinfo[key % 12]++;
+				if (key > *pmax)
+					*pmax = key;
+			}
+
+			/* valid chord/score found */
+			return (1);
+		}
+		counter++;
+	}
+	return (0);
+}
+
+void
+MppHead :: optimise(void)
+{
+	MppElement *ptr;
+	MppElement *next;
+	int duration = 1;
+	int channel = 0;
+	int has_score = 0;
+
+	/* accumulate same duration and channel */
+	TAILQ_FOREACH(ptr, &head, entry) {
+		if (ptr->type == MPP_T_NEWLINE) {
+			duration = 1;
+			channel = 0;
+		} else if (ptr->type == MPP_T_DURATION) {
+			if (ptr->value[0] == duration) {
+				ptr->type = MPP_T_UNKNOWN;
+				ptr->txt = QString();
+			} else {
+				duration = ptr->value[0];
+			}
+		} else if (ptr->type == MPP_T_CHANNEL) {
+			if (ptr->value[0] == channel) {
+				ptr->type = MPP_T_UNKNOWN;
+				ptr->txt = QString();
+			} else {
+				channel = ptr->value[0];
+			}
+		}
+	}
+
+	/* remove unused channel and duration */
+	TAILQ_FOREACH_REVERSE(ptr, &head, MppElementHead, entry) {
+		if (ptr->type == MPP_T_NEWLINE) {
+			has_score = 0;
+		} else if (ptr->type == MPP_T_DURATION) {
+			if (has_score == 0) {
+				ptr->type = MPP_T_UNKNOWN;
+				ptr->txt = QString();
+			}
+		} else if (ptr->type == MPP_T_CHANNEL) {
+			if (has_score == 0) {
+				ptr->type = MPP_T_UNKNOWN;
+				ptr->txt = QString();
+			}
+		} else if (ptr->type == MPP_T_SCORE) {
+			has_score = 1;
+		}
+	}
+
+	/* accumulate spaces */
+	TAILQ_FOREACH(ptr, &head, entry) {
+		next = TAILQ_NEXT(ptr, entry);
+		if (next != 0 && MppSpaceOnly(ptr->txt) != 0 &&
+		    MppSpaceOnly(next->txt) != 0) {
+			ptr->txt = QString();
+			next->txt = QString(" ");
+		}
+	}
+
+	/* remove unused entries, except labels */
+	TAILQ_FOREACH_SAFE(ptr, &head, entry, next) {
+		if (ptr->type == MPP_T_LABEL)
+			continue;
+		if (ptr->txt.size() == 0) {
+			TAILQ_REMOVE(&head, ptr, entry);
+			delete ptr;
+		}
+	}
+}
+
+void
+MppHead :: autoMelody(int which)
+{
+	MppElement *ptr;
+	MppElement *psc;
+	MppElement *pdr;
+	MppElement *start;
+	MppElement *stop;
+	MppElement *am_start;
+	MppElement *am_stop;
+	int duration;
+	int steps;
+	int num;
+	int dup;
+	int am_keys[12];
+	int cur_keys[12];
+	int sort_keys[12];
+	int last = 0;
+	int am_step;
+	int x;
+	int y;
+	int key;
+
+	memset(am_keys, 0, sizeof(am_keys));
+
+	am_start = am_stop = 0;
+	am_step = steps = 0;
+
+	while (foreachLine(&start, &stop) != 0) {
+
+		memset(cur_keys, 0, sizeof(cur_keys));
+
+		duration = 1;
+
+		for (dup = num = 0, ptr = start; ptr != stop;
+		    ptr = TAILQ_NEXT(ptr, entry)) {
+			if (ptr->type == MPP_T_SCORE) {
+				int rem;
+
+				last = ptr->value[0];
+				rem = last % 12;
+				if (cur_keys[rem] == 0)
+					num++;
+				else
+					dup++;
+				cur_keys[rem]++;
+			}
+		}
+		if (num != 0)
+			steps++;
+
+		if (num >= 3) {
+			/* this looks like a chord */
+			memcpy(am_keys, cur_keys, sizeof(am_keys));
+			am_start = start;
+			am_stop = stop;
+			am_step = steps - 1;
+			continue;
+		} else if ((dup + num) != 1) {
+			/* not a single score event */
+			continue;
+		}
+
+		/* compute second score */
+		memset(sort_keys, 0xFF, sizeof(sort_keys));
+
+		/* gather candidates */
+		for (x = 0; x != 12; x++) {
+			int delta;
+			int rem;
+
+			if (am_keys[x] == 0 || cur_keys[x] != 0)
+				continue;
+
+			rem = last % 12;
+			if (x > rem)
+				delta = x - rem;
+			else
+				delta = rem - x;
+
+			rem = x + last - rem;
+
+			while (rem >= last)
+				rem -= 12;
+
+			sort_keys[delta] = rem;
+		}
+
+		/* decide closest candidate */
+		for (x = y = 0; x != 12; x++) {
+			if (sort_keys[x] > -1) {
+				if (y == which)
+					break;
+				y++;
+			}
+		}
+
+		/* add melody, if any */
+		if (x == 12)
+			continue;
+
+		key = sort_keys[x];
+
+		ptr = new MppElement(MPP_T_SCORE, start->line, key);
+		ptr->txt = QString(mid_key_str[key]);
+
+		psc = new MppElement(MPP_T_SPACE, start->line);
+		psc->txt = QString(" ");
+
+		TAILQ_INSERT_BEFORE(start, ptr, entry);
+		TAILQ_INSERT_BEFORE(start, psc, entry);
+
+		/* update stop pointer, if any */
+		if (am_stop == start)
+			am_stop = ptr;
+
+		duration = 1;
+
+		/* update duration of conflicting scores */
+		for (ptr = am_start; ptr != am_stop;
+		    ptr = TAILQ_NEXT(ptr, entry)) {
+			if (ptr->type == MPP_T_SCORE) {
+				if (ptr->value[0] != key)
+					continue;
+				if (duration < (2 * (steps - am_step - 1)))
+					continue;
+
+				psc = new MppElement(MPP_T_SPACE, am_start->line);
+				psc->txt = QString(" ");
+
+				pdr = new MppElement(MPP_T_DURATION, am_start->line, 1);
+				pdr->txt = QString("U1");
+
+				TAILQ_INSERT_BEFORE(ptr, psc, entry);
+				TAILQ_INSERT_BEFORE(ptr, pdr, entry);
+
+				/* update start pointer, if any */
+				if (am_start == ptr)
+					am_start = psc;
+
+				psc = new MppElement(MPP_T_SPACE, am_start->line);
+				psc->txt = QString(" ");
+
+				pdr = new MppElement(MPP_T_DURATION, am_start->line, 1);
+				pdr->txt = QString("U%1").arg((duration + 1) / 2);
+				if (!(duration & 1))
+					pdr->txt += QChar('.');
+
+				TAILQ_INSERT_AFTER(&head, ptr, psc, entry);
+				TAILQ_INSERT_AFTER(&head, ptr, pdr, entry);
+
+			} else if (ptr->type == MPP_T_DURATION) {
+				duration = ptr->value[0];
+			}
+		}
+	}
+}
+
 void
 MppHead :: transposeScore(int adjust, int sharp)
 {
 	MppElement *ptr;
+	int x;
 
 	if (sharp == 0) {
 		/* figure out sharp or flat */
 		TAILQ_FOREACH(ptr, &head, entry) {
-			int level;
-			int x;
 
-			if (ptr->type != MPP_T_STRING)
+			if (ptr->type != MPP_T_STRING_CHORD)
+				continue;			
+
+			/* Chords should not contain spaces of any kind */
+			if (MppHasSpace(ptr->txt))
 				continue;
 
-			level = 0;
 			for (x = 0; x < ptr->txt.size() - 1; x++) {
 				QChar ch = ptr->txt[x];
 				QChar cn = ptr->txt[x + 1];
 
-				if (ch == '(')
-					level ++;
-				else if (ch == ')')
-					level --;
-				else if (level > 0) {
-					if (ch == 'A' ||
-					    ch == 'B' ||
-					    ch == 'C' ||
-					    ch == 'D' ||
-					    ch == 'E' ||
-					    ch == 'F' ||
-					    ch == 'G' ||
-					    ch == 'H') {
-						if (cn == '#') {
-							sharp++;
-							x++;
-						} else if (cn == 'b') {
-							sharp--;
-							x++;
-						}
+				if (ch == 'A' ||
+				    ch == 'B' ||
+				    ch == 'C' ||
+				    ch == 'D' ||
+				    ch == 'E' ||
+				    ch == 'F' ||
+				    ch == 'G' ||
+				    ch == 'H') {
+					if (cn == '#') {
+						sharp++;
+						x++;
+					} else if (cn == 'b') {
+						sharp--;
+						x++;
 					}
 				}
 			}
@@ -480,8 +822,6 @@ MppHead :: transposeScore(int adjust, int sharp)
 		sharp = 0;	/* flat */
 
 	TAILQ_FOREACH(ptr, &head, entry) {
-		int level;
-		int x;
 
 		if (ptr->type == MPP_T_SCORE) {
 			ptr->value[0] += adjust;
@@ -494,57 +834,58 @@ MppHead :: transposeScore(int adjust, int sharp)
 			continue;
 		}
 
-		if (ptr->type != MPP_T_STRING)
+		if (ptr->type != MPP_T_STRING_CHORD)
+			continue;
+
+		/* Chords should not contain spaces of any kind */
+		if (MppHasSpace(ptr->txt))
 			continue;
 
 		QString out;
 
-		level = 0;
 		for (x = 0; x < ptr->txt.size() - 1; x++) {
+			int key;
+
 			QChar ch = ptr->txt[x];
 			QChar cn = ptr->txt[x + 1];
 
-			if (ch == '(')
-				level ++;
-			else if (ch == ')')
-				level --;
-			else if (level > 0) {
-				int key;
-				if (ch == 'A')
-					key = A0;
-				else if (ch == 'B' || ch == 'H')
-					key = H0;
-				else if (ch == 'C')
-					key = C0;
-				else if (ch == 'D')
-					key = D0;
-				else if (ch == 'E')
-					key = E0;
-				else if (ch == 'F')
-					key = F0;
-				else if (ch == 'G')
-					key = G0;
-				else
-					key = -1;
+			if (ch == 'A')
+				key = A0;
+			else if (ch == 'B' || ch == 'H')
+				key = H0;
+			else if (ch == 'C')
+				key = C0;
+			else if (ch == 'D')
+				key = D0;
+			else if (ch == 'E')
+				key = E0;
+			else if (ch == 'F')
+				key = F0;
+			else if (ch == 'G')
+				key = G0;
+			else
+				key = -1;
 
-				if (key > -1) {
-					if (cn == 'b') {
-						key = (key + 11 + adjust) % 12;
-						out += MppBaseKeyToString(key, sharp);
-						x++;
-					} else if (cn == '#') {
-						key = (key + 1 + adjust) % 12;
-						out += MppBaseKeyToString(key, sharp);
-						x++;
-					} else {
-						key = (key + adjust) % 12;
-						out += MppBaseKeyToString(key, sharp);
-					}
-					continue;
+			if (key > -1) {
+				if (cn == 'b') {
+					key = (key + 11 + adjust) % 12;
+					out += MppBaseKeyToString(key, sharp);
+					x++;
+				} else if (cn == '#') {
+					key = (key + 1 + adjust) % 12;
+					out += MppBaseKeyToString(key, sharp);
+					x++;
+				} else {
+					key = (key + adjust) % 12;
+					out += MppBaseKeyToString(key, sharp);
 				}
+				continue;
 			}
 			out += ch;
 		}
+		/* last character too */
+		out += ptr->txt[ptr->txt.size() - 1];
+
 		/* put new text in place */
 		ptr->txt = out;
 	}
