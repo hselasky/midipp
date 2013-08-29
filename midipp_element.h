@@ -45,8 +45,12 @@ enum MppElementType {
 	MPP_T_STRING,
 	MPP_T_TRANSPOSE,
 	MPP_T_TIMER,
+	MPP_T_UNKNOWN,
 	MPP_T_MAX,
 };
+
+#define	MPP_FLAG_JUMP_PAGE 1
+#define	MPP_FLAG_JUMP_REL 2
 
 class MppElement {
 public:
@@ -77,13 +81,20 @@ public:
 		int line;
 		int string;
 		MppElement *elem;
+		MppElement *labels[MPP_MAX_LABELS];
 	} state;
 
 	MppHead();
 	~MppHead();
 
+	void transposeScore(int, int = 0);
+	void limitScore(int);
+	void scaleTime(int);
+	void alignTime(int);
+	int getPlaytime();
 	void flush();
 	QString toPlain();
+	int foreachLine(MppElement **, MppElement **);
 
 	void operator += (QChar);
 	void operator += (QString &);

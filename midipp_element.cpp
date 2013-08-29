@@ -27,6 +27,18 @@
 
 #include "midipp_element.h"
 
+static int
+MppCompareValue(const void *pa, const void *pb)
+{
+	MppElement *ma = *((MppElement **)pa);
+	MppElement *mb = *((MppElement **)pb);
+	if (ma->value[0] > mb->value[0])
+		return (1);
+	if (ma->value[0] < mb->value[0])
+		return (-1);
+	return (0);
+}
+
 MppElement :: MppElement(MppElementType type, int line, int v0, int v1, int v2)
 {
 	memset(&entry, 0, sizeof(entry));
@@ -108,6 +120,20 @@ MppHead :: ~MppHead()
 		TAILQ_REMOVE(&head, elem, entry);
 		delete elem;
 	}
+
+	delete (state.elem);
+
+	memset(&state, 0, sizeof(state));
+}
+
+static int
+MppGetJumpFlags(QChar ch)
+{
+	if (ch == 'P' || ch == 'p')	/* new page */
+		return (MPP_FLAG_JUMP_PAGE);
+	if (ch == 'R' || ch == 'r')	/* relative jump */
+		return (MPP_FLAG_JUMP_REL);
+	return (0);
 }
 
 void
@@ -190,11 +216,34 @@ MppHead :: operator += (MppElement *elem)
 		break;
 
 	case MPP_T_JUMP:
+		while (1) {
+			int last = off;
+			int flags;
+			ch = elem->getChar(&off);
+			flags = MppGetJumpFlags(ch);
+			elem->value[1] |= flags;
+			if (flags == 0) {
+				off = last;
+				break;
+			}
+		}
+		elem->value[0] = elem->getIntValue(&off);
+		if (elem->value[0] < 0 || elem->value[0] >= MPP_MAX_LABELS)
+			elem->value[0] = 0;
+		break;
+
 	case MPP_T_MACRO:
+		elem->value[0] = elem->getIntValue(&off);
+		if (elem->value[0] < 0 || elem->value[0] >= MPP_MAX_LABELS)
+			elem->value[0] = 0;
+		break;
+
 	case MPP_T_LABEL:
 		elem->value[0] = elem->getIntValue(&off);
 		if (elem->value[0] < 0 || elem->value[0] >= MPP_MAX_LABELS)
 			elem->value[0] = 0;
+		/* store pointer to label */
+		state.labels[elem->value[0]] = elem;
 		break;
 
 	case MPP_T_SCORE:
@@ -206,9 +255,6 @@ MppHead :: operator += (MppElement *elem)
 			elem->value[0] = 127;
 		else if (elem->value[0] < 0)
 			elem->value[0] = 0;
-		break;
-
-	case MPP_T_STRING:
 		break;
 
 	case MPP_T_TRANSPOSE:
@@ -300,6 +346,10 @@ MppHead :: operator += (QChar ch)
 			} else if (ch == 'X') {
 				*this += state.elem;
 				state.elem = new MppElement(MPP_T_TRANSPOSE, state.line);
+			} else if (ch != ' ' && ch != '\t' && ch != '\r' &&
+			    ch != '/' && ch != '\n' && ch != ';') {
+				*this += state.elem;
+				state.elem = new MppElement(MPP_T_UNKNOWN, state.line);
 			}
 		}
 		if (ch == '\n') {
@@ -358,4 +408,313 @@ MppHead :: toPlain()
 		retval += elem->txt;
 
 	return (retval);
+}
+
+int
+MppHead :: getPlaytime()
+{
+	MppElement *elem;
+	int retval = 0;
+
+	TAILQ_FOREACH(elem, &head, entry) {
+		if (elem->type != MPP_T_TIMER)
+			continue;
+		retval += elem->value[0] + elem->value[1];
+	}
+	/* simple check for overflow */
+	if (retval < 0)
+		retval = 0;
+
+	return (retval);
+}
+
+void
+MppHead :: transposeScore(int adjust, int sharp)
+{
+	MppElement *ptr;
+
+	if (sharp == 0) {
+		/* figure out sharp or flat */
+		TAILQ_FOREACH(ptr, &head, entry) {
+			int level;
+			int x;
+
+			if (ptr->type != MPP_T_STRING)
+				continue;
+
+			level = 0;
+			for (x = 0; x < ptr->txt.size() - 1; x++) {
+				QChar ch = ptr->txt[x];
+				QChar cn = ptr->txt[x + 1];
+
+				if (ch == '(')
+					level ++;
+				else if (ch == ')')
+					level --;
+				else if (level > 0) {
+					if (ch == 'A' ||
+					    ch == 'B' ||
+					    ch == 'C' ||
+					    ch == 'D' ||
+					    ch == 'E' ||
+					    ch == 'F' ||
+					    ch == 'G' ||
+					    ch == 'H') {
+						if (cn == '#') {
+							sharp++;
+							x++;
+						} else if (cn == 'b') {
+							sharp--;
+							x++;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/* convert to boolean */
+	if (sharp >= 0)
+		sharp = 1;	/* sharp */
+	else
+		sharp = 0;	/* flat */
+
+	TAILQ_FOREACH(ptr, &head, entry) {
+		int level;
+		int x;
+
+		if (ptr->type == MPP_T_SCORE) {
+			ptr->value[0] += adjust;
+			if (ptr->value[0] < 0 || ptr->value[0] > 127) {
+				ptr->txt = QString();
+				ptr->type = MPP_T_UNKNOWN;
+			} else {
+				ptr->txt = QString(mid_key_str[ptr->value[0]]);
+			}
+			continue;
+		}
+
+		if (ptr->type != MPP_T_STRING)
+			continue;
+
+		QString out;
+
+		level = 0;
+		for (x = 0; x < ptr->txt.size() - 1; x++) {
+			QChar ch = ptr->txt[x];
+			QChar cn = ptr->txt[x + 1];
+
+			if (ch == '(')
+				level ++;
+			else if (ch == ')')
+				level --;
+			else if (level > 0) {
+				int key;
+				if (ch == 'A')
+					key = A0;
+				else if (ch == 'B' || ch == 'H')
+					key = H0;
+				else if (ch == 'C')
+					key = C0;
+				else if (ch == 'D')
+					key = D0;
+				else if (ch == 'E')
+					key = E0;
+				else if (ch == 'F')
+					key = F0;
+				else if (ch == 'G')
+					key = G0;
+				else
+					key = -1;
+
+				if (key > -1) {
+					if (cn == 'b') {
+						key = (key + 11 + adjust) % 12;
+						out += MppBaseKeyToString(key, sharp);
+						x++;
+					} else if (cn == '#') {
+						key = (key + 1 + adjust) % 12;
+						out += MppBaseKeyToString(key, sharp);
+						x++;
+					} else {
+						key = (key + adjust) % 12;
+						out += MppBaseKeyToString(key, sharp);
+					}
+					continue;
+				}
+			}
+			out += ch;
+		}
+		/* put new text in place */
+		ptr->txt = out;
+	}
+}
+
+void
+MppHead :: limitScore(int limit)
+{
+	MppElement *start;
+	MppElement *stop;
+	MppElement *ptr;
+	MppElement *array[128];
+	int num;
+	int x;
+	int y;
+	int z;
+	int temp;
+	int map[12];
+
+	if (limit < 0 || limit > 127)
+		return;
+
+	start = stop = 0;
+
+	while (foreachLine(&start, &stop) != 0) {
+		for (num = 0, ptr = start; ptr != stop;
+		    ptr = TAILQ_NEXT(ptr, entry)) {
+			if (ptr->type == MPP_T_SCORE && num < 128) {
+				array[num++] = ptr;
+			}
+		}
+		if (num == 0)
+			continue;
+
+		/* sort scores by value */
+
+		qsort(array, num, sizeof(void *), MppCompareValue);
+
+		/* setup map */
+
+		for (x = 0; x != 12; x++)
+			map[x] = limit;
+
+		/* re-align */
+
+		for (x = num - 1; x != -1; ) {
+
+			/* get current score */
+			temp = array[x]->value[0];
+			y = temp % 12;
+
+			/* compute length */
+
+			for (z = x - 1; z != -1; z--) {
+				if (array[x]->value[0] != array[z]->value[0])
+					break;
+			}
+
+			/* adjust */
+
+			while (temp < map[y])
+				temp += 12;
+			while (temp >= map[y])
+				temp -= 12;
+
+			/* range check */
+
+			if (temp < 0 || temp > 127) {
+				for (; x != z; x--) {
+					array[x]->type = MPP_T_UNKNOWN;
+					array[x]->value[0] = 0;
+					array[x]->txt = QString();
+				}
+			} else {
+				map[y] = temp;
+				for (; x != z; x--) {
+					array[x]->value[0] = temp;
+					array[x]->txt = QString(mid_key_str[temp]);
+				}
+			}
+		}
+	}
+}
+
+void
+MppHead :: alignTime(int align)
+{
+	MppElement *elem;
+	int rem;
+
+	if (align <= 0)
+		return;
+
+	TAILQ_FOREACH(elem, &head, entry) {
+		if (elem->type != MPP_T_TIMER)
+			continue;
+
+		rem = elem->value[0] % align;
+		if (rem < (align / 2))
+			elem->value[0] -= rem;
+		else
+			elem->value[0] += (align - rem) % align;
+
+		rem = elem->value[1] % align;
+		if (rem < (align / 2))
+			elem->value[1] -= rem;
+		else
+			elem->value[1] += (align - rem) % align;
+
+		elem->txt = QString("W%1.%2").arg(elem->value[0]).arg(elem->value[1]);
+	}
+}
+
+void
+MppHead :: scaleTime(int max)
+{
+	MppElement *elem;
+	int offset;
+	int playtime;
+	int last;
+
+	if (max < 0)
+		return;
+
+	playtime = getPlaytime();
+	if (playtime <= 0)
+		return;
+
+	last = 0;
+	offset = 0;
+	TAILQ_FOREACH(elem, &head, entry) {
+		int curr;
+
+		if (elem->type != MPP_T_TIMER)
+			continue;
+
+		offset += elem->value[0];
+		curr = ((int64_t)offset * (int64_t)max) / (int64_t)playtime;
+		elem->value[0] = curr - last;
+		last = curr;
+
+		offset += elem->value[1];
+		curr = ((int64_t)offset * (int64_t)max) / (int64_t)playtime;
+		elem->value[1] = curr - last;
+		last = curr;
+
+		elem->txt = QString("W%1.%2").arg(elem->value[0]).arg(elem->value[1]);
+	}
+}
+
+int
+MppHead :: foreachLine(MppElement **ppstart, MppElement **ppstop)
+{
+	MppElement *ptr;
+
+	if (*ppstart == 0)
+		ptr = *ppstart = *ppstop = TAILQ_FIRST(&head);
+	else
+		ptr = *ppstart = *ppstop;
+
+	if (ptr == 0)
+		return (0);
+
+	for ( ; ptr != 0; ptr = TAILQ_NEXT(ptr, entry)) {
+		if (ptr->type == MPP_T_NEWLINE) {
+			ptr = TAILQ_NEXT(ptr, entry);
+			break;
+		}
+	}
+	*ppstop = ptr;
+
+	return (1);
 }
