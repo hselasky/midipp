@@ -483,7 +483,8 @@ MppHead :: getChord(int line, struct MppChordElement *pinfo)
 	MppElement *ptr;
 	MppElement *start;
 	MppElement *stop;
-	MppElement *last = 0;
+	MppElement *string_start = 0;
+	MppElement *string_stop = 0;
 	int counter = 0;
 	int x;
 	int y;
@@ -496,7 +497,8 @@ MppHead :: getChord(int line, struct MppChordElement *pinfo)
 		    ptr = TAILQ_NEXT(ptr, entry)) {
 			if (ptr->type == MPP_T_STRING_CHORD &&
 			    MppHasSpace(ptr->txt) == 0) {
-				last = ptr;
+				string_start = start;
+				string_stop = stop;
 				counter = 0;
 				break;
 			}
@@ -513,16 +515,36 @@ MppHead :: getChord(int line, struct MppChordElement *pinfo)
 
 		if (start->line == line) {
 			/* compute pointer to chord info, if any */
-			while (counter--) {
-				while (last != 0) {
-					last = TAILQ_NEXT(last, entry);
-					if (last == 0)
-						break;
-					if (last->type == MPP_T_STRING_CHORD)
-						break;
+			int dot_first = 0;
+			int num_dot = 0;
+
+			for (ptr = string_start; ptr != string_stop;
+			     ptr = TAILQ_NEXT(ptr, entry)) {
+
+				if (ptr->type == MPP_T_STRING_DESC) {
+					for (x = 0; x != ptr->txt.size(); x++) {
+						if (ptr->txt[x] == '.') {
+							if (dot_first == 0)
+								dot_first = 1;
+							num_dot++;
+						}
+					}
+				} else if (ptr->type == MPP_T_STRING_CHORD) {
+					if (dot_first == 0)
+						dot_first = -1;
+					if (dot_first == 1) {
+						/* dot is before the chord */
+						if ((num_dot - 1) == counter)
+							break;
+					} else {
+						/* dot is after the chord */
+						if (num_dot == counter)
+							break;
+					}
 				}
 			}
-			pinfo->chord = last;
+			if (ptr != string_stop)
+				pinfo->chord = ptr;
 			pinfo->start = start;
 			pinfo->stop = stop;
 
