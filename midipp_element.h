@@ -53,6 +53,15 @@ enum MppElementType {
 #define	MPP_FLAG_JUMP_PAGE 1
 #define	MPP_FLAG_JUMP_REL 2
 
+struct MppChordElement {
+	MppElement *chord;
+	MppElement *start;
+	MppElement *stop;
+	int stats[12];
+	int key_max;
+	int key_base;
+};
+
 class MppElement {
 public:
 	MppElement(MppElementType type, int, int = 0, int = 0, int = 0);
@@ -89,7 +98,7 @@ public:
 	MppHead();
 	~MppHead();
 
-	int getChord(int, MppElement **, int *, int *);
+	int getChord(int, struct MppChordElement *);
 	void optimise(void);
 	void autoMelody(int);
 	void transposeScore(int, int = 0);

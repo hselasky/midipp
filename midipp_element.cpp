@@ -478,17 +478,17 @@ MppHead :: getPlaytime()
 }
 
 int
-MppHead :: getChord(int line, MppElement **ppelm, int *pinfo, int *pmax)
+MppHead :: getChord(int line, struct MppChordElement *pinfo)
 {
 	MppElement *ptr;
 	MppElement *start;
 	MppElement *stop;
 	MppElement *last = 0;
 	int counter = 0;
+	int x;
+	int y;
 
-	memset(pinfo, 0, 12 * sizeof(pinfo[0]));
-	*ppelm = 0;
-	*pmax = 0;
+	memset(pinfo, 0, sizeof(*pinfo));
 
 	while (foreachLine(&start, &stop) != 0) {
 
@@ -522,8 +522,9 @@ MppHead :: getChord(int line, MppElement **ppelm, int *pinfo, int *pmax)
 						break;
 				}
 			}
-			*ppelm = last;
-			*pmax = 0;
+			pinfo->chord = last;
+			pinfo->start = start;
+			pinfo->stop = stop;
 
 			/* compute chord profile */
 			for (ptr = start; ptr != stop;
@@ -532,10 +533,21 @@ MppHead :: getChord(int line, MppElement **ppelm, int *pinfo, int *pmax)
 				if (ptr->type != MPP_T_SCORE)
 					continue;
 				key = ptr->value[0];
-				pinfo[key % 12]++;
-				if (key > *pmax)
-					*pmax = key;
+				pinfo->stats[key % 12]++;
+				if (key > pinfo->key_max)
+					pinfo->key_max = key;
 			}
+
+			for (x = y = 0; x != 12; x++) {
+				if (pinfo->stats[x] > pinfo->stats[y])
+					y = x;
+			}
+
+			/*
+			 * The key having the most hits typically is
+			 * the base:
+			 */
+			pinfo->key_base = y;
 
 			/* valid chord/score found */
 			return (1);
