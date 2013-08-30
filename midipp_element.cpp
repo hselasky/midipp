@@ -477,6 +477,30 @@ MppHead :: getPlaytime()
 	return (retval);
 }
 
+void
+MppHead :: move(MppHead *phead, MppElement *start, MppElement *stop)
+{
+	MppElement *ptr;
+
+	if (start == 0)
+		return;
+
+	while ((ptr = TAILQ_FIRST(&phead->head)) != 0) {
+		TAILQ_REMOVE(&phead->head, ptr, entry);
+		TAILQ_INSERT_BEFORE(start, ptr, entry);
+	}
+
+	while (start != stop) {
+		ptr = TAILQ_NEXT(start, entry);
+		TAILQ_REMOVE(&head, start, entry);
+		delete start;
+		start = ptr;
+	}
+
+	/* clear all labels */
+	memset(phead->state.labels, 0, sizeof(phead->state.labels));
+}
+
 int
 MppHead :: getChord(int line, struct MppChordElement *pinfo)
 {

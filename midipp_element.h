@@ -98,6 +98,7 @@ public:
 	MppHead();
 	~MppHead();
 
+	void move(MppHead *, MppElement *, MppElement *);
 	int getChord(int, struct MppChordElement *);
 	void optimise(void);
 	void autoMelody(int);
