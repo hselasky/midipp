@@ -64,7 +64,6 @@ public:
 	MppGridLayout *gl_main;
 
 	QString labelTxt[MPP_SHOW_MAX];
-	QPixmap labelPix[MPP_SHOW_MAX];
 
 	QPixmap background;
 
@@ -78,10 +77,10 @@ public:
 
 	MppButtonMap *butMode;
 	MppButtonMap *butLabel;
-	QPushButton *butLoadA;
-	QPushButton *butLoadB;
+	QPushButton *butLoadLyrics;
 	QPushButton *butShow;
 	QPushButton *butFullScreen;
+	QPushButton *butBackground;
 	QTimer *watchdog;
 
 public slots:
@@ -89,10 +88,10 @@ public slots:
 	void handle_label_change(int);
 	void handle_select_bg();
 	void handle_show();
-	void handle_load_a();
-	void handle_load_b();
+	void handle_load_lyrics();
 	void handle_fullscreen();
 	void handle_watchdog();
+	void handle_background();
 };
 
 #endif		/* _MIDIPP_SHOW_H_ */

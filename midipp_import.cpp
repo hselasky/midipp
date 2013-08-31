@@ -326,15 +326,18 @@ MppImportTab :: MppImportTab(MppMainWindow *parent)
 
 	butImportFileNew = new QPushButton(tr("New"));
 	butImportFileOpen = new QPushButton(tr("Open"));
+	butImportFileSaveAs = new QPushButton(tr("Save As"));
 	butImport = new QPushButton();
 
 	gbImport = new MppGroupBox(tr("Lyrics"));
 	gbImport->addWidget(butImportFileNew, 0, 0, 1, 1);
 	gbImport->addWidget(butImportFileOpen, 1, 0, 1, 1);
-	gbImport->addWidget(butImport, 2, 0, 1, 1);
+	gbImport->addWidget(butImportFileSaveAs, 2, 0, 1, 1);
+	gbImport->addWidget(butImport, 3, 0, 1, 1);
 
 	connect(butImportFileNew, SIGNAL(released()), this, SLOT(handleImportNew()));
 	connect(butImportFileOpen, SIGNAL(released()), this, SLOT(handleImportOpen()));
+	connect(butImportFileSaveAs, SIGNAL(released()), this, SLOT(handleImportSaveAs()));
 	connect(butImport, SIGNAL(released()), this, SLOT(handleImport()));
 }
 
@@ -373,6 +376,26 @@ MppImportTab :: handleImportOpen()
 
 		editWidget->setPlainText(scores);
 	}
+	delete diag;
+}
+
+void
+MppImportTab :: handleImportSaveAs()
+{
+	QFileDialog *diag = 
+	  new QFileDialog(mainWindow, tr("Select Chord Tabular File"), 
+		MppHomeDirTxt,
+		QString("Score File (*.txt *.TXT)"));
+
+	diag->setAcceptMode(QFileDialog::AcceptSave);
+	diag->setFileMode(QFileDialog::AnyFile);
+	diag->setDefaultSuffix(QString("txt"));
+
+	if (diag->exec()) {
+		MppHomeDirTxt = diag->directory().path();
+		MppWriteFile(diag->selectedFiles()[0], editWidget->toPlainText());
+	}
+
 	delete diag;
 }
 

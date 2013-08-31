@@ -65,6 +65,7 @@ public:
 	QPlainTextEdit *editWidget;
 	QPushButton *butImportFileNew;
 	QPushButton *butImportFileOpen;
+	QPushButton *butImportFileSaveAs;
 	QPushButton *butImport;
 	MppGroupBox *gbImport;
 
@@ -72,6 +73,7 @@ public slots:
 
 	void handleImportNew();
 	void handleImportOpen();
+	void handleImportSaveAs();
 	void handleImport();
 };
 

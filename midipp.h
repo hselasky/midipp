@@ -178,6 +178,7 @@ extern QString MppVariantList;
 extern QString MppHomeDirTxt;
 extern QString MppHomeDirMid;
 extern QString MppHomeDirGp3;
+extern QString MppHomeDirBackground;
 
 extern QString MppBaseName(QString fname);
 extern char *MppQStringToAscii(QString s);

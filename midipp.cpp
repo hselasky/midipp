@@ -45,6 +45,7 @@ QColor color_green   (0x40, 0xc4, 0x20, 0xff);
 QString MppHomeDirMid;
 QString MppHomeDirTxt;
 QString MppHomeDirGp3;
+QString MppHomeDirBackground;
 
 QString
 MppBaseName(QString fname)
@@ -252,6 +253,7 @@ main(int argc, char **argv)
 	MppHomeDirMid = QDir::homePath();
 	MppHomeDirTxt = QDir::homePath();
 	MppHomeDirGp3 = QDir::homePath();
+	MppHomeDirBackground = QDir::homePath();
 
 	signal(SIGPIPE, mask_signal);
 
