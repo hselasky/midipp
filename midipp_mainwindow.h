@@ -301,6 +301,10 @@ public:
 
 	MppDataBase *tab_database;
 
+	/* tab <Show> */
+
+	MppShowControl *tab_show_control;
+
 	/* tab <Help> */
 
 	QPlainTextEdit *tab_help;

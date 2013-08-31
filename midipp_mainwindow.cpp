@@ -45,6 +45,7 @@
 #include "midipp_volume.h"
 #include "midipp_settings.h"
 #include "midipp_checkbox.h"
+#include "midipp_show.h"
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -161,6 +162,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_database = 	new MppDataBase(this);
 
+	tab_show_control = new MppShowControl(this);
+
 	tab_help = new QPlainTextEdit();
 	tab_help->setFont(editFont);
 	tab_help->setLineWrapMode(QPlainTextEdit::NoWrap);
@@ -237,6 +240,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_tw->addTab(tab_volume_gl, tr("Volume"));
 	main_tw->addTab(tab_loop, tr("Loop"));
 	main_tw->addTab(tab_database, tr("Database"));
+	main_tw->addTab(tab_show_control->gl_main, tr("Show"));
 	main_tw->addTab(tab_help, tr("Help"));
 
 	/* <File> Tab */

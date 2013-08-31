@@ -77,7 +77,7 @@
 
 #include <umidi20.h>
 
-#define	MPP_MAX_BUTTON_MAP	8
+#define	MPP_MAX_BUTTON_MAP	16
 #define	MPP_MAX_MERGE	1024
 #define	MPP_MAX_VIEWS	2
 #define	MPP_MAX_LINES	8192
@@ -128,6 +128,8 @@ class MppScoreMain;
 class MppScoreView;
 class MppSettings;
 class MppSettingsWhat;
+class MppShowControl;
+class MppShowWidget;
 class MppSpinBox;
 class MppVolume;
 
