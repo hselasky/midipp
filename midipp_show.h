@@ -72,11 +72,13 @@ public:
 	int curr_label;
 	int curr_st;
 	int transition;
+	int trackview;
 
 	MppShowWidget *wg_show;
 
 	MppButtonMap *butMode;
 	MppButtonMap *butLabel;
+	MppButtonMap *butTrack;
 	QPushButton *butLoadLyrics;
 	QPushButton *butShow;
 	QPushButton *butFullScreen;
@@ -86,6 +88,7 @@ public:
 public slots:
 	void handle_mode_change(int);
 	void handle_label_change(int);
+	void handle_track_change(int);
 	void handle_select_bg();
 	void handle_show();
 	void handle_load_lyrics();

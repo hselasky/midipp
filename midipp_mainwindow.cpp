@@ -273,7 +273,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_file_gl->addWidget(gb_gpro_file_import, 1, 2, 1, 1);
 	tab_file_gl->addWidget(gb_midi_file, 0, 3, 2, 1);
 
-	tab_file_gl->setRowStretch(2, 3);
+	tab_file_gl->setRowStretch(2, 1);
+	tab_file_gl->setColumnStretch(4, 1);
 
 	tab_file_gl->addWidget(but_quit, 3, 0, 1, 4);
 
@@ -362,7 +363,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_play_gl->addWidget(but_play[0], 4, 1, 1, 1);
 	tab_play_gl->addWidget(but_play[1], 4, 2, 1, 1);
 
-	tab_play_gl->setRowStretch(5, 4);
+	tab_play_gl->setRowStretch(5, 1);
+	tab_play_gl->setColumnStretch(4, 1);
 
 	gl_bpm->addWidget(lbl_bpm_avg_val, 0, 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
@@ -471,6 +473,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_config_gl->addWidget(but_config_revert, x, 6, 1, 2);
 
 	tab_config_gl->addWidget(mpp_settings->but_config_clean, x, 2, 1, 1);
+	tab_config_gl->setColumnStretch(8, 1);
 
 	/* <Instrument> tab */
 
@@ -543,6 +546,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_instr_gl->addWidget(gb_instr_table, 1, 0, 1, 8);
 
 	tab_instr_gl->setRowStretch(2, 1);
+	tab_instr_gl->setColumnStretch(8, 1);
 
 	tab_instr_gl->addWidget(but_instr_mute_all, 3, 0, 1, 2);
 	tab_instr_gl->addWidget(but_instr_unmute_all, 3, 2, 1, 2);
@@ -582,6 +586,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_volume_gl->addWidget(gb_volume_synth, 0, 1, 1, 1);
 
 	tab_volume_gl->setRowStretch(1, 1);
+	tab_volume_gl->setColumnStretch(4, 1);
 
 	tab_volume_gl->addWidget(but_volume_reset, 2, 0, 1, 2);
 

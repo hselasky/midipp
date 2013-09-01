@@ -3279,3 +3279,30 @@ MppScoreMain :: outputPitch(uint16_t val)
 		chan &= 0xF;
 	}
 }
+
+int
+MppScoreMain :: getCurrLabel(void)
+{
+	int x;
+	int pos;
+	int min = MPP_MAX_LINES;
+	int delta;
+	int line;
+	int retval = 0;
+
+	pthread_mutex_lock(&mainWindow->mtx);
+	pos = currPos;
+	pthread_mutex_unlock(&mainWindow->mtx);
+
+	for (x = 0; x != MPP_MAX_LABELS; x++) {
+		line = jumpTable[x] - 1;
+		if (line < 0)
+			continue;
+		delta = pos - line;
+		if (delta > -1 && delta < min) {
+			retval = x;
+			min = delta;
+		}
+	}
+	return (retval);
+}

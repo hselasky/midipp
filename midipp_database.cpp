@@ -31,6 +31,7 @@
 #include "midipp_groupbox.h"
 #include "midipp_mainwindow.h"
 #include "midipp_scores.h"
+#include "midipp_show.h"
 
 #define	MIDIPP_FILTER_MAX 32
 
@@ -267,9 +268,11 @@ MppDataBase :: MppDataBase(MppMainWindow *mw)
 
 	open_a = new QPushButton(tr("Open In A-Scores"));
 	open_b = new QPushButton(tr("Open In B-Scores"));
+	open_l = new QPushButton(tr("Open Lyrics In Show"));
 
 	connect(open_a, SIGNAL(released()), this, SLOT(handle_open_a()));
 	connect(open_b, SIGNAL(released()), this, SLOT(handle_open_b()));
+	connect(open_l, SIGNAL(released()), this, SLOT(handle_open_l()));
 
 	clear_url = new QPushButton(tr("Clear"));
 	clear_search = new QPushButton(tr("Clear"));
@@ -292,6 +295,7 @@ MppDataBase :: MppDataBase(MppMainWindow *mw)
 
 	gl->addWidget(gb_result, 2, 0, 1, 6);
 
+	gl->addWidget(open_l, 3, 0, 1, 1);
 	gl->addWidget(open_a, 3, 2, 1, 1);
 	gl->addWidget(open_b, 3, 3, 1, 1);
 	gl->addWidget(reset, 3, 5, 1, 1);
@@ -387,6 +391,19 @@ MppDataBase :: handle_open_b()
 
 	if (n > -1 && n < (int)record_count)
 		handle_open(record_ptr[n], sm);
+}
+
+void
+MppDataBase :: handle_open_l()
+{
+	int n = result->currentRow();
+
+	if (n > -1 && n < (int)record_count) {
+		union record *prec = record_ptr[n];
+		QString str = QString::fromUtf8((char *)(prec + 1),
+		    tar_record_size(prec, 1));
+		parent->tab_show_control->handle_load(str);
+	}
 }
 
 void

@@ -84,7 +84,8 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 		connect(but_import[n], SIGNAL(released(int)), this, SLOT(handle_import(int)));
 	}
 
-	gl->setRowStretch(2 + MIDIPP_LOOP_MAX, 3);
+	gl->setRowStretch(2 + MIDIPP_LOOP_MAX, 1);
+	gl->setColumnStretch(8, 1);
 
 	lbl_chn_title = new QLabel(tr("Chan."));
 	lbl_dur_title = new QLabel(tr("Dur-s"));

@@ -79,6 +79,7 @@ public:
 	void outputKeyPressure(uint8_t chan, uint8_t key, uint8_t pressure);
 	void outputChanPressure(uint8_t chan, uint8_t pressure);
 	void outputPitch(uint16_t val);
+	int getCurrLabel(void);
 
 	void handleReplace(void);
 
