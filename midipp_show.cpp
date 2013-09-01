@@ -246,7 +246,9 @@ MppShowControl :: handle_label_change(int lbl)
 {
 	last_label = curr_label;
 	curr_label = lbl;
-	transition = 0;
+
+	if (curr_st == MPP_SHOW_ST_LIVE)
+		transition = 0;
 }
 
 void
@@ -314,8 +316,6 @@ MppShowControl :: handle_load(QString str)
 			butLabel->but[x]->setText(QString("L%1 ").arg(x) + tmpdesc);
 		}
 	}
-
-	transition = 0;
 }
 
 void
@@ -328,6 +328,12 @@ MppShowControl :: handle_load_lyrics()
 
 	diag->setAcceptMode(QFileDialog::AcceptOpen);
 	diag->setFileMode(QFileDialog::ExistingFile);
+
+	if (curr_st == MPP_SHOW_ST_LIVE)
+		butMode->setSelection(MPP_SHOW_ST_LOGO);
+
+	if (curr_label != 0)
+		butLabel->setSelection(0);
 
 	if (diag->exec()) {
 
