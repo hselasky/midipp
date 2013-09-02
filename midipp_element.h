@@ -114,7 +114,8 @@ public:
 
 	void move(MppHead *, MppElement *, MppElement *);
 	int getChord(int, struct MppChordElement *);
-	void optimise(void);
+	void clear();
+	void optimise();
 	void autoMelody(int);
 	void transposeScore(int, int = 0);
 	void limitScore(int);

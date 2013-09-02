@@ -163,6 +163,12 @@ MppHead :: MppHead()
 
 MppHead :: ~MppHead()
 {
+	clear();
+}
+
+void
+MppHead :: clear()
+{
 	MppElement *elem;
 
 	while ((elem = TAILQ_FIRST(&head)) != 0) {
@@ -172,6 +178,7 @@ MppHead :: ~MppHead()
 
 	delete (state.elem);
 
+	last = ' ';
 	memset(&state, 0, sizeof(state));
 }
 
@@ -643,7 +650,7 @@ MppHead :: getChord(int line, struct MppChordElement *pinfo)
 }
 
 void
-MppHead :: optimise(void)
+MppHead :: optimise()
 {
 	MppElement *ptr;
 	MppElement *next;
