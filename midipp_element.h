@@ -42,12 +42,24 @@ enum MppElementType {
 	MPP_T_NEWLINE,
 	MPP_T_SCORE,
 	MPP_T_SPACE,
+	MPP_T_STRING_CMD,
 	MPP_T_STRING_DESC,
+	MPP_T_STRING_DOT,
 	MPP_T_STRING_CHORD,
 	MPP_T_TRANSPOSE,
 	MPP_T_TIMER,
 	MPP_T_UNKNOWN,
 	MPP_T_MAX,
+};
+
+enum MppCommandType {
+	MPP_CMD_NOP,
+	MPP_CMD_LOCK,
+	MPP_CMD_UNLOCK,
+	MPP_CMD_BPM_REF,
+	MPP_CMD_AUTO_MELODY,
+	MPP_CMD_NUM_BASE,
+	MPP_CMD_MAX,
 };
 
 #define	MPP_FLAG_JUMP_PAGE 1
@@ -91,8 +103,10 @@ public:
 		int line;
 		int string;
 		int level;
+		MppElement *curr_start;
+		MppElement *curr_stop;
 		MppElement *elem;
-		MppElement *labels[MPP_MAX_LABELS];
+		MppElement *label_start[MPP_MAX_LABELS];
 	} state;
 
 	MppHead();
@@ -109,11 +123,22 @@ public:
 	int getPlaytime();
 	void flush();
 	QString toPlain(int = -1);
+	QString toLyrics();
 	int foreachLine(MppElement **, MppElement **);
+	int getMaxLines();
+	void stepLine(MppElement **, MppElement **);
+	void currLine(MppElement **, MppElement **);
+	void jumpLabel(int);
+	void jumpPointer(MppElement *);
 
 	void operator += (QChar);
-	void operator += (QString &);
+	void operator += (const QString &);
 	void operator += (MppElement *);
 };
+
+extern int MppSpaceOnly(QString &);
+extern int MppHasSpace(QString &);
+extern QString MppDeQuoteChord(QString &);
+extern QString MppDeQuoteString(QString &);
 
 #endif			/* _MIDIPP_ELEMENT_H_ */

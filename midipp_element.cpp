@@ -39,7 +39,7 @@ MppCompareValue(const void *pa, const void *pb)
 	return (0);
 }
 
-static int
+int
 MppSpaceOnly(QString &str)
 {
 	int x;
@@ -51,7 +51,7 @@ MppSpaceOnly(QString &str)
 	return (1);
 }
 
-static int
+int
 MppHasSpace(QString &str)
 {
 	int x;
@@ -61,6 +61,31 @@ MppHasSpace(QString &str)
 			return (1);
 	}
 	return (0);
+}
+
+QString
+MppDeQuoteChord(QString &str)
+{
+	int n = str.size();
+	if (n >= 2) {
+		if (str[0] == '(' && str[n - 1] == ')') {
+			return (str.mid(1, n - 2));
+		}
+	}
+	return (str);
+}
+
+QString
+MppDeQuoteString(QString &str)
+{
+	int n = str.size();
+	if (n >= 3) {
+		if (str[0] == 'S' && str[1] == '"' &&
+		    str[n - 1] == '"') {
+			return (str.mid(2, n - 3));
+		}
+	}
+	return (str);
 }
 
 MppElement :: MppElement(MppElementType type, int line, int v0, int v1, int v2)
@@ -183,7 +208,7 @@ MppHead :: operator += (MppElement *elem)
 	case MPP_T_COMMAND:
 		elem->value[0] = elem->getIntValue(&off);
 		switch (elem->value[0]) {
-		case 5:
+		case MPP_CMD_NUM_BASE:
 			ch = elem->getChar(&off);
 			if (ch == '.') {
 				elem->value[1] = elem->getIntValue(&off);
@@ -195,14 +220,14 @@ MppHead :: operator += (MppElement *elem)
 				elem->value[1] = 2;
 			}
 			break;
-		case 4:
+		case MPP_CMD_AUTO_MELODY:
 			ch = elem->getChar(&off);
 			if (ch == '.')
 				elem->value[1] = elem->getIntValue(&off);
 			else
 				elem->value[1] = 0;	/* disabled */
 			break;
-		case 3:
+		case MPP_CMD_BPM_REF:
 			ch = elem->getChar(&off);
 			if (ch == '.') {
 				elem->value[1] = elem->getIntValue(&off);
@@ -267,7 +292,7 @@ MppHead :: operator += (MppElement *elem)
 		if (elem->value[0] < 0 || elem->value[0] >= MPP_MAX_LABELS)
 			elem->value[0] = 0;
 		/* store pointer to label */
-		state.labels[elem->value[0]] = elem;
+		state.label_start[elem->value[0]] = elem;
 		break;
 
 	case MPP_T_SCORE:
@@ -309,7 +334,7 @@ MppHead :: operator += (MppElement *elem)
 }
 
 void
-MppHead :: operator += (QString &str)
+MppHead :: operator += (const QString &str)
 {
 	int x;
 
@@ -364,7 +389,7 @@ MppHead :: operator += (QChar ch)
 				state.elem = new MppElement(MPP_T_DURATION, state.line);
 			} else if (ch == 'S') {
 				*this += state.elem;
-				state.elem = new MppElement(MPP_T_STRING_DESC, state.line);
+				state.elem = new MppElement(MPP_T_STRING_CMD, state.line);
 			} else if (ch == 'W') {
 				*this += state.elem;
 				state.elem = new MppElement(MPP_T_TIMER, state.line);
@@ -401,6 +426,17 @@ MppHead :: operator += (QChar ch)
 		state.string ^= 1;
 		if (state.string != 0)
 			state.level = 0;
+
+		switch (state.elem->type) {
+		case MPP_T_STRING_DESC:
+		case MPP_T_STRING_DOT:
+		case MPP_T_STRING_CHORD:
+			*this += state.elem;
+			state.elem = new MppElement(MPP_T_STRING_CMD, state.line);
+			break;
+		default:
+			break;
+		}
 	}
 	if (state.string == 0) {
 		if (ch == '/' && last == '*') {
@@ -413,22 +449,29 @@ MppHead :: operator += (QChar ch)
 	} else {
 		if (state.level == 0) {
 			/* flush previous chord */
-			if (state.elem->type == MPP_T_STRING_CHORD) {
+			if (state.elem->type == MPP_T_STRING_CHORD && ch != '(') {
 				*this += state.elem;
 				state.elem = new MppElement(MPP_T_STRING_DESC, state.line);
 			}
-		}
-		if (ch == '(')
-			state.level ++;
-
-		if (state.level != 0) {
-			/* start new chord */
-			if (state.elem->type == MPP_T_STRING_DESC) {
+			/* flush previous dot */
+			if (state.elem->type == MPP_T_STRING_DOT && ch != '[') {
+				*this += state.elem;
+				state.elem = new MppElement(MPP_T_STRING_DESC, state.line);
+			}
+			/* check for dot */
+			if (ch == '.') {
+				*this += state.elem;
+				state.elem = new MppElement(MPP_T_STRING_DOT, state.line);
+			}
+			/* check for new chord */
+			if (ch == '(') {
 				*this += state.elem;
 				state.elem = new MppElement(MPP_T_STRING_CHORD, state.line);
 			}
 		}
-		if (ch == ')')
+		if (ch == '(' || ch == '[')
+			state.level ++;
+		else if (ch == ')' || ch == ']')
 			state.level --;
 	}
 	state.elem->txt += ch;
@@ -498,7 +541,7 @@ MppHead :: move(MppHead *phead, MppElement *start, MppElement *stop)
 	}
 
 	/* clear all labels */
-	memset(phead->state.labels, 0, sizeof(phead->state.labels));
+	memset(phead->state.label_start, 0, sizeof(phead->state.label_start));
 }
 
 int
@@ -545,14 +588,10 @@ MppHead :: getChord(int line, struct MppChordElement *pinfo)
 			for (ptr = string_start; ptr != string_stop;
 			     ptr = TAILQ_NEXT(ptr, entry)) {
 
-				if (ptr->type == MPP_T_STRING_DESC) {
-					for (x = 0; x != ptr->txt.size(); x++) {
-						if (ptr->txt[x] == '.') {
-							if (dot_first == 0)
-								dot_first = 1;
-							num_dot++;
-						}
-					}
+				if (ptr->type == MPP_T_STRING_DOT) {
+					if (dot_first == 0)
+						dot_first = 1;
+					num_dot++;
 				} else if (ptr->type == MPP_T_STRING_CHORD) {
 					if (dot_first == 0)
 						dot_first = -1;
@@ -648,7 +687,8 @@ MppHead :: optimise(void)
 				ptr->type = MPP_T_UNKNOWN;
 				ptr->txt = QString();
 			}
-		} else if (ptr->type == MPP_T_SCORE) {
+		} else if (ptr->type == MPP_T_SCORE ||
+		    ptr->type == MPP_T_MACRO) {
 			has_score = 1;
 		}
 	}
@@ -698,7 +738,6 @@ MppHead :: autoMelody(int which)
 	int key;
 
 	memset(am_keys, 0, sizeof(am_keys));
-
 	am_start = am_stop = 0;
 	am_step = steps = 0;
 
@@ -720,6 +759,11 @@ MppHead :: autoMelody(int which)
 				else
 					dup++;
 				cur_keys[rem]++;
+			} else if (ptr->type == MPP_T_JUMP) {
+				/* reset auto melody */
+				memset(am_keys, 0, sizeof(am_keys));
+				am_start = am_stop = 0;
+				am_step = 0;
 			}
 		}
 		if (num != 0)
@@ -1108,7 +1152,10 @@ MppHead :: foreachLine(MppElement **ppstart, MppElement **ppstop)
 		return (0);
 
 	for ( ; ptr != 0; ptr = TAILQ_NEXT(ptr, entry)) {
-		if (ptr->type == MPP_T_NEWLINE) {
+		if (ptr->type == MPP_T_NEWLINE ||
+		    ptr->type == MPP_T_JUMP ||
+		    ptr->type == MPP_T_TIMER ||
+		    ptr->type == MPP_T_LABEL) {
 			ptr = TAILQ_NEXT(ptr, entry);
 			break;
 		}
@@ -1116,4 +1163,114 @@ MppHead :: foreachLine(MppElement **ppstart, MppElement **ppstop)
 	*ppstop = ptr;
 
 	return (1);
+}
+
+int
+MppHead :: getMaxLines()
+{
+	return (state.line + 1);
+}
+
+QString
+MppHead :: toLyrics()
+{
+	MppElement *start;
+	MppElement *stop;
+	MppElement *ptr;
+	QString linebuf[2];
+	QString out;
+
+	for (start = stop = 0; foreachLine(&start, &stop); ) {
+
+		linebuf[0] = QString();
+		linebuf[1] = QString();
+
+		for (ptr = start; ptr != stop;
+		    ptr = TAILQ_NEXT(ptr, entry)) {
+			switch (ptr->type) {
+			case MPP_T_STRING_DESC:
+				linebuf[1] += ptr->txt;
+				break;
+			case MPP_T_STRING_DOT:
+				break;
+			case MPP_T_STRING_CHORD:
+				while (linebuf[1].size() > linebuf[0].size())
+					linebuf[0] += ' ';
+				linebuf[0] += MppDeQuoteChord(ptr->txt);
+				linebuf[0] += ' ';
+				break;
+			default:
+				break;
+			}
+		}
+
+		/* Export Chord Line */
+		if (linebuf[0].size() > 0) {
+			out += linebuf[0];
+			out += "\n";
+		}
+
+		/* Export Text Line */
+		if (linebuf[1].size() > 0) {
+			out += linebuf[1];
+			out += "\n";
+		}
+	}
+	return (out);
+}
+
+void
+MppHead :: stepLine(MppElement **ppstart, MppElement **ppstop)
+{
+	MppElement *ptr;
+	int to = 8;
+
+top:
+	while (foreachLine(&state.curr_start, &state.curr_stop)) {
+
+		for (ptr = state.curr_start; ptr != state.curr_stop;
+		    ptr = TAILQ_NEXT(ptr, entry)) {
+			switch(ptr->type) {
+			case MPP_T_JUMP:
+				if (!to--)
+					goto done;
+				if (ptr->value[1] & MPP_FLAG_JUMP_REL)
+					;
+				else
+					jumpLabel(ptr->value[0]);
+				goto top;
+			case MPP_T_SCORE:
+			case MPP_T_MACRO:
+				goto done;
+			default:
+				break;
+			}
+		}
+	}
+done:
+	*ppstart = state.curr_start;
+	*ppstop = state.curr_stop;
+}
+
+void
+MppHead :: currLine(MppElement **ppstart, MppElement **ppstop)
+{
+	*ppstart = state.curr_start;
+	*ppstop = state.curr_stop;
+}
+
+void
+MppHead :: jumpLabel(int label)
+{
+	if (label < 0 || label >= MPP_MAX_LABELS ||
+	    state.label_start[label] == 0)
+		return;
+
+	state.curr_start = state.curr_stop = state.label_start[label];
+}
+
+void
+MppHead :: jumpPointer(MppElement *ptr)
+{
+	state.curr_start = state.curr_stop = ptr;
 }
