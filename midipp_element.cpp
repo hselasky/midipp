@@ -527,9 +527,10 @@ MppHead :: getPlaytime()
 }
 
 void
-MppHead :: move(MppHead *phead, MppElement *start, MppElement *stop)
+MppHead :: replace(MppHead *phead, MppElement *start, MppElement *stop)
 {
 	MppElement *ptr;
+	int x;
 
 	if (start == 0)
 		return;
@@ -539,15 +540,20 @@ MppHead :: move(MppHead *phead, MppElement *start, MppElement *stop)
 		TAILQ_INSERT_BEFORE(start, ptr, entry);
 	}
 
+	/* clear all labels */
+	memset(phead->state.label_start, 0, sizeof(phead->state.label_start));
+
 	while (start != stop) {
 		ptr = TAILQ_NEXT(start, entry);
 		TAILQ_REMOVE(&head, start, entry);
+		/* clear labels, if any */
+		for (x = 0; x != MPP_MAX_LABELS; x++) {
+			if (state.label_start[x] == start)
+				state.label_start[x] = 0;
+		}
 		delete start;
 		start = ptr;
 	}
-
-	/* clear all labels */
-	memset(phead->state.label_start, 0, sizeof(phead->state.label_start));
 }
 
 int
@@ -711,12 +717,19 @@ MppHead :: optimise()
 
 	/* remove unused entries, except labels */
 	TAILQ_FOREACH_SAFE(ptr, &head, entry, next) {
-		if (ptr->type == MPP_T_LABEL)
+		int x;
+
+		if (ptr->txt.size() != 0)
 			continue;
-		if (ptr->txt.size() == 0) {
-			TAILQ_REMOVE(&head, ptr, entry);
-			delete ptr;
+
+		/* clear labels, if any */
+		for (x = 0; x != MPP_MAX_LABELS; x++) {
+			if (state.label_start[x] == ptr)
+				state.label_start[x] = 0;
 		}
+
+		TAILQ_REMOVE(&head, ptr, entry);
+		delete ptr;
 	}
 }
 
@@ -1327,4 +1340,26 @@ void
 MppHead :: jumpPointer(MppElement *ptr)
 {
 	state.curr_start = state.curr_stop = ptr;
+}
+
+void
+MppHead :: sequence()
+{
+	MppElement *elem;
+	int count = 0;
+
+	TAILQ_FOREACH(elem, &head, entry) {
+		elem->sequence = count;
+		count++;
+	}
+}
+
+int
+MppHead :: compare(const MppElement *other) const
+{
+	if (this->sequence > other->sequence)
+		return (1);
+	if (this->sequence < other->sequence)
+		return (-1);
+	return (0);
 }

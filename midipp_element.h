@@ -103,6 +103,7 @@ public:
 		int line;
 		int string;
 		int level;
+		int sequence;
 		MppElement *curr_start;
 		MppElement *curr_stop;
 		MppElement *elem;
@@ -112,7 +113,7 @@ public:
 	MppHead();
 	~MppHead();
 
-	void move(MppHead *, MppElement *, MppElement *);
+	void replace(MppHead *, MppElement *, MppElement *);
 	int getChord(int, struct MppChordElement *);
 	void clear();
 	void optimise();
@@ -132,6 +133,8 @@ public:
 	void currLine(MppElement **, MppElement **);
 	void jumpLabel(int);
 	void jumpPointer(MppElement *);
+	void sequence();
+	int compare(const MppElement *) const;
 
 	void operator += (QChar);
 	void operator += (const QString &);
