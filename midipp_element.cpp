@@ -354,7 +354,6 @@ MppHead :: operator += (QChar ch)
 {
 	if (state.comment == 0 && state.string == 0) {
 		if (state.command == 0) {
-			ch = ch.toUpper();
 			if (ch == 'C') {
 				*this += state.elem;
 				state.elem = new MppElement(MPP_T_SCORE, state.line, C0);
@@ -1224,6 +1223,54 @@ MppHead :: toLyrics()
 		}
 	}
 	return (out);
+}
+
+void
+MppHead :: toLyrics(QString *pstr)
+{
+	MppElement *start;
+	MppElement *stop;
+	MppElement *ptr;
+	QString linebuf;
+	int x;
+	int label = 0;
+
+	for (x = 0; x != MPP_MAX_LABELS; x++) {
+		pstr[x] = QString();
+	}
+
+	for (start = stop = 0; foreachLine(&start, &stop); ) {
+
+		linebuf = QString();
+
+		for (ptr = start; ptr != stop;
+		    ptr = TAILQ_NEXT(ptr, entry)) {
+			switch (ptr->type) {
+			case MPP_T_STRING_DESC:
+				linebuf += ptr->txt;
+				break;
+			default:
+				break;
+			}
+		}
+
+		/* Export Text Line */
+		if (linebuf.size() > 0) {
+			/* Hide text lines starting with "L%d" */
+			if ((linebuf.size() > 1) &&
+			    (linebuf[0] == 'L') && linebuf[1].isDigit()) {
+				label = 0;
+				for (x = 1; (x != linebuf.size()) && (linebuf[x].isDigit()); x++) {
+					label *= 10;
+					label += linebuf[x].digitValue();
+				}
+				if (label < 0 || label >= MPP_MAX_LABELS)
+					label = 0;
+			} else {
+				pstr[label] += linebuf + '\n';
+			}
+		}
+	}
 }
 
 void

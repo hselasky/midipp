@@ -125,6 +125,7 @@ public:
 	void flush();
 	QString toPlain(int = -1);
 	QString toLyrics();
+	void toLyrics(QString *pstr);
 	int foreachLine(MppElement **, MppElement **);
 	int getMaxLines();
 	void stepLine(MppElement **, MppElement **);
