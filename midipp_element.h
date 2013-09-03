@@ -64,6 +64,7 @@ enum MppCommandType {
 
 #define	MPP_FLAG_JUMP_PAGE 1
 #define	MPP_FLAG_JUMP_REL 2
+#define	MPP_FLAG_JUMP_DIGIT 4
 
 struct MppChordElement {
 	MppElement *chord;
@@ -79,8 +80,10 @@ public:
 	MppElement(MppElementType type, int, int = 0, int = 0, int = 0);
 	~MppElement();
 
-	QChar getChar(int *);
-	int getIntValue(int *);
+	int compare(const MppElement *) const;
+
+	QChar getChar(int *) const;
+	int getIntValue(int *) const;
 
 	QString txt;
 
@@ -88,6 +91,7 @@ public:
 	enum MppElementType type;
 	int value[3];
 	int line;
+	int sequence;
 };
 
 class MppHead {
@@ -97,15 +101,17 @@ public:
 	QChar last;
 
 	struct {
-		int offset;
 		int command;
 		int comment;
-		int line;
-		int string;
+		int key_lock;
 		int level;
-		int sequence;
+		int line;
+		int offset;
+		int string;
 		MppElement *curr_start;
 		MppElement *curr_stop;
+		MppElement *last_start;
+		MppElement *last_stop;
 		MppElement *elem;
 		MppElement *label_start[MPP_MAX_LABELS];
 	} state;
@@ -129,12 +135,13 @@ public:
 	void toLyrics(QString *pstr);
 	int foreachLine(MppElement **, MppElement **);
 	int getMaxLines();
+	int isFirst();
+	void syncLast();
 	void stepLine(MppElement **, MppElement **);
 	void currLine(MppElement **, MppElement **);
 	void jumpLabel(int);
 	void jumpPointer(MppElement *);
 	void sequence();
-	int compare(const MppElement *) const;
 
 	void operator += (QChar);
 	void operator += (const QString &);

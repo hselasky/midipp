@@ -93,6 +93,7 @@ MppElement :: MppElement(MppElementType type, int line, int v0, int v1, int v2)
 	memset(&entry, 0, sizeof(entry));
 	type = type;
 	line = line;
+	sequence = 0;
 	value[0] = v0;
 	value[1] = v1;
 	value[2] = v2;
@@ -103,7 +104,7 @@ MppElement :: ~MppElement()
 }
 
 QChar
-MppElement :: getChar(int *poffset)
+MppElement :: getChar(int *poffset) const
 {
 	if (*poffset < txt.size())
 		return (txt[(*poffset)++]);
@@ -112,7 +113,7 @@ MppElement :: getChar(int *poffset)
 }
 
 int
-MppElement :: getIntValue(int *poffset)
+MppElement :: getIntValue(int *poffset) const
 {
 	QChar ch;
 	int value;
@@ -189,6 +190,8 @@ MppGetJumpFlags(QChar ch)
 		return (MPP_FLAG_JUMP_PAGE);
 	if (ch == 'R' || ch == 'r')	/* relative jump */
 		return (MPP_FLAG_JUMP_REL);
+	if (ch.isDigit())
+		return (MPP_FLAG_JUMP_DIGIT);
 	return (0);
 }
 
@@ -278,7 +281,8 @@ MppHead :: operator += (MppElement *elem)
 			ch = elem->getChar(&off);
 			flags = MppGetJumpFlags(ch);
 			elem->value[1] |= flags;
-			if (flags == 0) {
+			if (flags == 0 ||
+			    flags == MPP_FLAG_JUMP_DIGIT) {
 				off = last;
 				break;
 			}
@@ -1286,35 +1290,49 @@ MppHead :: toLyrics(QString *pstr)
 	}
 }
 
+int
+MppHead :: isFirst()
+{
+	return (state.curr_start == state.last_start);
+}
+
+void
+MppHead :: syncLast()
+{
+	state.last_start = state.curr_start;
+	state.last_stop = state.curr_stop;
+}
+
 void
 MppHead :: stepLine(MppElement **ppstart, MppElement **ppstop)
 {
 	MppElement *ptr;
 	int to = 8;
 
-top:
-	while (foreachLine(&state.curr_start, &state.curr_stop)) {
-
-		for (ptr = state.curr_start; ptr != state.curr_stop;
-		    ptr = TAILQ_NEXT(ptr, entry)) {
-			switch(ptr->type) {
-			case MPP_T_JUMP:
-				if (!to--)
+	while (!to--) {
+		while (foreachLine(&state.curr_start, &state.curr_stop)) {
+			for (ptr = state.curr_start; ptr != state.curr_stop;
+			    ptr = TAILQ_NEXT(ptr, entry)) {
+				if (ptr->type == MPP_T_JUMP) {
+					if (!(ptr->value[1] & MPP_FLAG_JUMP_DIGIT))
+						continue;
+					if (ptr->value[1] & MPP_FLAG_JUMP_REL)
+						;
+					else
+						jumpLabel(ptr->value[0]);
+					break;
+				} else if (ptr->type == MPP_T_SCORE ||
+				    ptr->type == MPP_T_MACRO) {
 					goto done;
-				if (ptr->value[1] & MPP_FLAG_JUMP_REL)
-					;
-				else
-					jumpLabel(ptr->value[0]);
-				goto top;
-			case MPP_T_SCORE:
-			case MPP_T_MACRO:
-				goto done;
-			default:
-				break;
+				}
 			}
+			if (ptr != state.curr_stop)
+				break;
 		}
 	}
 done:
+	syncLast();
+
 	*ppstart = state.curr_start;
 	*ppstop = state.curr_stop;
 }
@@ -1333,13 +1351,15 @@ MppHead :: jumpLabel(int label)
 	    state.label_start[label] == 0)
 		return;
 
-	state.curr_start = state.curr_stop = state.label_start[label];
+	jumpPointer(state.label_start[label]);
 }
 
 void
 MppHead :: jumpPointer(MppElement *ptr)
 {
-	state.curr_start = state.curr_stop = ptr;
+	state.key_lock = 0;
+	state.last_start = state.last_stop =
+	    state.curr_start = state.curr_stop = ptr;
 }
 
 void
@@ -1355,8 +1375,17 @@ MppHead :: sequence()
 }
 
 int
-MppHead :: compare(const MppElement *other) const
+MppElement :: compare(const MppElement *other) const
 {
+	/* handle special case */
+	if (this == 0 && other == 0)
+		return (0);
+	if (other == 0)
+		return (1);
+	if (this == 0)
+		return (-1);
+
+	/* compare sequence number */
 	if (this->sequence > other->sequence)
 		return (1);
 	if (this->sequence < other->sequence)
