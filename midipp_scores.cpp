@@ -449,7 +449,7 @@ MppScoreMain :: viewMousePressEvent(QMouseEvent *e)
 {
 	int yi;
 
-	yi = (e->y() - MPP_VISUAL_MARGIN) / visual_y_max;
+	yi = ((e->y() - MPP_VISUAL_MARGIN) / visual_y_max) + picScroll;
 
 	if (yi < 0 || yi >= visual_max)
 		return;
