@@ -29,8 +29,14 @@
 #include "midipp.h"
 
 class MppElement;
-typedef TAILQ_ENTRY(MppElement) MppElementEntryT;
-typedef TAILQ_HEAD(MppElementHead, MppElement) MppElementHeadT;
+typedef struct
+#define struct 
+TAILQ_ENTRY(MppElement) MppElementEntryT;
+#undef struct
+typedef struct
+#define struct
+TAILQ_HEAD(MppElementHead, MppElement) MppElementHeadT;
+#undef struct
 
 enum MppElementType {
 	MPP_T_CHANNEL,
