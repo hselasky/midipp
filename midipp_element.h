@@ -103,11 +103,14 @@ public:
 	struct {
 		int command;
 		int comment;
+		int did_jump;
 		int key_lock;
 		int level;
 		int line;
 		int offset;
 		int string;
+		MppElement *push_start;
+		MppElement *push_stop;
 		MppElement *curr_start;
 		MppElement *curr_stop;
 		MppElement *last_start;
@@ -120,7 +123,7 @@ public:
 	~MppHead();
 
 	void replace(MppHead *, MppElement *, MppElement *);
-	int getChord(int, struct MppChordElement *);
+	int getChord(int, MppChordElement *);
 	void clear();
 	void optimise();
 	void autoMelody(int);
@@ -137,11 +140,14 @@ public:
 	int getMaxLines();
 	int isFirst();
 	void syncLast();
+	void pushLine();
+	void popLine();
 	void stepLine(MppElement **, MppElement **);
 	void currLine(MppElement **, MppElement **);
 	void jumpLabel(int);
 	void jumpPointer(MppElement *);
 	void sequence();
+	int getCurrLine();
 
 	void operator += (QChar);
 	void operator += (const QString &);

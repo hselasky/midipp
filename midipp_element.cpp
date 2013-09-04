@@ -88,11 +88,11 @@ MppDeQuoteString(QString &str)
 	return (str);
 }
 
-MppElement :: MppElement(MppElementType type, int line, int v0, int v1, int v2)
+MppElement :: MppElement(MppElementType _type, int _line, int v0, int v1, int v2)
 {
 	memset(&entry, 0, sizeof(entry));
-	type = type;
-	line = line;
+	type = _type;
+	line = _line;
 	sequence = 0;
 	value[0] = v0;
 	value[1] = v1;
@@ -340,7 +340,6 @@ MppHead :: operator += (MppElement *elem)
 	default:
 		break;
 	}
-
 	TAILQ_INSERT_TAIL(&head, elem, entry);
 }
 
@@ -356,6 +355,9 @@ MppHead :: operator += (const QString &str)
 void
 MppHead :: operator += (QChar ch)
 {
+	if (ch == QChar::ParagraphSeparator)
+		ch = '\n';
+
 	if (state.comment == 0 && state.string == 0) {
 		if (state.command == 0) {
 			if (ch == 'C') {
@@ -458,25 +460,20 @@ MppHead :: operator += (QChar ch)
 		}
 	} else {
 		if (state.level == 0) {
-			/* flush previous chord */
-			if (state.elem->type == MPP_T_STRING_CHORD && ch != '(') {
-				*this += state.elem;
-				state.elem = new MppElement(MPP_T_STRING_DESC, state.line);
-			}
-			/* flush previous dot */
-			if (state.elem->type == MPP_T_STRING_DOT && ch != '[') {
-				*this += state.elem;
-				state.elem = new MppElement(MPP_T_STRING_DESC, state.line);
-			}
-			/* check for dot */
+			/* flush previous string type, if any */
 			if (ch == '.') {
 				*this += state.elem;
 				state.elem = new MppElement(MPP_T_STRING_DOT, state.line);
-			}
-			/* check for new chord */
-			if (ch == '(') {
+			} else if (ch == '(') {
 				*this += state.elem;
 				state.elem = new MppElement(MPP_T_STRING_CHORD, state.line);
+			} else if (ch == '[' || ch == '"') {
+				/* ignore - same as previous */
+			} else if (state.elem->type == MPP_T_STRING_CHORD ||
+				   state.elem->type == MPP_T_STRING_DOT ||
+				   state.elem->type == MPP_T_STRING_CMD) {
+				*this += state.elem;
+				state.elem = new MppElement(MPP_T_STRING_DESC, state.line);
 			}
 		}
 		if (ch == '(' || ch == '[')
@@ -493,10 +490,9 @@ MppHead :: operator += (QChar ch)
 void
 MppHead :: flush()
 {
-	if (state.elem != 0) {
+	if (state.elem != 0)
 		*this += state.elem;
-		state.elem = 0;
-	}
+	state.elem = 0;
 }
 
 QString
@@ -561,7 +557,7 @@ MppHead :: replace(MppHead *phead, MppElement *start, MppElement *stop)
 }
 
 int
-MppHead :: getChord(int line, struct MppChordElement *pinfo)
+MppHead :: getChord(int line, MppChordElement *pinfo)
 {
 	MppElement *ptr;
 	MppElement *start;
@@ -573,6 +569,8 @@ MppHead :: getChord(int line, struct MppChordElement *pinfo)
 	int y;
 
 	memset(pinfo, 0, sizeof(*pinfo));
+
+	start = stop = 0;
 
 	while (foreachLine(&start, &stop) != 0) {
 
@@ -661,6 +659,8 @@ MppHead :: getChord(int line, struct MppChordElement *pinfo)
 void
 MppHead :: optimise()
 {
+	MppElement *start;
+	MppElement *stop;
 	MppElement *ptr;
 	MppElement *next;
 	int duration = 1;
@@ -719,6 +719,21 @@ MppHead :: optimise()
 		}
 	}
 
+	for (start = stop = 0; foreachLine(&start, &stop); ) {
+		/* remove space at beginning of each line */
+		ptr = start;
+		while (ptr != stop) {
+			if (MppSpaceOnly(ptr->txt) != 0) {
+				next = TAILQ_NEXT(ptr, entry);
+				TAILQ_REMOVE(&head, ptr, entry);
+				delete ptr;
+				ptr = next;
+			} else {
+				break;
+			}
+		}
+	}
+
 	/* remove unused entries, except labels */
 	TAILQ_FOREACH_SAFE(ptr, &head, entry, next) {
 		int x;
@@ -763,6 +778,7 @@ MppHead :: autoMelody(int which)
 	memset(am_keys, 0, sizeof(am_keys));
 	am_start = am_stop = 0;
 	am_step = steps = 0;
+	start = stop = 0;
 
 	while (foreachLine(&start, &stop) != 0) {
 
@@ -874,12 +890,12 @@ MppHead :: autoMelody(int which)
 				pdr = new MppElement(MPP_T_DURATION, am_start->line, 1);
 				pdr->txt = QString("U1");
 
-				TAILQ_INSERT_BEFORE(ptr, psc, entry);
 				TAILQ_INSERT_BEFORE(ptr, pdr, entry);
+				TAILQ_INSERT_BEFORE(ptr, psc, entry);
 
 				/* update start pointer, if any */
 				if (am_start == ptr)
-					am_start = psc;
+					am_start = pdr;
 
 				psc = new MppElement(MPP_T_SPACE, am_start->line);
 				psc->txt = QString(" ");
@@ -992,16 +1008,19 @@ MppHead :: transposeScore(int adjust, int sharp)
 				key = -1;
 
 			if (key > -1) {
+				/* can be negative */
+				key += adjust % 12;
+
 				if (cn == 'b') {
-					key = (key + 11 + adjust) % 12;
+					key = (12 + key + 11) % 12;
 					out += MppBaseKeyToString(key, sharp);
 					x++;
 				} else if (cn == '#') {
-					key = (key + 1 + adjust) % 12;
+					key = (12 + key + 1) % 12;
 					out += MppBaseKeyToString(key, sharp);
 					x++;
 				} else {
-					key = (key + adjust) % 12;
+					key = (12 + key) % 12;
 					out += MppBaseKeyToString(key, sharp);
 				}
 				continue;
@@ -1177,7 +1196,6 @@ MppHead :: foreachLine(MppElement **ppstart, MppElement **ppstop)
 	for ( ; ptr != 0; ptr = TAILQ_NEXT(ptr, entry)) {
 		if (ptr->type == MPP_T_NEWLINE ||
 		    ptr->type == MPP_T_JUMP ||
-		    ptr->type == MPP_T_TIMER ||
 		    ptr->type == MPP_T_LABEL) {
 			ptr = TAILQ_NEXT(ptr, entry);
 			break;
@@ -1230,13 +1248,13 @@ MppHead :: toLyrics()
 		/* Export Chord Line */
 		if (linebuf[0].size() > 0) {
 			out += linebuf[0];
-			out += "\n";
+			out += '\n';
 		}
 
 		/* Export Text Line */
 		if (linebuf[1].size() > 0) {
 			out += linebuf[1];
-			out += "\n";
+			out += '\n';
 		}
 	}
 	return (out);
@@ -1263,6 +1281,11 @@ MppHead :: toLyrics(QString *pstr)
 		for (ptr = start; ptr != stop;
 		    ptr = TAILQ_NEXT(ptr, entry)) {
 			switch (ptr->type) {
+			case MPP_T_STRING_CHORD:
+				if (MppHasSpace(ptr->txt) == 0)
+					break;
+				linebuf += MppDeQuoteChord(ptr->txt) + '\n';
+				break;
 			case MPP_T_STRING_DESC:
 				linebuf += ptr->txt;
 				break;
@@ -1304,12 +1327,26 @@ MppHead :: syncLast()
 }
 
 void
+MppHead :: pushLine()
+{
+	state.push_start = state.curr_start;
+	state.push_stop = state.curr_stop;
+}
+
+void
+MppHead :: popLine()
+{
+	state.curr_start = state.push_start;
+	state.curr_stop = state.push_stop;
+}
+
+void
 MppHead :: stepLine(MppElement **ppstart, MppElement **ppstop)
 {
 	MppElement *ptr;
 	int to = 8;
 
-	while (!to--) {
+	while (to--) {
 		while (foreachLine(&state.curr_start, &state.curr_stop)) {
 			for (ptr = state.curr_start; ptr != state.curr_stop;
 			    ptr = TAILQ_NEXT(ptr, entry)) {
@@ -1320,19 +1357,30 @@ MppHead :: stepLine(MppElement **ppstart, MppElement **ppstop)
 						;
 					else
 						jumpLabel(ptr->value[0]);
+					if (!to--)
+						goto done;
 					break;
 				} else if (ptr->type == MPP_T_SCORE ||
 				    ptr->type == MPP_T_MACRO) {
 					goto done;
+				} else if (ptr->type == MPP_T_COMMAND) {
+					switch (ptr->value[0]) {
+					case MPP_CMD_LOCK:
+						state.key_lock = -1;
+						break;
+					case MPP_CMD_UNLOCK:
+						state.key_lock = 0;
+						break;
+					default:
+						break;
+					}
 				}
 			}
-			if (ptr != state.curr_stop)
-				break;
 		}
+		state.did_jump = 1;
+		state.key_lock = 0;
 	}
 done:
-	syncLast();
-
 	*ppstart = state.curr_start;
 	*ppstop = state.curr_stop;
 }
@@ -1340,15 +1388,20 @@ done:
 void
 MppHead :: currLine(MppElement **ppstart, MppElement **ppstop)
 {
-	*ppstart = state.curr_start;
-	*ppstop = state.curr_stop;
+	/* check if after jump */
+	if (state.curr_start == state.curr_stop) {
+		stepLine(ppstart, ppstop);
+		syncLast();
+	} else {
+		*ppstart = state.curr_start;
+		*ppstop = state.curr_stop;
+	}
 }
 
 void
 MppHead :: jumpLabel(int label)
 {
-	if (label < 0 || label >= MPP_MAX_LABELS ||
-	    state.label_start[label] == 0)
+	if (label < 0 || label >= MPP_MAX_LABELS)
 		return;
 
 	jumpPointer(state.label_start[label]);
@@ -1357,6 +1410,10 @@ MppHead :: jumpLabel(int label)
 void
 MppHead :: jumpPointer(MppElement *ptr)
 {
+	if (ptr == 0)
+		return;
+
+	state.did_jump = 1;
 	state.key_lock = 0;
 	state.last_start = state.last_stop =
 	    state.curr_start = state.curr_stop = ptr;
@@ -1374,6 +1431,20 @@ MppHead :: sequence()
 	}
 }
 
+/* must be called locked */
+int
+MppHead :: getCurrLine()
+{
+	MppElement *start;
+	MppElement *stop;
+
+	currLine(&start, &stop);
+
+	if (start != 0)
+		return (start->line);
+	return (0);
+}
+
 int
 MppElement :: compare(const MppElement *other) const
 {
@@ -1381,9 +1452,9 @@ MppElement :: compare(const MppElement *other) const
 	if (this == 0 && other == 0)
 		return (0);
 	if (other == 0)
-		return (1);
-	if (this == 0)
 		return (-1);
+	if (this == 0)
+		return (1);
 
 	/* compare sequence number */
 	if (this->sequence > other->sequence)
