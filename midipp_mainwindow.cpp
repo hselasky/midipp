@@ -30,7 +30,6 @@
 #include "midipp_mutemap.h"
 #include "midipp_looptab.h"
 #include "midipp_database.h"
-#include "midipp_decode.h"
 #include "midipp_import.h"
 #include "midipp_devices.h"
 #include "midipp_spinbox.h"
@@ -151,6 +150,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_gl->addWidget(mwRight,12,1,1,1);
 	main_gl->addWidget(mwLeft,13,1,1,1);
 
+	tab_show_control = new MppShowControl(this);
+
 	for (x = 0; x != MPP_MAX_VIEWS; x++)
 		scores_main[x] = new MppScoreMain(this, x);
 
@@ -161,8 +162,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_loop = new MppLoopTab(this, this);
 
 	tab_database = 	new MppDataBase(this);
-
-	tab_show_control = new MppShowControl(this);
 
 	tab_help = new QPlainTextEdit();
 	tab_help->setFont(editFont);
@@ -187,7 +186,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " * K3.<bpm>.<period_ms> - set reference BPM and period in ms.\n"
 	    " * K4.<number> - enable automatic melody effect on the N-th note, if non-zero.\n"
 	    " * K5.<number> - set number of base scores for chord mode. Default value is 2.\n"
-	    " * M<number> - macro inline the given label. Label definition must come before any references.\n"
+	    " * M<number> - macro inline the given label.\n"
 	    " * L<number> - defines a label (0..31).\n"
 	    " * J<R><P><number> - jumps to the given label (0..31) or \n"
 	    " *     Relative(R) line (0..31) and starts a new page(P).\n"
@@ -309,9 +308,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		but_jump[n] = new MppButton(tr(buf), n);
 	}
 
-	but_insert_chord = new QPushButton(tr("&Insert"));
-	but_edit_chord = new QPushButton(tr("&Edit"));
-	but_replace = new QPushButton(tr("&ReplaceAll"));
 	but_compile = new QPushButton(tr("Com&pile"));
 
 	but_midi_pause = new QPushButton(tr("Pau&se"));
@@ -376,19 +372,14 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	gl_ctrl->addWidget(but_compile, 3, 0, 1, 1);
 
 	gl_synth_play->addWidget(but_bpm, 0, 0, 1, 2);
-	gl_synth_play->addWidget(lbl_play_key, 0, 2, 1, 1);
-	gl_synth_play->addWidget(spn_play_key, 0, 3, 1, 1);
+	gl_synth_play->addWidget(lbl_play_key, 1, 0, 1, 1);
+	gl_synth_play->addWidget(spn_play_key, 1, 1, 1, 1);
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++)
-		gl_synth_play->addWidget(but_mode[x], 1 + x, 2, 1, 2);
-
-	gl_synth_play->addWidget(but_insert_chord, 1, 0, 1, 1);
-
-	gl_synth_play->addWidget(but_edit_chord, 2, 0, 1, 1);
-	gl_synth_play->addWidget(but_replace, 2, 1, 1, 1);
+		gl_synth_play->addWidget(but_mode[x], x, 2, 1, 2);
 
 	for (x = 0; x != MPP_MAX_LBUTTON; x++)
-		gl_synth_play->addWidget(but_jump[x], 1 + MPP_MAX_VIEWS + (x / 4), (x % 4), 1, 1);
+		gl_synth_play->addWidget(but_jump[x], MPP_MAX_VIEWS + (x / 4), (x % 4), 1, 1);
 
 	/* <Configuration> Tab */
 
@@ -592,10 +583,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* Connect all */
 
-	connect(but_insert_chord, SIGNAL(released()), this, SLOT(handle_insert_chord()));
-	connect(but_edit_chord, SIGNAL(released()), this, SLOT(handle_edit_chord()));
-	connect(but_replace, SIGNAL(released()), this, SLOT(handle_replace()));
-
 	for (n = 0; n != MPP_MAX_LBUTTON; n++)
 		connect(but_jump[n], SIGNAL(released(int)), this, SLOT(handle_jump(int)));
 
@@ -634,7 +621,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	MidiInit();
 
-	version = tr("MIDI Player Pro v1.1.3");
+	version = tr("MIDI Player Pro v1.1.5");
 
 	setWindowTitle(version);
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
@@ -670,41 +657,6 @@ MppMainWindow :: handle_jump_locked(int index)
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++)
 		scores_main[x]->handleLabelJump(index);
-}
-
-void
-MppMainWindow :: handle_insert_chord()
-{
-	MppDecode dlg(this, 0);
-
-        if(dlg.exec() == QDialog::Accepted) {
-		QTextCursor cursor(currScoreMain()->editWidget->textCursor());
-		cursor.beginEditBlock();
-		cursor.insertText(led_config_insert->text());
-		cursor.insertText(dlg.getText());
-		cursor.insertText(QString("\n"));
-		cursor.endEditBlock();
-		handle_compile();
-		handle_make_tab_visible(currScoreMain()->editWidget);
-	}
-}
-
-void
-MppMainWindow :: handle_edit_chord()
-{
-	MppScoreMain *sm = currScoreMain();
-
-	handle_compile();
-	if (sm->handleEditLine() == 0)
-		handle_compile();
-}
-
-void
-MppMainWindow :: handle_replace()
-{
-	MppScoreMain *sm = currScoreMain();
-
-	sm->handleReplace();
 }
 
 void
@@ -848,25 +800,10 @@ void
 MppMainWindow :: handle_watchdog_sub(MppScoreMain *sm, int update_cursor)
 {
 	QTextCursor cursor(sm->editWidget->textCursor());
-	uint32_t play_line;
-	uint32_t play_pos;
-	uint32_t x;
+	int play_line;
 
 	pthread_mutex_lock(&mtx);
-
-	play_pos = sm->currPos;
-
-	/* skip any jumps */
-	for (x = 0; x != 128; x++) {
-		uint32_t jump_pos;
-		jump_pos = sm->resolveJump(play_pos);
-		if (jump_pos != 0)
-			play_pos = jump_pos - 1;
-		else
-			break;
-	}
-	play_line = sm->realLine[play_pos];
-
+	play_line = sm->head.getCurrLine();
 	pthread_mutex_unlock(&mtx);
 
 	if (update_cursor) {
@@ -2281,7 +2218,7 @@ MppMainWindow :: handle_volume_changed(int dummy)
 void
 MppMainWindow :: handle_make_scores_visible(MppScoreMain *sm)
 {
-	if (sm->maxScoresWidth == 0)
+	if (sm->visual_max == 0)
 		handle_make_tab_visible(sm->editWidget);
 	else
 		handle_make_tab_visible(&sm->viewWidget);

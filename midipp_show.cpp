@@ -190,20 +190,11 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 	transition = 0;
 	trackview = 0;
 
-	butTrack = new MppButtonMap("Track\0" "None\0" "View-A\0" "View-B\0", 3, 3);
+	butTrack = new MppButtonMap("Track\0" "View-A\0" "View-B\0", 2, 2);
 	connect(butTrack, SIGNAL(selectionChanged(int)), this, SLOT(handle_track_change(int)));
 
 	butMode = new MppButtonMap("Current mode\0" "BLANK\0" "LOGO\0" "LIVE\0", 3, 3);
 	connect(butMode, SIGNAL(selectionChanged(int)), this, SLOT(handle_mode_change(int)));
-
-	butLabel = new MppButtonMap("Current label\0" "L0\0" "L1\0" "L2\0" "L3\0"
-	    "L4\0" "L5\0" "L6\0" "L7\0"
-	    "L8\0" "L9\0" "L10\0" "L11\0"
-	    "L12\0" "L13\0" "L14\0" "L15\0", 16, 4);
-	connect(butLabel, SIGNAL(selectionChanged(int)), this, SLOT(handle_label_change(int)));
-
-	butLoadLyrics = new QPushButton(tr("Open and Load Lyrics"));
-	connect(butLoadLyrics, SIGNAL(released()), this, SLOT(handle_load_lyrics()));
 
 	butShow = new QPushButton(tr("Show"));
 	connect(butShow, SIGNAL(released()), this, SLOT(handle_show()));
@@ -218,10 +209,8 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 
 	gl_main->addWidget(butTrack, 0, 0, 1, 2);
 	gl_main->addWidget(butMode, 0, 2, 1, 2);
-	gl_main->addWidget(butLabel, 1, 0, 1, 4);
 
-	gl_main->addWidget(butLoadLyrics, 3, 0, 1, 1);
-	gl_main->addWidget(butBackground, 3, 1, 1, 1);
+	gl_main->addWidget(butBackground, 3, 0, 1, 1);
 	gl_main->addWidget(butShow, 3, 2, 1, 1);
 	gl_main->addWidget(butFullScreen, 3, 3, 1, 1);
 	gl_main->setRowStretch(2, 1);
@@ -231,8 +220,6 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 	connect(watchdog, SIGNAL(timeout()), this, SLOT(handle_watchdog()));
 
 	wg_show = new MppShowWidget(this);
-
-	handle_load(QString());
 
 	watchdog->start(1000 / (2 * MPP_TRAN_MAX));
 }
@@ -253,6 +240,9 @@ MppShowControl :: handle_mode_change(int mode)
 void
 MppShowControl :: handle_label_change(int lbl)
 {
+	if (curr_label == lbl)
+		return;
+
 	last_label = curr_label;
 	curr_label = lbl;
 
@@ -261,96 +251,10 @@ MppShowControl :: handle_label_change(int lbl)
 }
 
 void
-MppShowControl :: handle_select_bg()
-{
-
-}
-
-void
 MppShowControl :: handle_show()
 {
 	wg_show->setWindowState(wg_show->windowState() & ~Qt::WindowFullScreen);
 	wg_show->show();
-}
-
-void
-MppShowControl :: handle_load(QString str)
-{
-	int x;
-	int y;
-	int last_nl = 0;
-
-	for (x = 0; x != MPP_SHOW_MAX; x++)
-		labelTxt[x] = QString();
-
-	for (x = y = 0; x != str.size(); x++) {
-		QChar ch = str[x];
-
-		if (ch == '\r')
-			continue;
-		if (ch == '\n') {
-			if (last_nl == 0) {
-				if (y < MPP_SHOW_MAX)
-					labelTxt[y] += ch;
-			} else if (last_nl == 1) {
-				if (y < MPP_SHOW_MAX)
-					y++;
-			}
-			last_nl++;
-			continue;
-		}
-		if (y < MPP_SHOW_MAX)
-			labelTxt[y] += ch;
-		last_nl = 0;
-	}
-
-	for (x = 0; x != MPP_SHOW_MAX; x++) {
-		if (labelTxt[x].size() == 0) {
-			butLabel->but[x]->setEnabled(0);
-			butLabel->but[x]->setText(QString("L%1").arg(x));
-		} else {
-			QString tmpdesc;
-			for (y = 0; y != labelTxt[x].size(); y++) {
-				QChar ch = labelTxt[x][y];
-				if (ch == '\r')
-					continue;
-				if (ch == '\n')
-					ch = ' ';
-				if (y >= 20)
-					break;
-				tmpdesc += ch;
-			}
-
-			butLabel->but[x]->setEnabled(1);
-			butLabel->but[x]->setText(QString("L%1 ").arg(x) + tmpdesc);
-		}
-	}
-}
-
-void
-MppShowControl :: handle_load_lyrics()
-{
-	QFileDialog *diag = 
-	  new QFileDialog(mw, tr("Select Lyrics File"), 
-		MppHomeDirTxt,
-		QString("Lyrics File (*.txt; *.TXT)"));
-
-	diag->setAcceptMode(QFileDialog::AcceptOpen);
-	diag->setFileMode(QFileDialog::ExistingFile);
-
-	if (curr_st == MPP_SHOW_ST_LIVE)
-		butMode->setSelection(MPP_SHOW_ST_LOGO);
-
-	if (curr_label != 0)
-		butLabel->setSelection(0);
-
-	if (diag->exec()) {
-
-		MppHomeDirTxt = diag->directory().path();
-
-		handle_load(MppReadFile(diag->selectedFiles()[0]));
-	}
-	delete diag;
 }
 
 void
@@ -365,17 +269,17 @@ MppShowControl :: handle_watchdog()
 	switch (trackview) {
 	int label;
 #if MPP_MAX_VIEWS > 0
-	case 1:
+	case 0:
 		label = mw->scores_main[0]->getCurrLabel();
-		if (label > -1 && label < MPP_SHOW_MAX)
-			butLabel->setSelection(label);
+		if (label > -1 && label < MPP_MAX_LABELS)
+			handle_label_change(label);
 		break;
 #endif
 #if MPP_MAX_VIEWS > 1
-	case 2:
+	case 1:
 		label = mw->scores_main[1]->getCurrLabel();
-		if (label > -1 && label < MPP_SHOW_MAX)
-			butLabel->setSelection(label);
+		if (label > -1 && label < MPP_MAX_LABELS)
+			handle_label_change(label);
 		break;
 #endif
 	default:

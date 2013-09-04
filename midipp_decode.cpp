@@ -28,47 +28,51 @@
 #include "midipp_scores.h"
 #include "midipp_button.h"
 #include "midipp_checkbox.h"
+#include "midipp_element.h"
 
 /* The list is sorted by priority. C5 is base. */
 
+#define MASK(x) (1U << ((x) % 12))
+
 static const struct score_variant score_internal[] = {
-  { "", {C5, E5, G5} },
-  { "M", {C5, E5, G5} },
-  { "maj", {C5, E5, G5} },
-  { "major", {C5, E5, G5} },
+  { "", MASK(C5)| MASK(E5)| MASK(G5), 0 },
+  { "M", MASK(C5)| MASK(E5)| MASK(G5), 0 },
+  { "m", MASK(C5)| MASK(E5B)| MASK(G5), 0 },
 
-  { "m", {C5, E5B, G5} },
-  { "min", {C5, E5B, G5} },
-  { "minor", {C5, E5B, G5} },
+  { "+3", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5 - 3), 0 },
+  { "+5", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5 - 5), 0 },
+  { "+9", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5 - 9), 0 },
 
-  { "maj7", {C5, E5, G5, H5} },
-  { "maj8", {C5, E5, G5, H5B} },
-  { "maj9", {C5, E5, G5, A5} },
-  { "maj10", {C5, E5, G5, A5B} },
+  { "2", MASK(C5)| MASK(D5)| MASK(E5)| MASK(G5), 0 },
+  { "4", MASK(C5)| MASK(E5)| MASK(G5), 0 },
+  { "5", MASK(C5)| MASK(G5), 0 },
+  { "6", MASK(C5)| MASK(E5)| MASK(G5)| MASK(A5), 0 },
+  { "7", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5B), 0 },
+  { "9", MASK(C5)| MASK(D5)| MASK(E5)| MASK(G5)| MASK(H5B), 0 },
+  { "11", MASK(C5)| MASK(D5)| MASK(E5)| MASK(F5)| MASK(G5)| MASK(H5B), 0 },
+  { "13", MASK(C5)| MASK(D5)| MASK(F5)| MASK(A5)| MASK(H5B), 0 },
 
-  { "7b5", {C5, E5, G5B, H5B} },
-  { "7#5", {C5, E5, A5B, H5B} },
-  { "7b9", {C5, D5B, E5, G5, H5B} },
-  { "7#9", {C5, E5B, E5, G5, H5B} },
+  { "69", MASK(C5)| MASK(D5)| MASK(E5)| MASK(G5)| MASK(A5), 0 },
 
-  { "69", {C5, D5, E5, G5, A5} },
+  { "7b5", MASK(C5)| MASK(E5)| MASK(G5B)| MASK(H5B), 0 },
+  { "7#5", MASK(C5)| MASK(E5)| MASK(A5B)| MASK(H5B), 0 },
+  { "7b9", MASK(C5)| MASK(D5B)| MASK(E5)| MASK(G5)| MASK(H5B), 0 },
+  { "7#9", MASK(C5)| MASK(E5B)| MASK(E5)| MASK(G5)| MASK(H5B), 0 },
 
-  { "add3", {C5, E5, G5, H5 - 3} },
-  { "add5", {C5, E5, G5, H5 - 5} },
-  { "add9", {C5, E5, G5, H5 - 9} },
+  { "add3", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5 - 3), 0 },
+  { "add5", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5 - 5), 0 },
+  { "add9", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5 - 9), 0 },
 
-  { "+3", {C5, E5, G5, H5 - 3} },
-  { "+5", {C5, E5, G5, H5 - 5} },
-  { "+9", {C5, E5, G5, H5 - 9} },
+  { "maj", MASK(C5)| MASK(E5)| MASK(G5), 0 },
+  { "major", MASK(C5)| MASK(E5)| MASK(G5), 0 },
 
-  { "2", {C5, D5, E5, G5} },
-  { "4", {C5, E5, G5} },
-  { "5", {C5, G5} },
-  { "6", {C5, E5, G5, A5} },
-  { "7", {C5, E5, G5, H5B} },
-  { "9", {C5, D5, E5, G5, H5B} },
-  { "11", {C5, D5, E5, F5, G5, H5B} },
-  { "13", {C5, D5, F5, A5, H5B} },
+  { "min", MASK(C5)| MASK(E5B)| MASK(G5), 0 },
+  { "minor", MASK(C5)| MASK(E5B)| MASK(G5), 0 },
+
+  { "maj7", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5), 0 },
+  { "maj8", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5B), 0 },
+  { "maj9", MASK(C5)| MASK(E5)| MASK(G5)| MASK(A5), 0 },
+  { "maj10", MASK(C5)| MASK(E5)| MASK(G5)| MASK(A5B), 0 },
 };
 
 #define	MAX_VAR (sizeof(score_internal)/sizeof(score_internal[0]))
@@ -80,28 +84,38 @@ static int mpp_max_variant;
 
 QString MppVariantList;
 
+static uint32_t
+MppRor(uint32_t val, uint8_t n)
+{
+	return (((val >> n) | (val << (12 - n))) & 0xfff);
+}
+
+static uint8_t
+MppSumbits(uint32_t val)
+{
+	val = ((val & (1U * 0xAAAAAAAAU)) / 2U) + (val & (1U * 0x55555555U));
+	val = ((val & (3U * 0x44444444U)) / 4U) + (val & (3U * 0x11111111U));
+	val = ((val & (15U * 0x10101010U)) / 16U) + (val & (15U * 0x01010101U));
+	val = ((val & (255U * 0x01000100U)) / 256U) + (val & (255U * 0x00010001U));
+	val = ((val & (65535U * 0x00010000U)) / 65536U) + (val & (65535U * 0x00000001U));
+	return (val);
+}
+
 static uint8_t
 score_variant_init_sub(unsigned int x, struct score_variant *ps)
 {
 	unsigned int type;
 	unsigned int what;
-	unsigned int y;
-	int e_off = -1;
-	int g_off = -1;
+	uint32_t e_mask = 0;
+	uint32_t g_mask = 0;
 
 	type = x / MAX_VAR;
 	what = x % MAX_VAR;
 
-	for (y = 0; y != MPP_MAX_VAR_OFF; y++) {
-		if (score_internal[what].offset[y] == E5)
-			e_off = y;
-		if (score_internal[what].offset[y] == G5)
-			g_off = y;
-	}
+	e_mask = score_internal[what].footprint & MASK(E5);
+	g_mask = score_internal[what].footprint & MASK(G5);
 
-	if (type != 0 && (e_off == -1 || g_off == -1 ||
-	    (score_internal[what].keyword[0] == 'M') ||
-	    (score_internal[what].keyword[0] == 'm')))
+	if (type != 0 && (e_mask == 0 || g_mask == 0))
 		return (1);
 
 	switch (type) {
@@ -110,10 +124,7 @@ score_variant_init_sub(unsigned int x, struct score_variant *ps)
 		ps->keyword[0] = 'm';
 		STRLCPY(ps->keyword + 1, score_internal[what].keyword,
 		    sizeof(ps->keyword) - 1);
-		memcpy(ps->offset, score_internal[what].offset,
-		    sizeof(ps->offset));
-
-		ps->offset[e_off]--;
+		ps->footprint = (score_internal[what].footprint ^ e_mask) | (e_mask / 2);
 		break;
 	case 2:
 		/* dim */
@@ -123,11 +134,8 @@ score_variant_init_sub(unsigned int x, struct score_variant *ps)
 
 		STRLCPY(ps->keyword + 3, score_internal[what].keyword,
 		    sizeof(ps->keyword) - 3);
-		memcpy(ps->offset, score_internal[what].offset,
-		    sizeof(ps->offset));
-
-		ps->offset[e_off]--;
-		ps->offset[g_off]--;
+		ps->footprint = (score_internal[what].footprint ^
+		    e_mask ^ g_mask) | (e_mask / 2) | (g_mask / 2);
 		break;
 	case 3:
 		/* aug */
@@ -137,10 +145,9 @@ score_variant_init_sub(unsigned int x, struct score_variant *ps)
 
 		STRLCPY(ps->keyword + 3, score_internal[what].keyword,
 		    sizeof(ps->keyword) - 3);
-		memcpy(ps->offset, score_internal[what].offset,
-		    sizeof(ps->offset));
 
-		ps->offset[g_off]++;
+		ps->footprint = (score_internal[what].footprint ^
+		    g_mask) | (g_mask / 2);
 		break;
 	case 4:
 		/* sus */
@@ -150,17 +157,14 @@ score_variant_init_sub(unsigned int x, struct score_variant *ps)
 
 		STRLCPY(ps->keyword + 3, score_internal[what].keyword,
 		    sizeof(ps->keyword) - 3);
-		memcpy(ps->offset, score_internal[what].offset,
-		    sizeof(ps->offset));
-
-		ps->offset[e_off]++;
+		ps->footprint = (score_internal[what].footprint ^
+		    e_mask) | (e_mask * 2);
 		break;
 	default:
 		/* others */
 		STRLCPY(ps->keyword, score_internal[what].keyword,
 		    sizeof(ps->keyword));
-		memcpy(ps->offset, score_internal[what].offset,
-		    sizeof(ps->offset));
+		ps->footprint = score_internal[what].footprint;
 		break;
 	}
 	return (0);
@@ -171,19 +175,40 @@ MppScoreVariantInit(void)
 {
 	unsigned int x;
 	unsigned int y;
+	unsigned int z;
+	unsigned int t;
 
 	for (x = y = 0; x != (MAX_VAR * MAX_TYPE); x++) {
-		if (score_variant_init_sub(x, &mpp_score_variant[y]) == 0) {
-			MppVariantList += QString("/* C") +
-			    QString(mpp_score_variant[y].keyword) +
-			    QString(" */\n");
-			y++;
+		if (score_variant_init_sub(x, &mpp_score_variant[y]) != 0)
+			continue;
+		y++;
+	}
+
+	for (x = 0; x != y; x ++) {
+		int dup = mpp_score_variant[x].duplicate;
+
+		MppVariantList += QString("/* C") +
+		    QString(mpp_score_variant[x].keyword) +
+		    (dup ? QString(" = C") + QString(mpp_score_variant[dup - 1].keyword) : QString()) +
+		    QString(" */\n");
+
+		if (dup)
+			continue;
+		for (z = x + 1; z != y; z++) {
+			for (t = 0; t != 12; t++) {
+				if (MppRor(mpp_score_variant[z].footprint, t) ==
+					    mpp_score_variant[x].footprint)
+					break;
+			}
+			if (t != 12)
+				mpp_score_variant[z].duplicate = 1 + x;
 		}
 	}
 
+	MppVariantList += QString("\n/* Number of supported chords is %1 */\n").arg(y);
+
 	mpp_max_variant = y;
 }
-
 
 static uint8_t
 mpp_get_key(char *ptr, char **pp)
@@ -240,137 +265,94 @@ mpp_get_key(char *ptr, char **pp)
 }
 
 uint8_t
-MppDecode :: parseScoreChord(struct MppScoreEntry *ps,
-    const char *chord, uint8_t allow_var)
+MppDecode :: parseScoreChord(MppChordElement *pinfo)
 {
 	QString out;
-
-	uint8_t foot_print[12];
-	uint8_t foot_max[12];
-	uint8_t foot_len = 0;
-	uint8_t max;
-	uint8_t min;
-	uint8_t var_min;
-	uint8_t var_max;
-	uint8_t fkey;
-	uint8_t match_curr;
-	uint8_t match_max;
-	uint8_t match_var;
-	uint8_t match_trans;
-
+	uint8_t temp[12];
+	uint32_t footprint = 0;
 	int x;
 	int y;
 	int z;
+	int n;
 	int is_sharp;
-	int key;
+	int rol;
+	int flags;
+	int best_x;
+	int best_y;
+	int best_z;
 
-	memset(foot_print, 0, sizeof(foot_print));
-	memset(foot_max, 0, sizeof(foot_max));
-	max = 0;
-
-	is_sharp = (strstr(chord, "#") != NULL);
-
-	if (mpp_find_chord(chord, &min, &fkey, &var_min)) {
-		min = 255;
-		var_min = 0;
-		var_max = mpp_max_variant;
-	} else {
-		min %= 12;
-		var_max = var_min + 1;
-	}
-
-	for (x = 0; x != MPP_MAX_SCORES; x++) {
-		if (ps[x].dur != 0) {
-			key = ps[x].key % 12;
-			/*
-			 * When the base score is unknown, we look for
-			 * a score that occurs more than once:
-			 */
-			if (foot_print[key] != 0 && min == 255)
-				min = key;
-			foot_print[key] = 1;
-			if (foot_max[key] < ps[x].key)
-				foot_max[key] = ps[x].key;
-			if (max < ps[x].key)
-				max = ps[x].key;
-		}
-	}
-	for (x = 0; x != 12; x++) {
-		if (foot_print[x])
-			foot_len++;
-		else
-			foot_max[x] = max;
-	}
-
-	if (foot_len == 0)
-		return (1);
-
-	match_max = 255;	/* smaller is better */
-	match_var = var_min;
-	match_trans = 0;
+	if (pinfo->chord != 0)
+		is_sharp = (pinfo->chord->txt.indexOf('#') > -1);
+	else
+		is_sharp = 0;
 
 	for (x = 0; x != 12; x++) {
-		for (y = var_min; y != var_max; y++) {
-			uint8_t p = 0;
-			uint8_t q = 0;
+		if (pinfo->stats[x] != 0)
+			footprint |= (1 << x);
+	}
 
-			for (z = 0; z != MPP_MAX_VAR_OFF; z++) {
-				key = mpp_score_variant[y].offset[z];
+	if (footprint == 0)
+		return (1);	/* not found */
 
-				if (key != 0) {
-					p++;
+	best_x = 0;
+	best_y = 12;
+	best_z = 12;
 
-					if (foot_print[(key + x) % 12])
-						q++;
-				}
-			}
-
-			if (p < foot_len)
-				p = foot_len;
-
-			if (p > q)
-				match_curr = p - q;
-			else
-				match_curr = q - p;
-
-			if (match_curr < match_max) {
-				match_max = match_curr;
-				match_var = y;
-				match_trans = x;
+	for (x = 0; x != mpp_max_variant; x++) {
+		if (mpp_score_variant[x].duplicate)
+			continue;
+		for (y = 0; y != 12; y++) {
+			z = MppSumbits(mpp_score_variant[x].footprint ^ MppRor(footprint, y));
+			if (z < best_z) {
+				best_z = z;
+				best_x = x;
+				best_y = y;
 			}
 		}
 	}
+	x = best_x;
+	y = best_y;
 
-	if (match_max != 0 && allow_var == 0) {
-		if (min == 255)
-			return (1);
-		z = MPP_MAX_VAR_OFF;
-		y = var_min;
-		key = fkey % 12;
-		spn_base->setValue(C5);
-		spn_rol->setValue(0);
-	} else {
-		y = match_var;
-		x = match_trans;
+	if (x == mpp_max_variant || y == 12)
+		return (1);	/* not found */
 
-		for (z = 0; z != MPP_MAX_VAR_OFF; z++) {
-			key = mpp_score_variant[y].offset[z];
+	for (n = z = 0; z != 12; z++) {
+		if (mpp_score_variant[x].footprint & (1 << z))
+			temp[n++] = z + y + C5;
+	}
+	if (n == 0)
+		return (1);	/* not found */
 
-			if ((key % 12) == ((max - foot_max[x]) % 12))
-				break;
+	rol = 0;
+	flags = 0;
+
+	while (flags != 3 &&
+	    rol < (spn_rol->maximum() - 1) &&
+	    rol > (spn_rol->minimum() + 1)) {
+
+		mid_sort(temp, n);
+
+		if (temp[n-1] < pinfo->key_max) {
+			mid_trans(temp, n, 1);
+			rol++;
+			flags |= 1;
+		} else if (temp[n-1] > pinfo->key_max) {
+			mid_trans(temp, n, -1);
+			rol--;
+			flags |= 2;
+		} else {
+			break;
 		}
-		key = (foot_max[x] % 12);
-		spn_base->setValue(foot_max[x] - key);
-		z = z - foot_len + 1;
-		spn_rol->setValue(z);
 	}
 
-	out += MppBaseKeyToString(key, is_sharp);
-	out += mpp_score_variant[y].keyword;
+	spn_rol->setValue(rol);
 
-	if (min != 255 && min != key) {
+	out += MppBaseKeyToString(y, is_sharp);
+	out += mpp_score_variant[x].keyword;
+
+	if (y != pinfo->key_base) {
 		out += "/";
-		out += MppBaseKeyToString(min, is_sharp);
+		out += MppBaseKeyToString(pinfo->key_base, is_sharp);
 	}
 
 	lin_edit->setText(out);
@@ -430,8 +412,8 @@ mpp_find_chord(const char *input, uint8_t *pbase,
 }
 
 uint8_t
-mpp_parse_chord(const char *input, uint8_t trans,
-    int8_t rol, uint8_t *pout, uint8_t *pn,
+mpp_parse_chord(const char *input, int8_t rol,
+    uint8_t *pout, uint8_t *pn,
     uint8_t *pvar, int change_var)
 {
 	uint8_t error = 0;
@@ -449,33 +431,27 @@ mpp_parse_chord(const char *input, uint8_t trans,
 	}
 
 	if (change_var != 0) {
-		while (change_var > 0) {
-			x++;
-			x %= mpp_max_variant;
-			if (mpp_score_variant[x].offset[0] != 0)
-				change_var--;
-		}
-		while (change_var < 0) {
-			x--;
-			x += mpp_max_variant;
-			x %= mpp_max_variant;
-			if (mpp_score_variant[x].offset[0] != 0)
-				change_var++;
+		change_var %= (int)mpp_max_variant;
+		x = (mpp_max_variant + change_var + x) % mpp_max_variant;
+
+		/* skip duplicates */
+		while (mpp_score_variant[x].duplicate) {
+			if (change_var < 0)
+				x = (mpp_max_variant + x - 1) % mpp_max_variant;
+			else
+				x = (mpp_max_variant + x + 1) % mpp_max_variant;
 		}
 	}
 
 	n = 0;
 
-	pout[n++] = (base - C5) + trans;
+	pout[n++] = base;
 
-	for (y = 0; y != MPP_MAX_VAR_OFF; y++) {
-		uint8_t z;
-
-		z = mpp_score_variant[x].offset[y];
-		if (z == 0)
-			break;
+	for (y = 0; y != 12; y++) {
+		if (!(mpp_score_variant[x].footprint & (1 << y)))
+			continue;
 		if (n < *pn)
-			pout[n++] = (z - C5) + (key - C5) + trans;
+			pout[n++] = y + key;
 	}
 
 	mid_trans(pout + 1, n - 1, rol);
@@ -509,18 +485,12 @@ MppDecode :: MppDecode(MppMainWindow *_mw, int is_edit)
 	lbl_format = new QLabel(tr("[CDEFGABH][#b][...][/CDEFGABH[#b]]"));
 	lbl_status = new QLabel(tr(""));
 	lbl_rol = new QLabel(tr("Rotate:"));
-	lbl_base = new QLabel(tr("Base (C5):"));
 	lbl_auto_base = new QLabel(tr("Add auto base:"));
 
 	spn_rol = new QSpinBox();
 	spn_rol->setMaximum(127);
 	spn_rol->setMinimum(-127);
 	spn_rol->setValue(0);
-
-	spn_base = new QSpinBox();
-	spn_base->setMaximum(127);
-	spn_base->setMinimum(0);
-	spn_base->setValue(C5);
 
 	cbx_auto_base = new MppCheckBox();
 	cbx_auto_base->setChecked(1);
@@ -539,7 +509,6 @@ MppDecode :: MppDecode(MppMainWindow *_mw, int is_edit)
 	}
 	connect(lin_edit, SIGNAL(textChanged(const QString &)), this, SLOT(handle_parse_text(const QString &)));
 	connect(spn_rol, SIGNAL(valueChanged(int)), this, SLOT(handle_parse_int(int)));
-	connect(spn_base, SIGNAL(valueChanged(int)), this, SLOT(handle_parse_int(int)));
 	connect(cbx_auto_base, SIGNAL(stateChanged(int)), this, SLOT(handle_parse_int(int)));
 
 	memset(current_score, 0, sizeof(current_score));
@@ -548,10 +517,7 @@ MppDecode :: MppDecode(MppMainWindow *_mw, int is_edit)
 	gl->addWidget(lbl_format, 0,0,1,5, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	gl->addWidget(lbl_rol, 2,0,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(spn_rol, 2,1,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	gl->addWidget(lbl_base, 2,2,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(spn_base, 2,3,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(spn_rol, 2,1,1,2);
 
 	gl->addWidget(lin_edit, 3,0,1,5);
 	gl->addWidget(lbl_status, 2,4,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
@@ -639,7 +605,6 @@ MppDecode :: handle_parse(int change_var)
 	char *ptr;
 
 	int error;
-	int base;
 	int b_auto;
 	int rol;
 	int x;
@@ -654,13 +619,12 @@ MppDecode :: handle_parse(int change_var)
 	out += QString("U1 ");
 
 	rol = spn_rol->value();
-	base = spn_base->value();
 
 	memset(current_score, 0, sizeof(current_score));
 	memset(auto_base, 0, sizeof(auto_base));
 
 	n = sizeof(current_score) / sizeof(current_score[0]);
-	error = mpp_parse_chord(ptr, base, rol, current_score,
+	error = mpp_parse_chord(ptr, rol, current_score,
 	    &n, &var, change_var);
 
 	if (error == 0) {
@@ -722,7 +686,6 @@ done:
 	  + QString(" */");
 
 	lin_out->setText(out);
-	lbl_base->setText(tr("Base (") + QString(mid_key_str[base]) + tr("):"));
 
 	free(ptr);
 }

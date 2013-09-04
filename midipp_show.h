@@ -28,7 +28,6 @@
 
 #include "midipp.h"
 
-#define	MPP_SHOW_MAX 16
 #define	MPP_TRAN_MAX 4
 
 enum {
@@ -58,12 +57,12 @@ public:
 	MppShowControl(MppMainWindow *);
 	~MppShowControl();
 
-	void handle_load(QString str);
-
 	MppMainWindow *mw;
 	MppGridLayout *gl_main;
 
-	QString labelTxt[MPP_SHOW_MAX];
+	void handle_label_change(int);
+
+	QString labelTxt[MPP_MAX_LABELS];
 
 	QPixmap background;
 
@@ -77,9 +76,7 @@ public:
 	MppShowWidget *wg_show;
 
 	MppButtonMap *butMode;
-	MppButtonMap *butLabel;
 	MppButtonMap *butTrack;
-	QPushButton *butLoadLyrics;
 	QPushButton *butShow;
 	QPushButton *butFullScreen;
 	QPushButton *butBackground;
@@ -87,11 +84,8 @@ public:
 
 public slots:
 	void handle_mode_change(int);
-	void handle_label_change(int);
 	void handle_track_change(int);
-	void handle_select_bg();
 	void handle_show();
-	void handle_load_lyrics();
 	void handle_fullscreen();
 	void handle_watchdog();
 	void handle_background();

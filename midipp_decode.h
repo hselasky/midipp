@@ -32,7 +32,8 @@
 
 struct score_variant {
 	char keyword[12];
-	uint8_t offset[MPP_MAX_VAR_OFF];
+	uint32_t footprint;
+	uint32_t duplicate;
 };
 
 class MppDecode : public QDialog
@@ -45,7 +46,7 @@ public:
 
 	QString getText();
 	void setText(QString);
-	uint8_t parseScoreChord(struct MppScoreEntry *, const char *, uint8_t);
+	uint8_t parseScoreChord(MppChordElement *);
 	void keyPressEvent(QKeyEvent *);
 	void wheelEvent(QWheelEvent *);
 
@@ -59,13 +60,11 @@ public:
 	QLabel *lbl_format;
 	QLabel *lbl_status;
 	QLabel *lbl_rol;
-	QLabel *lbl_base;
 	QLabel *lbl_auto_base;
 
 	MppCheckBox *cbx_auto_base;
 
 	QSpinBox *spn_rol;
-	QSpinBox *spn_base;
 
 	MppButton *but_play[3];
 	QPushButton *but_ok;
@@ -83,10 +82,9 @@ public slots:
 	void handle_parse_int(int x);
 	void handle_parse_text(const QString &x);
 	void handle_parse(int = 0);
-
 };
 
 extern uint8_t mpp_find_chord(const char *input, uint8_t *pbase, uint8_t *pkey, uint8_t *pvar);
-extern uint8_t mpp_parse_chord(const char *input, uint8_t trans, int8_t rol, uint8_t *pout, uint8_t *pn, uint8_t *, int);
+extern uint8_t mpp_parse_chord(const char *input, int8_t rol, uint8_t *pout, uint8_t *pn, uint8_t *, int);
 
 #endif		/* _MIDIPP_DECODE_H_ */

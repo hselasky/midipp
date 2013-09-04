@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2012 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2013 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -60,7 +60,6 @@
 #include <QFontDialog>
 #include <QFontInfo>
 #include <QFileInfo>
-#include <QPixmap>
 #include <QMouseEvent>
 #include <QSizePolicy>
 #include <QListWidget>
@@ -78,15 +77,14 @@
 #include <umidi20.h>
 
 #define	MPP_MAX_BUTTON_MAP	16
-#define	MPP_MAX_MERGE	1024
 #define	MPP_MAX_VIEWS	2
 #define	MPP_MAX_LINES	8192
 #define	MPP_MAX_SCORES	32
 #define	MPP_MAX_LABELS	32
 #define	MPP_MAX_QUEUE	32
-#define	MPP_MAX_DEVS	6
+#define	MPP_MAX_DEVS	8
 #define	MPP_MAX_BPM	32
-#define	MPP_MAX_LBUTTON	12
+#define	MPP_MAX_LBUTTON	16
 #define	MPP_MIN_POS	4	/* ticks */
 #define	MPP_PRESSED_MAX	128
 #define	MPP_MAX_DURATION 255	/* inclusive */
@@ -112,10 +110,11 @@ class MppButtonMap;
 class MppDataBase;
 class MppDecode;
 class MppDevices;
-class MppEchoTab;
+class MppElement;
 class MppGPro;
 class MppGroupBox;
 class MppGridLayout;
+class MppHead;
 class MppImportTab;
 class MppLoopTab;
 class MppMainWindow;
@@ -133,24 +132,13 @@ class MppShowWidget;
 class MppSpinBox;
 class MppVolume;
 
-class QPrinter;
+struct MppChordElement;
 
-struct MppChordInfo {
-	int chord_line;
-	uint8_t start_col;
-	uint8_t stop_col;
-};
+class QPrinter;
 
 struct MppScoreEntry {
 	uint8_t key;
 	uint8_t dur;
-	uint8_t channel;
-};
-
-struct MppMergeEntry {
-	uint32_t ticks;
-	uint8_t is_on;
-	uint8_t key;
 	uint8_t channel;
 };
 
@@ -161,11 +149,18 @@ struct MppInstr {
 	uint8_t updated;
 };
 
+struct MppVisualDot {
+	int x_off;
+	int y_off;
+};
+
 struct MppVisualScore {
-	char *pstr;
-	QPixmap *pic;
-	int32_t x_off;
-	int32_t y_off;
+	QPicture *pic;
+	struct MppVisualDot *pdot;
+	MppElement *start;
+	MppElement *stop;
+	int newpage;
+	int ndot;
 };
 
 extern QColor color_black;

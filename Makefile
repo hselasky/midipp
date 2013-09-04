@@ -26,7 +26,7 @@
 # Makefile for MIDI Player Pro
 #
 
-VERSION=1.1.3
+VERSION=1.1.5
 
 PREFIX?=/usr/local
 

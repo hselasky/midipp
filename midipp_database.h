@@ -64,7 +64,6 @@ public:
 	QPushButton *download;
 	QPushButton *open_a;
 	QPushButton *open_b;
-	QPushButton *open_l;
 	QPushButton *reset;
 	QPushButton *clear_url;
 	QPushButton *clear_search;
@@ -74,7 +73,6 @@ public:
 public slots:
 	void handle_open_a();
 	void handle_open_b();
-	void handle_open_l();
 	void handle_reset();
 	void handle_clear_url();
 	void handle_clear_search();

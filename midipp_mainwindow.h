@@ -220,9 +220,6 @@ public:
 	MppButtonMap *mbm_score_record;
 	MppButtonMap *mbm_key_mode;
 
-	QPushButton *but_insert_chord;
-	QPushButton *but_edit_chord;
-	QPushButton *but_replace;
 	QPushButton *but_jump[MPP_MAX_LBUTTON];
 	QPushButton *but_compile;
 	MppButton *but_play[2];
@@ -319,9 +316,6 @@ public:
 public slots:
 	void handle_quit();
 	void handle_play_key_changed(int);
-	void handle_insert_chord();
-	void handle_edit_chord();
-	void handle_replace();
 	void handle_jump(int index);
 	void handle_compile(int force = 0);
 	void handle_score_record(int);
