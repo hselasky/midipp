@@ -47,6 +47,7 @@ public:
 
 	void paintEvent(QPaintEvent *);
 	void keyPressEvent(QKeyEvent *);
+	void mouseDoubleClickEvent(QMouseEvent *e);
 };
 
 class MppShowControl : public QObject

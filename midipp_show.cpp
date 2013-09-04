@@ -177,6 +177,13 @@ MppShowWidget :: keyPressEvent(QKeyEvent *key)
 	}
 }
 
+void
+MppShowWidget :: mouseDoubleClickEvent(QMouseEvent *e)
+{
+	/* toggle fullscreen */
+	setWindowState(windowState() ^ Qt::WindowFullScreen);
+}
+
 MppShowControl :: MppShowControl(MppMainWindow *_mw)
 {
 	mw = _mw;
