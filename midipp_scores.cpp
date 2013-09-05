@@ -60,12 +60,67 @@ MppCountNewline(const QString &str)
 MppScoreView :: MppScoreView(MppScoreMain *parent)
 {
 	pScores = parent;
+	setFocusPolicy(Qt::ClickFocus);
 }
 
 void
 MppScoreView :: mousePressEvent(QMouseEvent *e)
 {
 	pScores->viewMousePressEvent(e);
+}
+
+void
+MppScoreView :: wheelEvent(QWheelEvent *event)
+{
+	QScrollBar *ps = pScores->viewScroll;
+	int value;
+
+	value = ps->value();
+
+	if (event->delta() < 0)
+		value ++;
+	else if (event->delta() > 0)
+		value --;
+	else
+		goto done;
+
+	if (value >= ps->minimum() && value <= ps->maximum())
+		ps->setValue(value);
+done:
+	event->accept();
+}
+
+void
+MppScoreView :: keyPressEvent(QKeyEvent *event)
+{
+	QScrollBar *ps = pScores->viewScroll;
+	int value;
+
+	value = ps->value();
+
+	switch (event->key()) {
+	case Qt::Key_PageDown:
+	case Qt::Key_Down:
+		value ++;
+		break;
+	case Qt::Key_Up:
+	case Qt::Key_PageUp:
+		value --;
+		break;
+	case Qt::Key_End:
+		value = ps->maximum();
+		break;
+	case Qt::Key_Home:
+		value = 0;
+		break;
+	default:
+		goto done;
+	}
+
+	if (value >= ps->minimum() && value <= ps->maximum())
+		ps->setValue(value);
+ done:
+	event->accept();
 }
 
 void
@@ -219,8 +274,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 
 	viewScroll = new QScrollBar(Qt::Vertical);
 	viewScroll->setValue(0);
-	viewScroll->setMinimum(0);
-	viewScroll->setMaximum(0);
+	viewScroll->setRange(0,0);
 	viewScroll->setPageStep(1);
 
 	connect(viewScroll, SIGNAL(valueChanged(int)), this, SLOT(handleScrollChanged(int)));
@@ -811,7 +865,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 	handlePrintSub(0, QPoint(0,0), 1.0);
 
 	/* update scrollbar */
-	viewScroll->setMaximum(visual_max);
+	viewScroll->setMaximum((visual_max > 0) ? (visual_max - 1) : 0);
 
 	MppShowControl *pshow = mainWindow->tab_show_control;
 

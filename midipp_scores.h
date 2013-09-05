@@ -35,8 +35,11 @@ class MppScoreView : public QWidget
 public:
 	MppScoreView(MppScoreMain *parent);
 
-	void paintEvent(QPaintEvent *event);
-	void mousePressEvent(QMouseEvent *e);
+protected:
+	void paintEvent(QPaintEvent *);
+	void mousePressEvent(QMouseEvent *);
+	void wheelEvent(QWheelEvent *);
+	void keyPressEvent(QKeyEvent *);
 
 	MppScoreMain *pScores;
 };

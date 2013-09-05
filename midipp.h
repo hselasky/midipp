@@ -73,6 +73,7 @@
 #include <QSlider>
 #include <QtNetwork>
 #include <QUrl>
+#include <QWheelEvent>
 
 #include <umidi20.h>
 
