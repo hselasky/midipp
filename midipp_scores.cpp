@@ -1339,7 +1339,9 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 			if (chordNormalize == 0) {
 				vel_other = vel;
 			} else {
-				vel_other = (vel * chordContrast) / (nfoot * 128);
+				vel_other = vel +
+				  ((vel * (nfoot - 1) * (128 - chordContrast)) /
+				    (nfoot * 128));
 				if (vel_other > 127)
 					vel_other = 127;
 				else if (vel_other < 0)
