@@ -32,13 +32,14 @@ class MppReplace : public QDialog
 {
 	Q_OBJECT;
 public:
-	MppReplace(MppMainWindow *, QString, QString);
+	MppReplace(MppMainWindow *, MppScoreMain *, QString, QString);
 	~MppReplace();
 
 	QString match;
 	QString replace;
 
 	MppMainWindow *mw;
+	MppScoreMain *sm;
 
 	QGridLayout *gl;
 	QLabel *lbl_replace;

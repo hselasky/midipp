@@ -41,7 +41,7 @@ class MppDecode : public QDialog
 	Q_OBJECT;
 
 public:
-	MppDecode(MppMainWindow *, int);
+	MppDecode(MppMainWindow *, MppScoreMain *, int);
 	~MppDecode();
 
 	QString getText();
@@ -51,6 +51,7 @@ public:
 	void wheelEvent(QWheelEvent *);
 
 	MppMainWindow *mw;
+	MppScoreMain *sm;
 
 	QGridLayout *gl;
 

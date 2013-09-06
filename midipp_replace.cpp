@@ -27,12 +27,13 @@
 #include "midipp_mainwindow.h"
 #include "midipp_replace.h"
 
-MppReplace :: MppReplace(MppMainWindow *_mw, QString _match, QString _replace)
-  : QDialog(0)
+MppReplace :: MppReplace(MppMainWindow *_mw, MppScoreMain *_sm,
+  QString _match, QString _replace) : QDialog(0)
 {
 	gl = new QGridLayout(this);
 
 	mw = _mw;
+	sm = _sm;
 
 	setWindowTitle(tr("Replace text dialog"));
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
@@ -81,7 +82,7 @@ MppReplace :: accept(void)
 void
 MppReplace :: edit(void)
 {
-	MppDecode dlg(mw, 0);
+	MppDecode dlg(mw, sm, 0);
 
 	if (dlg.exec() == QDialog::Accepted)
 		led_with->setText(dlg.getText());

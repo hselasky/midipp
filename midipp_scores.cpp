@@ -1848,7 +1848,7 @@ MppScoreMain :: handleEditLine(void)
 
 	if (temp.getChord(row, &info) != 0) {
 
-		MppDecode dlg(mainWindow, 1);
+		MppDecode dlg(mainWindow, this, 1);
 
 		if (dlg.parseScoreChord(&info) == 0) {
 
@@ -1897,7 +1897,7 @@ MppScoreMain :: handleScoreFileReplaceAll(void)
 {
 	QTextCursor cursor(editWidget->textCursor());
 
-	MppReplace dlg(mainWindow, cursor.selectedText(),
+	MppReplace dlg(mainWindow, this, cursor.selectedText(),
 	    cursor.selectedText());
 
 	if (dlg.exec() == QDialog::Accepted) {
@@ -2100,7 +2100,7 @@ MppScoreMain :: getCurrLabel(void)
 void
 MppScoreMain :: handleScoreFileInsertChord(void)
 {
-	MppDecode dlg(mainWindow, 0);
+	MppDecode dlg(mainWindow, this, 0);
 
         if(dlg.exec() == QDialog::Accepted) {
 		QTextCursor cursor(editWidget->textCursor());

@@ -462,12 +462,13 @@ mpp_parse_chord(const char *input, int8_t rol,
 	return (0);
 }
 
-MppDecode :: MppDecode(MppMainWindow *_mw, int is_edit)
+MppDecode :: MppDecode(MppMainWindow *_mw, MppScoreMain *_sm, int is_edit)
   : QDialog(0)
 {
 	int n;
 
 	mw = _mw;
+	sm = _sm;
 
 	gl = new QGridLayout(this);
 
@@ -549,10 +550,10 @@ MppDecode :: handle_play_press(int vel)
 	pthread_mutex_lock(&mw->mtx);
 	for (x = 0; x != MPP_MAX_VAR_OFF; x++) {
 		if (auto_base[x] != 0)
-			mw->output_key(mw->currScoreMain()->synthChannel, auto_base[x], vel, 0, 0);
+			mw->output_key(sm->synthChannel, auto_base[x], vel, 0, 0);
 	}
 	for (x = 0; current_score[x]; x++) {
-		mw->output_key(mw->currScoreMain()->synthChannel, current_score[x], vel, 0, 0);
+		mw->output_key(sm->synthChannel, current_score[x], vel, 0, 0);
 	}
 	pthread_mutex_unlock(&mw->mtx);
 }
@@ -565,10 +566,10 @@ MppDecode :: handle_play_release(int vel)
 	pthread_mutex_lock(&mw->mtx);
 	for (x = 0; x != MPP_MAX_VAR_OFF; x++) {
 		if (auto_base[x] != 0)
-			mw->output_key(mw->currScoreMain()->synthChannel, auto_base[x], 0, 0, 0);
+			mw->output_key(sm->synthChannel, auto_base[x], 0, 0, 0);
 	}
 	for (x = 0; current_score[x]; x++) {
-		mw->output_key(mw->currScoreMain()->synthChannel, current_score[x], 0, 0, 0);
+		mw->output_key(sm->synthChannel, current_score[x], 0, 0, 0);
 	}
 	pthread_mutex_unlock(&mw->mtx);
 }
