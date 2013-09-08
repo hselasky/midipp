@@ -52,15 +52,38 @@ MppSpaceOnly(QString &str)
 }
 
 int
-MppHasSpace(QString &str)
+MppIsChord(QString &str)
 {
 	int x;
+	int retval = 0;
+
+	if (str.size() > 1) {
+		QChar ch = str[1];
+
+		if (ch == 'A' ||
+		    ch == 'B' ||
+		    ch == 'C' ||
+		    ch == 'D' ||
+		    ch == 'E' ||
+		    ch == 'F' ||
+		    ch == 'G' ||
+		    ch == 'H')
+			retval = 1;
+	}
 
 	for (x = 0; x != str.size(); x++) {
-		if (str[x] == ' ' || str[x] == '\t')
-			return (1);
+		QChar ch = str[x];
+
+		if (ch.isDigit() || ch.isLetter() ||
+		    ch == '+' || ch == '#' ||
+		    ch == '(' || ch == ')' ||
+		    ch == '/')
+			continue;
+
+		retval = 0;
+		break;
 	}
-	return (0);
+	return (retval);
 }
 
 QString
@@ -577,7 +600,7 @@ MppHead :: getChord(int line, MppChordElement *pinfo)
 		for (ptr = start; ptr != stop;
 		    ptr = TAILQ_NEXT(ptr, entry)) {
 			if (ptr->type == MPP_T_STRING_CHORD &&
-			    MppHasSpace(ptr->txt) == 0) {
+			    MppIsChord(ptr->txt) != 0) {
 				string_start = start;
 				string_stop = stop;
 				counter = 0;
@@ -929,7 +952,7 @@ MppHead :: transposeScore(int adjust, int sharp)
 				continue;			
 
 			/* Chords should not contain spaces of any kind */
-			if (MppHasSpace(ptr->txt))
+			if (MppIsChord(ptr->txt) == 0)
 				continue;
 
 			for (x = 0; x < ptr->txt.size() - 1; x++) {
@@ -979,7 +1002,7 @@ MppHead :: transposeScore(int adjust, int sharp)
 			continue;
 
 		/* Chords should not contain spaces of any kind */
-		if (MppHasSpace(ptr->txt))
+		if (MppIsChord(ptr->txt) == 0)
 			continue;
 
 		QString out;
@@ -1282,7 +1305,7 @@ MppHead :: toLyrics(QString *pstr)
 		    ptr = TAILQ_NEXT(ptr, entry)) {
 			switch (ptr->type) {
 			case MPP_T_STRING_CHORD:
-				if (MppHasSpace(ptr->txt) == 0)
+				if (MppIsChord(ptr->txt))
 					break;
 				linebuf += MppDeQuoteChord(ptr->txt) + '\n';
 				break;
@@ -1300,14 +1323,16 @@ MppHead :: toLyrics(QString *pstr)
 			if ((linebuf.size() > 1) &&
 			    (linebuf[0] == 'L') && linebuf[1].isDigit()) {
 				label = 0;
-				for (x = 1; (x != linebuf.size()) && (linebuf[x].isDigit()); x++) {
+				for (x = 1; (x != linebuf.size()) &&
+				    (linebuf[x].isDigit()); x++) {
 					label *= 10;
 					label += linebuf[x].digitValue();
 				}
 				if (label < 0 || label >= MPP_MAX_LABELS)
 					label = 0;
 			} else {
-				pstr[label] += linebuf + '\n';
+				if (MppSpaceOnly(linebuf) == 0)
+					pstr[label] += linebuf + '\n';
 			}
 		}
 	}

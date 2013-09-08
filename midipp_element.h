@@ -161,7 +161,7 @@ public:
 };
 
 extern int MppSpaceOnly(QString &);
-extern int MppHasSpace(QString &);
+extern int MppIsChord(QString &);
 extern QString MppDeQuoteChord(QString &);
 extern QString MppDeQuoteString(QString &);
 
