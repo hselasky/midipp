@@ -88,8 +88,8 @@ MppShowWidget :: paintText(QPainter &paint, QString &str, int w, int h)
 	fnt.setPixelSize(pt);
 	paint.setFont(fnt);
 	txtBound = paint.boundingRect(QRectF(wm,hm,w,h), Qt::AlignCenter, str);
-	txtBound = QRectF(txtBound.x() - (2.0 * pt), txtBound.y() - (2.0 * pt),
-	    txtBound.width() + (4.0 * pt), txtBound.height() + (4.0 * pt));
+	txtBound = QRectF(txtBound.x() - pt, txtBound.y() - pt,
+	    txtBound.width() + (2.0 * pt), txtBound.height() + (2.0 * pt));
 	paint.setPen(QPen(parent->fontBgColor, 16));
 	paint.setBrush(parent->fontBgColor);
 	factor = paint.opacity();
