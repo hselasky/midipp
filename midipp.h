@@ -74,6 +74,7 @@
 #include <QtNetwork>
 #include <QUrl>
 #include <QWheelEvent>
+#include <QColorDialog>
 
 #include <umidi20.h>
 

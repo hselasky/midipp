@@ -34,10 +34,70 @@
 MppShowWidget :: MppShowWidget(MppShowControl *_parent)
 {
 	parent = _parent;
+
+	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 }
 
 MppShowWidget :: ~MppShowWidget()
 {
+}
+
+void
+MppShowWidget :: paintText(QPainter &paint, QString &str, int w, int h)
+{
+	QRectF txtBound;
+	QFont fnt;
+	qreal ps;
+	qreal pt;
+	qreal factor;
+	int wm = w / 16;
+	int hm = h / 16;
+
+	if (str.size() == 0)
+		return;
+
+	w -= 2*wm;
+	h -= 2*hm;
+
+	fnt = parent->mw->defaultFont;
+
+	for (ps = 1.0; ps < 128.0; ps *= 2.0) {
+		fnt.setPixelSize(ps);
+		paint.setFont(fnt);
+		txtBound = paint.boundingRect(QRectF(0,0,w,h), Qt::AlignCenter, str);
+
+		if (txtBound.width() >= w || 
+		    txtBound.height() >= h)
+			break;
+	}
+	pt = ps;
+	ps /= 2.0;
+
+	for ( ; ps >= 1.0; ps /= 2.0) {
+		pt -= ps;
+
+		fnt.setPixelSize(pt);
+		paint.setFont(fnt);
+		txtBound = paint.boundingRect(QRectF(0,0,w,h), Qt::AlignCenter, str);
+
+		if (txtBound.width() < w &&
+		    txtBound.height() < h)
+			pt += ps;
+	}
+
+	fnt.setPixelSize(pt);
+	paint.setFont(fnt);
+	txtBound = paint.boundingRect(QRectF(wm,hm,w,h), Qt::AlignCenter, str);
+	txtBound = QRectF(txtBound.x() - (2.0 * pt), txtBound.y() - (2.0 * pt),
+	    txtBound.width() + (4.0 * pt), txtBound.height() + (4.0 * pt));
+	paint.setPen(QPen(parent->fontBgColor, 16));
+	paint.setBrush(parent->fontBgColor);
+	factor = paint.opacity();
+	paint.setOpacity(0.75 * factor);
+	paint.drawRoundedRect(txtBound, 16, 16);
+	paint.setOpacity(factor);
+	paint.setPen(parent->fontFgColor);
+	paint.drawText(QRectF(0,0,w+(2*wm),h+(2*hm)), Qt::AlignCenter, str);
 }
 
 void
@@ -52,14 +112,11 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 	qreal ratio_w;
 	qreal ratio_h;
 	qreal ratio;
-	qreal factor;
-	qreal ps;
 	int p;
 
 	paint.setRenderHints(QPainter::Antialiasing, 1);
 
 	QColor black(0,0,0);
-	QColor white(255,255,255);
 
 	paint.fillRect(QRectF(0,0,w,h), black);
 
@@ -78,46 +135,18 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 
 	QRect bg_rect((w - bg_w * ratio) / 2.0, (h - bg_h * ratio) / 2.0, bg_w * ratio, bg_h * ratio);
 
-	QFont fnt = parent->mw->defaultFont;
-
 	if (p < MPP_TRAN_MAX) {
-		paint.setOpacity((qreal)(MPP_TRAN_MAX - p) / (qreal)MPP_TRAN_MAX);
+		paint.setOpacity((qreal)(MPP_TRAN_MAX - p - 1) / (qreal)MPP_TRAN_MAX);
 
 		switch(parent->last_st) {
 		case MPP_SHOW_ST_BLANK:
 			break;
-		case MPP_SHOW_ST_LOGO:
+		case MPP_SHOW_ST_BACKGROUND:
 			paint.drawPixmap(bg_rect,parent->background);
 			break;
-		case MPP_SHOW_ST_LIVE:
+		case MPP_SHOW_ST_LYRICS:
 			paint.drawPixmap(bg_rect,parent->background);
-
-			if (parent->labelTxt[parent->last_label].size() == 0)
-				break;
-			for (ps = 1.0; ps < 128.0; ps *= 2.0) {
-				fnt.setPixelSize(ps);
-				paint.setFont(fnt);
-				txtBound = paint.boundingRect(QRectF(0,0,w,h), Qt::AlignCenter, parent->labelTxt[parent->last_label]);
-
-				if (txtBound.width() >= w || 
-				    txtBound.height() >= h)
-					break;
-			}
-			ps /= 2.0;
-
- 			fnt.setPixelSize(ps);
-			paint.setFont(fnt);
-			txtBound = paint.boundingRect(QRectF(0,0,w,h), Qt::AlignCenter, parent->labelTxt[parent->last_label]);
-			txtBound = QRectF(txtBound.x() - (2.0 * ps), txtBound.y() - (2.0 * ps),
-			    txtBound.width() + (4.0 * ps), txtBound.height() + (4.0 * ps));
-			paint.setPen(QPen(white, 16));
-			paint.setBrush(white);
-			factor = paint.opacity();
-			paint.setOpacity(0.75 * factor);
-			paint.drawRoundedRect(txtBound, 16, 16);
-			paint.setOpacity(factor);
-			paint.setPen(black);
-			paint.drawText(QRectF(0,0,w,h), Qt::AlignCenter, parent->labelTxt[parent->last_label]);
+ 			paintText(paint, parent->labelTxt[parent->last_label], w, h);
 			break;
 		default:
 			break;
@@ -128,39 +157,12 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 	switch(parent->curr_st) {
 	case MPP_SHOW_ST_BLANK:
 		break;
-	case MPP_SHOW_ST_LOGO:
+	case MPP_SHOW_ST_BACKGROUND:
 		paint.drawPixmap(bg_rect,parent->background);
 		break;
-	case MPP_SHOW_ST_LIVE:
+	case MPP_SHOW_ST_LYRICS:
 		paint.drawPixmap(bg_rect,parent->background);
-
-		if (parent->labelTxt[parent->curr_label].size() == 0)
-			break;
-
- 		for (ps = 1.0; ps < 128.0; ps *= 2.0) {
- 			fnt.setPixelSize(ps);
-			paint.setFont(fnt);
-			txtBound = paint.boundingRect(QRectF(0,0,w,h), Qt::AlignCenter, parent->labelTxt[parent->curr_label]);
-
-			if (txtBound.width() >= w || 
-			    txtBound.height() >= h)
-				break;
-		}
-		ps /= 2.0;
-
-		fnt.setPixelSize(ps);
-		paint.setFont(fnt);
-		txtBound = paint.boundingRect(QRectF(0,0,w,h), Qt::AlignCenter, parent->labelTxt[parent->curr_label]);
-		txtBound = QRectF(txtBound.x() - (2.0 * ps), txtBound.y() - (2.0 * ps),
-		    txtBound.width() + (4.0 * ps), txtBound.height() + (4.0 * ps));
-		paint.setPen(QPen(white, 16));
-		paint.setBrush(white);
-		factor = paint.opacity();
-		paint.setOpacity(0.75 * factor);
-		paint.drawRoundedRect(txtBound, 16, 16);
-		paint.setOpacity(factor);
-		paint.setPen(black);
-		paint.drawText(QRectF(0,0,w,h), Qt::AlignCenter, parent->labelTxt[parent->curr_label]);
+		paintText(paint, parent->labelTxt[parent->curr_label], w, h);
 		break;
 	default:
 		break;
@@ -197,10 +199,13 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 	transition = 0;
 	trackview = 0;
 
+	fontFgColor = QColor(0,0,0);
+	fontBgColor = QColor(255,255,255);
+
 	butTrack = new MppButtonMap("Track\0" "View-A\0" "View-B\0", 2, 2);
 	connect(butTrack, SIGNAL(selectionChanged(int)), this, SLOT(handle_track_change(int)));
 
-	butMode = new MppButtonMap("Current mode\0" "BLANK\0" "LOGO\0" "LIVE\0", 3, 3);
+	butMode = new MppButtonMap("Current mode\0" "BLANK\0" "BACKGROUND\0" "LYRICS\0", 3, 3);
 	connect(butMode, SIGNAL(selectionChanged(int)), this, SLOT(handle_mode_change(int)));
 
 	butShow = new QPushButton(tr("Show"));
@@ -212,16 +217,23 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 	butBackground = new QPushButton(tr("Background"));
 	connect(butBackground, SIGNAL(released()), this, SLOT(handle_background()));
 
+	butFontFgColor = new QPushButton(tr("Set Font Fg Color"));
+	connect(butFontFgColor, SIGNAL(released()), this, SLOT(handle_change_font_fg_color()));
+
+	butFontBgColor = new QPushButton(tr("Set Font Bg Color"));
+	connect(butFontBgColor, SIGNAL(released()), this, SLOT(handle_change_font_bg_color()));
+
 	gl_main = new MppGridLayout();
 
 	gl_main->addWidget(butTrack, 0, 0, 1, 2);
 	gl_main->addWidget(butMode, 0, 2, 1, 2);
-
 	gl_main->addWidget(butBackground, 3, 0, 1, 1);
-	gl_main->addWidget(butShow, 3, 2, 1, 1);
-	gl_main->addWidget(butFullScreen, 3, 3, 1, 1);
+	gl_main->addWidget(butFontFgColor, 3, 1, 1, 1);
+	gl_main->addWidget(butFontBgColor, 3, 2, 1, 1);
+	gl_main->addWidget(butShow, 3, 3, 1, 1);
+	gl_main->addWidget(butFullScreen, 3, 4, 1, 1);
 	gl_main->setRowStretch(2, 1);
-	gl_main->setColumnStretch(4, 1);
+	gl_main->setColumnStretch(5, 1);
 
 	watchdog = new QTimer(this);
 	connect(watchdog, SIGNAL(timeout()), this, SLOT(handle_watchdog()));
@@ -253,7 +265,7 @@ MppShowControl :: handle_label_change(int lbl)
 	last_label = curr_label;
 	curr_label = lbl;
 
-	if (curr_st == MPP_SHOW_ST_LIVE)
+	if (curr_st == MPP_SHOW_ST_LYRICS)
 		transition = 0;
 }
 
@@ -323,4 +335,26 @@ void
 MppShowControl :: handle_track_change(int n)
 {
 	trackview = n;
+}
+
+void
+MppShowControl :: handle_change_font_fg_color()
+{
+	QColorDialog dlg(fontFgColor);
+
+	if (dlg.exec() == QDialog::Accepted) {
+		fontFgColor = dlg.currentColor();
+		transition = 0;
+	}
+}
+
+void
+MppShowControl :: handle_change_font_bg_color()
+{
+	QColorDialog dlg(fontBgColor);
+
+	if (dlg.exec() == QDialog::Accepted) {
+		fontBgColor = dlg.currentColor();
+		transition = 0;
+	}
 }

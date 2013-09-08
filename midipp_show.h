@@ -32,8 +32,8 @@
 
 enum {
 	MPP_SHOW_ST_BLANK,
-	MPP_SHOW_ST_LOGO,
-	MPP_SHOW_ST_LIVE,
+	MPP_SHOW_ST_BACKGROUND,
+	MPP_SHOW_ST_LYRICS,
 	MPP_SHOW_ST_MAX,
 };
 
@@ -45,6 +45,7 @@ public:
 
 	MppShowControl *parent;
 
+	void paintText(QPainter &, QString &, int, int);
 	void paintEvent(QPaintEvent *);
 	void keyPressEvent(QKeyEvent *);
 	void mouseDoubleClickEvent(QMouseEvent *e);
@@ -67,6 +68,9 @@ public:
 
 	QPixmap background;
 
+	QColor fontFgColor;
+	QColor fontBgColor;
+
 	int last_label;
 	int last_st;
 	int curr_label;
@@ -81,6 +85,8 @@ public:
 	QPushButton *butShow;
 	QPushButton *butFullScreen;
 	QPushButton *butBackground;
+	QPushButton *butFontFgColor;
+	QPushButton *butFontBgColor;
 	QTimer *watchdog;
 
 public slots:
@@ -90,6 +96,8 @@ public slots:
 	void handle_fullscreen();
 	void handle_watchdog();
 	void handle_background();
+	void handle_change_font_fg_color();
+	void handle_change_font_bg_color();
 };
 
 #endif		/* _MIDIPP_SHOW_H_ */
