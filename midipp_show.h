@@ -64,7 +64,7 @@ public:
 
 	void handle_label_change(int);
 
-	QString labelTxt[MPP_MAX_LABELS];
+	QString labelTxt[MPP_MAX_VIEWS][MPP_MAX_LABELS];
 
 	QPixmap background;
 

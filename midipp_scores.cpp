@@ -869,12 +869,11 @@ MppScoreMain :: handleParse(const QString &pstr)
 
 	MppShowControl *pshow = mainWindow->tab_show_control;
 
-	if (unit == pshow->trackview) {
-		/* create show lyrics, if any */
-		head.toLyrics(pshow->labelTxt);
-		/* force new transition */
-		pshow->transition = 0;
-	}
+	/* create show lyrics, if any */
+	head.toLyrics(pshow->labelTxt[unit]);
+
+	/* force new transition */
+	pshow->transition = 0;
 }
 
 void

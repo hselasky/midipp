@@ -146,7 +146,7 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 			break;
 		case MPP_SHOW_ST_LYRICS:
 			paint.drawPixmap(bg_rect,parent->background);
- 			paintText(paint, parent->labelTxt[parent->last_label], w, h);
+ 			paintText(paint, parent->labelTxt[parent->trackview][parent->last_label], w, h);
 			break;
 		default:
 			break;
@@ -162,7 +162,7 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 		break;
 	case MPP_SHOW_ST_LYRICS:
 		paint.drawPixmap(bg_rect,parent->background);
-		paintText(paint, parent->labelTxt[parent->curr_label], w, h);
+		paintText(paint, parent->labelTxt[parent->trackview][parent->curr_label], w, h);
 		break;
 	default:
 		break;
@@ -335,6 +335,7 @@ void
 MppShowControl :: handle_track_change(int n)
 {
 	trackview = n;
+	transition = 0;
 }
 
 void
