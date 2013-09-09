@@ -35,6 +35,8 @@ public:
 	MppDevices(QWidget *parent = 0);
 	~MppDevices();
 
+	int autoSelect();
+
 	QGridLayout *gl;
 
 	MppGroupBox *gb_rec;

@@ -121,6 +121,22 @@ MppDevices :: MppDevices(QWidget *parent)
 	lw_play->setCurrentRow(0);
 }
 
+int
+MppDevices :: autoSelect()
+{
+	/* check for zero or once choice only */
+	if (lw_rec->count() == 1 && lw_play->count() == 1) {
+		accept();
+		return (-1);
+	} else if (lw_rec->count() == 2 && lw_play->count() == 2) {
+		lw_rec->setCurrentRow(1);
+		lw_play->setCurrentRow(1);
+		accept();
+		return (1);
+	}
+	return (0);
+}
+
 MppDevices :: ~MppDevices()
 {
 	umidi20_jack_free_outputs(rec_jack_str);

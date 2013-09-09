@@ -2852,13 +2852,25 @@ MppMainWindow :: handle_mute_map(int n)
 }
 
 int
-MppMainWindow :: handle_config_dev(int n)
+MppMainWindow :: handle_config_dev(int n, int automagic)
 {
 	int retval;
 
 	MppDevices diag(this);
 
-	retval = diag.exec();
+	if (automagic == 0) {
+		retval = diag.exec();
+	} else switch (diag.autoSelect()) {
+	case 0:
+		retval = diag.exec();
+		break;
+	case 1:
+		retval = QDialog::Accepted;
+		break;
+	default:
+		retval = QDialog::Rejected;
+		break;
+	}
 
 	if (retval == QDialog::Accepted) {
 		led_config_dev[n]->setText(diag.result_dev);

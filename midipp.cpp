@@ -319,7 +319,7 @@ main(int argc, char **argv)
 	} else {
 		/* show configuration window by default */
 		if (strcmp(main.deviceName[0], "X:") == 0) {
-			if (main.handle_config_dev(0) == QDialog::Accepted) {
+			if (main.handle_config_dev(0, 1) == QDialog::Accepted) {
 				if (main.handle_mute_map(0) != QDialog::Accepted)
 					main.handle_config_apply_sub(0);
 			}
