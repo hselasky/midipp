@@ -1699,7 +1699,7 @@ MppMainWindow :: do_bpm_stats(void)
 	lbl_bpm_avg_val->display((int)sum);
 }
 
-/* is called locked */
+/* NOTE: Is called unlocked */
 static void
 MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uint8_t *drop)
 {
@@ -1713,6 +1713,8 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 	int n;
 
 	*drop = 1;
+
+	pthread_mutex_lock(&mw->mtx);
 
 	if (umidi20_event_is_key_start(event)) {
 
@@ -1730,7 +1732,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 		if (mw->tab_loop->handle_trigN(key, vel)) {
 			mw->do_update_bpm();
-			return;
+			goto done;
 		}
 	}
 
@@ -1880,9 +1882,11 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 		}
 	}
+done:
+	pthread_mutex_unlock(&mw->mtx);
 }
 
-/* is called locked */
+/* NOTE: Is called unlocked */
 static void
 MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uint8_t *drop)
 {
@@ -1890,6 +1894,8 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 	struct umidi20_event *p_event;
 	int vel;
 	int do_drop;
+
+	pthread_mutex_lock(&mw->mtx);
 
 	if (umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL) {
 		uint8_t chan;
@@ -1938,6 +1944,7 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 		*drop = mw->instr[chan].muted || do_drop;
 	}
+	pthread_mutex_unlock(&mw->mtx);
 }
 
 /* must be called locked */
