@@ -512,6 +512,7 @@ MppScoreMain :: viewMousePressEvent(QMouseEvent *e)
 
 	pthread_mutex_lock(&mainWindow->mtx);
 	head.jumpPointer(pVisual[yi].start);
+	head.syncLast();
 	mainWindow->handle_stop();
 	pthread_mutex_unlock(&mainWindow->mtx);
 }
@@ -533,6 +534,8 @@ MppScoreMain :: locateVisual(MppElement *ptr, int *pindex, MppVisualDot **ppdot)
 		for (start = stop = pVisual[x].start;
 			head.foreachLine(&start, &stop); ) {
 
+			if (start->compare(pVisual[x].stop) >= 0)
+				break;
 			if (ptr->compare(start) >= 0 &&
 			    ptr->compare(stop) < 0)
 				break;
@@ -1007,6 +1010,7 @@ MppScoreMain :: handleLabelJump(int pos)
 		return;
 
 	head.jumpLabel(pos);
+	head.syncLast();
 
 	mainWindow->cursorUpdate = 1;
 

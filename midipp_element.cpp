@@ -1439,8 +1439,7 @@ MppHead :: jumpPointer(MppElement *ptr)
 
 	state.did_jump = 1;
 	state.key_lock = 0;
-	state.last_start = state.last_stop =
-	    state.curr_start = state.curr_stop = ptr;
+	state.curr_start = state.curr_stop = ptr;
 }
 
 void
