@@ -130,6 +130,7 @@ public:
 
 	void replace(MppHead *, MppElement *, MppElement *);
 	int getChord(int, MppChordElement *);
+	void reset();
 	void clear();
 	void optimise();
 	void autoMelody(int);

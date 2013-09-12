@@ -797,14 +797,10 @@ MppScoreMain :: handleParse(const QString &pstr)
 
 			/* move dot before chord */
 			if (ptr->type != MPP_T_STRING_DOT &&
-			    next != 0 && next->type == MPP_T_STRING_CHORD &&
-			    nnext != 0 && nnext->type == MPP_T_STRING_DOT) {
+			    next != 0 && next != stop && next->type == MPP_T_STRING_CHORD &&
+			    nnext != 0 && nnext != stop && nnext->type == MPP_T_STRING_DOT) {
 				TAILQ_REMOVE(&head.head, nnext, entry);
 				TAILQ_INSERT_BEFORE(next, nnext, entry);
-
-				/* correct stop */
-				if (nnext == stop)
-					stop = next;
 			}
 		}
 
@@ -841,12 +837,11 @@ MppScoreMain :: handleParse(const QString &pstr)
 			index++;
 		}
 	}
-	/* extend region of previous visual */
-	if (index > 0 && index <= visual_max)
-		pVisual[index - 1].stop = stop;
-	/* extend region of first visual */
-	if (index > 0)
+	/* extend region of first and last visual */
+	if (visual_max != 0) {
 		pVisual[0].start = TAILQ_FIRST(&head.head);
+		pVisual[visual_max - 1].stop = 0;
+	}
 
 	/* check if auto-melody should be applied */
 	if (auto_melody > 0)
@@ -1396,7 +1391,7 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 
 				out_key = ptr->value[0] + in_key + transpose;
 				if (out_key < 0 || out_key > 127)
-					continue;
+					break;
 
 				ch = (synthChannel + channel) & 0xF;
 
@@ -1406,7 +1401,7 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 					delay = 0;
 
 				if (setPressedKey(ch, out_key, duration, delay))
-					continue;
+					break;
 
 				mainWindow->output_key(ch, out_key, out_vel,
 				    key_delay + delay, 0);

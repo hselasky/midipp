@@ -200,10 +200,22 @@ MppHead :: clear()
 		delete elem;
 	}
 
-	delete (state.elem);
+	reset();
+}
 
+void
+MppHead :: reset()
+{
+	MppElement *elem;
+
+	delete (state.elem);
 	last = ' ';
 	memset(&state, 0, sizeof(state));
+
+	TAILQ_FOREACH(elem, &head, entry) {
+		if (elem->type == MPP_T_LABEL)
+			state.label_start[elem->value[0]] = elem;
+	}
 }
 
 static int
@@ -325,8 +337,6 @@ MppHead :: operator += (MppElement *elem)
 		elem->value[0] = elem->getIntValue(&off);
 		if (elem->value[0] < 0 || elem->value[0] >= MPP_MAX_LABELS)
 			elem->value[0] = 0;
-		/* store pointer to label */
-		state.label_start[elem->value[0]] = elem;
 		break;
 
 	case MPP_T_SCORE:
@@ -513,9 +523,10 @@ MppHead :: operator += (QChar ch)
 void
 MppHead :: flush()
 {
-	if (state.elem != 0)
-		*this += state.elem;
+	*this += state.elem;
 	state.elem = 0;
+
+	reset();
 }
 
 QString
@@ -553,7 +564,6 @@ void
 MppHead :: replace(MppHead *phead, MppElement *start, MppElement *stop)
 {
 	MppElement *ptr;
-	int x;
 
 	if (start == 0)
 		return;
@@ -563,20 +573,16 @@ MppHead :: replace(MppHead *phead, MppElement *start, MppElement *stop)
 		TAILQ_INSERT_BEFORE(start, ptr, entry);
 	}
 
-	/* clear all labels */
-	memset(phead->state.label_start, 0, sizeof(phead->state.label_start));
+	phead->clear();
 
 	while (start != stop) {
 		ptr = TAILQ_NEXT(start, entry);
 		TAILQ_REMOVE(&head, start, entry);
-		/* clear labels, if any */
-		for (x = 0; x != MPP_MAX_LABELS; x++) {
-			if (state.label_start[x] == start)
-				state.label_start[x] = 0;
-		}
 		delete start;
 		start = ptr;
 	}
+
+	reset();
 }
 
 int
@@ -759,20 +765,13 @@ MppHead :: optimise()
 
 	/* remove unused entries, except labels */
 	TAILQ_FOREACH_SAFE(ptr, &head, entry, next) {
-		int x;
-
 		if (ptr->txt.size() != 0)
 			continue;
-
-		/* clear labels, if any */
-		for (x = 0; x != MPP_MAX_LABELS; x++) {
-			if (state.label_start[x] == ptr)
-				state.label_start[x] = 0;
-		}
-
 		TAILQ_REMOVE(&head, ptr, entry);
 		delete ptr;
 	}
+
+	reset();
 }
 
 void
