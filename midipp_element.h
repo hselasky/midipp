@@ -138,6 +138,7 @@ public:
 	void limitScore(int);
 	void scaleTime(int);
 	void alignTime(int);
+	void dotReorder();
 	int getPlaytime();
 	void flush();
 	QString toPlain(int = -1);

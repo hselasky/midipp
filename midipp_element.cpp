@@ -339,6 +339,16 @@ MppHead :: operator += (MppElement *elem)
 			elem->value[0] = 0;
 		break;
 
+	case MPP_T_STRING_DOT:
+		if (elem->txt.size() > 2 &&
+		    elem->txt[0] == '.' && elem->txt[1] == '[') {
+			off = 2;
+			elem->value[0] = elem->getIntValue(&off);
+		} else {
+			elem->value[0] = 0;
+		}
+		break;
+
 	case MPP_T_SCORE:
 		elem->value[0] += 12 * elem->getIntValue(&off);
 		ch = elem->getChar(&off);
@@ -1466,6 +1476,31 @@ MppHead :: getCurrLine()
 	if (start != 0)
 		return (start->line);
 	return (0);
+}
+
+void
+MppHead :: dotReorder()
+{
+	MppElement *ptr;
+	MppElement *next;
+	MppElement *nnext;
+
+	TAILQ_FOREACH(ptr, &head, entry) {
+		if (ptr->type != MPP_T_STRING_DOT)
+			continue;
+
+		next = TAILQ_NEXT(ptr, entry);
+		if (next == 0 || next->type != MPP_T_STRING_CHORD)
+			continue;
+
+		nnext = TAILQ_NEXT(next, entry);
+		if (nnext == 0 || nnext->type != MPP_T_STRING_DOT)
+			continue;
+
+		/* move dot before chord */
+		TAILQ_REMOVE(&head, nnext, entry);
+		TAILQ_INSERT_BEFORE(next, nnext, entry);
+	}
 }
 
 int
