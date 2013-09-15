@@ -472,7 +472,7 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 				chord = MppDeQuoteChord(ptr->txt);
 
 				paint.setFont(fnt_b);
-				paint.drawText(QPointF(MPP_VISUAL_MARGIN + box.width() + offset,
+				paint.drawText(QPointF(MPP_VISUAL_MARGIN + box.width(),
 				    MPP_VISUAL_MARGIN + (visual_y_max / 3) - (MPP_VISUAL_C_MAX / 4)),
 				    chord);
 
