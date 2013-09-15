@@ -1483,23 +1483,18 @@ MppHead :: dotReorder()
 {
 	MppElement *ptr;
 	MppElement *next;
-	MppElement *nnext;
 
 	TAILQ_FOREACH(ptr, &head, entry) {
-		if (ptr->type != MPP_T_STRING_DOT)
+		if (ptr->type != MPP_T_STRING_CHORD)
 			continue;
 
 		next = TAILQ_NEXT(ptr, entry);
-		if (next == 0 || next->type != MPP_T_STRING_CHORD)
-			continue;
-
-		nnext = TAILQ_NEXT(next, entry);
-		if (nnext == 0 || nnext->type != MPP_T_STRING_DOT)
+		if (next == 0 || next->type != MPP_T_STRING_DOT)
 			continue;
 
 		/* move dot before chord */
-		TAILQ_REMOVE(&head, nnext, entry);
-		TAILQ_INSERT_BEFORE(next, nnext, entry);
+		TAILQ_REMOVE(&head, next, entry);
+		TAILQ_INSERT_BEFORE(ptr, next, entry);
 	}
 }
 
