@@ -341,7 +341,7 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 	fnt_b = mainWindow->defaultFont;
 	fnt_b.setPixelSize(mainWindow->defaultFont.pixelSize() + 4);
 
-	QFontMetricsF fm_a(fnt_a);
+	QFontMetricsF fm_b(fnt_b);
 
 	if (pd != NULL) {
 #ifndef QT_NO_PRINTER
@@ -434,7 +434,7 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 						break;
 				}
 				if (next != pVisual[x].stop)
-					pdot->x_off += (fm_a.width(next->txt[1]) - MPP_VISUAL_R_MAX - 2) / 2.0;
+					pdot->x_off += (fm_b.width(next->txt[1]) - MPP_VISUAL_R_MAX - 2) / 2.0;
 
 				dur = ptr->value[0];
 
