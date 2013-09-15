@@ -319,13 +319,14 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 {
 	MppVisualDot *pdot;
 	MppElement *ptr;
+	MppElement *next;
 	QPainter paint;
 	QString linebuf;
 	QString chord;
 	QRectF box;
 	qreal chord_x_max;
+	qreal offset;
 	int last_dot;
-	int offset;
 	int dur;
 	int x;
 	int y;
@@ -339,6 +340,8 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 
 	fnt_b = mainWindow->defaultFont;
 	fnt_b.setPixelSize(mainWindow->defaultFont.pixelSize() + 4);
+
+	QFontMetricsF fm_a(fnt_a);
 
 	if (pd != NULL) {
 #ifndef QT_NO_PRINTER
@@ -358,6 +361,7 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 		paint.begin(pd);
 		paint.translate(orig);
 		paint.scale(scale_f, scale_f);
+		paint.translate(QPoint(-MPP_VISUAL_MARGIN,-MPP_VISUAL_MARGIN));
 #endif
 	}
 
@@ -423,9 +427,18 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 				pdot->x_off = MPP_VISUAL_MARGIN + box.width();
 				pdot->y_off = MPP_VISUAL_MARGIN + (visual_y_max / 3);
 
+				for (next = ptr; next != pVisual[x].stop;
+				     next = TAILQ_NEXT(next, entry)) {
+					if (next->type == MPP_T_STRING_CHORD &&
+					    next->txt.size() > 1 && next->txt[0] == '(')
+						break;
+				}
+				if (next != pVisual[x].stop)
+					pdot->x_off += (fm_a.width(next->txt[1]) - MPP_VISUAL_R_MAX - 2) / 2.0;
+
 				dur = ptr->value[0];
 
-				paint.drawEllipse(QRect(pdot->x_off, pdot->y_off,
+				paint.drawEllipse(QRectF(pdot->x_off, pdot->y_off,
 				    MPP_VISUAL_R_MAX, MPP_VISUAL_R_MAX));
 
 				if (dur <= 0)
@@ -451,7 +464,7 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 					    pdot->y_off + MPP_VISUAL_R_MAX -
 					    (3 * MPP_VISUAL_R_MAX) + offset);
 
-					offset += (MPP_VISUAL_R_MAX / 2);
+					offset += (MPP_VISUAL_R_MAX / 2.0);
 				}
 				break;
 
@@ -459,9 +472,8 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 				chord = MppDeQuoteChord(ptr->txt);
 
 				paint.setFont(fnt_b);
-				paint.drawText(QPointF(MPP_VISUAL_MARGIN + box.width(),
-				    MPP_VISUAL_MARGIN +
-				    (visual_y_max / 3) - (MPP_VISUAL_C_MAX / 4)),
+				paint.drawText(QPointF(MPP_VISUAL_MARGIN + box.width() + offset,
+				    MPP_VISUAL_MARGIN + (visual_y_max / 3) - (MPP_VISUAL_C_MAX / 4)),
 				    chord);
 
 				chord_x_max = box.width() +
@@ -785,6 +797,8 @@ MppScoreMain :: handleParse(const QString &pstr)
 		memset(pVisual, 0, size);
 	}
 
+	head.dotReorder();
+
 	step = 0;
 	index = 0;
 
@@ -792,20 +806,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 
 		has_string = 0;
 		num_dot = 0;
-
-		for (ptr = start; ptr != stop;
-		    ptr = TAILQ_NEXT(ptr, entry)) {
-			MppElement *next = TAILQ_NEXT(ptr, entry);
-			MppElement *nnext = next ? TAILQ_NEXT(next, entry) : 0;
-
-			/* move dot before chord */
-			if (ptr->type != MPP_T_STRING_DOT &&
-			    next != 0 && next != stop && next->type == MPP_T_STRING_CHORD &&
-			    nnext != 0 && nnext != stop && nnext->type == MPP_T_STRING_DOT) {
-				TAILQ_REMOVE(&head.head, nnext, entry);
-				TAILQ_INSERT_BEFORE(next, nnext, entry);
-			}
-		}
 
 		for (ptr = start; ptr != stop;
 		    ptr = TAILQ_NEXT(ptr, entry)) {
@@ -1540,7 +1540,7 @@ MppScoreMain :: handleScorePrint(void)
 
 		printer.setOutputFileName(temp);
 	} else {
-		printer.setOutputFileName(QString("NewSong.pdf"));
+		printer.setOutputFileName(MppHomeDirTxt + QString("/NewSong.pdf"));
 	}
 
 	printer.setColorMode(QPrinter::Color);

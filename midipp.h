@@ -152,8 +152,8 @@ struct MppInstr {
 };
 
 struct MppVisualDot {
-	int x_off;
-	int y_off;
+	qreal x_off;
+	qreal y_off;
 };
 
 struct MppVisualScore {
