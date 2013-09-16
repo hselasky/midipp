@@ -63,7 +63,7 @@ public:
 	QLabel *lbl_loop[MIDIPP_LOOP_MAX];
 	QLabel *lbl_state[MIDIPP_LOOP_MAX];
 
-	MppButton *but_import[MIDIPP_LOOP_MAX];
+	MppButton *but_import[MIDIPP_LOOP_MAX][MPP_MAX_VIEWS];
 	MppButton *but_clear[MIDIPP_LOOP_MAX];
 	MppButton *but_trig[MIDIPP_LOOP_MAX];
 	QPushButton *but_loop_on;

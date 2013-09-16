@@ -28,6 +28,7 @@
 #include "midipp_scores.h"
 #include "midipp_groupbox.h"
 #include "midipp_import.h"
+#include "midipp_button.h"
 
 static uint8_t
 midipp_import_flush(struct midipp_import *ps, int i_txt, int i_score)
@@ -314,6 +315,8 @@ midipp_import(QString str, struct midipp_import *ps, MppScoreMain *sm)
 
 MppImportTab :: MppImportTab(MppMainWindow *parent)
 {
+	int x;
+
 	mainWindow = parent;
 
 	editWidget = new QPlainTextEdit();
@@ -327,18 +330,21 @@ MppImportTab :: MppImportTab(MppMainWindow *parent)
 	butImportFileNew = new QPushButton(tr("New"));
 	butImportFileOpen = new QPushButton(tr("Open"));
 	butImportFileSaveAs = new QPushButton(tr("Save As"));
-	butImport = new QPushButton();
 
+	for (x = 0; x != MPP_MAX_VIEWS; x++) {
+		butImport[x] = new MppButton(QString("To %1-Scores").arg(QChar('A' + x)), x);
+		connect(butImport[x], SIGNAL(released(int)), this, SLOT(handleImport(int)));
+	}
 	gbImport = new MppGroupBox(tr("Lyrics"));
 	gbImport->addWidget(butImportFileNew, 0, 0, 1, 1);
 	gbImport->addWidget(butImportFileOpen, 1, 0, 1, 1);
 	gbImport->addWidget(butImportFileSaveAs, 2, 0, 1, 1);
-	gbImport->addWidget(butImport, 3, 0, 1, 1);
+	for (x = 0; x != MPP_MAX_VIEWS; x++)
+		gbImport->addWidget(butImport[x], 3 + x, 0, 1, 1);
 
 	connect(butImportFileNew, SIGNAL(released()), this, SLOT(handleImportNew()));
 	connect(butImportFileOpen, SIGNAL(released()), this, SLOT(handleImportOpen()));
 	connect(butImportFileSaveAs, SIGNAL(released()), this, SLOT(handleImportSaveAs()));
-	connect(butImport, SIGNAL(released()), this, SLOT(handleImport()));
 }
 
 MppImportTab :: ~MppImportTab()
@@ -400,11 +406,11 @@ MppImportTab :: handleImportSaveAs()
 }
 
 void
-MppImportTab :: handleImport()
+MppImportTab :: handleImport(int n)
 {
 	struct midipp_import ps;
 
-	midipp_import(editWidget->toPlainText(), &ps, mainWindow->currScoreMain());
+	midipp_import(editWidget->toPlainText(), &ps, mainWindow->scores_main[n]);
 
 	mainWindow->handle_compile();
 }

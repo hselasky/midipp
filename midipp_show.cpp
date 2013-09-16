@@ -202,7 +202,13 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 	fontFgColor = QColor(0,0,0);
 	fontBgColor = QColor(255,255,255);
 
-	butTrack = new MppButtonMap("Track\0" "View-A\0" "View-B\0", 2, 2);
+	butTrack = new MppButtonMap("Track\0" "View-A\0" "View-B\0" "View-C\0",
+#if MPP_MAX_VIEWS <= 3
+				    MPP_MAX_VIEWS, MPP_MAX_VIEWS
+#else
+				    3, 3
+#endif
+				    );
 	connect(butTrack, SIGNAL(selectionChanged(int)), this, SLOT(handle_track_change(int)));
 
 	butMode = new MppButtonMap("Current mode\0" "BLANK\0" "BACKGROUND\0" "LYRICS\0", 3, 3);
@@ -297,6 +303,13 @@ MppShowControl :: handle_watchdog()
 #if MPP_MAX_VIEWS > 1
 	case 1:
 		label = mw->scores_main[1]->getCurrLabel();
+		if (label > -1 && label < MPP_MAX_LABELS)
+			handle_label_change(label);
+		break;
+#endif
+#if MPP_MAX_VIEWS > 2
+	case 2:
+		label = mw->scores_main[2]->getCurrLabel();
 		if (label > -1 && label < MPP_MAX_LABELS)
 			handle_label_change(label);
 		break;

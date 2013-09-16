@@ -204,8 +204,8 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	butScoreFileStepDown = new QPushButton(tr("Step Down"));
 	butScoreFileSetSharp = new QPushButton(tr("Set #"));
 	butScoreFileSetFlat = new QPushButton(tr("Set b"));
-	butScoreFileAutoMel[0] = new MppButton(tr("Auto Melody 1"), 0);
-	butScoreFileAutoMel[1] = new MppButton(tr("Auto Melody 2"), 1);
+	butScoreFileAutoMel[0] = new MppButton(tr("AutoMel 1"), 0);
+	butScoreFileAutoMel[1] = new MppButton(tr("AutoMel 2"), 1);
 	butScoreFileEditChord = new QPushButton(tr("Edit Chord"));
 	butScoreFileInsertChord = new QPushButton(tr("Insert Chord"));
 	butScoreFileReplaceAll = new QPushButton(tr("Replace All"));

@@ -66,7 +66,7 @@ public:
 	QPushButton *butImportFileNew;
 	QPushButton *butImportFileOpen;
 	QPushButton *butImportFileSaveAs;
-	QPushButton *butImport;
+	MppButton *butImport[MPP_MAX_VIEWS];
 	MppGroupBox *gbImport;
 
 public slots:
@@ -74,7 +74,7 @@ public slots:
 	void handleImportNew();
 	void handleImportOpen();
 	void handleImportSaveAs();
-	void handleImport();
+	void handleImport(int);
 };
 
 extern uint8_t midipp_import(QString str, struct midipp_import *ps, MppScoreMain *sm);

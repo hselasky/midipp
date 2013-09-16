@@ -66,7 +66,7 @@ public:
 	QString get_midi_score_duration(uint32_t *psum = 0);
 	int log_midi_score_duration();
 	int convert_midi_duration(struct umidi20_track *, uint32_t thres, uint32_t chan_mask);
-	void import_midi_track(struct umidi20_track *, uint32_t midi_flags = 0, int label = -1);
+	void import_midi_track(struct umidi20_track *, uint32_t = 0, int = -1, int = 0);
 
 	void update_play_device_no(void);
 
@@ -195,10 +195,10 @@ public:
 	QPushButton *but_midi_file_merge;
 	QPushButton *but_midi_file_save;
 	QPushButton *but_midi_file_save_as;
-	QPushButton *but_midi_file_import;
+	MppButton *but_midi_file_import[MPP_MAX_VIEWS];
 
 	MppGroupBox *gb_gpro_file_import;
-	QPushButton *but_gpro_file_import;
+	MppButton *but_gpro_file_import[MPP_MAX_VIEWS];
 
 	/* tab <Play> */
 
@@ -351,9 +351,8 @@ public slots:
 	void handle_volume_changed(int);
 	void handle_volume_reset();
 
-	void handle_midi_file_import();
-
-	void handle_gpro_file_import();
+	void handle_midi_file_import(int);
+	void handle_gpro_file_import(int);
 
 	int handle_mute_map(int);
 	int handle_config_dev(int, int = 0);

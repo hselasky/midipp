@@ -227,10 +227,18 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	scores_tw->setVisible(0);
 	main_tw->setVisible(1);
 
+#if MPP_MAX_VIEWS > 0
 	main_tw->addTab(&scores_main[0]->viewWidget, tr("View A"));
 	main_tw->addTab(scores_main[0]->editWidget, tr("Edit A"));
+#endif
+#if MPP_MAX_VIEWS > 1
 	main_tw->addTab(&scores_main[1]->viewWidget, tr("View B"));
 	main_tw->addTab(scores_main[1]->editWidget, tr("Edit B"));
+#endif
+#if MPP_MAX_VIEWS > 2
+	main_tw->addTab(&scores_main[2]->viewWidget, tr("View C"));
+	main_tw->addTab(scores_main[2]->editWidget, tr("Edit C"));
+#endif
 	main_tw->addTab(tab_import->editWidget, tr("Lyrics"));
 	main_tw->addTab(tab_file_gl, tr("File"));
 	main_tw->addTab(tab_play_gl, tr("Play"));
@@ -251,7 +259,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_midi_file_merge = new QPushButton(tr("Merge"));
 	but_midi_file_save = new QPushButton(tr("Save"));
 	but_midi_file_save_as = new QPushButton(tr("Save As"));
-	but_midi_file_import = new QPushButton();
 
 	gb_midi_file = new MppGroupBox(tr("MIDI File"));
 	gb_midi_file->addWidget(but_midi_file_new, 0, 0, 1, 1);
@@ -259,18 +266,32 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	gb_midi_file->addWidget(but_midi_file_merge, 2, 0, 1, 1);
 	gb_midi_file->addWidget(but_midi_file_save, 3, 0, 1, 1);
 	gb_midi_file->addWidget(but_midi_file_save_as, 4, 0, 1, 1);
-	gb_midi_file->addWidget(but_midi_file_import, 5, 0, 1, 1);
 
-	but_gpro_file_import = new QPushButton();
+	for (x = 0; x != MPP_MAX_VIEWS; x++) {
+		but_midi_file_import[x] = new MppButton(QString("To %1-Scores").arg(QChar('A' + x)), x);
+		gb_midi_file->addWidget(but_midi_file_import[x], 5 + x, 0, 1, 1);
+		connect(but_midi_file_import[x], SIGNAL(released(int)), this, SLOT(handle_midi_file_import(int)));
+	}
 
 	gb_gpro_file_import = new MppGroupBox(tr("GPro v3/4"));
-	gb_gpro_file_import->addWidget(but_gpro_file_import, 0, 0, 1, 1);
 
+	for (x = 0; x != MPP_MAX_VIEWS; x++) {
+		but_gpro_file_import[x] = new MppButton(QString("Open In %1-Scores").arg(QChar('A' + x)), x);
+		gb_gpro_file_import->addWidget(but_gpro_file_import[x], x, 0, 1, 1);
+		connect(but_gpro_file_import[x], SIGNAL(released(int)), this, SLOT(handle_gpro_file_import(int)));
+	}
+#if MPP_MAX_VIEWS > 0
 	tab_file_gl->addWidget(scores_main[0]->gbScoreFile, 0, 0, 2, 1);
+#endif
+#if MPP_MAX_VIEWS > 1
 	tab_file_gl->addWidget(scores_main[1]->gbScoreFile, 0, 1, 2, 1);
-	tab_file_gl->addWidget(tab_import->gbImport, 0, 2, 1, 1);
-	tab_file_gl->addWidget(gb_gpro_file_import, 1, 2, 1, 1);
-	tab_file_gl->addWidget(gb_midi_file, 0, 3, 2, 1);
+#endif
+#if MPP_MAX_VIEWS > 2
+	tab_file_gl->addWidget(scores_main[2]->gbScoreFile, 0, 2, 2, 1);
+#endif
+	tab_file_gl->addWidget(tab_import->gbImport, 0, MPP_MAX_VIEWS, 1, 1);
+	tab_file_gl->addWidget(gb_gpro_file_import, 1, MPP_MAX_VIEWS, 1, 1);
+	tab_file_gl->addWidget(gb_midi_file, 0, MPP_MAX_VIEWS + 1, 2, 1);
 
 	tab_file_gl->setRowStretch(2, 1);
 	tab_file_gl->setColumnStretch(4, 1);
@@ -594,9 +615,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_midi_file_merge, SIGNAL(released()), this, SLOT(handle_midi_file_merge_open()));
 	connect(but_midi_file_save, SIGNAL(released()), this, SLOT(handle_midi_file_save()));
 	connect(but_midi_file_save_as, SIGNAL(released()), this, SLOT(handle_midi_file_save_as()));
-	connect(but_midi_file_import, SIGNAL(released()), this, SLOT(handle_midi_file_import()));
-
-	connect(but_gpro_file_import, SIGNAL(released()), this, SLOT(handle_gpro_file_import()));
 
 	connect(but_midi_trigger, SIGNAL(pressed()), this, SLOT(handle_midi_trigger()));
 	connect(but_midi_rewind, SIGNAL(pressed()), this, SLOT(handle_rewind()));
@@ -621,7 +639,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	MidiInit();
 
-	version = tr("MIDI Player Pro v1.1.5");
+	version = tr("MIDI Player Pro v1.2.0");
 
 	setWindowTitle(version);
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
@@ -2305,15 +2323,6 @@ found:
 	if (force != 0 || y != 0)
 		handle_compile();
 
-	but_midi_file_import->setText(tr("To ") +
-	    QChar('A' + currViewIndex) + tr("-Scores"));
-
-	but_gpro_file_import->setText(tr("Open In ") +
-	    QChar('A' + currViewIndex) + tr("-Scores"));
-
-	tab_import->butImport->setText(tr("To ") +
-	    QChar('A' + currViewIndex) + tr("-Scores"));
-
 	sync_key_mode();
 }
 
@@ -2434,9 +2443,9 @@ MppMainWindow :: log_midi_score_duration(void)
 }
 
 void
-MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flags, int label)
+MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flags, int label, int view)
 {
-	QTextCursor cursor(currScoreMain()->editWidget->textCursor());
+	QTextCursor cursor(scores_main[view]->editWidget->textCursor());
 
 	QString output;
 	QString out_block;
@@ -2644,17 +2653,17 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 	cursor.insertText(output);
 	
 	handle_compile();
-	handle_make_tab_visible(currScoreMain()->editWidget);
+	handle_make_tab_visible(scores_main[view]->editWidget);
 }
 
 void
-MppMainWindow :: handle_midi_file_import()
+MppMainWindow :: handle_midi_file_import(int n)
 {
 	import_midi_track(track, MIDI_FLAG_DIALOG | MIDI_FLAG_MULTI_CHAN, 0);
 }
 
 void
-MppMainWindow :: handle_gpro_file_import()
+MppMainWindow :: handle_gpro_file_import(int view)
 {
 	QFileDialog *diag = 
 	  new QFileDialog(this, tr("Select GPro v3 or v4 File"), 
@@ -2693,7 +2702,7 @@ load_file:
 
 	gpro = new MppGPro((uint8_t *)data.data(), data.size());
 
-	cursor = new QTextCursor(currScoreMain()->editWidget->textCursor());
+	cursor = new QTextCursor(scores_main[view]->editWidget->textCursor());
 	cursor->beginEditBlock();
 	cursor->insertText(gpro->output);
 	cursor->endEditBlock();
@@ -2702,7 +2711,7 @@ load_file:
 	delete cursor;
 
 	handle_compile();
-	handle_make_scores_visible(currScoreMain());
+	handle_make_scores_visible(scores_main[view]);
 
 done:
 	delete diag;
