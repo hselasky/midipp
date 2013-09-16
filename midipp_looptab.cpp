@@ -71,13 +71,13 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 
 	for (n = 0; n != MIDIPP_LOOP_MAX; n++) {
 
-		gl->addWidget(lbl_state[n], (MIDIPP_LOOP_MAX-n-1) + 2, 5 + MPP_MAX_VIEWS, 1, 1);
-		gl->addWidget(spn_chan[n], (MIDIPP_LOOP_MAX-n-1) + 2, 4 + MPP_MAX_VIEWS, 1, 1);
-		gl->addWidget(lbl_dur[n], (MIDIPP_LOOP_MAX-n-1) + 2, 3 + MPP_MAX_VIEWS, 1, 1);
-		gl->addWidget(but_clear[n], (MIDIPP_LOOP_MAX-n-1) + 2, 1 + MPP_MAX_VIEWS, 1, 1);
-		gl->addWidget(but_trig[n], (MIDIPP_LOOP_MAX-n-1) + 2, 0 + MPP_MAX_VIEWS, 1, 1);
+		gl->addWidget(lbl_state[n], (MIDIPP_LOOP_MAX-n-1) + 2, 6 + MPP_MAX_VIEWS, 1, 1);
+		gl->addWidget(spn_chan[n], (MIDIPP_LOOP_MAX-n-1) + 2, 5 + MPP_MAX_VIEWS, 1, 1);
+		gl->addWidget(lbl_dur[n], (MIDIPP_LOOP_MAX-n-1) + 2, 4 + MPP_MAX_VIEWS, 1, 1);
+		gl->addWidget(but_clear[n], (MIDIPP_LOOP_MAX-n-1) + 2, 2 + MPP_MAX_VIEWS, 1, 1);
+		gl->addWidget(but_trig[n], (MIDIPP_LOOP_MAX-n-1) + 2, 1 + MPP_MAX_VIEWS, 1, 1);
 		gl->addWidget(lbl_loop[n], (MIDIPP_LOOP_MAX-n-1) + 2, 0, 1, 1);
-		gl->addWidget(spn_key[n], (MIDIPP_LOOP_MAX-n-1) + 2, 2 + MPP_MAX_VIEWS, 1, 1);
+		gl->addWidget(spn_key[n], (MIDIPP_LOOP_MAX-n-1) + 2, 3 + MPP_MAX_VIEWS, 1, 1);
 
 		for (x = 0; x != MPP_MAX_VIEWS; x++) {
 			gl->addWidget(but_import[n][x], (MIDIPP_LOOP_MAX-n-1) + 2, 1 + x, 1, 1);
@@ -91,17 +91,17 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 	}
 
 	gl->setRowStretch(2 + MIDIPP_LOOP_MAX, 1);
-	gl->setColumnStretch(8, 1);
+	gl->setColumnStretch(6 + MPP_MAX_VIEWS, 1);
 
 	lbl_chn_title = new QLabel(tr("Chan."));
 	lbl_dur_title = new QLabel(tr("Dur-s"));
 	lbl_state_title = new QLabel(tr("State"));
 	lbl_mkey_title = new QLabel(tr("Key-m"));
 
-	gl->addWidget(lbl_state_title, 1, 5 + MPP_MAX_VIEWS, 1, 1);
-	gl->addWidget(lbl_chn_title, 1, 4 + MPP_MAX_VIEWS, 1, 1);
-	gl->addWidget(lbl_dur_title, 1, 3 + MPP_MAX_VIEWS, 1, 1);
-	gl->addWidget(lbl_mkey_title, 1, 2 + MPP_MAX_VIEWS, 1, 1);
+	gl->addWidget(lbl_state_title, 1, 6 + MPP_MAX_VIEWS, 1, 1);
+	gl->addWidget(lbl_chn_title, 1, 5 + MPP_MAX_VIEWS, 1, 1);
+	gl->addWidget(lbl_dur_title, 1, 4 + MPP_MAX_VIEWS, 1, 1);
+	gl->addWidget(lbl_mkey_title, 1, 3 + MPP_MAX_VIEWS, 1, 1);
 
 	but_reset = new QPushButton(tr("Reset"));
 
@@ -249,7 +249,10 @@ MppLoopTab :: handle_trig(int n)
 void
 MppLoopTab :: handle_import(int n)
 {
-	mw->import_midi_track(track[n], MIDI_FLAG_DURATION | MIDI_FLAG_DIALOG, n % MIDIPP_LOOP_MAX, n / MIDIPP_LOOP_MAX);
+	int which = n % MIDIPP_LOOP_MAX;
+	int view = n / MIDIPP_LOOP_MAX;
+
+	mw->import_midi_track(track[which], MIDI_FLAG_DURATION | MIDI_FLAG_DIALOG, which, view);
 }
 
 /* Must be called locked */
