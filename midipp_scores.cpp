@@ -158,11 +158,13 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	    "\n"
 	    "S\".(C)Welcome .(C)to .(D)MIDI .(E)Player .(C)Pro! \"\n"
 	    "\n"
+	    "L0:\n"
 	    "U1 C3 C4 C5 E5 G5 /* C */\n"
 	    "U1 C3 C4 C5 E5 G5 /* C */\n"
 	    "U1 D3 D4 D5 G5B A5 /* D */\n"
 	    "U1 E3 E4 E5 A5B H5 /* E */\n"
-	    "U1 C3 C4 C5 E5 G5 /* C */\n");
+	    "U1 C3 C4 C5 E5 G5 /* C */\n"
+	    "J0\n");
 	}
 
 	snprintf(buf, sizeof(buf), "%c-scores", 'A' + _unit);
