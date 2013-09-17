@@ -150,8 +150,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_gl->addWidget(mwRight,12,1,1,1);
 	main_gl->addWidget(mwLeft,13,1,1,1);
 
+#ifndef HAVE_NO_SHOW
 	tab_show_control = new MppShowControl(this);
-
+#endif
 	for (x = 0; x != MPP_MAX_VIEWS; x++)
 		scores_main[x] = new MppScoreMain(this, x);
 
@@ -247,7 +248,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_tw->addTab(tab_volume_gl, tr("Volume"));
 	main_tw->addTab(tab_loop, tr("Loop"));
 	main_tw->addTab(tab_database, tr("Database"));
+#ifndef HAVE_NO_SHOW
 	main_tw->addTab(tab_show_control->gl_main, tr("Show"));
+#endif
 	main_tw->addTab(tab_help, tr("Help"));
 
 	/* <File> Tab */

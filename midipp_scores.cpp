@@ -867,6 +867,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 	/* update scrollbar */
 	viewScroll->setMaximum((visual_max > 0) ? (visual_max - 1) : 0);
 
+#ifndef HAVE_NO_SHOW
 	MppShowControl *pshow = mainWindow->tab_show_control;
 
 	/* create show lyrics, if any */
@@ -874,6 +875,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 
 	/* force new transition */
 	pshow->transition = 0;
+#endif
 }
 
 void

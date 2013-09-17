@@ -299,9 +299,9 @@ public:
 	MppDataBase *tab_database;
 
 	/* tab <Show> */
-
+#ifndef HAVE_NO_SHOW
 	MppShowControl *tab_show_control;
-
+#endif
 	/* tab <Help> */
 
 	QPlainTextEdit *tab_help;

@@ -9,6 +9,7 @@ QT += widgets printsupport
 HAVE_STATIC=YES
 HAVE_COREMIDI=YES
 HAVE_BUNDLE_ICONS=YES
+HAVE_NO_SHOW=YES
 icons.path	= $${PREFIX}
 icons.files	= midipp_ios.png midipp_ios_retina.png
 QMAKE_BUNDLE_DATA += icons
@@ -23,6 +24,10 @@ icons.path	= $${PREFIX}
 icons.files	= midipp.icns
 QMAKE_BUNDLE_DATA += icons
 QMAKE_INFO_PLIST= midipp_osx.plist
+}
+
+!isEmpty(HAVE_NO_SHOW) {
+DEFINES += HAVE_NO_SHOW
 }
 
 HEADERS		+= midipp.h
@@ -46,7 +51,9 @@ HEADERS		+= midipp_mutemap.h
 HEADERS		+= midipp_replace.h
 HEADERS		+= midipp_scores.h
 HEADERS		+= midipp_settings.h
+isEmpty(HAVE_NO_SHOW) {
 HEADERS		+= midipp_show.h
+}
 HEADERS		+= midipp_spinbox.h
 HEADERS		+= midipp_pattern.h
 HEADERS		+= midipp_volume.h
@@ -71,7 +78,9 @@ SOURCES		+= midipp_mutemap.cpp
 SOURCES		+= midipp_replace.cpp
 SOURCES		+= midipp_scores.cpp
 SOURCES		+= midipp_settings.cpp
+isEmpty(HAVE_NO_SHOW) {
 SOURCES		+= midipp_show.cpp
+}
 SOURCES		+= midipp_pattern.cpp
 SOURCES		+= midipp_spinbox.cpp
 SOURCES		+= midipp_volume.cpp
