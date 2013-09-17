@@ -12,6 +12,7 @@ HAVE_BUNDLE_ICONS=YES
 icons.path	= $${PREFIX}
 icons.files	= midipp_ios.png midipp_ios_retina.png
 QMAKE_BUNDLE_DATA += icons
+QMAKE_INFO_PLIST= midipp_ios.plist
 }
 
 !isEmpty(HAVE_MACOSX) {
@@ -21,6 +22,7 @@ HAVE_BUNDLE_ICONS=YES
 icons.path	= $${PREFIX}
 icons.files	= midipp.icns
 QMAKE_BUNDLE_DATA += icons
+QMAKE_INFO_PLIST= midipp_osx.plist
 }
 
 HEADERS		+= midipp.h
