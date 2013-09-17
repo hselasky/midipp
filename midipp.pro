@@ -87,7 +87,11 @@ SOURCES		+= midipp_volume.cpp
 
 RESOURCES	+= midipp.qrc
 
+isEmpty(HAVE_MACOSX) {
 TARGET		= midipp
+} else {
+TARGET		= MidiPlayerPro
+}
 
 LIBS		+= -lz
 

@@ -51,6 +51,8 @@ package: clean
 	tar -cvf temp.tar --exclude="*~" --exclude="*#" \
 		--exclude=".svn" --exclude="*.orig" --exclude="*.rej" \
 		Makefile midipp*.pro midipp*.qrc midipp*.plist \
+		midipp.icns \
+		MidiPlayerPro*.entitlements \
 		midipp*.cpp midipp*.h *.png midipp*.desktop
 
 	rm -rf midipp-${VERSION}
