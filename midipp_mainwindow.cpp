@@ -493,7 +493,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	/* <Instrument> tab */
 
 	but_other_mute_all = new MppButtonMap("Mute non-channel specific MIDI events\0NO\0YES\0", 2, 2);
-	connect(but_other_mute_all, SIGNAL(selectionChanged(int)), this, SLOT(handle_other_changed(int)));
+	connect(but_other_mute_all, SIGNAL(selectionChanged(int)), this, SLOT(handle_other_muted_changed(int)));
 
 	but_instr_program = new QPushButton(tr("Program One"));
 	but_instr_program_all = new QPushButton(tr("Program All"));
@@ -2249,6 +2249,8 @@ MppMainWindow :: handle_instr_reset()
 {
 	uint8_t x;
 
+	but_other_mute_all->setSelection(0);
+
 	for (x = 0; x != 16; x++) {
 		spn_instr_bank[x]->blockSignals(1);
 		spn_instr_prog[x]->blockSignals(1);
@@ -2991,9 +2993,7 @@ MppMainWindow :: handle_instr_mute_all()
 {
 	uint8_t n;
 
-	but_other_mute_all->blockSignals(1);
 	but_other_mute_all->setSelection(1);
-	but_other_mute_all->blockSignals(0);
 
 	for (n = 0; n != 16; n++) {
 		cbx_instr_mute[n]->blockSignals(1);
@@ -3009,9 +3009,7 @@ MppMainWindow :: handle_instr_unmute_all()
 {
 	uint8_t n;
 
-	but_other_mute_all->blockSignals(1);
 	but_other_mute_all->setSelection(0);
-	but_other_mute_all->blockSignals(0);
 
 	for (n = 0; n != 16; n++) {
 		cbx_instr_mute[n]->blockSignals(1);
