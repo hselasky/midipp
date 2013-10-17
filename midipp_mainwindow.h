@@ -85,6 +85,11 @@ public:
 
 	void handle_watchdog_sub(MppScoreMain *, int);
 
+	void send_song_stop_locked();
+	void send_song_trigger_locked();
+	void send_song_event_locked(uint8_t);
+	void send_song_select_locked(uint8_t);
+
 	MppScoreMain *currScoreMain();
 	QPlainTextEdit *currEditor();
 
@@ -136,6 +141,7 @@ public:
 	uint8_t enableLocalKeys[MPP_MAX_DEVS];
 	uint8_t disableLocalKeys[MPP_MAX_DEVS];
 	uint8_t muteAllControl[MPP_MAX_DEVS];
+	uint8_t muteAllMidiSong[MPP_MAX_DEVS];
 	uint8_t muteMap[MPP_MAX_DEVS][16];
 	uint8_t inputEvents[MPP_MAX_QUEUE];
 	uint8_t numInputEvents;
@@ -144,6 +150,7 @@ public:
 	uint8_t bpmAvgPos;
 	uint8_t cursorUpdate;
 
+	uint8_t otherMuted;
 	uint8_t scoreRecordOff;
 	uint8_t instrUpdated;
 	uint8_t midiRecordOff;
@@ -271,6 +278,8 @@ public:
 
 	MppCheckBox *cbx_instr_mute[16];
 
+	MppButtonMap *but_other_mute_all;
+
 	QPushButton *but_instr_rem;
 	QPushButton *but_instr_program;
 	QPushButton *but_instr_program_all;
@@ -339,6 +348,7 @@ public slots:
 	void handle_config_view_fontsel();
 	void handle_config_edit_fontsel();
 
+	void handle_other_muted_changed(int);
 	void handle_instr_changed(int);
 	void handle_instr_reset();
 	void handle_instr_program();

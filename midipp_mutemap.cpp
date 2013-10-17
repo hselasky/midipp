@@ -27,6 +27,7 @@
 #include "midipp_mutemap.h"
 #include "midipp_groupbox.h"
 #include "midipp_checkbox.h"
+#include "midipp_buttonmap.h"
 
 MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
   : QDialog(parent)
@@ -39,8 +40,8 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 
 	gl = new QGridLayout(this);
 
-	gb_mute = new MppGroupBox("Mute Map");
-	gb_other = new MppGroupBox("Other controls");
+	gb_mute = new MppGroupBox("MIDI Channel Mute Map");
+	gb_other = new MppGroupBox("MIDI Events Mute");
 
 	snprintf(buf, sizeof(buf), "- MIDI Output Mute "
 	    "Map For Device %d -", _devno);
@@ -91,36 +92,17 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 		    y_off, x_off + 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	}
 
-	cbx_mute_program = new MppCheckBox();
-	cbx_mute_pedal = new MppCheckBox();
-	cbx_mute_local_keys_enable = new MppCheckBox();
-	cbx_mute_local_keys_disable = new MppCheckBox();
-	cbx_mute_all_control = new MppCheckBox();
+	cbx_mute_program = new MppButtonMap("Don't send program events\0" "NO\0" "YES\0", 2, 2);
+	cbx_mute_pedal = new MppButtonMap("Don't send pedal events\0" "NO\0" "YES\0", 2, 2);
+	cbx_mute_midi_song = new MppButtonMap("Don't send MIDI song events\0" "NO\0" "YES\0", 2, 2);
+	cbx_mute_local_keys = new MppButtonMap("Local keys command sent\0" "NONE\0" "ENABLE\0" "DISABLE\0", 3, 3);
+	cbx_mute_control = new MppButtonMap("Don't send control events\0" "NO\0" "YES\0", 2, 2);
 
-	gb_other->addWidget(new QLabel(tr("Mute all bank and program change events")),
-	    0, 0, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
-	gb_other->addWidget(cbx_mute_program,
-	    0, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	gb_other->addWidget(new QLabel(tr("Mute all pedal events")),
-	    1, 0, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
-	gb_other->addWidget(cbx_mute_pedal,
-	    1, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	gb_other->addWidget(new QLabel(tr("Local keys enabled on non-muted channels")),
-	    2, 0, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
-	gb_other->addWidget(cbx_mute_local_keys_enable,
-	    2, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	gb_other->addWidget(new QLabel(tr("Local keys disabled on non-muted channels")),
-	    3, 0, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
-	gb_other->addWidget(cbx_mute_local_keys_disable,
-	    3, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	gb_other->addWidget(new QLabel(tr("Mute all control events")),
-	    4, 0, 1, 1, Qt::AlignLeft|Qt::AlignVCenter);
-	gb_other->addWidget(cbx_mute_all_control,
-	    4, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb_other->addWidget(cbx_mute_program, 0, 0, 1, 1);
+	gb_other->addWidget(cbx_mute_pedal, 0, 1, 1, 1);
+	gb_other->addWidget(cbx_mute_local_keys, 1, 0, 1, 2);
+	gb_other->addWidget(cbx_mute_midi_song, 2, 0, 1, 1);
+	gb_other->addWidget(cbx_mute_control, 2, 1, 1, 1);
 
 	handle_revert_all();
 }
@@ -154,9 +136,9 @@ MppMuteMap :: handle_revert_all()
 	uint8_t mute_copy[16];
 	uint8_t mute_prog_copy;
 	uint8_t mute_pedal_copy;
-	uint8_t mute_local_enable_copy;
-	uint8_t mute_local_disable_copy;
-	uint8_t mute_all_control_copy;
+	uint8_t mute_local_keys_copy;
+	uint8_t mute_midi_song_copy;
+	uint8_t mute_control_copy;
 	int n;
 
 	pthread_mutex_lock(&mw->mtx);
@@ -165,19 +147,24 @@ MppMuteMap :: handle_revert_all()
 
 	mute_prog_copy = mw->muteProgram[devno];
 	mute_pedal_copy = mw->mutePedal[devno];
-	mute_local_enable_copy = mw->enableLocalKeys[devno];
-	mute_local_disable_copy = mw->disableLocalKeys[devno];
-	mute_all_control_copy = mw->muteAllControl[devno];
+	if (mw->enableLocalKeys[devno])
+		mute_local_keys_copy = 1;
+	else if (mw->disableLocalKeys[devno])
+		mute_local_keys_copy = 2;
+	else
+		mute_local_keys_copy = 0;
+	mute_midi_song_copy = mw->muteAllMidiSong[devno];
+	mute_control_copy = mw->muteAllControl[devno];
 	pthread_mutex_unlock(&mw->mtx);
 
 	for (n = 0; n != 16; n++)
 		cbx_mute[n]->setChecked(mute_copy[n]);
 
-	cbx_mute_program->setChecked(mute_prog_copy);
-	cbx_mute_pedal->setChecked(mute_pedal_copy);
-	cbx_mute_local_keys_enable->setChecked(mute_local_enable_copy);
-	cbx_mute_local_keys_disable->setChecked(mute_local_disable_copy);
-	cbx_mute_all_control->setChecked(mute_all_control_copy);
+	cbx_mute_program->setSelection(mute_prog_copy);
+	cbx_mute_pedal->setSelection(mute_pedal_copy);
+	cbx_mute_local_keys->setSelection(mute_local_keys_copy);
+	cbx_mute_midi_song->setSelection(mute_midi_song_copy);
+	cbx_mute_control->setSelection(mute_control_copy);
 }
 
 void
@@ -188,20 +175,19 @@ MppMuteMap :: handle_apply_all()
 	uint8_t mute_pedal_copy;
 	uint8_t mute_local_enable_copy;
 	uint8_t mute_local_disable_copy;
-	uint8_t mute_all_control_copy;
+	uint8_t mute_midi_song_copy;
+	uint8_t mute_control_copy;
 	int n;
 
 	for (n = 0; n != 16; n++)
 		mute_copy[n] = (cbx_mute[n]->checkState() == Qt::Checked);
 
-	mute_prog_copy = (cbx_mute_program->checkState() == Qt::Checked);
-	mute_pedal_copy = (cbx_mute_pedal->checkState() == Qt::Checked);
-	mute_local_enable_copy = (cbx_mute_local_keys_enable->checkState() == Qt::Checked);
-	mute_local_disable_copy = (cbx_mute_local_keys_disable->checkState() == Qt::Checked);
-	mute_all_control_copy = (cbx_mute_all_control->checkState() == Qt::Checked);
-
-	if (mute_local_enable_copy && mute_local_disable_copy)
-		mute_local_disable_copy = 0;
+	mute_prog_copy = (cbx_mute_program->currSelection != 0);
+	mute_pedal_copy = (cbx_mute_pedal->currSelection != 0);
+	mute_local_enable_copy = (cbx_mute_local_keys->currSelection == 1);
+	mute_local_disable_copy = (cbx_mute_local_keys->currSelection == 2);
+	mute_midi_song_copy = (cbx_mute_midi_song->currSelection != 0);
+	mute_control_copy = (cbx_mute_control->currSelection != 0);
 
 	pthread_mutex_lock(&mw->mtx);
 	for (n = 0; n != 16; n++)
@@ -211,7 +197,8 @@ MppMuteMap :: handle_apply_all()
 	mw->mutePedal[devno] = mute_pedal_copy;
 	mw->enableLocalKeys[devno] = mute_local_enable_copy;
 	mw->disableLocalKeys[devno] = mute_local_disable_copy;
-	mw->muteAllControl[devno] = mute_all_control_copy;
+	mw->muteAllMidiSong[devno] = mute_midi_song_copy;
+	mw->muteAllControl[devno] = mute_control_copy;
 	pthread_mutex_unlock(&mw->mtx);
 
 	this->accept();

@@ -45,11 +45,11 @@ public:
 	MppGroupBox *gb_other;
 
 	MppCheckBox *cbx_mute[16];
-	MppCheckBox *cbx_mute_program;
-	MppCheckBox *cbx_mute_pedal;
-	MppCheckBox *cbx_mute_local_keys_enable;
-	MppCheckBox *cbx_mute_local_keys_disable;
-	MppCheckBox *cbx_mute_all_control;
+	MppButtonMap *cbx_mute_program;
+	MppButtonMap *cbx_mute_pedal;
+	MppButtonMap *cbx_mute_local_keys;
+	MppButtonMap *cbx_mute_midi_song;
+	MppButtonMap *cbx_mute_control;
 
 	QPushButton *but_set_all;
 	QPushButton *but_clear_all;

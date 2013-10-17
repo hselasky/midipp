@@ -173,6 +173,7 @@ MppSettings :: doSave(void)
 			setValue("mutepedal", mw->mutePedal[y]);
 			setValue("enablelocalkeys", mw->enableLocalKeys[y]);
 			setValue("disablelocalkeys", mw->disableLocalKeys[y]);
+			setValue("muteallmidisong", mw->muteAllMidiSong[y]);
 			setValue("muteallcontrol", mw->muteAllControl[y]);
 
 			for (x = 0; x != 16; x++)
@@ -289,6 +290,7 @@ MppSettings :: doLoad(void)
 			int enableLocalKeys = valueDefault(concat("device%d/enablelocalkeys", y), 0) ? 1 : 0;
 			int disableLocalKeys = valueDefault(concat("device%d/disablelocalkeys", y), 0) ? 1 : 0;
 			int muteAllControl = valueDefault(concat("device%d/muteallcontrol", y), 0) ? 1 : 0;
+			int muteAllMidiSong = valueDefault(concat("device%d/muteallmidisong", y), 0) ? 1 : 0;
 
 			int mute[16];
 
@@ -300,7 +302,8 @@ MppSettings :: doLoad(void)
 			mw->mutePedal[y] = mutePedal; 
 			mw->enableLocalKeys[y] = enableLocalKeys; 
 			mw->disableLocalKeys[y] = disableLocalKeys; 
-			mw->muteAllControl[y] = muteAllControl; 
+			mw->muteAllControl[y] = muteAllControl;
+			mw->muteAllMidiSong[y] = muteAllMidiSong; 
 
 			for (x = 0; x != 16; x++)
 				mw->muteMap[y][x] = mute[x];

@@ -1019,6 +1019,8 @@ MppScoreMain :: handleLabelJump(int pos)
 	mainWindow->cursorUpdate = 1;
 
 	mainWindow->handle_stop(1);
+
+	mainWindow->send_song_select_locked(pos);
 }
 
 void
@@ -1164,6 +1166,15 @@ MppScoreMain :: handleKeyRemovePast(MppScoreEntry *pn, uint32_t key_delay)
 
 /* must be called locked */
 void
+MppScoreMain :: handleBeat(void)
+{
+	/* make sure we are triggered before sending beat events */
+	mainWindow->handle_midi_trigger();
+	mainWindow->send_song_event_locked(0xF8);
+}
+
+/* must be called locked */
+void
 MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 {
 	MppScoreEntry *pn;
@@ -1176,6 +1187,7 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 		if (pressed_future == 0 || head.isFirst()) {
 			pressed_future = 1;
 			handleChordsLoad();
+			handleBeat();
 		}
 
 		pn = &score_future[off];
@@ -1200,6 +1212,7 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 		if (pressed_future == 1 || head.isFirst()) {
 			pressed_future = 0;
 			handleChordsLoad();
+			handleBeat();
 		}
 
 		pn = &score_future[off - 12];
@@ -1459,6 +1472,10 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 			return;
 		}
 	}
+
+	/* generate beat event, if any */
+
+	handleBeat();
 
 	/* play sheet */
 
