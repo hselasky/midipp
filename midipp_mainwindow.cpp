@@ -492,8 +492,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* <Instrument> tab */
 
-	but_other_mute_all = new MppButtonMap("Mute non-channel specific MIDI events\0NO\0YES\0", 2, 2);
-	connect(but_other_mute_all, SIGNAL(selectionChanged(int)), this, SLOT(handle_other_muted_changed(int)));
+	but_non_channel_mute_all = new MppButtonMap("Mute non-channel specific MIDI events\0NO\0YES\0", 2, 2);
+	connect(but_non_channel_mute_all, SIGNAL(selectionChanged(int)), this, SLOT(handle_non_channel_muted_changed(int)));
 
 	but_instr_program = new QPushButton(tr("Program One"));
 	but_instr_program_all = new QPushButton(tr("Program All"));
@@ -562,7 +562,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_instr_gl->addWidget(gb_instr_select, 0, 0, 1, 8);
 	tab_instr_gl->addWidget(gb_instr_table, 1, 0, 1, 8);
-	tab_instr_gl->addWidget(but_other_mute_all, 2, 0, 1, 8);
+	tab_instr_gl->addWidget(but_non_channel_mute_all, 2, 0, 1, 8);
 
 	tab_instr_gl->setRowStretch(3, 1);
 	tab_instr_gl->setColumnStretch(8, 1);
@@ -701,10 +701,10 @@ MppMainWindow :: handle_play_key_changed(int key)
 }
 
 void
-MppMainWindow :: handle_other_muted_changed(int value)
+MppMainWindow :: handle_non_channel_muted_changed(int value)
 {
 	pthread_mutex_lock(&mtx);
-	otherMuted = value;
+	nonChannelMuted = value;
 	pthread_mutex_unlock(&mtx);
 }
 
@@ -1941,7 +1941,7 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 	struct umidi20_event *p_event;
 	uint32_t what;
 	int vel;
-	int do_drop;
+	int do_drop = (device_no == MPP_MAGIC_DEVNO);
 
 	pthread_mutex_lock(&mw->mtx);
 
@@ -1953,8 +1953,6 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 		chan = umidi20_event_get_channel(event) & 0xF;
 
 		vel = umidi20_event_get_velocity(event);
-
-		do_drop = (device_no == MPP_MAGIC_DEVNO);
 
 		/* check for playback event */
 		if (do_drop) {
@@ -1986,7 +1984,9 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			}
 		}
 
-		if (device_no < MPP_MAX_DEVS) {
+		if (mw->instr[chan].muted) {
+			do_drop = 1;
+		} else if (device_no < MPP_MAX_DEVS) {
 			/* check for pedal and control events mute */
 			if (what & UMIDI20_WHAT_CONTROL_VALUE) {
 				if (umidi20_event_get_control_address(event) == 0x40) {
@@ -2002,28 +2002,35 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 				do_drop = 1;
 			}
 		}
-		*drop = mw->instr[chan].muted || do_drop;
 
-	} else {
-		if (mw->otherMuted) {
-			*drop = 1;
-		} else switch (event->cmd[1]) {
-		case 0xF1:	/* time code */
-		case 0xF2:	/* song position */
-		case 0xF3:	/* song select */
-		case 0xF8:	/* beat */
-		case 0xFA:	/* song start */
-		case 0xFB:	/* song continue */
-		case 0xFC:	/* song stop */
-			if (device_no < MPP_MAX_DEVS) {
-				if (mw->muteAllMidiSong[device_no])
-					*drop = 1;
+	} else if (event->cmd[1] != 0xFF) {
+
+		/* check for playback event */
+		if (do_drop) {
+
+			uint8_t x;
+
+			/* check if we should duplicate events for other devices */
+			for (x = 0; x < MPP_MAX_DEVS; x++) {
+				if (mw->deviceBits & (MPP_DEV0_PLAY << (3 * x))) {
+					p_event = umidi20_event_copy(event, 1);
+					if (p_event != NULL) {
+						p_event->device_no = x;
+						umidi20_event_queue_insert(&(root_dev.play[x].queue),
+							p_event, UMIDI20_CACHE_INPUT);
+					}
+				}
 			}
-			break;
-		default:
-			break;
+		}
+
+		if (mw->nonChannelMuted) {
+			do_drop = 1;
+		} else if (device_no < MPP_MAX_DEVS) {
+			if (mw->muteAllNonChannel[device_no])
+				do_drop = 1;
 		}
 	}
+	*drop = do_drop;
 	pthread_mutex_unlock(&mw->mtx);
 }
 
@@ -2249,7 +2256,7 @@ MppMainWindow :: handle_instr_reset()
 {
 	uint8_t x;
 
-	but_other_mute_all->setSelection(0);
+	but_non_channel_mute_all->setSelection(0);
 
 	for (x = 0; x != 16; x++) {
 		spn_instr_bank[x]->blockSignals(1);
@@ -2980,7 +2987,7 @@ MppMainWindow :: handle_instr_rem()
 				UMIDI20_IF_REMOVE(&(track->queue), event);
 				umidi20_event_free(event);
 			}
-		} else if (otherMuted) {
+		} else if (nonChannelMuted) {
 			UMIDI20_IF_REMOVE(&(track->queue), event);
 			umidi20_event_free(event);
 		}
@@ -2993,7 +3000,7 @@ MppMainWindow :: handle_instr_mute_all()
 {
 	uint8_t n;
 
-	but_other_mute_all->setSelection(1);
+	but_non_channel_mute_all->setSelection(1);
 
 	for (n = 0; n != 16; n++) {
 		cbx_instr_mute[n]->blockSignals(1);
@@ -3009,7 +3016,7 @@ MppMainWindow :: handle_instr_unmute_all()
 {
 	uint8_t n;
 
-	but_other_mute_all->setSelection(0);
+	but_non_channel_mute_all->setSelection(0);
 
 	for (n = 0; n != 16; n++) {
 		cbx_instr_mute[n]->blockSignals(1);
@@ -3204,28 +3211,39 @@ MppMainWindow :: handle_undo()
 void
 MppMainWindow :: send_song_stop_locked()
 {
-	send_song_event_locked(0xFC);
+	int n;
+
+	for (n = 0; n != MPP_MAX_VIEWS; n++) {
+		if (scores_main[n]->songEventsOn != 0)
+			break;
+	}
+	if (n != MPP_MAX_VIEWS)
+		send_byte_event_locked(0xFC);
 }
 
 void
 MppMainWindow :: send_song_trigger_locked()
 {
-	if (midiPaused != 0)
-		send_song_event_locked(0xFB);	/* continue */
-	else if (midiTriggered == 0)
-		send_song_event_locked(0xFA);	/* start */
+	int n;
+
+	for (n = 0; n != MPP_MAX_VIEWS; n++) {
+		if (scores_main[n]->songEventsOn != 0)
+			break;
+	}
+	if (n != MPP_MAX_VIEWS) {
+		if (midiPaused != 0)
+			send_byte_event_locked(0xFB);	/* continue */
+		else if (midiTriggered == 0)
+			send_byte_event_locked(0xFA);	/* start */
+	}
 }
 
 void
-MppMainWindow :: send_song_event_locked(uint8_t which)
+MppMainWindow :: send_byte_event_locked(uint8_t which)
 {
 	uint8_t buf[1];
 	uint8_t trig;
 	int n;
-
-	/* don't generate this event upon playback */
-	if (midiPlayOff == 0)
-		return;
 
 	trig = midiTriggered;
 	midiTriggered = 1;
@@ -3233,8 +3251,6 @@ MppMainWindow :: send_song_event_locked(uint8_t which)
 	buf[0] = which;
 
 	for (n = 0; n != MPP_MAX_DEVS; n++) {
-		if (muteAllMidiSong[n])
-			continue;
 		if (check_synth(n, 0, 0) != 0)
 			mid_add_raw(&mid_data, buf, 1, 0);
 	}
@@ -3250,10 +3266,6 @@ MppMainWindow :: send_song_select_locked(uint8_t which)
 	uint8_t trig;
 	int n;
 
-	/* don't generate this event upon playback */
-	if (midiPlayOff == 0)
-		return;
-
 	trig = midiTriggered;
 	midiTriggered = 1;
 
@@ -3261,8 +3273,6 @@ MppMainWindow :: send_song_select_locked(uint8_t which)
 	buf[1] = which & 0x7F;
 
 	for (n = 0; n != MPP_MAX_DEVS; n++) {
-		if (muteAllMidiSong[n])
-			continue;
 		if (check_synth(n, 0, 0) != 0)
 			mid_add_raw(&mid_data, buf, 2, 0);
 	}

@@ -66,7 +66,6 @@ public:
 	void decrementDuration(uint32_t timeout = 0);
 	void handleLabelJump(int label);
 	void handleChordsLoad(void);
-	void handleBeat(void);
 	void handleKeyPressChord(int key, int vel, uint32_t key_delay = 0);
 	void handleKeyPressureChord(int key, int vel, uint32_t key_delay = 0);
 	void handleKeyReleaseChord(int key, uint32_t key_delay = 0);
@@ -166,6 +165,7 @@ public:
 	uint8_t num_base;
 	uint8_t chordContrast;
 	uint8_t chordNormalize;
+	uint8_t songEventsOn;
 
 	uint8_t auto_zero_end[0];
 

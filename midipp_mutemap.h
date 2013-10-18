@@ -48,8 +48,8 @@ public:
 	MppButtonMap *cbx_mute_program;
 	MppButtonMap *cbx_mute_pedal;
 	MppButtonMap *cbx_mute_local_keys;
-	MppButtonMap *cbx_mute_midi_song;
 	MppButtonMap *cbx_mute_control;
+	MppButtonMap *cbx_mute_non_channel;
 
 	QPushButton *but_set_all;
 	QPushButton *but_clear_all;

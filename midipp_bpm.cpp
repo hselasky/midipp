@@ -59,6 +59,10 @@ MppTimerCallback(void *arg)
 			sm->handleKeyPress(mb->key, mb->amp, 0);
 			sm->handleKeyRelease(mb->key, mb->duty_ticks);
 		}
+
+		if (mb->beat != 0) {
+			mw->send_byte_event_locked(0xF8);
+		}
 	}
 	mb->time++;
 	pthread_mutex_unlock(&mw->mtx);
@@ -73,19 +77,6 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 	mw = parent;
 
 	gl = new QGridLayout(this);
-
-	lbl_bpm_pattern = new QLabel(tr("BPM pattern: 1+a+bc+d"));
-	lbl_bpm_value = new QLabel(tr("BPM value (1..6000)"));
-	lbl_bpm_duty = new QLabel(tr("BPM duty (1..199)"));
-	lbl_bpm_amp = new QLabel(tr("BPM amplitude (1..127)"));
-	lbl_bpm_key = new QLabel(tr("BPM play key"));
-	lbl_bpm_ref = new QLabel(tr("BPM period reference (1..6000)"));
-	lbl_bpm_period = new QLabel(tr("BPM period value (0..60000)"));
-
-	for (n = 0; n != MPP_MAX_VIEWS; n++) {
-		snprintf(buf, sizeof(buf), "BPM to view %c", 'A' + n);
-		lbl_view[n] = new QLabel(tr(buf));
-	}
 
 	led_bpm_pattern = new MppPattern();
 
@@ -122,6 +113,9 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 		connect(cbx_view[n], SIGNAL(stateChanged(int)), this, SLOT(handle_view_all(int)));
 	}
 
+	cbx_midi_beat = new MppCheckBox();
+	connect(cbx_midi_beat, SIGNAL(stateChanged(int)), this, SLOT(handle_midi_beat_change(int)));
+
 	but_bpm_enable = new QPushButton(tr("Enable"));
 	but_reset_all = new QPushButton(tr("Reset all"));
 	but_done_all = new QPushButton(tr("Close"));
@@ -133,33 +127,44 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 	setWindowTitle(tr("BPM settings"));
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
-	gl->addWidget(lbl_bpm_pattern, 0, 0, 1, 2);
+	gl->addWidget(new QLabel(tr("BPM pattern: 1+a+bc+d")), 0, 0, 1, 2);
 	gl->addWidget(led_bpm_pattern, 0, 2, 1, 1);
 
-	gl->addWidget(lbl_bpm_value, 1, 0, 1, 2);
+	gl->addWidget(new QLabel(tr("BPM value (1..6000)")), 1, 0, 1, 2);
 	gl->addWidget(spn_bpm_value, 1, 2, 1, 1);
 
-	gl->addWidget(lbl_bpm_duty, 2, 0, 1, 2);
+	gl->addWidget(new QLabel(tr("BPM duty (1..199)")), 2, 0, 1, 2);
 	gl->addWidget(spn_bpm_duty, 2, 2, 1, 1);
 
-	gl->addWidget(lbl_bpm_amp, 3, 0, 1, 2);
+	gl->addWidget(new QLabel(tr("BPM amplitude (1..127)")), 3, 0, 1, 2);
 	gl->addWidget(spn_bpm_amp, 3, 2, 1, 1);
 
-	gl->addWidget(lbl_bpm_key, 4, 0, 1, 2);
+	gl->addWidget(new QLabel(tr("BPM play key")), 4, 0, 1, 2);
 	gl->addWidget(spn_bpm_key, 4, 2, 1, 1);
 
-	gl->addWidget(lbl_bpm_ref, 5, 0, 1, 2);
+	gl->addWidget(new QLabel(tr("BPM period reference (1..6000)")), 5, 0, 1, 2);
 	gl->addWidget(spn_bpm_ref, 5, 2, 1, 1);
 
-	gl->addWidget(lbl_bpm_period, 6, 0, 1, 2);
+	gl->addWidget(new QLabel(tr("BPM period value (0..60000)")), 6, 0, 1, 2);
 	gl->addWidget(spn_bpm_period, 6, 2, 1, 1);
 
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
-		gl->addWidget(lbl_view[n], 7 + n, 0, 1, 2);
+		snprintf(buf, sizeof(buf), "BPM to view %c", 'A' + n);
+		gl->addWidget(new QLabel(tr(buf)), 7 + n, 0, 1, 2);
 		gl->addWidget(cbx_view[n], 7 + n, 2, 1, 1);
 	}
 
 	n = 7 + MPP_MAX_VIEWS;
+
+	gl->addWidget(new QLabel(tr("BPM to MIDI beat event")), n, 0, 1, 2);
+	gl->addWidget(cbx_midi_beat, n, 2, 1, 1);
+
+	n++;
+
+	gl->setRowStretch(n, 1);
+	gl->setColumnStretch(3, 1);
+
+	n++;
 
 	gl->addWidget(but_bpm_enable, n, 0, 1, 1);
 	gl->addWidget(but_reset_all, n, 1, 1, 1);
@@ -205,11 +210,14 @@ MppBpm :: handle_reset_all()
 	for (n = 0; n != MPP_MAX_VIEWS; n++)
 		cbx_view[n]->setCheckState(Qt::Unchecked);
 
+	cbx_midi_beat->setCheckState(Qt::Unchecked);
+
 	pthread_mutex_lock(&mw->mtx);
 
 	for (n = 0; n != MPP_MAX_VIEWS; n++)
 		view[n] = 0;
 
+	beat = 0;
 	skip_bpm = 0;
 	time = 0;
 	enabled = 0;
@@ -261,17 +269,19 @@ MppBpm :: handle_view_all(int dummy)
 {
 	int n;
 	uint8_t temp[MPP_MAX_VIEWS];
+	uint8_t temp_beat;
 
 	for (n = 0; n != MPP_MAX_VIEWS; n++)
 		temp[n] = (cbx_view[n]->checkState() != Qt::Unchecked);
 
+	temp_beat = (cbx_midi_beat->checkState() != Qt::Unchecked);
+
 	pthread_mutex_lock(&mw->mtx);
 	for (n = 0; n != MPP_MAX_VIEWS; n++)
 		view[n] = temp[n];
+	beat = temp_beat;
 	pthread_mutex_unlock(&mw->mtx);
 }
-
-
 
 /* must be called locked */
 void
@@ -373,3 +383,16 @@ MppBpm :: handle_bpm_period(int val)
 	}
 	pthread_mutex_unlock(&mw->mtx);
 }
+
+void
+MppBpm :: handle_midi_beat_change(int val)
+{
+	pthread_mutex_lock(&mw->mtx);
+	if (beat != (uint8_t)val) {
+		beat = (uint8_t)val;
+		skip_bpm = enabled && mw->midiTriggered;
+		handle_update();
+	}
+	pthread_mutex_unlock(&mw->mtx);
+}
+

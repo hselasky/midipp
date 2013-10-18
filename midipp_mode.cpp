@@ -80,6 +80,8 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	handle_contrast_changed(sli_contrast->value());
 	gl_contrast->addWidget(sli_contrast,0,0,1,1);
 
+	but_song_events = new MppButtonMap("Send MIDI song events\0OFF\0ON\0", 2, 2);
+
 	but_mode = new MppButtonMap("Key mode\0" "ALL\0" "MIXED\0" "FIXED\0" "TRANSP\0" "CHORD\0", 5, 3);
 
 	but_reset = new QPushButton(tr("Reset"));
@@ -116,11 +118,11 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	spn_chan->setValue(0);
 
 	for (x = 0; x != MPP_MAX_DEVS; x++) {
-		gl_idev->addWidget(lbl_dev[x], x, 0, 1, 1);
-		gl_idev->addWidget(cbx_dev[x], x, 1, 1, 1);
+		gl_idev->addWidget(lbl_dev[x], x, 0, 1, 1, Qt::AlignCenter);
+		gl_idev->addWidget(cbx_dev[x], x, 1, 1, 1, Qt::AlignCenter);
 	}
 
-	gl->addWidget(gb_idev, 0, 0, 8, 2);
+	gl->addWidget(gb_idev, 0, 0, 9, 2);
 
 	gl->addWidget(lbl_cmd, 0, 2, 1, 1);
 	gl->addWidget(spn_cmd, 0, 3, 1, 1);
@@ -138,12 +140,17 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 
 	gl->addWidget(gb_contrast, 5, 2, 1, 2);
 
-	gl->addWidget(but_mode, 6, 2, 2, 2);
+	gl->addWidget(but_song_events, 6, 2, 1, 2);
 
-	gl->addWidget(but_set_all, 8, 0, 1, 1);
-	gl->addWidget(but_clear_all, 8, 1, 1, 1);
-	gl->addWidget(but_reset, 8, 2, 1, 1);
-	gl->addWidget(but_done, 8, 3, 1, 1);
+	gl->addWidget(but_mode, 7, 2, 2, 2);
+
+	gl->setRowStretch(9, 1);
+	gl->setColumnStretch(4, 1);
+
+	gl->addWidget(but_set_all, 10, 0, 1, 1);
+	gl->addWidget(but_clear_all, 10, 1, 1, 1);
+	gl->addWidget(but_reset, 10, 2, 1, 1);
+	gl->addWidget(but_done, 10, 3, 1, 1);
 }
 
 MppMode :: ~MppMode()
@@ -162,6 +169,7 @@ MppMode :: update_all(void)
 	int input_mask;
 	int chord_contrast;
 	int chord_norm;
+	int song_events;
 	int x;
 
 	pthread_mutex_lock(&sm->mainWindow->mtx);
@@ -173,6 +181,7 @@ MppMode :: update_all(void)
 	input_mask = sm->devInputMask;
 	chord_contrast = sm->chordContrast;
 	chord_norm = sm->chordNormalize;
+	song_events = sm->songEventsOn;
 	pthread_mutex_unlock(&sm->mainWindow->mtx);
 
 	for (x = 0; x != MPP_MAX_DEVS; x++)
@@ -185,6 +194,7 @@ MppMode :: update_all(void)
 	spn_chan->setValue(channel);
 	but_mode->handle_pressed(key_mode);
 	cbx_norm->setChecked(chord_norm);
+	but_song_events->handle_pressed(song_events);
 }
 
 void
@@ -240,6 +250,8 @@ MppMode :: handle_reset()
 	spn_base->setValue(MPP_DEFAULT_BASE_KEY);
 	spn_chan->setValue(0);
 	cbx_norm->setChecked(1);
+	but_mode->handle_pressed(0);
+	but_song_events->handle_pressed(0);
 
 	for (x = 0; x != MPP_MAX_DEVS; x++)
 		cbx_dev[x]->setChecked(1);
@@ -256,6 +268,7 @@ MppMode :: handle_done()
 	int input_mask;
 	int chord_contrast;
 	int chord_norm;
+	int song_events;
 	int x;
 
 	input_mask = 0;
@@ -272,6 +285,7 @@ MppMode :: handle_done()
 	chord_contrast = sli_contrast->value();
 	chord_norm = cbx_norm->isChecked();
 	key_mode = but_mode->currSelection;
+	song_events = but_song_events->currSelection;
 
 	if (key_mode < 0 || key_mode >= MM_PASS_MAX)
 		key_mode = 0;
@@ -285,6 +299,7 @@ MppMode :: handle_done()
 	sm->devInputMask = input_mask;
 	sm->chordContrast = chord_contrast;
 	sm->chordNormalize = chord_norm;
+	sm->songEventsOn = song_events;
 	pthread_mutex_unlock(&sm->mainWindow->mtx);
 
 	accept();

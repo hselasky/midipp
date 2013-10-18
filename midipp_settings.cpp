@@ -31,6 +31,7 @@
 #include "midipp_import.h"
 #include "midipp_database.h"
 #include "midipp_checkbox.h"
+#include "midipp_buttonmap.h"
 
 MppSettings :: MppSettings(MppMainWindow *_parent, const QString & fname)
   : QSettings(fname)
@@ -159,6 +160,7 @@ MppSettings :: doSave(void)
 			setValue(concat("prog%d", x), mw->spn_instr_prog[x]->value());
 			setValue(concat("mute%d", x), (int)mw->cbx_instr_mute[x]->isChecked());
 		}
+		setValue("nonchannelmute", mw->but_non_channel_mute_all->currSelection);
 		endGroup();
 	}
 
@@ -173,7 +175,7 @@ MppSettings :: doSave(void)
 			setValue("mutepedal", mw->mutePedal[y]);
 			setValue("enablelocalkeys", mw->enableLocalKeys[y]);
 			setValue("disablelocalkeys", mw->disableLocalKeys[y]);
-			setValue("muteallmidisong", mw->muteAllMidiSong[y]);
+			setValue("mutenonchannel", mw->muteAllNonChannel[y]);
 			setValue("muteallcontrol", mw->muteAllControl[y]);
 
 			for (x = 0; x != 16; x++)
@@ -276,6 +278,7 @@ MppSettings :: doLoad(void)
 			mw->spn_instr_prog[x]->setValue(valueDefault(concat("instruments/prog%d", x), 0) & 127);
 			mw->cbx_instr_mute[x]->setChecked(valueDefault(concat("instruments/mute%d", x), 0) ? 1 : 0);
 		}
+		mw->but_non_channel_mute_all->setSelection(valueDefault("nonchannelmute", 0) ? 1 : 0);
 	}
 
 	if (save_devices > 0) {
@@ -290,7 +293,7 @@ MppSettings :: doLoad(void)
 			int enableLocalKeys = valueDefault(concat("device%d/enablelocalkeys", y), 0) ? 1 : 0;
 			int disableLocalKeys = valueDefault(concat("device%d/disablelocalkeys", y), 0) ? 1 : 0;
 			int muteAllControl = valueDefault(concat("device%d/muteallcontrol", y), 0) ? 1 : 0;
-			int muteAllMidiSong = valueDefault(concat("device%d/muteallmidisong", y), 0) ? 1 : 0;
+			int muteAllNonChannel = valueDefault(concat("device%d/mutenonchannel", y), 0) ? 1 : 0;
 
 			int mute[16];
 
@@ -303,7 +306,7 @@ MppSettings :: doLoad(void)
 			mw->enableLocalKeys[y] = enableLocalKeys; 
 			mw->disableLocalKeys[y] = disableLocalKeys; 
 			mw->muteAllControl[y] = muteAllControl;
-			mw->muteAllMidiSong[y] = muteAllMidiSong; 
+			mw->muteAllNonChannel[y] = muteAllNonChannel; 
 
 			for (x = 0; x != 16; x++)
 				mw->muteMap[y][x] = mute[x];

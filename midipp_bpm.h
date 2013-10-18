@@ -42,15 +42,6 @@ public:
 
 	QGridLayout *gl;
 
-	QLabel *lbl_bpm_pattern;
-	QLabel *lbl_bpm_value;
-	QLabel *lbl_bpm_duty;
-	QLabel *lbl_bpm_amp;
-	QLabel *lbl_bpm_key;
-	QLabel *lbl_view[MPP_MAX_VIEWS];
-	QLabel *lbl_bpm_ref;
-	QLabel *lbl_bpm_period;
-
 	MppPattern *led_bpm_pattern;
 	QSpinBox *spn_bpm_value;
 	QSpinBox *spn_bpm_duty;
@@ -59,6 +50,7 @@ public:
 	QSpinBox *spn_bpm_ref;
 	QSpinBox *spn_bpm_period;
 	MppCheckBox *cbx_view[MPP_MAX_VIEWS];
+	MppCheckBox *cbx_midi_beat;
 
 	QPushButton *but_bpm_enable;
 	QPushButton *but_reset_all;
@@ -75,6 +67,7 @@ public:
 	uint8_t view[MPP_MAX_VIEWS];
 	uint8_t amp;
 	uint8_t skip_bpm;
+	uint8_t beat;
 
 public slots:
 	void handle_reload_all();
@@ -88,6 +81,7 @@ public slots:
 	void handle_bpm_key(int);
 	void handle_bpm_ref(int);
 	void handle_bpm_period(int);
+	void handle_midi_beat_change(int);
 };
 
 #endif		/* _MIDIPP_BPM_H_ */

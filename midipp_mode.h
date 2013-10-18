@@ -71,6 +71,7 @@ public:
 	MppCheckBox *cbx_norm;
 	MppCheckBox *cbx_dev[MPP_MAX_DEVS];
 
+	MppButtonMap *but_song_events;
 	MppButtonMap *but_mode;
 	QPushButton *but_done;
 	QPushButton *but_set_all;
