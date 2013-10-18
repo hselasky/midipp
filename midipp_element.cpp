@@ -774,7 +774,8 @@ MppHead :: optimise()
 	}
 
 	/* remove unused entries, except labels */
-	TAILQ_FOREACH_SAFE(ptr, &head, entry, next) {
+	for (ptr = TAILQ_FIRST(&head); ptr != NULL; ptr = next) {
+		next = TAILQ_NEXT(ptr, entry);
 		if (ptr->txt.size() != 0)
 			continue;
 		TAILQ_REMOVE(&head, ptr, entry);
