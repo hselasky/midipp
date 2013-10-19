@@ -1209,12 +1209,19 @@ MppMainWindow :: handle_midi_file_save_as()
 void
 MppMainWindow :: handle_rewind()
 {
-	pthread_mutex_lock(&mtx);
+	if (midiTriggered != 0) {
+		pthread_mutex_lock(&mtx);
+		/* kill all leftover notes */
+		handle_stop();
+		/* send song stop event */
+		send_song_stop_locked();
+		pthread_mutex_unlock(&mtx);
 
-	/* kill all leftover notes */
-	handle_stop();
-	/* send song stop event */
-	send_song_stop_locked();
+		/* wait for MIDI events to propagate */
+		usleep(100000);
+	}
+
+	pthread_mutex_lock(&mtx);
 
 	midiTriggered = 0;
 	midiPaused = 0;
@@ -1229,12 +1236,6 @@ MppMainWindow :: handle_rewind()
 		    UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
 		startPosition = umidi20_get_curr_position() - 0x40000000;
 	}
-
-	/* kill all leftover notes */
-	handle_stop();
-	/* send song stop event */
-	send_song_stop_locked();
-
 	pthread_mutex_unlock(&mtx);
 }
 
@@ -1428,8 +1429,7 @@ MppMainWindow :: handle_config_apply_sub(int devno)
 	handle_config_reload();
 
 	/* wait for MIDI devices to be opened */
-
-	usleep(125000);
+	usleep(100000);
 
 	pthread_mutex_lock(&mtx);
 	ScMidiTriggered = midiTriggered;
