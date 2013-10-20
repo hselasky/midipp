@@ -28,25 +28,26 @@
 
 #include "midipp.h"
 
-#define	MIDIPP_IMPORT_LB	256
 #define	MIDIPP_IMPORT_MW	64
 
-struct midipp_word {
-	uint16_t off;
-	char name[32];
+class midipp_word {
+public:
+	int off;
+	QString name;
 };
 
-struct midipp_import {
-	char line_buffer[MIDIPP_IMPORT_LB];
+class midipp_import {
+public:
+	QString line_buffer;
 
-	struct midipp_word d_word[2][MIDIPP_IMPORT_MW];
+	midipp_word d_word[2][MIDIPP_IMPORT_MW];
 	uint8_t d_chords[2];
 
 	MppScoreMain *sm;
 
 	MppDecode *dlg;
 
-	uint16_t n_word[2];
+	int n_word[2];
 
 	uint8_t index;
 	uint8_t load_more;
@@ -77,6 +78,6 @@ public slots:
 	void handleImport(int);
 };
 
-extern uint8_t midipp_import(QString str, struct midipp_import *ps, MppScoreMain *sm);
+extern uint8_t midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm);
 
 #endif		/* _MIDIPP_IMPORT_H_ */

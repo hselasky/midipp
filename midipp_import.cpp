@@ -31,21 +31,21 @@
 #include "midipp_button.h"
 
 static uint8_t
-midipp_import_flush(struct midipp_import *ps, int i_txt, int i_score)
+midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 {
-	QByteArray out;
-	QByteArray scs;
+	QString out;
+	QString scs;
 
-	uint16_t x;
-	uint16_t ai;
-	uint16_t bi;
-	uint16_t off;
+	int off;
+	int x;
+	int ai;
+	int bi;
 
 	uint8_t any;
 	
-	out += QByteArray("S\"");
+	out += "S\"";
 
-	for (ai = bi = x = 0; x != MIDIPP_IMPORT_LB; x++) {
+	for (ai = bi = x = 0; x != ps->line_buffer.size(); x++) {
 
 		any = 0;
 
@@ -54,19 +54,24 @@ midipp_import_flush(struct midipp_import *ps, int i_txt, int i_score)
 			any = 1;
 
 			if (ps->d_word[i_score][ai].off == x) {
-				const char *ptr = ps->d_word[i_score][ai].name;
+				char *ptr =
+				    MppQStringToAscii(ps->d_word[i_score][ai].name);
 
-				if (mpp_find_chord(ptr, NULL, NULL, NULL) == 0) {
-					out += QByteArray(".(") + QByteArray(ptr) +
-					    QByteArray(")");
+				if (ptr != NULL &&
+				    mpp_find_chord(ptr, NULL, NULL, NULL) == 0) {
+					out += ".(";
+					out += ps->d_word[i_score][ai].name;
+					out += ")";
 
 					ps->dlg->setText(ptr);
 
 					scs += ps->sm->mainWindow->
-					    led_config_insert->text().toUtf8() +
-					    ps->dlg->getText().toUtf8() +
-					    QByteArray("\n");
+					    led_config_insert->text() +
+					    ps->dlg->getText() +
+					    "\n";
 				}
+
+				free(ptr);
 				ai++;
 			}
 		}
@@ -76,41 +81,43 @@ midipp_import_flush(struct midipp_import *ps, int i_txt, int i_score)
 			off = ps->d_word[i_txt][bi].off;
 
 			if (x >= off) {
-				char ch[2];
-				ch[0] = ps->d_word[i_txt][bi].name[x - off];
-				ch[1] = 0;
-				if (ch[0] == 0) {
+				int y = x - off;
+
+				if (y >= ps->d_word[i_txt][bi].name.size()) {
 					bi++;
 					goto next_word;
 				} else {
-					out += QByteArray(ch);
+					out += ps->d_word[i_txt][bi].name[y];
 				}
 			} else {
 				if (!any)
 					break;
 
-				out += QByteArray(" ");
+				out += " ";
 			}
 		} else {
 			if (!any)
 				break;
 
-			out += QByteArray(" ");
+			out += " ";
 		}
 	}
-	out += QByteArray("\"\n\n") + scs + QByteArray("\n");
+	out += "\"\n\n";
+	out += scs;
+	out += "\n";
 
 	QTextCursor cursor(ps->sm->editWidget->textCursor());
 	cursor.beginEditBlock();
-	cursor.insertText(QString::fromUtf8(out));
+	cursor.insertText(out);
 	cursor.endEditBlock();
 
 	return (0);
 }
 
 static uint8_t
-midipp_import_is_chord(char c)
+midipp_import_is_chord(QChar ch)
 {
+	char c = ch.toLatin1();
 	if (c >= 'A' && c <= 'H')
 		return (1);
 	if (c >= '0' && c <= '9')
@@ -128,53 +135,77 @@ midipp_import_is_chord(char c)
 	return (0);
 }
 
-static uint8_t
-midipp_import_parse(struct midipp_import *ps)
+static int
+midipp_import_find_chord(const QString &str)
 {
-	uint16_t n_word;
-	uint16_t n_off;
-	uint16_t n_cof;
+	char *ptr;
+	int ret;
+
+	ptr = MppQStringToAscii(str);
+	ret = (ptr != NULL && mpp_find_chord(ptr, NULL, NULL, NULL) == 0);
+	free(ptr);
+
+	return (ret);
+}
+
+static uint8_t
+midipp_import_parse(class midipp_import *ps)
+{
+	int n_off;
+	int n_word;
+	int nchord;
+	int fchord;
+	int temp;
 	uint8_t state;
 	uint8_t next;
-	uint8_t nchord;
-	uint8_t fchord;
-	int c;
+	QChar c;
 
 	n_word = 0;
-	n_off = 0;
-	n_cof = 0;
 	state = midipp_import_is_chord(ps->line_buffer[0]);
 	nchord = (state == 1) ? 1 : 0;
 	fchord = 0;
 
-	while (1) {
+	/* reset all the "name" strings */
+	for (n_off = 0; n_off != MIDIPP_IMPORT_MW; n_off++) {
+		ps->d_word[ps->index][n_off].name = QString();
+	}
+
+	/* parse line */
+	for (n_off = 0; n_off != ps->line_buffer.size(); n_off++) {
+
 		c = ps->line_buffer[n_off];
 
 		next = midipp_import_is_chord(c);
-		if (next != state || n_cof == 31 || c == 0) {
-
-			ps->d_word[ps->index][n_word].name[n_cof] = 0;
-			ps->d_word[ps->index][n_word].off = n_off - n_cof;
+		if (next != state) {
+			ps->d_word[ps->index][n_word].off = n_off -
+			    ps->d_word[ps->index][n_word].name.size();
 
 			if (state == 1 &&
-			    mpp_find_chord(ps->d_word[ps->index][n_word].name,
-			    NULL, NULL, NULL) == 0) {
+			    midipp_import_find_chord(
+			    ps->d_word[ps->index][n_word].name) != 0) {
 				fchord++;
 			}
-
 			n_word ++;
-			n_cof = 0;
 
-			if (n_word == (MIDIPP_IMPORT_MW - 1) || c == 0)
+			if (n_word == (MIDIPP_IMPORT_MW - 1))
 				break;
 
 			state = next;
 			if (state == 1)
 				nchord++;
 		}
-		ps->d_word[ps->index][n_word].name[n_cof] = c;
-		n_off ++;
-		n_cof ++;
+		ps->d_word[ps->index][n_word].name += c;
+	}
+	if (n_off == ps->line_buffer.size()) {
+		ps->d_word[ps->index][n_word].off = n_off -
+		    ps->d_word[ps->index][n_word].name.size();
+
+		if (state == 1 &&
+		    midipp_import_find_chord(
+		    ps->d_word[ps->index][n_word].name) != 0) {
+			fchord++;
+		}
+		n_word ++;
 	}
 
 	ps->n_word[ps->index] = n_word;
@@ -187,13 +218,13 @@ midipp_import_parse(struct midipp_import *ps)
 		return (0);
 	}
 
-	c = 0;
+	temp = 0;
 	if (ps->d_chords[0])
-		c |= 1;
+		temp |= 1;
 	if (ps->d_chords[1])
-		c |= 2;
+		temp |= 2;
 
-	switch (c) {
+	switch (temp) {
 	case 0:
 		if (ps->index == 0) {
 			if (midipp_import_flush(ps, 1, -1))
@@ -238,30 +269,27 @@ midipp_import_parse(struct midipp_import *ps)
 }
 
 uint8_t
-midipp_import(QString str, struct midipp_import *ps, MppScoreMain *sm)
+midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm)
 {
 	MppDecode dlg(sm->mainWindow, sm, 0);
-	char ch;
+	QChar ch;
 	int off;
-	char *ptr;
-	char *ptr_curr;
 
-	ptr = MppQStringToAscii(str);
-	if (ptr == NULL)
-		return (1);
+	/* reset parse state */
+	for (off = 0; off != (2 * MIDIPP_IMPORT_MW); off++)
+		ps->d_word[0][off].off = 0;
 
-	ptr_curr = ptr;
-
-	off = 0;
-
-	memset(ps, 0, sizeof(*ps));
-
+	ps->d_chords[0] = 0;
+	ps->d_chords[1] = 0;
 	ps->sm = sm;
 	ps->dlg = &dlg;
+	ps->n_word[0] = 0;
+	ps->n_word[1] = 0;
+	ps->index = 0;
 	ps->load_more = 1;
 
-	while ((ch = *ptr_curr) != 0) {
-		ptr_curr++;
+	for (off = 0; off != str.size(); off++) {
+		ch = str[off];
 
 		if (ch == '\r')
 			continue;
@@ -277,39 +305,25 @@ midipp_import(QString str, struct midipp_import *ps, MppScoreMain *sm)
 			ch = ' ';
 
 		/* expand tabs to 8 spaces */
-		if (ch == '\t') {
-			int n;
-			ch = ' ';
-			for (n = 0; n != 7; n++) {
-				if (off != (MIDIPP_IMPORT_LB - 1)) {
-					ps->line_buffer[off] = ch;
-					off++;
-				}
-			}
-		}
+		if (ch == '\t')
+			ps->line_buffer += "       ";
 
-		ps->line_buffer[off] = ch;
-		if (ch == '\n' || ch == '\0' || off == (MIDIPP_IMPORT_LB - 1)) {
-			ps->line_buffer[off] = 0;
+		if (ch == '\n') {
 			if (midipp_import_parse(ps))
 				goto done;
-			off = 0;
+			ps->line_buffer = QString();
 		} else {
-			off++;
+			ps->line_buffer += ch;
 		}
 	}
-
-	ps->line_buffer[off] = 0;
 	midipp_import_parse(ps);
 
-	if (off != 0 && ps->load_more == 0) {
-		ps->line_buffer[0] = 0;
+	if (ps->line_buffer.size() != 0 && ps->load_more == 0) {
+		ps->line_buffer = QString();
 		midipp_import_parse(ps);
 	}
 
  done:
-	free(ptr);
-
 	return (0);
 }
 
@@ -408,7 +422,7 @@ MppImportTab :: handleImportSaveAs()
 void
 MppImportTab :: handleImport(int n)
 {
-	struct midipp_import ps;
+	class midipp_import ps;
 
 	midipp_import(editWidget->toPlainText(), &ps, mainWindow->scores_main[n]);
 
