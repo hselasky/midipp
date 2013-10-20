@@ -45,7 +45,7 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 	
 	out += "S\"";
 
-	for (ai = bi = x = 0; x != ps->line_buffer.size(); x++) {
+	for (ai = bi = x = 0; x != ps->max_off; x++) {
 
 		any = 0;
 
@@ -206,7 +206,11 @@ midipp_import_parse(class midipp_import *ps)
 			fchord++;
 		}
 		n_word ++;
+	} else {
+		n_off++;
 	}
+	if (n_off > ps->max_off)
+		ps->max_off = n_off;
 
 	ps->n_word[ps->index] = n_word;
 	ps->d_chords[ps->index] = ((nchord != 0) && (nchord == fchord));
@@ -285,6 +289,7 @@ midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm)
 	ps->dlg = &dlg;
 	ps->n_word[0] = 0;
 	ps->n_word[1] = 0;
+	ps->max_off = 0;
 	ps->index = 0;
 	ps->load_more = 1;
 

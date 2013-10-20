@@ -48,6 +48,7 @@ public:
 	MppDecode *dlg;
 
 	int n_word[2];
+	int max_off;
 
 	uint8_t index;
 	uint8_t load_more;
