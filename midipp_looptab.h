@@ -28,8 +28,6 @@
 
 #include "midipp.h"
 
-#define	MPP_LOOP_MAX		8U
-
 class MppLoopTab : public QWidget
 {
 	Q_OBJECT;
