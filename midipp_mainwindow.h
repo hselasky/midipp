@@ -264,6 +264,10 @@ public:
 
 	QString *CurrMidiFileName;
 
+	/* tab <Custom> */
+
+	MppCustomTab *tab_custom;
+
 	/* tab <Instrument> */
 
 	MppGridLayout *tab_instr_gl;

@@ -43,6 +43,7 @@ public:
 	int save_font;
 	int save_database_url;
 	int save_database_data;
+	int save_custom;
 
 	QString stringDefault(const QString &, const QString &);
 	QByteArray byteArrayDefault(const QString &, const QByteArray &);
@@ -95,6 +96,7 @@ public:
 	MppCheckBox *cbx_font;
 	MppCheckBox *cbx_database_url;
 	MppCheckBox *cbx_database_data;
+	MppCheckBox *cbx_custom;
 
 public slots:
 	void handle_reset(void);

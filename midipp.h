@@ -100,7 +100,7 @@
 #define	MPP_VISUAL_C_MAX	20
 #define	MPP_VOLUME_UNIT		127
 #define	MPP_VOLUME_MAX		511	/* inclusivly */
-#define	MPP_CUSTOM_MAX		8
+#define	MPP_CUSTOM_MAX		10
 #define	MPP_LOOP_MAX		8
 
 #define	STRLCPY(a,b,c) do { \
