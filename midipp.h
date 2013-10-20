@@ -100,6 +100,8 @@
 #define	MPP_VISUAL_C_MAX	20
 #define	MPP_VOLUME_UNIT		127
 #define	MPP_VOLUME_MAX		511	/* inclusivly */
+#define	MPP_CUSTOM_MAX		8
+#define	MPP_LOOP_MAX		8
 
 #define	STRLCPY(a,b,c) do { \
     strncpy(a,b,c); ((char *)(a))[(c)-1] = 0; \
@@ -109,6 +111,7 @@ class MppCheckBox;
 class MppBpm;
 class MppButton;
 class MppButtonMap;
+class MppCustomTab;
 class MppDataBase;
 class MppDecode;
 class MppDevices;

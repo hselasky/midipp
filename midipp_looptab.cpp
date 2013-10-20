@@ -47,7 +47,7 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 
 	gl = new QGridLayout(this);
 
-	for (n = 0; n != MIDIPP_LOOP_MAX; n++) {
+	for (n = 0; n != MPP_LOOP_MAX; n++) {
 		spn_chan[n] = new QSpinBox();
 		spn_chan[n]->setRange(0, 15);
 		spn_chan[n]->setValue(0);
@@ -66,21 +66,21 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 		but_trig[n] = new MppButton(tr("Trigger"), n);
 
 		for (x = 0; x != MPP_MAX_VIEWS; x++)
-			but_import[n][x] = new MppButton(QString("To %1-Scores").arg(QChar('A' + x)), n + (MIDIPP_LOOP_MAX * x));
+			but_import[n][x] = new MppButton(QString("To %1-Scores").arg(QChar('A' + x)), n + (MPP_LOOP_MAX * x));
 	}
 
-	for (n = 0; n != MIDIPP_LOOP_MAX; n++) {
+	for (n = 0; n != MPP_LOOP_MAX; n++) {
 
-		gl->addWidget(lbl_state[n], (MIDIPP_LOOP_MAX-n-1) + 2, 6 + MPP_MAX_VIEWS, 1, 1);
-		gl->addWidget(spn_chan[n], (MIDIPP_LOOP_MAX-n-1) + 2, 5 + MPP_MAX_VIEWS, 1, 1);
-		gl->addWidget(lbl_dur[n], (MIDIPP_LOOP_MAX-n-1) + 2, 4 + MPP_MAX_VIEWS, 1, 1);
-		gl->addWidget(but_clear[n], (MIDIPP_LOOP_MAX-n-1) + 2, 2 + MPP_MAX_VIEWS, 1, 1);
-		gl->addWidget(but_trig[n], (MIDIPP_LOOP_MAX-n-1) + 2, 1 + MPP_MAX_VIEWS, 1, 1);
-		gl->addWidget(lbl_loop[n], (MIDIPP_LOOP_MAX-n-1) + 2, 0, 1, 1);
-		gl->addWidget(spn_key[n], (MIDIPP_LOOP_MAX-n-1) + 2, 3 + MPP_MAX_VIEWS, 1, 1);
+		gl->addWidget(lbl_state[n], (MPP_LOOP_MAX-n-1) + 2, 6 + MPP_MAX_VIEWS, 1, 1);
+		gl->addWidget(spn_chan[n], (MPP_LOOP_MAX-n-1) + 2, 5 + MPP_MAX_VIEWS, 1, 1);
+		gl->addWidget(lbl_dur[n], (MPP_LOOP_MAX-n-1) + 2, 4 + MPP_MAX_VIEWS, 1, 1);
+		gl->addWidget(but_clear[n], (MPP_LOOP_MAX-n-1) + 2, 2 + MPP_MAX_VIEWS, 1, 1);
+		gl->addWidget(but_trig[n], (MPP_LOOP_MAX-n-1) + 2, 1 + MPP_MAX_VIEWS, 1, 1);
+		gl->addWidget(lbl_loop[n], (MPP_LOOP_MAX-n-1) + 2, 0, 1, 1);
+		gl->addWidget(spn_key[n], (MPP_LOOP_MAX-n-1) + 2, 3 + MPP_MAX_VIEWS, 1, 1);
 
 		for (x = 0; x != MPP_MAX_VIEWS; x++) {
-			gl->addWidget(but_import[n][x], (MIDIPP_LOOP_MAX-n-1) + 2, 1 + x, 1, 1);
+			gl->addWidget(but_import[n][x], (MPP_LOOP_MAX-n-1) + 2, 1 + x, 1, 1);
 			connect(but_import[n][x], SIGNAL(released(int)), this, SLOT(handle_import(int)));
 		}
 
@@ -90,7 +90,7 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 		connect(but_trig[n], SIGNAL(pressed(int)), this, SLOT(handle_trig(int)));
 	}
 
-	gl->setRowStretch(2 + MIDIPP_LOOP_MAX, 1);
+	gl->setRowStretch(2 + MPP_LOOP_MAX, 1);
 	gl->setColumnStretch(6 + MPP_MAX_VIEWS, 1);
 
 	lbl_chn_title = new QLabel(tr("Chan."));
@@ -137,7 +137,7 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 
 	needs_update = 1;
 
-	for (n = 0; n != MIDIPP_LOOP_MAX; n++)
+	for (n = 0; n != MPP_LOOP_MAX; n++)
 		track[n] = umidi20_track_alloc();
 
 	pthread_mutex_unlock(&mw->mtx);
@@ -151,7 +151,7 @@ MppLoopTab :: ~MppLoopTab()
 
 	pthread_mutex_lock(&mw->mtx);
 
-	for (n = 0; n != MIDIPP_LOOP_MAX; n++)
+	for (n = 0; n != MPP_LOOP_MAX; n++)
 		umidi20_track_free(track[n]);
 
 	pthread_mutex_unlock(&mw->mtx);
@@ -169,7 +169,7 @@ MppLoopTab :: add_key(uint8_t key, uint8_t vel)
 	if (pos == 0)
 		pos = 1;
 
-	for (n = 0; n != MIDIPP_LOOP_MAX; n++) {
+	for (n = 0; n != MPP_LOOP_MAX; n++) {
 
 		if (state[n] != ST_REC)
 			continue;
@@ -205,7 +205,7 @@ MppLoopTab :: add_pedal(uint8_t val)
 	if (pos == 0)
 		pos = 1;
 
-	for (n = 0; n != MIDIPP_LOOP_MAX; n++) {
+	for (n = 0; n != MPP_LOOP_MAX; n++) {
 
 		if (state[n] != ST_REC)
 			continue;
@@ -249,8 +249,8 @@ MppLoopTab :: handle_trig(int n)
 void
 MppLoopTab :: handle_import(int n)
 {
-	int which = n % MIDIPP_LOOP_MAX;
-	int view = n / MIDIPP_LOOP_MAX;
+	int which = n % MPP_LOOP_MAX;
+	int view = n / MPP_LOOP_MAX;
 
 	mw->import_midi_track(track[which], MIDI_FLAG_DURATION | MIDI_FLAG_DIALOG, which, view);
 }
@@ -333,7 +333,7 @@ MppLoopTab :: handle_trigN(int key, int vel)
 
 	if (loop_on == 0)
 		return (0);
-	for (n = 0; n != MIDIPP_LOOP_MAX; n++) {
+	for (n = 0; n != MPP_LOOP_MAX; n++) {
 		if (state[n] == ST_REC)
 			return (0);
 	}
@@ -352,7 +352,7 @@ MppLoopTab :: handle_trigN(int key, int vel)
 			break;
 		}
 	} else {
-		for (n = 0; n != MIDIPP_LOOP_MAX; n++) {
+		for (n = 0; n != MPP_LOOP_MAX; n++) {
 			if (key_val[n] != key)
 				continue;
 
@@ -396,7 +396,7 @@ MppLoopTab :: handle_reset()
 	uint8_t n;
 
 	pthread_mutex_lock(&mw->mtx);
-	for (n = 0; n != MIDIPP_LOOP_MAX; n++)
+	for (n = 0; n != MPP_LOOP_MAX; n++)
 		handle_clearN(n);
 
 	last_loop = 0;
@@ -407,21 +407,21 @@ void
 MppLoopTab :: handle_value_changed(int dummy)
 {
 	uint8_t x;
-	uint8_t temp[MIDIPP_LOOP_MAX];
+	uint8_t temp[MPP_LOOP_MAX];
 
-	for (x = 0; x != MIDIPP_LOOP_MAX; x++)
+	for (x = 0; x != MPP_LOOP_MAX; x++)
 		temp[x] = spn_chan[x]->value();
 
 	pthread_mutex_lock(&mw->mtx);
-	for (x = 0; x != MIDIPP_LOOP_MAX; x++)
+	for (x = 0; x != MPP_LOOP_MAX; x++)
 		chan_val[x] = temp[x];
 	pthread_mutex_unlock(&mw->mtx);
 
-	for (x = 0; x != MIDIPP_LOOP_MAX; x++)
+	for (x = 0; x != MPP_LOOP_MAX; x++)
 		temp[x] = spn_key[x]->value();
 
 	pthread_mutex_lock(&mw->mtx);
-	for (x = 0; x != MIDIPP_LOOP_MAX; x++)
+	for (x = 0; x != MPP_LOOP_MAX; x++)
 		key_val[x] = temp[x];
 	pthread_mutex_unlock(&mw->mtx);
 }
@@ -476,7 +476,7 @@ MppLoopTab :: watchdog()
 
 	new_chan = 255;
 
-	for (n = 0; n != MIDIPP_LOOP_MAX; n++) {
+	for (n = 0; n != MPP_LOOP_MAX; n++) {
 
 		pthread_mutex_lock(&mw->mtx);
 

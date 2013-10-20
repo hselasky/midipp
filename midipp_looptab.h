@@ -28,7 +28,7 @@
 
 #include "midipp.h"
 
-#define	MIDIPP_LOOP_MAX		8U
+#define	MPP_LOOP_MAX		8U
 
 class MppLoopTab : public QWidget
 {
@@ -56,16 +56,16 @@ public:
 
 	QGridLayout *gl;
 
-	QSpinBox *spn_chan[MIDIPP_LOOP_MAX];
-	MppSpinBox *spn_key[MIDIPP_LOOP_MAX];
+	QSpinBox *spn_chan[MPP_LOOP_MAX];
+	MppSpinBox *spn_key[MPP_LOOP_MAX];
 
-	QLabel *lbl_dur[MIDIPP_LOOP_MAX];
-	QLabel *lbl_loop[MIDIPP_LOOP_MAX];
-	QLabel *lbl_state[MIDIPP_LOOP_MAX];
+	QLabel *lbl_dur[MPP_LOOP_MAX];
+	QLabel *lbl_loop[MPP_LOOP_MAX];
+	QLabel *lbl_state[MPP_LOOP_MAX];
 
-	MppButton *but_import[MIDIPP_LOOP_MAX][MPP_MAX_VIEWS];
-	MppButton *but_clear[MIDIPP_LOOP_MAX];
-	MppButton *but_trig[MIDIPP_LOOP_MAX];
+	MppButton *but_import[MPP_LOOP_MAX][MPP_MAX_VIEWS];
+	MppButton *but_clear[MPP_LOOP_MAX];
+	MppButton *but_trig[MPP_LOOP_MAX];
 	QPushButton *but_loop_on;
 	QPushButton *but_pedal_rec;
 	QPushButton *but_loop_multi;
@@ -80,16 +80,16 @@ public:
 
 	QPushButton *but_reset;
 
-	uint32_t first_pos[MIDIPP_LOOP_MAX];
-	uint32_t last_pos[MIDIPP_LOOP_MAX];
-	uint32_t state[MIDIPP_LOOP_MAX];
+	uint32_t first_pos[MPP_LOOP_MAX];
+	uint32_t last_pos[MPP_LOOP_MAX];
+	uint32_t state[MPP_LOOP_MAX];
 
 	struct mid_data mid_data;
 	struct umidi20_song *song;
-	struct umidi20_track *track[MIDIPP_LOOP_MAX];
+	struct umidi20_track *track[MPP_LOOP_MAX];
 
-	uint8_t chan_val[MIDIPP_LOOP_MAX];
-	uint8_t key_val[MIDIPP_LOOP_MAX];
+	uint8_t chan_val[MPP_LOOP_MAX];
+	uint8_t key_val[MPP_LOOP_MAX];
 	uint8_t pedal_rec;
 	uint8_t loop_on;
 	uint8_t needs_update;
