@@ -2704,7 +2704,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 void
 MppMainWindow :: handle_midi_file_import(int n)
 {
-	import_midi_track(track, MIDI_FLAG_DIALOG | MIDI_FLAG_MULTI_CHAN, 0);
+	import_midi_track(track, MIDI_FLAG_DIALOG | MIDI_FLAG_MULTI_CHAN, 0, n);
 }
 
 void
