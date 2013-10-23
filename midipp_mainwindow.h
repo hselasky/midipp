@@ -53,6 +53,7 @@ public:
 	void MidiInit(void);
 	void MidiUnInit(void);
 
+	void resizeEvent(QResizeEvent *);
 	void closeEvent(QCloseEvent *event);
 	void handle_stop(int flag = 0);
 	void handle_midi_file_open(int merge);
@@ -91,12 +92,7 @@ public:
 
 	void send_byte_event_locked(uint8_t);
 
-	MppScoreMain *currScoreMain();
 	QPlainTextEdit *currEditor();
-
-	MppMode *currModeDlg();
-
-	void sync_key_mode();
 
 	pthread_mutex_t mtx;
 
@@ -158,16 +154,13 @@ public:
 	uint8_t midiPlayOff;
 	uint8_t midiTriggered;
 	uint8_t midiPaused;
-	uint8_t currViewIndex;
-	uint8_t currViewSubIndex; /* 0: EDIT, 1: VIEW */
+	uint8_t lastViewIndex;
 
 	char *deviceName[MPP_MAX_DEVS];
 
 	QGridLayout *main_gl;
 
-	QTabWidget *main_tw;
-
-	QTabWidget *scores_tw;
+	MppTabBar *main_tb;
 
 	/* main <> */
 

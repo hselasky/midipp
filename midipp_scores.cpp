@@ -1226,7 +1226,7 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 		return;
 	}
 
-	if (mainWindow->currScoreMain() == this)
+	if (mainWindow->scores_main[0] == this)
 		mainWindow->do_update_bpm();
 
 	mainWindow->cursorUpdate = 1;
@@ -1473,7 +1473,7 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 
 	/* update bpm, if any */
 
-	if (mainWindow->currScoreMain() == this)
+	if (mainWindow->scores_main[0] == this)
 		mainWindow->do_update_bpm();
 }
 

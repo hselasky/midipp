@@ -270,7 +270,14 @@ MppSettings :: doLoad(void)
 
 			mw->dlg_mode[x]->update_all();
 		}
-		mw->sync_key_mode();
+
+		int value;
+
+		pthread_mutex_lock(&mw->mtx);
+		value = mw->scores_main[0]->keyMode;
+		pthread_mutex_unlock(&mw->mtx);
+
+		mw->mbm_key_mode->setSelection(value);
 	}
 
 	if (save_volume > 0) {

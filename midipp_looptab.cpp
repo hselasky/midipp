@@ -340,7 +340,7 @@ MppLoopTab :: handle_trigN(int key, int vel)
 
 	if (is_multi == 0) {
 		n = last_loop;
-		key -= mw->currScoreMain()->baseKey;
+		key -= MPP_DEFAULT_BASE_KEY;
 
 		switch (state[n]) {
 		case ST_IDLE:

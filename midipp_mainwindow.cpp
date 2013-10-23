@@ -46,6 +46,7 @@
 #include "midipp_checkbox.h"
 #include "midipp_show.h"
 #include "midipp_custom.h"
+#include "midipp_tabbar.h"
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -124,32 +125,32 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	/* Setup GUI */
 
 	main_gl = new QGridLayout(this);
-	main_tw = new QTabWidget();
-	scores_tw = new QTabWidget();
+
+	main_tb = new MppTabBar();
+	main_gl->addWidget(main_tb,0,0,1,3);
+	main_gl->addWidget(main_tb->right_sw,1,2,15,1);
+	main_gl->addWidget(main_tb->left_sw,1,0,15,1);
 
 	/* Watchdog */
 
 	watchdog = new QTimer(this);
 	connect(watchdog, SIGNAL(timeout()), this, SLOT(handle_watchdog()));
 
-	/* Tabs */
+	/* Buttons */
 
-	main_gl->addWidget(scores_tw,0,0,15,1);
-	main_gl->addWidget(main_tw,0,2,15,1);
+	main_gl->addWidget(mwPlay,2,1,1,1);
+	main_gl->addWidget(mwRewind,3,1,1,1);
 
-	main_gl->addWidget(mwPlay,1,1,1,1);
-	main_gl->addWidget(mwRewind,2,1,1,1);
+	main_gl->addWidget(mwCopy,5,1,1,1);
+	main_gl->addWidget(mwPaste,6,1,1,1);
 
-	main_gl->addWidget(mwCopy,4,1,1,1);
-	main_gl->addWidget(mwPaste,5,1,1,1);
+	main_gl->addWidget(mwUndo,8,1,1,1);
+	main_gl->addWidget(mwRedo,9,1,1,1);
 
-	main_gl->addWidget(mwUndo,7,1,1,1);
-	main_gl->addWidget(mwRedo,8,1,1,1);
+	main_gl->addWidget(mwReload,11,1,1,1);
 
-	main_gl->addWidget(mwReload,10,1,1,1);
-
-	main_gl->addWidget(mwRight,12,1,1,1);
-	main_gl->addWidget(mwLeft,13,1,1,1);
+	main_gl->addWidget(mwRight,13,1,1,1);
+	main_gl->addWidget(mwLeft,14,1,1,1);
 
 #ifndef HAVE_NO_SHOW
 	tab_show_control = new MppShowControl(this);
@@ -157,7 +158,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	for (x = 0; x != MPP_MAX_VIEWS; x++)
 		scores_main[x] = new MppScoreMain(this, x);
 
-	currScoreMain()->devInputMask = -1U;
+	scores_main[0]->devInputMask = -1U;
 
 	tab_import = new MppImportTab(this);
 
@@ -225,37 +226,35 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	gl_ctrl = new MppGroupBox(tr("Main controls"));
 	gl_time = new MppGroupBox(tr("Time counter"));
-	gl_bpm = new MppGroupBox(tr("Average Beats Per Minute, BPM"));
+	gl_bpm = new MppGroupBox(tr("Average Beats Per Minute, BPM, for view A"));
 	gl_synth_play = new MppGroupBox(tr("Synth and Play controls"));
 
-	scores_tw->setVisible(0);
-	main_tw->setVisible(1);
-
+	/* Fill up tabbar */
 #if MPP_MAX_VIEWS > 0
-	main_tw->addTab(&scores_main[0]->viewWidget, tr("View A"));
-	main_tw->addTab(scores_main[0]->editWidget, tr("Edit A"));
+	main_tb->addTab(&scores_main[0]->viewWidget, tr("View A"));
+	main_tb->addTab(scores_main[0]->editWidget, tr("Edit A"));
 #endif
 #if MPP_MAX_VIEWS > 1
-	main_tw->addTab(&scores_main[1]->viewWidget, tr("View B"));
-	main_tw->addTab(scores_main[1]->editWidget, tr("Edit B"));
+	main_tb->addTab(&scores_main[1]->viewWidget, tr("View B"));
+	main_tb->addTab(scores_main[1]->editWidget, tr("Edit B"));
 #endif
 #if MPP_MAX_VIEWS > 2
-	main_tw->addTab(&scores_main[2]->viewWidget, tr("View C"));
-	main_tw->addTab(scores_main[2]->editWidget, tr("Edit C"));
+	main_tb->addTab(&scores_main[2]->viewWidget, tr("View C"));
+	main_tb->addTab(scores_main[2]->editWidget, tr("Edit C"));
 #endif
-	main_tw->addTab(tab_import->editWidget, tr("Lyrics"));
-	main_tw->addTab(tab_file_gl, tr("File"));
-	main_tw->addTab(tab_play_gl, tr("Play"));
-	main_tw->addTab(tab_config_gl, tr("Config"));
-	main_tw->addTab(tab_custom, tr("Custom"));
-	main_tw->addTab(tab_instr_gl, tr("Instrument"));
-	main_tw->addTab(tab_volume_gl, tr("Volume"));
-	main_tw->addTab(tab_loop, tr("Loop"));
-	main_tw->addTab(tab_database, tr("Database"));
+	main_tb->addTab(tab_import->editWidget, tr("Lyrics"));
 #ifndef HAVE_NO_SHOW
-	main_tw->addTab(tab_show_control->gl_main, tr("Show"));
+	main_tb->addTab(tab_show_control->gl_main, tr("Show"));
 #endif
-	main_tw->addTab(tab_help, tr("Help"));
+	main_tb->addTab(tab_loop, tr("Loop"));
+	main_tb->addTab(tab_file_gl, tr("File"));
+	main_tb->addTab(tab_play_gl, tr("Play"));
+	main_tb->addTab(tab_config_gl, tr("Config"));
+	main_tb->addTab(tab_custom, tr("Custom"));
+	main_tb->addTab(tab_instr_gl, tr("Instrument"));
+	main_tb->addTab(tab_volume_gl, tr("Volume"));
+	main_tb->addTab(tab_database, tr("Database"));
+	main_tb->addTab(tab_help, tr("Help"));
 
 	/* <File> Tab */
 
@@ -351,7 +350,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mbm_score_record = new MppButtonMap("Score recording\0" "OFF\0" "ON\0", 2, 2);
 	connect(mbm_score_record, SIGNAL(selectionChanged(int)), this, SLOT(handle_score_record(int)));
 
-	mbm_key_mode = new MppButtonMap("\0" "ALL\0" "MIXED\0" "FIXED\0" "TRANSP\0" "CHORD\0", 5, 3);
+	mbm_key_mode = new MppButtonMap("Key Mode for view A\0" "ALL\0" "MIXED\0" "FIXED\0" "TRANSP\0" "CHORD\0", 5, 3);
 	connect(mbm_key_mode, SIGNAL(selectionChanged(int)), this, SLOT(handle_key_mode(int)));
 
 	but_play[0] = new MppButton(tr("Shift+Play+A"), 0);
@@ -645,9 +644,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	connect(but_midi_pause, SIGNAL(pressed()), this, SLOT(handle_midi_pause()));
 
-	connect(scores_tw, SIGNAL(currentChanged(int)), this, SLOT(handle_tab_changed()));
-	connect(main_tw, SIGNAL(currentChanged(int)), this, SLOT(handle_tab_changed()));
-
 	MidiInit();
 
 	version = tr("MIDI Player Pro v1.2.1");
@@ -891,16 +887,19 @@ MppMainWindow :: handle_watchdog()
 	pthread_mutex_unlock(&mtx);
 
 	if (num_events != 0) {
-		MppScoreMain *sm = currScoreMain();
-		QTextCursor cursor(sm->editWidget->textCursor());
+		QPlainTextEdit *ped = currEditor();
+		QTextCursor cursor;
 
 		mid_sort(events_copy, num_events);
 
 		last_duration = 0;
 
-		cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor, 1);
-		cursor.beginEditBlock();
-		cursor.insertText(led_config_insert->text());
+		if (ped != 0) {
+			cursor = QTextCursor(ped->textCursor());
+			cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor, 1);
+			cursor.beginEditBlock();
+			cursor.insertText(led_config_insert->text());
+		}
 
 		for (x = 0; x != num_events; x++) {
 			for (y = x; y != num_events; y++) {
@@ -920,14 +919,17 @@ MppMainWindow :: handle_watchdog()
 				    mid_key_str[events_copy[x] & 0x7F]);
 			}
 
-			cursor.insertText(QString(buf));
-
+			if (ped != 0) {
+				cursor.insertText(QString(buf));
+			}
 			x = z;
 		}
 
-		cursor.insertText(QString("\n"));
-		cursor.endEditBlock();
-		sm->editWidget->setTextCursor(cursor);
+		if (ped != 0) {
+			cursor.insertText(QString("\n"));
+			cursor.endEditBlock();
+			ped->setTextCursor(cursor);
+		}
 	}
 
 	if (instr_update)
@@ -2327,78 +2329,46 @@ MppMainWindow :: handle_make_scores_visible(MppScoreMain *sm)
 void
 MppMainWindow :: handle_make_tab_visible(QWidget *widget)
 {
-	int x;
-
-	for (x = 0; ; x++) {
-		QWidget *tab = scores_tw->widget(x);
-		if (tab == NULL)
-			break;
-		if (tab == widget) {
-			if (scores_tw->currentWidget() != widget)
-				scores_tw->setCurrentWidget(widget);
-			break;
-		}
-	}
-	for (x = 0; ; x++) {
-		QWidget *tab = main_tw->widget(x);
-		if (tab == NULL)
-			break;
-		if (tab == widget) {
-			if (main_tw->currentWidget() != widget)
-				main_tw->setCurrentWidget(widget);
-			break;
-		}
-	}
+	main_tb->makeWidgetVisible(widget);
 }
 
 void
 MppMainWindow :: handle_tab_changed(int force)
 {
-	int y;
 	int x;
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
 		if (scores_main[x]->editWidget->hasFocus()) {
-			y = 0;
+			x = (2 * x) + 0;
 			goto found;
 		}
 	}
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
-		if (scores_tw->currentWidget() == &scores_main[x]->viewWidget ||
-		    main_tw->currentWidget() == &scores_main[x]->viewWidget) {
-			y = 1;
+		if (main_tb->isVisible(&scores_main[x]->viewWidget)) {
+			x = (2 * x) + 1;
 			goto found;
 		}
-		if (scores_tw->currentWidget() == scores_main[x]->editWidget ||
-		    main_tw->currentWidget() == scores_main[x]->editWidget) {
-			y = 0;
+		if (main_tb->isVisible(scores_main[x]->editWidget)) {
+			x = (2 * x) + 0;
 			goto found;
 		}
 	}
 
 	/* set some defaults */
 	x = 0;
-	y = 0;
 found:
-	if (currViewIndex == x &&
-	    currViewSubIndex == y &&
-	    force == 0)
+	if (x == lastViewIndex && force == 0)
 		return;
+	lastViewIndex = 0;
 
-	currViewIndex = x;
-	currViewSubIndex = y;
-	QString *ps = scores_main[x]->currScoreFileName;
+	QString *ps = scores_main[x/2]->currScoreFileName;
 	if (ps != NULL)
 		setWindowTitle(version + " - " + MppBaseName(*ps));
 	else
 		setWindowTitle(version);
 
-	handle_instr_channel_changed(currScoreMain()->synthChannel);
-
-	if (force != 0 || y != 0)
+	if ((force != 0) || (x & 1))
 		handle_compile();
-
-	sync_key_mode();
 }
 
 void 
@@ -3071,113 +3041,58 @@ MppMainWindow :: handle_mode(int index)
 	dlg_mode[index]->update_all();
 	dlg_mode[index]->exec();
 
-	sync_key_mode();
+	if (index == 0) {
+		int value;
+
+		pthread_mutex_lock(&mtx);
+		value = scores_main[0]->keyMode;
+		pthread_mutex_unlock(&mtx);
+
+		mbm_key_mode->setSelection(value);
+	}
 }
 
 void
 MppMainWindow :: handle_key_mode(int value)
 {
-	MppScoreMain *sm = currScoreMain();
-	MppMode *cm = currModeDlg();
-
 	if (value < 0 || value >= MM_PASS_MAX)
 		value = 0;
 
 	pthread_mutex_lock(&mtx);
-	sm->keyMode = value;
+	scores_main[0]->keyMode = value;
 	pthread_mutex_unlock(&mtx);
-
-	cm->update_all();
-
-	sync_key_mode();
-}
-
-void
-MppMainWindow :: sync_key_mode()
-{
-	mbm_key_mode->setSelection(currModeDlg()->but_mode->currSelection);
-	mbm_key_mode->setTitle(tr("Key Mode for view ") + QChar('A' + currViewIndex));
-}
-
-MppScoreMain *
-MppMainWindow :: currScoreMain()
-{
-	return (scores_main[currViewIndex]);
-}
-
-MppMode *
-MppMainWindow :: currModeDlg()
-{
-	return (dlg_mode[currViewIndex]);
 }
 
 void
 MppMainWindow :: handle_move_right()
 {
-	QWidget *pw;
-	int index;
-
-	index = scores_tw->currentIndex();
-	if (index < 0)
-		return;
-
-	QString desc = scores_tw->tabText(index);
-	pw = scores_tw->widget(index);
-	scores_tw->removeTab(index);
-
-	if (scores_tw->widget(0) == NULL)
-		scores_tw->setVisible(0);
-
-	main_tw->addTab(pw, desc);
-	main_tw->setCurrentWidget(pw);
-	main_tw->setVisible(1);
+	main_tb->moveCurrWidgetRight();
 }
 
 void
 MppMainWindow :: handle_move_left()
 {
-	QWidget *pw;
-	int index;
-
-	index = main_tw->currentIndex();
-	if (index < 0)
-		return;
-
-	QString desc = main_tw->tabText(index);
-	pw = main_tw->widget(index);
-	main_tw->removeTab(index);
-
-	if (main_tw->widget(0) == NULL)
-		main_tw->setVisible(0);
-
-	scores_tw->addTab(pw, desc);
-	scores_tw->setCurrentWidget(pw);
-	scores_tw->setVisible(1);
+	main_tb->moveCurrWidgetLeft();
 }
 
 QPlainTextEdit *
 MppMainWindow :: currEditor()
 {
-	QPlainTextEdit *qedit;
+	QPlainTextEdit *pe;
+	int x;
 
-	qedit = currScoreMain()->editWidget;
-	if (scores_tw->currentWidget() == qedit ||
-	    main_tw->currentWidget() == qedit)
-		goto done;
-
-	qedit = tab_import->editWidget;
-	if (scores_tw->currentWidget() == qedit ||
-	    main_tw->currentWidget() == qedit)
-		goto done;
-
-	qedit = tab_help;
-	if (scores_tw->currentWidget() == qedit ||
-	    main_tw->currentWidget() == qedit)
-		goto done;
-
-	qedit = 0;
- done:
-	return (qedit);
+	for (x = 0; x != MPP_MAX_VIEWS; x++) {
+		pe = scores_main[x]->editWidget;
+		if (pe->hasFocus())
+			return (pe);
+	}
+	pe = tab_import->editWidget;
+	if (pe->hasFocus())
+		return (pe);
+	pe = tab_help;
+	if (pe->hasFocus())
+		return (pe);
+	return (0);
 }
 
 void
@@ -3283,4 +3198,11 @@ MppMainWindow :: send_song_select_locked(uint8_t which)
 	if (check_record(0, 0) != 0)
 		mid_add_raw(&mid_data, buf, 1, 0);
 	midiTriggered = trig;
+}
+
+void
+MppMainWindow :: resizeEvent(QResizeEvent *event)
+{
+	main_tb->updateHeight(event->size().width());
+	QWidget :: resizeEvent(event);
 }

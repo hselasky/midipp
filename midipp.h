@@ -38,7 +38,8 @@
 #include <QTextEdit>
 #include <QScrollBar>
 #include <QPlainTextEdit>
-#include <QTabWidget>
+#include <QTabBar>
+#include <QStackedWidget>
 #include <QLabel>
 #include <QSpinBox>
 #include <QTextCursor>
@@ -75,6 +76,7 @@
 #include <QUrl>
 #include <QWheelEvent>
 #include <QColorDialog>
+#include <QPoint>
 
 #include <umidi20.h>
 
@@ -102,6 +104,7 @@
 #define	MPP_VOLUME_MAX		511	/* inclusivly */
 #define	MPP_CUSTOM_MAX		10
 #define	MPP_LOOP_MAX		8
+#define	MPP_MAX_TABS		16
 
 #define	STRLCPY(a,b,c) do { \
     strncpy(a,b,c); ((char *)(a))[(c)-1] = 0; \
@@ -135,6 +138,7 @@ class MppSettingsWhat;
 class MppShowControl;
 class MppShowWidget;
 class MppSpinBox;
+class MppTabBar;
 class MppVolume;
 
 struct MppChordElement;
