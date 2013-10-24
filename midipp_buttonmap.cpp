@@ -85,16 +85,18 @@ MppButtonMap :: setSelection(int id)
 void
 MppButtonMap :: handle_released(int id)
 {
-	selectionChanged(currSelection);
-}
-
-void
-MppButtonMap :: handle_pressed(int id)
-{
 	int x;
 
 	currSelection = id;
 
 	for (x = 0; x != nButtons; x++)
 		but[x]->setFlat(x != id);
+
+	selectionChanged(id);
+}
+
+void
+MppButtonMap :: handle_pressed(int id)
+{
+
 }
