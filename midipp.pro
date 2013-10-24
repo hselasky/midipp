@@ -11,7 +11,7 @@ HAVE_COREMIDI=YES
 HAVE_BUNDLE_ICONS=YES
 HAVE_NO_SHOW=YES
 icons.path	= $${PREFIX}
-icons.files	= midipp_ios.png midipp_ios_retina.png
+icons.files	= midipp_ios.png midipp_ios_retina.png midipp_76x76.png midipp_152x152.png
 QMAKE_BUNDLE_DATA += icons
 QMAKE_INFO_PLIST= midipp_ios.plist
 }
