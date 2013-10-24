@@ -400,6 +400,8 @@ MppImportTab :: handleImportOpen()
 		scores = MppReadFile(diag->selectedFiles()[0]);
 
 		editWidget->setPlainText(scores);
+
+		mainWindow->handle_make_tab_visible(editWidget);
 	}
 	delete diag;
 }
@@ -432,4 +434,5 @@ MppImportTab :: handleImport(int n)
 	midipp_import(editWidget->toPlainText(), &ps, mainWindow->scores_main[n]);
 
 	mainWindow->handle_compile();
+	mainWindow->handle_make_scores_visible(mainWindow->scores_main[n]);
 }
