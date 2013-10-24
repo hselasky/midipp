@@ -25,8 +25,8 @@
 
 #include "midipp_tabbar.h"
 
-MppTabBar :: MppTabBar()
-    : QWidget()
+MppTabBar :: MppTabBar(QWidget *parent)
+    : QWidget(parent)
 {
 	right_sw = new QStackedWidget();
 	left_sw = new QStackedWidget();

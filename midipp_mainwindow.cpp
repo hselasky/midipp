@@ -126,7 +126,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	main_gl = new QGridLayout(this);
 
-	main_tb = new MppTabBar();
+	main_tb = new MppTabBar(this);
 	main_gl->addWidget(main_tb,0,0,1,3);
 	main_gl->addWidget(main_tb->right_sw,1,2,15,1);
 	main_gl->addWidget(main_tb->left_sw,1,0,15,1);
