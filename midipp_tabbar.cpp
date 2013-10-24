@@ -258,13 +258,16 @@ MppTabBar :: paintEvent(QPaintEvent *event)
 			paint.drawPolygon(temp, 3);
 		}
 
-		tabs[n].area = QRect(x_off + basic_size, y_off + (basic_size / 4),
-		    dw - (2*basic_size), (basic_size * 2) - (basic_size / 2));
+		tabs[n].area = QRect(x_off + (basic_size / 2), y_off + (basic_size / 4),
+		    dw - basic_size, (basic_size * 2) - (basic_size / 2));
 
 		if (isVisible(tabs[n].w)) {
+			QRect area(x_off + basic_size, y_off + (basic_size / 4),
+			    dw - (2*basic_size), (basic_size * 2) - (basic_size / 2));
+
 			paint.setPen(QPen(white, 0));
 			paint.setBrush(white);
-			paint.drawRect(tabs[n].area);
+			paint.drawRect(area);
 		}
 
 		paint.setPen(QPen(black, 0));
