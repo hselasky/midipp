@@ -192,9 +192,9 @@ MppMode :: update_all(void)
 	sli_delay->setValue(key_delay);
 	sli_contrast->setValue(chord_contrast);
 	spn_chan->setValue(channel);
-	but_mode->handle_pressed(key_mode);
+	but_mode->setSelection(key_mode);
 	cbx_norm->setChecked(chord_norm);
-	but_song_events->handle_pressed(song_events);
+	but_song_events->setSelection(song_events);
 }
 
 void
@@ -250,8 +250,8 @@ MppMode :: handle_reset()
 	spn_base->setValue(MPP_DEFAULT_BASE_KEY);
 	spn_chan->setValue(0);
 	cbx_norm->setChecked(1);
-	but_mode->handle_pressed(0);
-	but_song_events->handle_pressed(0);
+	but_mode->setSelection(0);
+	but_song_events->setSelection(0);
 
 	for (x = 0; x != MPP_MAX_DEVS; x++)
 		cbx_dev[x]->setChecked(1);
