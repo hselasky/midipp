@@ -1603,6 +1603,7 @@ MppMainWindow :: handle_stop(int flag)
 {
 	uint32_t *pkey;
 	uint8_t ScMidiTriggered;
+	uint8_t ScMidiRecordOff;
 	uint8_t out_key;
 	uint8_t chan;
 	uint8_t x;
@@ -1610,7 +1611,9 @@ MppMainWindow :: handle_stop(int flag)
 	uint8_t delay;
 
 	ScMidiTriggered = midiTriggered;
+	ScMidiRecordOff = midiRecordOff;
 	midiTriggered = 1;
+	midiRecordOff = 1;
 
 	for (z = 0; z != MPP_MAX_VIEWS; z++) {
 
@@ -1658,6 +1661,7 @@ MppMainWindow :: handle_stop(int flag)
 	}
 
 	midiTriggered = ScMidiTriggered;
+	midiRecordOff = ScMidiRecordOff;
 }
 
 /* This function must be called locked */
