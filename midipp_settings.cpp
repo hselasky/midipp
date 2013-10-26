@@ -346,7 +346,12 @@ MppSettings :: doLoad(void)
 
 		mw->editFont.fromString(
 		    stringDefault("font/editor",
-		    "Monospace,-1,14,5,50,0,0,0,0,0"));
+#ifdef __APPLE__
+		    "Courier New,-1,14,5,50,0,0,0,0,0"
+#else
+		    "Monospace,-1,14,5,50,0,0,0,0,0"
+#endif
+		    ));
 		if (mw->editFont.pixelSize() < 1)
 			mw->editFont.setPixelSize(14);
 
