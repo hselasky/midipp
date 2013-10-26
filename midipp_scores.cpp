@@ -715,7 +715,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 	int has_string;
 	int index;
 	int x;
-	int step;
 	int num_dot;
 
 	/* reset head structure */
@@ -801,7 +800,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 
 	head.dotReorder();
 
-	step = 0;
 	index = 0;
 
 	for (start = stop = 0; head.foreachLine(&start, &stop); ) {
