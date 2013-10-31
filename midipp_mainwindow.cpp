@@ -118,6 +118,16 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mwUndo->setIcon(QIcon(QString(":/undo.png")));
 	mwRedo->setIcon(QIcon(QString(":/redo.png")));
 
+	mwRight->setFocusPolicy(Qt::NoFocus);
+	mwLeft->setFocusPolicy(Qt::NoFocus);
+	mwRewind->setFocusPolicy(Qt::NoFocus);
+	mwPlay->setFocusPolicy(Qt::NoFocus);
+	mwReload->setFocusPolicy(Qt::NoFocus);
+	mwPaste->setFocusPolicy(Qt::NoFocus);
+	mwCopy->setFocusPolicy(Qt::NoFocus);
+	mwUndo->setFocusPolicy(Qt::NoFocus);
+	mwRedo->setFocusPolicy(Qt::NoFocus);
+
 	connect(mwRight, SIGNAL(released()), this, SLOT(handle_move_right()));
 	connect(mwLeft, SIGNAL(released()), this, SLOT(handle_move_left()));
 	connect(mwRewind, SIGNAL(released()), this, SLOT(handle_rewind()));
