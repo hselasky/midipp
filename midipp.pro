@@ -24,6 +24,7 @@ icons.path	= $${PREFIX}
 icons.files	= midipp.icns
 QMAKE_BUNDLE_DATA += icons
 QMAKE_INFO_PLIST= midipp_osx.plist
+OTHER_FILES += MidiPlayerPro.entitlements
 }
 
 !isEmpty(HAVE_NO_SHOW) {
