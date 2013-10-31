@@ -3099,19 +3099,36 @@ QPlainTextEdit *
 MppMainWindow :: currEditor()
 {
 	QPlainTextEdit *pe;
+	QPlainTextEdit *pev = 0;
 	int x;
+	int n = 0;
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
 		pe = scores_main[x]->editWidget;
 		if (pe->hasFocus())
 			return (pe);
+		if (main_tb->isVisible(pe)) {
+			pev = pe;
+			n++;
+		}
 	}
 	pe = tab_import->editWidget;
 	if (pe->hasFocus())
 		return (pe);
+	if (main_tb->isVisible(pe)) {
+		pev = pe;
+		n++;
+	}
 	pe = tab_help;
 	if (pe->hasFocus())
 		return (pe);
+	if (main_tb->isVisible(pe)) {
+		pev = pe;
+		n++;
+	}
+	/* if only one editor is visible, return that */
+	if (n == 1)
+		return (pev);
 	return (0);
 }
 
