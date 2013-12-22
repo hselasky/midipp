@@ -318,9 +318,10 @@ MppBpm :: handle_update(int restart)
 
 	time = 0;
 
-	if (restart && i != 0)
-		umidi20_set_timer(&MppTimerCallback, this, 0);
-
+	if (restart != 0 && i != 0) {
+		umidi20_unset_timer(&MppTimerCallback, this);
+		MppTimerCallback(this);
+	}
 	umidi20_set_timer(&MppTimerCallback, this, i);
 }
 

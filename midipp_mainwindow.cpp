@@ -1321,7 +1321,7 @@ MppMainWindow :: handle_midi_trigger()
 		midiPaused = 0;
 		pausePosition = 0;
 
-		dlg_bpm->handle_update();
+		dlg_bpm->handle_update(1);
 	}
 	pthread_mutex_unlock(&mtx);
 }
