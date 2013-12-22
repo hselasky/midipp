@@ -249,11 +249,11 @@ MppBpm :: handle_bpm_enable()
 	if (enabled) {
 		enabled = 0;
 		skip_bpm = 0;
-		handle_update();
+		handle_update(1);
 	} else {
 		enabled = 1;
 		skip_bpm = 0;
-		handle_update();
+		handle_update(1);
 	}
 	pthread_mutex_unlock(&mw->mtx);
 	sync();
@@ -295,7 +295,7 @@ MppBpm :: handle_view_all(int dummy)
 
 /* must be called locked */
 void
-MppBpm :: handle_update()
+MppBpm :: handle_update(int restart)
 {
 	int temp = bpm;
 	int i;
@@ -317,6 +317,9 @@ MppBpm :: handle_update()
 	}
 
 	time = 0;
+
+	if (restart && i != 0)
+		umidi20_set_timer(&MppTimerCallback, this, 0);
 
 	umidi20_set_timer(&MppTimerCallback, this, i);
 }
