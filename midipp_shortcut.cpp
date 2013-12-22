@@ -112,14 +112,17 @@ MppShortcutTab :: MppShortcutTab(MppMainWindow *_mw)
 		connect(but_rec[x], SIGNAL(released(int)), this, SLOT(handle_record(int)));
 
 		led_cmd[x] = new QLineEdit();
-		connect(led_cmd[x], SIGNAL(selectionChanged()), this, SLOT(handle_selection_change()));
+		connect(led_cmd[x], SIGNAL(textChanged(const QString &)), this, SLOT(handle_text_changed(const QString &)));
 
 		if (x < MPP_SHORTCUT_LABEL_MAX) {
 			gb = gb_jump;
-			led_cmd[x]->setText(QString("%1 %2 %3")
-			    .arg(0x90, 2, 16, QChar('0'))
-			    .arg(MPP_DEFAULT_CMD_KEY + x - MPP_SHORTCUT_J0, 2, 16, QChar('0'))
-			    .arg(0, 2, 16, QChar('0')));
+			if (x < MPP_SHORTCUT_J12) {
+				led_cmd[x]->setText(QString("%1 %2 %3")
+				    .arg(0x90, 2, 16, QChar('0'))
+				    .arg(MPP_DEFAULT_CMD_KEY + x -
+				        MPP_SHORTCUT_J0, 2, 16, QChar('0'))
+				    .arg(0x7e, 2, 16, QChar('0')));
+			}
 		} else if (x < MPP_SHORTCUT_MODE_MAX) {
 			gb = gb_mode;
 		} else {
@@ -154,7 +157,7 @@ MppShortcutTab :: handle_event_received_locked(MppScoreMain *sm,
 	uint8_t found = 0;
 
 	/* check for start of MIDI command */
-	if ((event->cmd[1] & 0x80) == 0)
+	if ((match[0] & 0x80) == 0)
 		return (0);
 
 	/* key end is not a valid event */
@@ -290,10 +293,6 @@ MppShortcutTab :: handle_watchdog()
 					y++;
 			}
 		}
-		if (y & 1)
-			y++;
-
-		y /= 2;
 
 		pthread_mutex_lock(&mw->mtx);
 		filter[n][0] = buf[0];
@@ -304,7 +303,7 @@ MppShortcutTab :: handle_watchdog()
 }
 
 void
-MppShortcutTab :: handle_selection_change()
+MppShortcutTab :: handle_text_changed(const QString &arg)
 {
 	watchdog->start(1000);
 }
@@ -344,6 +343,8 @@ void
 MppShortcutTab :: handle_record_event(const uint8_t *data)
 {
 	uint32_t x;
+	uint8_t match[3] = {data[1] & 0xF0,data[2],data[3]};
+
 	for (x = 0; x != MPP_SHORTCUT_MAX; x++) {
 		if (but_rec[x]->isFlat())
 			break;
@@ -351,10 +352,14 @@ MppShortcutTab :: handle_record_event(const uint8_t *data)
 	if (x == MPP_SHORTCUT_MAX)
 		return;
 
+	/* remove amplitude from key-presses */
+	if (match[0] == 0x90)
+		match[2] = 0x7e;
+
 	led_cmd[x]->setText(QString("%1 %2 %3")
-		.arg(data[1], 2, 16, QChar('0'))
-		.arg(data[2], 2, 16, QChar('0'))
-		.arg(data[3], 2, 16, QChar('0')));
+		.arg(match[0], 2, 16, QChar('0'))
+		.arg(match[1], 2, 16, QChar('0'))
+		.arg(match[2], 2, 16, QChar('0')));
 
 	but_rec[x]->setFlat(0);
 	handle_update();

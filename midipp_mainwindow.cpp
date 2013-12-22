@@ -1863,7 +1863,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 		ctrl = umidi20_event_get_control_address(event);
 
 		if (mw->controlRecordOn == 0 &&
-		    mw->tab_shortcut->handle_event_received_locked(sm, event)) {
+		    mw->tab_shortcut->handle_event_received_locked(sm, event) != 0) {
 			/* command event */
 		} else if (umidi20_event_is_pitch_bend(event)) {
 

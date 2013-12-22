@@ -95,7 +95,7 @@ public:
 public slots:
 	void handle_record(int);
 	void handle_watchdog();
-	void handle_selection_change();
+	void handle_text_changed(const QString &);
 	void handle_clr_all_flat();
 	void handle_set_all_flat();
 	void handle_reset();
