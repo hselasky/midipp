@@ -55,7 +55,6 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 
 	lbl_norm = new QLabel(tr("Normalize chord pressure"));
 	lbl_base = new QLabel(tr("Base play key"));
-	lbl_cmd = new QLabel(tr("Base command key"));
 	lbl_chan = new QLabel(tr("Synth channel"));
 
 	cbx_norm = new MppCheckBox();
@@ -96,10 +95,6 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	but_clear_all = new QPushButton(tr("No devs"));
 	connect(but_clear_all, SIGNAL(released()), this, SLOT(handle_clear_all_devs()));
 
-	spn_cmd = new MppSpinBox();
-	spn_cmd->setRange(0, 127);
-	spn_cmd->setValue(0);
-
 	spn_base = new MppSpinBox();
 	spn_base->setRange(0, 127);
 	spn_base->setValue(0);
@@ -122,35 +117,32 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 		gl_idev->addWidget(cbx_dev[x], x, 1, 1, 1, Qt::AlignCenter);
 	}
 
-	gl->addWidget(gb_idev, 0, 0, 9, 2);
+	gl->addWidget(gb_idev, 0, 0, 8, 2);
 
-	gl->addWidget(lbl_cmd, 0, 2, 1, 1);
-	gl->addWidget(spn_cmd, 0, 3, 1, 1);
+	gl->addWidget(lbl_base, 0, 2, 1, 1);
+	gl->addWidget(spn_base, 0, 3, 1, 1);
 
-	gl->addWidget(lbl_base, 1, 2, 1, 1);
-	gl->addWidget(spn_base, 1, 3, 1, 1);
+	gl->addWidget(lbl_chan, 1, 2, 1, 1);
+	gl->addWidget(spn_chan, 1, 3, 1, 1);
 
-	gl->addWidget(lbl_chan, 2, 2, 1, 1);
-	gl->addWidget(spn_chan, 2, 3, 1, 1);
+	gl->addWidget(lbl_norm, 2, 2, 1, 1);
+	gl->addWidget(cbx_norm, 2, 3, 1, 1);
 
-	gl->addWidget(lbl_norm, 3, 2, 1, 1);
-	gl->addWidget(cbx_norm, 3, 3, 1, 1);
+	gl->addWidget(gb_delay, 3, 2, 1, 2);
 
-	gl->addWidget(gb_delay, 4, 2, 1, 2);
+	gl->addWidget(gb_contrast, 4, 2, 1, 2);
 
-	gl->addWidget(gb_contrast, 5, 2, 1, 2);
+	gl->addWidget(but_song_events, 5, 2, 1, 2);
 
-	gl->addWidget(but_song_events, 6, 2, 1, 2);
+	gl->addWidget(but_mode, 6, 2, 2, 2);
 
-	gl->addWidget(but_mode, 7, 2, 2, 2);
-
-	gl->setRowStretch(9, 1);
+	gl->setRowStretch(8, 1);
 	gl->setColumnStretch(4, 1);
 
-	gl->addWidget(but_set_all, 10, 0, 1, 1);
-	gl->addWidget(but_clear_all, 10, 1, 1, 1);
-	gl->addWidget(but_reset, 10, 2, 1, 1);
-	gl->addWidget(but_done, 10, 3, 1, 1);
+	gl->addWidget(but_set_all, 9, 0, 1, 1);
+	gl->addWidget(but_clear_all, 9, 1, 1, 1);
+	gl->addWidget(but_reset, 9, 2, 1, 1);
+	gl->addWidget(but_done, 9, 3, 1, 1);
 }
 
 MppMode :: ~MppMode()
@@ -162,7 +154,6 @@ void
 MppMode :: update_all(void)
 {
 	int base_key;
-	int cmd_key;
 	int key_delay;
 	int channel;
 	int key_mode;
@@ -174,7 +165,6 @@ MppMode :: update_all(void)
 
 	pthread_mutex_lock(&sm->mainWindow->mtx);
 	base_key = sm->baseKey;
-	cmd_key = sm->cmdKey;
 	key_delay = sm->delayNoise;
 	channel = sm->synthChannel;
 	key_mode = sm->keyMode;
@@ -188,7 +178,6 @@ MppMode :: update_all(void)
 		cbx_dev[x]->setChecked((input_mask >> x) & 1);
 
 	spn_base->setValue(base_key);
-	spn_cmd->setValue(cmd_key);
 	sli_delay->setValue(key_delay);
 	sli_contrast->setValue(chord_contrast);
 	spn_chan->setValue(channel);
@@ -246,7 +235,6 @@ MppMode :: handle_reset()
 
 	sli_contrast->setValue(128);
 	sli_delay->setValue(25);
-	spn_cmd->setValue(MPP_DEFAULT_CMD_KEY);
 	spn_base->setValue(MPP_DEFAULT_BASE_KEY);
 	spn_chan->setValue(0);
 	cbx_norm->setChecked(1);
@@ -261,7 +249,6 @@ void
 MppMode :: handle_done()
 {
 	int base_key;
-	int cmd_key;
 	int key_delay;
 	int channel;
 	int key_mode;
@@ -279,7 +266,6 @@ MppMode :: handle_done()
 	}
 
 	base_key = spn_base->value();
-	cmd_key = spn_cmd->value();
 	key_delay = sli_delay->value();
 	channel = spn_chan->value();
 	chord_contrast = sli_contrast->value();
@@ -292,7 +278,6 @@ MppMode :: handle_done()
 
 	pthread_mutex_lock(&sm->mainWindow->mtx);
 	sm->baseKey = base_key;
-	sm->cmdKey = cmd_key;
 	sm->delayNoise = key_delay;
 	sm->synthChannel = channel;
 	sm->keyMode = key_mode;

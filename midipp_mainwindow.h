@@ -142,6 +142,8 @@ public:
 	uint8_t muteMap[MPP_MAX_DEVS][16];
 	uint8_t inputEvents[MPP_MAX_QUEUE];
 	uint8_t numInputEvents;
+	uint8_t controlEvents[MPP_MAX_QUEUE][4];
+	uint8_t numControlEvents;
 	uint8_t playKey;
 	uint8_t bpmAvgLength;
 	uint8_t bpmAvgPos;
@@ -149,12 +151,18 @@ public:
 
 	uint8_t nonChannelMuted;
 	uint8_t scoreRecordOff;
+	uint8_t controlRecordOn;
 	uint8_t instrUpdated;
 	uint8_t midiRecordOff;
 	uint8_t midiPlayOff;
 	uint8_t midiTriggered;
 	uint8_t midiPaused;
 	uint8_t lastViewIndex;
+	uint8_t keyModeUpdated;
+	uint8_t doOperation;
+#define	MPP_OPERATION_PAUSE 0x01
+#define	MPP_OPERATION_REWIND 0x02
+#define	MPP_OPERATION_BPM 0x04
 
 	char *deviceName[MPP_MAX_DEVS];
 
@@ -256,6 +264,10 @@ public:
 	QLineEdit *led_config_insert;
 
 	QString *CurrMidiFileName;
+
+	/* tab <Shortcut> */
+
+	MppShortcutTab *tab_shortcut;
 
 	/* tab <Custom> */
 
@@ -366,7 +378,7 @@ public slots:
 	int handle_config_dev(int, int = 0);
 
 	void handle_bpm();
-	void handle_mode(int);
+	void handle_mode(int,int = 1);
 
 	void handle_key_mode(int);
 

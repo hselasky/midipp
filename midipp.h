@@ -110,18 +110,18 @@
     strncpy(a,b,c); ((char *)(a))[(c)-1] = 0; \
 } while (0)
 
-class MppCheckBox;
 class MppBpm;
 class MppButton;
 class MppButtonMap;
+class MppCheckBox;
 class MppCustomTab;
 class MppDataBase;
 class MppDecode;
 class MppDevices;
 class MppElement;
 class MppGPro;
-class MppGroupBox;
 class MppGridLayout;
+class MppGroupBox;
 class MppHead;
 class MppImportTab;
 class MppLoopTab;
@@ -135,6 +135,7 @@ class MppScoreMain;
 class MppScoreView;
 class MppSettings;
 class MppSettingsWhat;
+class MppShortcutTab;
 class MppShowControl;
 class MppShowWidget;
 class MppSpinBox;

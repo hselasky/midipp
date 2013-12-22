@@ -37,6 +37,7 @@ public:
 	~MppBpm();
 
 	void handle_update();
+	void sync();
 
 	MppMainWindow *mw;
 

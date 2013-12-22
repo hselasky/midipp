@@ -245,23 +245,33 @@ MppBpm :: handle_done_all()
 void
 MppBpm :: handle_bpm_enable()
 {
+	pthread_mutex_lock(&mw->mtx);
 	if (enabled) {
-		pthread_mutex_lock(&mw->mtx);
 		enabled = 0;
 		skip_bpm = 0;
 		handle_update();
-		pthread_mutex_unlock(&mw->mtx);
-
-		but_bpm_enable->setText(tr("Enable"));
 	} else {
-		pthread_mutex_lock(&mw->mtx);
 		enabled = 1;
 		skip_bpm = 0;
 		handle_update();
-		pthread_mutex_unlock(&mw->mtx);
-
-		but_bpm_enable->setText(tr("Disable"));
 	}
+	pthread_mutex_unlock(&mw->mtx);
+	sync();
+}
+
+void
+MppBpm :: sync()
+{
+	int value;
+
+	pthread_mutex_lock(&mw->mtx);
+	value = enabled;
+	pthread_mutex_unlock(&mw->mtx);
+
+	if (value == 0)
+		but_bpm_enable->setText(tr("Enable"));
+	else
+		but_bpm_enable->setText(tr("Disable"));
 }
 
 void

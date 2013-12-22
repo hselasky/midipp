@@ -33,6 +33,7 @@
 #include "midipp_checkbox.h"
 #include "midipp_buttonmap.h"
 #include "midipp_custom.h"
+#include "midipp_shortcut.h"
 
 MppSettings :: MppSettings(MppMainWindow *_parent, const QString & fname)
   : QSettings(fname)
@@ -47,6 +48,7 @@ MppSettings :: MppSettings(MppMainWindow *_parent, const QString & fname)
 	save_database_url = -1;
 	save_database_data = -1;
 	save_custom = -1;
+	save_shortcut = -1;
 
 	but_config_save = new QPushButton(tr("Config Save"));
 	but_config_clean = new QPushButton(tr("Config Clean"));
@@ -130,6 +132,7 @@ MppSettings :: doSave(void)
 	setValue("save_database_url", save_database_url ? 1 : 0);
 	setValue("save_database_data", save_database_data ? 1 : 0);
 	setValue("save_custom", save_custom ? 1 : 0);
+	setValue("save_shortcut", save_shortcut ? 1 : 0);
 	endGroup();
 
 	beginGroup("config");
@@ -140,7 +143,6 @@ MppSettings :: doSave(void)
 		for (x = 0; x != MPP_MAX_VIEWS; x++) {
 			beginGroup(concat("view%d", x));
 			setValue("basekey", mw->scores_main[x]->baseKey);
-			setValue("cmdkey", mw->scores_main[x]->cmdKey);
 			setValue("delay", mw->scores_main[x]->delayNoise);
 			setValue("inmask", mw->scores_main[x]->devInputMask);
 			setValue("keymode", mw->scores_main[x]->keyMode);
@@ -212,6 +214,12 @@ MppSettings :: doSave(void)
 			setValue(concat("command%d", x), mw->tab_custom->custom[x].led_send->text());
 		endGroup();
 	}
+	if (save_shortcut) {
+		beginGroup("shortcut_data");
+		for (x = 0; x != MPP_SHORTCUT_MAX; x++)
+			setValue(QString(mw->tab_shortcut->shortcut_desc[x]), mw->tab_shortcut->led_cmd[x]->text());
+		endGroup();
+	}
 }
 
 void
@@ -228,13 +236,13 @@ MppSettings :: doLoad(void)
 	save_database_url = valueDefault("global/save_database_url", -1);
 	save_database_data = valueDefault("global/save_database_data", -1);
 	save_custom = valueDefault("global/save_custom", -1);
+	save_shortcut = valueDefault("global/save_shortcut", -1);
 
 	mw->led_config_insert->setText(stringDefault("config/record_insert", ""));
 
 	if (save_viewmode > 0) {
 		for (x = 0; x != MPP_MAX_VIEWS; x++) {
 			int baseKey = valueDefault(concat("view%d/basekey", x), MPP_DEFAULT_BASE_KEY);
-			int cmdKey = valueDefault(concat("view%d/cmdkey", x), MPP_DEFAULT_CMD_KEY);
 			int delayNoise = valueDefault(concat("view%d/delay", x), 25);
 			int devInputMask = valueDefault(concat("view%d/inmask", x), x ? 0 : -1);
 			int keyMode = valueDefault(concat("view%d/keymode", x), 0);
@@ -244,8 +252,6 @@ MppSettings :: doLoad(void)
 
 			if (baseKey < 0 || baseKey > 127)
 				baseKey = 0;
-			if (cmdKey < 0 || cmdKey > 127)
-				cmdKey = 0;
 			if (delayNoise < 0 || delayNoise > 255)
 				delayNoise = 0;
 			if (keyMode < 0 || keyMode >= MM_PASS_MAX)
@@ -259,7 +265,6 @@ MppSettings :: doLoad(void)
 
 			pthread_mutex_lock(&mw->mtx);
 			mw->scores_main[x]->baseKey = baseKey;
-			mw->scores_main[x]->cmdKey = cmdKey;
 			mw->scores_main[x]->delayNoise = delayNoise;
 			mw->scores_main[x]->devInputMask = devInputMask;
 			mw->scores_main[x]->keyMode = keyMode;
@@ -376,6 +381,12 @@ MppSettings :: doLoad(void)
 			   stringDefault(concat("custom_data/command%d", x), ""));
 		}
 	}
+	if (save_shortcut > 0) {
+		for (x = 0; x != MPP_SHORTCUT_MAX; x++) {
+			mw->tab_shortcut->led_cmd[x]->setText(
+			    stringDefault(QString(mw->tab_shortcut->shortcut_desc[x]), ""));
+		}
+	}
 }
 
 void
@@ -413,6 +424,7 @@ MppSettings :: handle_clean(void)
 	setValue("save_database_url", 1);
 	setValue("save_database_data", 1);
 	setValue("save_custom", 1);
+	setValue("save_shortcut", 1);
 	endGroup();
 
 	doLoad();
@@ -447,6 +459,7 @@ MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
 	cbx_database_url = new MppCheckBox();
 	cbx_database_data = new MppCheckBox();
 	cbx_custom = new MppCheckBox();
+	cbx_shortcut = new MppCheckBox();
 
 	but_ok = new QPushButton(tr("Close"));
 	but_reset = new QPushButton(tr("Reset"));
@@ -465,6 +478,7 @@ MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
 	gl->addWidget(new QLabel(tr("Save database URL")), 5, 0, 1, 1);
 	gl->addWidget(new QLabel(tr("Save database contents")), 6, 0, 1, 1);
 	gl->addWidget(new QLabel(tr("Save custom MIDI commands")), 7, 0, 1, 1);
+	gl->addWidget(new QLabel(tr("Save shortcut MIDI commands")), 8, 0, 1, 1);
 
 	gl->addWidget(cbx_volume, 0, 2, 1, 2);
 	gl->addWidget(cbx_instruments, 1, 2, 1, 2);
@@ -474,9 +488,10 @@ MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
 	gl->addWidget(cbx_database_url, 5, 2, 1, 2);
 	gl->addWidget(cbx_database_data, 6, 2, 1, 2);
 	gl->addWidget(cbx_custom, 7, 2, 1, 2);
+	gl->addWidget(cbx_shortcut, 8, 2, 1, 2);
 
-	gl->addWidget(but_reset, 8, 1, 1, 1);
-	gl->addWidget(but_ok, 8, 2, 1, 1);
+	gl->addWidget(but_reset, 9, 1, 1, 1);
+	gl->addWidget(but_ok, 9, 2, 1, 1);
 }
 
 MppSettingsWhat :: ~MppSettingsWhat(void)
@@ -495,6 +510,7 @@ MppSettingsWhat :: doShow(void)
 	cbx_database_url->setChecked(ms->save_database_url ? 1 : 0);
 	cbx_database_data->setChecked(ms->save_database_data ? 1 : 0);
 	cbx_custom->setChecked(ms->save_custom ? 1 : 0);
+	cbx_shortcut->setChecked(ms->save_shortcut ? 1 : 0);
 
 	exec();
 
@@ -506,6 +522,7 @@ MppSettingsWhat :: doShow(void)
 	ms->save_database_url = cbx_database_url->isChecked() ? 1 : 0;
 	ms->save_database_data = cbx_database_data->isChecked() ? 1 : 0;
 	ms->save_custom = cbx_custom->isChecked() ? 1 : 0;
+	ms->save_shortcut = cbx_shortcut->isChecked() ? 1 : 0;
 }
 
 void
@@ -519,4 +536,5 @@ MppSettingsWhat :: handle_reset(void)
 	cbx_database_url->setChecked(1);
 	cbx_database_data->setChecked(1);
 	cbx_custom->setChecked(1);
+	cbx_shortcut->setChecked(1);
 }

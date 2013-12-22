@@ -57,6 +57,7 @@ isEmpty(HAVE_NO_SHOW) {
 HEADERS		+= midipp_show.h
 }
 HEADERS		+= midipp_spinbox.h
+HEADERS		+= midipp_shortcut.h
 HEADERS		+= midipp_tabbar.h
 HEADERS		+= midipp_pattern.h
 HEADERS		+= midipp_volume.h
@@ -88,6 +89,7 @@ SOURCES		+= midipp_show.cpp
 SOURCES		+= midipp_tabbar.cpp
 SOURCES		+= midipp_pattern.cpp
 SOURCES		+= midipp_spinbox.cpp
+SOURCES		+= midipp_shortcut.cpp
 SOURCES		+= midipp_volume.cpp
 
 RESOURCES	+= midipp.qrc

@@ -177,7 +177,6 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 
 	devInputMask = 0;
 	baseKey = MPP_DEFAULT_BASE_KEY;
-	cmdKey = MPP_DEFAULT_CMD_KEY;
 	delayNoise = 25;
 	chordContrast = 128;
 	chordNormalize = 1;

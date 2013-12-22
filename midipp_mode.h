@@ -65,7 +65,6 @@ public:
 	QLabel *lbl_norm;
 	QLabel *lbl_chan;
 	QLabel *lbl_base;
-	QLabel *lbl_cmd;
 	QLabel *lbl_dev[MPP_MAX_DEVS];
 
 	MppCheckBox *cbx_norm;
@@ -81,7 +80,6 @@ public:
 	QSlider *sli_contrast;
 	QSlider *sli_delay;
 
-	MppSpinBox *spn_cmd;
 	MppSpinBox *spn_base;
 
 	QSpinBox *spn_chan;

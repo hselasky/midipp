@@ -155,7 +155,6 @@ public:
 
 	uint8_t synthChannel;
 	uint8_t baseKey;
-	uint8_t cmdKey;
 	uint8_t delayNoise;
 	uint8_t whatPlayKeyLocked;
 	uint8_t last_key;

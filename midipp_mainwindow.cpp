@@ -47,6 +47,7 @@
 #include "midipp_show.h"
 #include "midipp_custom.h"
 #include "midipp_tabbar.h"
+#include "midipp_shortcut.h"
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -184,6 +185,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_custom = new MppCustomTab(this, this);
 
+	tab_shortcut = 	new MppShortcutTab(this);
+
 	tab_help = new QPlainTextEdit();
 	tab_help->setFont(editFont);
 	tab_help->setLineWrapMode(QPlainTextEdit::NoWrap);
@@ -267,6 +270,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_tb->addTab(tab_play_gl, tr("Play"));
 	main_tb->addTab(tab_config_gl, tr("Config"));
 	main_tb->addTab(tab_custom, tr("Custom"));
+	main_tb->addTab(tab_shortcut->gl, tr("Shortcut"));
 	main_tb->addTab(tab_instr_gl, tr("Instrument"));
 	main_tb->addTab(tab_volume_gl, tr("Volume"));
 	main_tb->addTab(tab_database, tr("Database"));
@@ -871,7 +875,7 @@ MppMainWindow :: handle_watchdog()
 {
 	uint32_t delta;
 	char buf[32];
-	uint8_t events_copy[MPP_MAX_QUEUE];
+	uint8_t events_copy[MPP_MAX_QUEUE][4];
 	uint8_t num_events;
 	uint8_t x;
 	uint8_t y;
@@ -879,6 +883,8 @@ MppMainWindow :: handle_watchdog()
 	uint8_t last_duration;
 	uint8_t instr_update;
 	uint8_t cursor_update;
+	uint8_t key_mode_update;
+	uint8_t ops;
 
 	/* update focus if any */
 	handle_tab_changed();
@@ -889,6 +895,10 @@ MppMainWindow :: handle_watchdog()
 	instr_update = instrUpdated;
 	instrUpdated = 0;
 	num_events = numInputEvents;
+	key_mode_update = keyModeUpdated;
+	keyModeUpdated = 0;
+	ops = doOperation;
+	doOperation = 0;
 
 	if (num_events != 0) {
 		delta =  umidi20_get_curr_position() - lastInputEvent;
@@ -900,13 +910,14 @@ MppMainWindow :: handle_watchdog()
 			num_events = 0;
 		}
 	}
-	pthread_mutex_unlock(&mtx);
-
 	if (num_events != 0) {
+
+		pthread_mutex_unlock(&mtx);
+
 		QPlainTextEdit *ped = currEditor();
 		QTextCursor cursor;
 
-		mid_sort(events_copy, num_events);
+		mid_sort(events_copy[0], num_events);
 
 		last_duration = 0;
 
@@ -919,7 +930,7 @@ MppMainWindow :: handle_watchdog()
 
 		for (x = 0; x != num_events; x++) {
 			for (y = x; y != num_events; y++) {
-				if (events_copy[x] != events_copy[y])
+				if (events_copy[0][x] != events_copy[0][y])
 					break;
 			}
 
@@ -929,10 +940,10 @@ MppMainWindow :: handle_watchdog()
 			if (y != last_duration) {
 				last_duration = y;
 				snprintf(buf, sizeof(buf), "U%d %s ",
-				    y, mid_key_str[events_copy[x] & 0x7F]);
+				    y, mid_key_str[events_copy[0][x] & 0x7F]);
 			} else {
 				snprintf(buf, sizeof(buf), "%s ",
-				    mid_key_str[events_copy[x] & 0x7F]);
+				    mid_key_str[events_copy[0][x] & 0x7F]);
 			}
 
 			if (ped != 0) {
@@ -946,6 +957,18 @@ MppMainWindow :: handle_watchdog()
 			cursor.endEditBlock();
 			ped->setTextCursor(cursor);
 		}
+
+		pthread_mutex_lock(&mtx);
+	}
+	num_events = numControlEvents;
+	if (num_events != 0) {
+		numControlEvents = 0;
+		memcpy(events_copy, controlEvents, num_events * sizeof(controlEvents[0]));
+	}
+	pthread_mutex_unlock(&mtx);
+
+	for (x = 0; x != num_events; x++) {
+		tab_shortcut->handle_record_event(events_copy[x]);
 	}
 
 	if (instr_update)
@@ -955,10 +978,20 @@ MppMainWindow :: handle_watchdog()
 
 	do_clock_stats();
 
-	for (x = 0; x != MPP_MAX_VIEWS; x++)
+	for (x = 0; x != MPP_MAX_VIEWS; x++) {
+		if (key_mode_update)
+			handle_mode(x, 0);
 		handle_watchdog_sub(scores_main[x], cursor_update);
+	}
 
 	tab_loop->watchdog();
+
+	if (ops & MPP_OPERATION_PAUSE)
+		handle_midi_pause();
+	if (ops & MPP_OPERATION_REWIND)
+		handle_rewind();
+	if (ops & MPP_OPERATION_BPM)
+		dlg_bpm->sync();
 }
 
 void
@@ -1782,20 +1815,30 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 	uint8_t ctrl;
 	int key;
 	int vel;
-	int lbl;
 	int n;
 
 	*drop = 1;
 
 	pthread_mutex_lock(&mw->mtx);
 
+	if (umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL) {
+		if (mw->controlRecordOn != 0 &&
+		    umidi20_event_is_key_end(event) == 0) {
+			if (mw->numControlEvents < MPP_MAX_QUEUE) {
+				mw->controlEvents[mw->numControlEvents][0] = event->cmd[0];
+				mw->controlEvents[mw->numControlEvents][1] = event->cmd[1];
+				mw->controlEvents[mw->numControlEvents][2] = event->cmd[2];
+				mw->controlEvents[mw->numControlEvents][3] = event->cmd[3];
+				mw->numControlEvents++;
+			}
+		}
+	}
 	if (umidi20_event_is_key_start(event)) {
 
 		key = umidi20_event_get_key(event) & 0x7F;
 		vel = umidi20_event_get_velocity(event);
 
 		if (mw->scoreRecordOff == 0) {
-
 			if (mw->numInputEvents < MPP_MAX_QUEUE) {
 				mw->inputEvents[mw->numInputEvents] = key;
 				mw->numInputEvents++;
@@ -1819,7 +1862,10 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 		ctrl = umidi20_event_get_control_address(event);
 
-		if (umidi20_event_is_pitch_bend(event)) {
+		if (mw->controlRecordOn == 0 &&
+		    mw->tab_shortcut->handle_event_received_locked(sm, event)) {
+			/* command event */
+		} else if (umidi20_event_is_pitch_bend(event)) {
 
 			vel = umidi20_event_get_pitch_value(event);
 
@@ -1831,18 +1877,12 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			key = umidi20_event_get_key(event) & 0x7F;
 			vel = umidi20_event_get_pressure(event) & 0x7F;
 
-			if (sm->cmdKey != 0)
-				lbl = key - sm->cmdKey;
-			else
-				lbl = -1;
-
 			switch (sm->keyMode) {
 			case MM_PASS_ALL:
 				sm->outputKeyPressure(sm->synthChannel, key, vel);
 				break;
 			case MM_PASS_NONE_CHORD:
-				if (sm->checkLabelJump(lbl) == 0)
-					sm->handleKeyPressureChord(key, vel);
+				sm->handleKeyPressureChord(key, vel);
 				break;
 			default:
 				break;
@@ -1873,39 +1913,28 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			key = umidi20_event_get_key(event) & 0x7F;
 			vel = umidi20_event_get_velocity(event);
 
-			if (sm->cmdKey != 0)
-				lbl = key - sm->cmdKey;
-			else
-				lbl = -1;
-
 			if (sm->keyMode != MM_PASS_ALL) {
+				if ((sm->keyMode == MM_PASS_NONE_FIXED) ||
+				    (sm->keyMode == MM_PASS_NONE_TRANS) ||
+				    (sm->keyMode == MM_PASS_NONE_CHORD)) {
 
-				if (sm->checkLabelJump(lbl)) {
-					mw->handle_jump_locked(lbl);
-				} else {
-					if ((sm->keyMode == MM_PASS_NONE_FIXED) ||
-					    (sm->keyMode == MM_PASS_NONE_TRANS) ||
-					    (sm->keyMode == MM_PASS_NONE_CHORD)) {
+					if (sm->keyMode == MM_PASS_NONE_FIXED)
+						key = mw->playKey;
 
-						if (sm->keyMode == MM_PASS_NONE_FIXED)
-							key = mw->playKey;
+					if (sm->keyMode != MM_PASS_NONE_CHORD)
+						sm->handleKeyPress(key, vel);
+					else
+						sm->handleKeyPressChord(key, vel);
 
-						if (sm->keyMode != MM_PASS_NONE_CHORD)
-							sm->handleKeyPress(key, vel);
-						else
-							sm->handleKeyPressChord(key, vel);
+				} else if (sm->checkHalfPassThru(key) != 0) {
 
-					} else if (sm->checkHalfPassThru(key) != 0) {
+					if (key == sm->baseKey)
+						sm->handleKeyPress(key, vel);
 
-						if (key == sm->baseKey)
-							sm->handleKeyPress(key, vel);
-
-					} else if (sm->setPressedKey(chan, key, 255, 0) == 0) {
-						mw->output_key(chan, key, vel, 0, 0);
-						mw->do_update_bpm();
-					}
+				} else if (sm->setPressedKey(chan, key, 255, 0) == 0) {
+					mw->output_key(chan, key, vel, 0, 0);
+					mw->do_update_bpm();
 				}
-
 			} else if (sm->setPressedKey(chan, key, 255, 0) == 0) {
 
 				mw->output_key(chan, key, vel, 0, 0);
@@ -1916,36 +1945,27 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 			key = umidi20_event_get_key(event) & 0x7F;
 
-			if (sm->cmdKey != 0)
-				lbl = key - sm->cmdKey;
-			else
-				lbl = -1;
-
 			if (sm->keyMode != MM_PASS_ALL) {
+				if ((sm->keyMode == MM_PASS_NONE_FIXED) ||
+				    (sm->keyMode == MM_PASS_NONE_TRANS) ||
+				    (sm->keyMode == MM_PASS_NONE_CHORD)) {
 
-				if (sm->checkLabelJump(lbl) == 0) {
-					if ((sm->keyMode == MM_PASS_NONE_FIXED) ||
-					    (sm->keyMode == MM_PASS_NONE_TRANS) ||
-					    (sm->keyMode == MM_PASS_NONE_CHORD)) {
+				  if (sm->keyMode == MM_PASS_NONE_FIXED)
+					key = mw->playKey;
 
-						if (sm->keyMode == MM_PASS_NONE_FIXED)
-							key = mw->playKey;
+				  if (sm->keyMode != MM_PASS_NONE_CHORD)
+					sm->handleKeyRelease(key);
+				  else
+					sm->handleKeyReleaseChord(key);
 
-						if (sm->keyMode != MM_PASS_NONE_CHORD)
-							sm->handleKeyRelease(key);
-						else
-							sm->handleKeyReleaseChord(key);
+				} else if (sm->checkHalfPassThru(key) != 0) {
 
-					} else if (sm->checkHalfPassThru(key) != 0) {
+					if (key == sm->baseKey)
+						sm->handleKeyRelease(key);
 
-						if (key == sm->baseKey)
-							sm->handleKeyRelease(key);
-
-					} else if (sm->setPressedKey(chan, key, 0, 0) == 0) {
-						mw->output_key(chan, key, 0, 0, 0);
-					}
+				} else if (sm->setPressedKey(chan, key, 0, 0) == 0) {
+					mw->output_key(chan, key, 0, 0, 0);
 				}
-
 			} else if (sm->setPressedKey(chan, key, 0, 0) == 0) {
 
 				mw->output_key(chan, key, 0, 0, 0);
@@ -3056,10 +3076,12 @@ MppMainWindow :: handle_bpm()
 }
 
 void
-MppMainWindow :: handle_mode(int index)
+MppMainWindow :: handle_mode(int index, int dialog)
 {
 	dlg_mode[index]->update_all();
-	dlg_mode[index]->exec();
+
+	if (dialog != 0)
+		dlg_mode[index]->exec();
 
 	if (index == 0) {
 		int value;
