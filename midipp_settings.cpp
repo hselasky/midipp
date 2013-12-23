@@ -384,7 +384,8 @@ MppSettings :: doLoad(void)
 	if (save_shortcut > 0) {
 		for (x = 0; x != MPP_SHORTCUT_MAX; x++) {
 			mw->tab_shortcut->led_cmd[x]->setText(
-			    stringDefault(QString(mw->tab_shortcut->shortcut_desc[x]), ""));
+			    stringDefault(QString("shortcut_data/") +
+			    QString(mw->tab_shortcut->shortcut_desc[x]), ""));
 		}
 	}
 }
