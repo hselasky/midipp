@@ -343,7 +343,7 @@ void
 MppShortcutTab :: handle_record_event(const uint8_t *data)
 {
 	uint32_t x;
-	uint8_t match[3] = {data[1] & 0xF0,data[2],data[3]};
+	uint8_t match[3] = {(uint8_t)(data[1] & 0xF0),data[2],data[3]};
 
 	for (x = 0; x != MPP_SHORTCUT_MAX; x++) {
 		if (but_rec[x]->isFlat())
