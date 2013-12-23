@@ -35,9 +35,10 @@ class MppCheckBox : public QWidget
 private:
 	Qt::CheckState state;
 	Qt::CheckState other;
+	int id;
 
 public:
-	MppCheckBox();
+	MppCheckBox(int = 0);
 	~MppCheckBox();
 
 	void setCheckState(Qt::CheckState);
@@ -50,7 +51,7 @@ public:
 	void mousePressEvent(QMouseEvent *);
 
 signals:
-	void stateChanged(int);
+	void stateChanged(int, int);
 };
 
 #endif		/* _MIDIPP_CHECKBOX_H_ */

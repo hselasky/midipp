@@ -43,7 +43,6 @@ public:
 
 	QGridLayout *gl;
 
-	MppPattern *led_bpm_pattern;
 	QSpinBox *spn_bpm_value;
 	QSpinBox *spn_bpm_duty;
 	QSpinBox *spn_bpm_amp;
@@ -57,7 +56,6 @@ public:
 	QPushButton *but_reset_all;
 	QPushButton *but_done_all;
 
-	uint32_t time;
 	uint32_t enabled;
 	uint32_t bpm;
 	uint32_t duty;

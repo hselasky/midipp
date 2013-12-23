@@ -116,6 +116,7 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 	gl->addWidget(spn_parse_thres,4,3,1,1);
 
 	led_prefix = new QLineEdit();
+	led_prefix->setMaxLength(256);
 
 	gl->addWidget(new QLabel(tr("Line prefix")),5,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
 	gl->addWidget(led_prefix,5,3,1,1);

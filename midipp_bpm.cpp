@@ -25,7 +25,6 @@
 
 #include "midipp_bpm.h"
 #include "midipp_mainwindow.h"
-#include "midipp_pattern.h"
 #include "midipp_scores.h"
 #include "midipp_spinbox.h"
 #include "midipp_checkbox.h"
@@ -42,8 +41,7 @@ MppTimerCallback(void *arg)
 	if (mb->enabled &&
 	    mb->duty_ticks &&
 	    mb->amp &&
-	    mw->midiTriggered &&
-	    mb->led_bpm_pattern->matchPattern(mb->time)) {
+	    mw->midiTriggered) {
 
 		if (mb->skip_bpm) {
 			mb->skip_bpm = 0;
@@ -64,7 +62,6 @@ MppTimerCallback(void *arg)
 			mw->send_byte_event_locked(0xF8);
 		}
 	}
-	mb->time++;
 	pthread_mutex_unlock(&mw->mtx);
 }
 
@@ -77,8 +74,6 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 	mw = parent;
 
 	gl = new QGridLayout(this);
-
-	led_bpm_pattern = new MppPattern();
 
 	spn_bpm_value = new QSpinBox();
 	spn_bpm_value->setRange(1, 6000);
@@ -110,11 +105,11 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
 		cbx_view[n] = new MppCheckBox();
-		connect(cbx_view[n], SIGNAL(stateChanged(int)), this, SLOT(handle_view_all(int)));
+		connect(cbx_view[n], SIGNAL(stateChanged(int,int)), this, SLOT(handle_view_all(int)));
 	}
 
 	cbx_midi_beat = new MppCheckBox();
-	connect(cbx_midi_beat, SIGNAL(stateChanged(int)), this, SLOT(handle_midi_beat_change(int)));
+	connect(cbx_midi_beat, SIGNAL(stateChanged(int,int)), this, SLOT(handle_midi_beat_change(int)));
 
 	but_bpm_enable = new QPushButton(tr("Enable"));
 	but_reset_all = new QPushButton(tr("Reset all"));
@@ -127,31 +122,28 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 	setWindowTitle(tr("BPM settings"));
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
-	gl->addWidget(new QLabel(tr("BPM pattern: 1+a+bc+d")), 0, 0, 1, 2);
-	gl->addWidget(led_bpm_pattern, 0, 2, 1, 1);
+	gl->addWidget(new QLabel(tr("BPM value (1..6000)")), 0, 0, 1, 2);
+	gl->addWidget(spn_bpm_value, 0, 2, 1, 1);
 
-	gl->addWidget(new QLabel(tr("BPM value (1..6000)")), 1, 0, 1, 2);
-	gl->addWidget(spn_bpm_value, 1, 2, 1, 1);
+	gl->addWidget(new QLabel(tr("BPM duty (1..199)")), 1, 0, 1, 2);
+	gl->addWidget(spn_bpm_duty, 1, 2, 1, 1);
 
-	gl->addWidget(new QLabel(tr("BPM duty (1..199)")), 2, 0, 1, 2);
-	gl->addWidget(spn_bpm_duty, 2, 2, 1, 1);
+	gl->addWidget(new QLabel(tr("BPM amplitude (1..127)")), 2, 0, 1, 2);
+	gl->addWidget(spn_bpm_amp, 2, 2, 1, 1);
 
-	gl->addWidget(new QLabel(tr("BPM amplitude (1..127)")), 3, 0, 1, 2);
-	gl->addWidget(spn_bpm_amp, 3, 2, 1, 1);
+	gl->addWidget(new QLabel(tr("BPM play key")), 3, 0, 1, 2);
+	gl->addWidget(spn_bpm_key, 3, 2, 1, 1);
 
-	gl->addWidget(new QLabel(tr("BPM play key")), 4, 0, 1, 2);
-	gl->addWidget(spn_bpm_key, 4, 2, 1, 1);
+	gl->addWidget(new QLabel(tr("BPM period reference (1..6000)")), 4, 0, 1, 2);
+	gl->addWidget(spn_bpm_ref, 4, 2, 1, 1);
 
-	gl->addWidget(new QLabel(tr("BPM period reference (1..6000)")), 5, 0, 1, 2);
-	gl->addWidget(spn_bpm_ref, 5, 2, 1, 1);
-
-	gl->addWidget(new QLabel(tr("BPM period value (0..60000)")), 6, 0, 1, 2);
-	gl->addWidget(spn_bpm_period, 6, 2, 1, 1);
+	gl->addWidget(new QLabel(tr("BPM period value (0..60000)")), 5, 0, 1, 2);
+	gl->addWidget(spn_bpm_period, 5, 2, 1, 1);
 
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
 		snprintf(buf, sizeof(buf), "BPM to view %c", 'A' + n);
-		gl->addWidget(new QLabel(tr(buf)), 7 + n, 0, 1, 2);
-		gl->addWidget(cbx_view[n], 7 + n, 2, 1, 1);
+		gl->addWidget(new QLabel(tr(buf)), 6 + n, 0, 1, 2);
+		gl->addWidget(cbx_view[n], 6 + n, 2, 1, 1);
 	}
 
 	n = 7 + MPP_MAX_VIEWS;
@@ -219,7 +211,6 @@ MppBpm :: handle_reset_all()
 
 	beat = 0;
 	skip_bpm = 0;
-	time = 0;
 	enabled = 0;
 	bpm = 120;
 	duty = 50;
@@ -315,8 +306,6 @@ MppBpm :: handle_update(int restart)
 		duty_ticks = 0;
 		i = 0;
 	}
-
-	time = 0;
 
 	if (restart != 0 && i != 0) {
 		umidi20_unset_timer(&MppTimerCallback, this);

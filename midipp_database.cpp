@@ -255,7 +255,11 @@ MppDataBase :: MppDataBase(MppMainWindow *mw)
 	gl = new QGridLayout(this);
 
 	location = new QLineEdit(QString(MPP_DEFAULT_URL));
+	location->setMaxLength(1024);
+
 	search = new QLineEdit();
+	search->setMaxLength(256);
+
 	result = new QListWidget();
 
 	gb_result = new MppGroupBox(tr("Search results"));

@@ -92,12 +92,16 @@ MppShortcutTab :: MppShortcutTab(MppMainWindow *_mw)
 	but_clr_all = new QPushButton("Record None");
 	connect(but_clr_all, SIGNAL(released()), this, SLOT(handle_clr_all_flat()));
 
-	but_reset = new QPushButton("Clear Record Commands");
-	connect(but_reset, SIGNAL(released()), this, SLOT(handle_reset()));
+	but_reset = new QPushButton("Clear Selected");
+	connect(but_reset, SIGNAL(released()), this, SLOT(handle_reset_all_flat()));
 
-	gl->addWidget(but_set_all, 2, 0, 1,1);
-	gl->addWidget(but_clr_all, 2, 1, 1,1);
-	gl->addWidget(but_reset, 2, 2, 1,1);
+	but_default = new QPushButton("Set Defaults");
+	connect(but_default, SIGNAL(released()), this, SLOT(handle_default()));
+
+	gl->addWidget(but_set_all, 2, 0, 1, 1);
+	gl->addWidget(but_clr_all, 2, 1, 1, 1);
+	gl->addWidget(but_reset, 2, 2, 1, 1);
+	gl->addWidget(but_default, 2, 3, 1, 1);
 
 	for (x = 0; x != MPP_SHORTCUT_MAX; x++) {
 		MppGroupBox *gb;
@@ -112,17 +116,12 @@ MppShortcutTab :: MppShortcutTab(MppMainWindow *_mw)
 		connect(but_rec[x], SIGNAL(released(int)), this, SLOT(handle_record(int)));
 
 		led_cmd[x] = new QLineEdit();
+		led_cmd[x]->setMaxLength(32);
+
 		connect(led_cmd[x], SIGNAL(textChanged(const QString &)), this, SLOT(handle_text_changed(const QString &)));
 
 		if (x < MPP_SHORTCUT_LABEL_MAX) {
 			gb = gb_jump;
-			if (x < MPP_SHORTCUT_J12) {
-				led_cmd[x]->setText(QString("%1 %2 %3")
-				    .arg(0x90, 2, 16, QChar('0'))
-				    .arg(MPP_DEFAULT_CMD_KEY + x -
-				        MPP_SHORTCUT_J0, 2, 16, QChar('0'))
-				    .arg(0x7e, 2, 16, QChar('0')));
-			}
 		} else if (x < MPP_SHORTCUT_MODE_MAX) {
 			gb = gb_mode;
 		} else {
@@ -139,6 +138,7 @@ MppShortcutTab :: MppShortcutTab(MppMainWindow *_mw)
 			y += 3;
 		}
 	}
+	handle_default();
 }
 
 MppShortcutTab :: ~MppShortcutTab()
@@ -366,11 +366,30 @@ MppShortcutTab :: handle_record_event(const uint8_t *data)
 }
 
 void
-MppShortcutTab :: handle_reset()
+MppShortcutTab :: handle_reset_all_flat()
 {
 	uint32_t x;
 	for (x = 0; x != MPP_SHORTCUT_MAX; x++) {
 		if (but_rec[x]->isFlat()) {
+			but_rec[x]->setFlat(0);
+			led_cmd[x]->setText(QString());
+		}
+	}
+}
+
+void
+MppShortcutTab :: handle_default()
+{
+	uint32_t x;
+	for (x = 0; x != MPP_SHORTCUT_MAX; x++) {
+		but_rec[x]->setFlat(0);
+		if (x < MPP_SHORTCUT_J12) {
+			led_cmd[x]->setText(QString("%1 %2 %3")
+			    .arg(0x90, 2, 16, QChar('0'))
+			    .arg(MPP_DEFAULT_CMD_KEY + x -
+			        MPP_SHORTCUT_J0, 2, 16, QChar('0'))
+			    .arg(0x7e, 2, 16, QChar('0')));
+		} else {
 			led_cmd[x]->setText(QString());
 		}
 	}

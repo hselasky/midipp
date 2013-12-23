@@ -25,13 +25,14 @@
 
 #include "midipp_checkbox.h"
 
-MppCheckBox :: MppCheckBox()
+MppCheckBox :: MppCheckBox(int _id)
   : QWidget()
 {
 	setFixedSize(24,24);
 
 	state = Qt::Unchecked;
 	other = Qt::Unchecked;
+	id = _id;
 }
 
 MppCheckBox :: ~MppCheckBox()
@@ -78,7 +79,7 @@ MppCheckBox :: mousePressEvent(QMouseEvent *event)
 
 	if (other != state) {
 		other = state;
-		stateChanged(other);
+		stateChanged(other, id);
 		repaint();
 	}
 	event->accept();
@@ -90,7 +91,7 @@ MppCheckBox :: setCheckState(Qt::CheckState _state)
 	state = _state;
 	if (other != state) {
 		other = state;
-		stateChanged(other);
+		stateChanged(other, id);
 		repaint();
 	}
 }
@@ -110,7 +111,7 @@ MppCheckBox :: setChecked(bool _enable)
 		state = Qt::Unchecked;
 	if (other != state) {
 		other = state;
-		stateChanged(other);
+		stateChanged(other, id);
 		repaint();
 	}
 }

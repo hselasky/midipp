@@ -128,7 +128,6 @@ class MppLoopTab;
 class MppMainWindow;
 class MppMidi;
 class MppMode;
-class MppPattern;
 class MppReplace;
 class MppScoreHighLighter;
 class MppScoreMain;

@@ -255,7 +255,9 @@ public:
 	QLineEdit *led_config_dev[MPP_MAX_DEVS];
 	MppCheckBox *cbx_config_dev[MPP_MAX_DEVS][3];
 
-	QPushButton *but_config_apply;
+	uint32_t dirty_config_mask;
+
+	QTimer *tim_config_apply;
 	QPushButton *but_config_revert;
 	QPushButton *but_config_view_fontsel;
 	QPushButton *but_config_edit_fontsel;
@@ -351,9 +353,9 @@ public slots:
 	void handle_midi_file_save_as();
 	void handle_rewind();
 	void handle_midi_trigger();
-	void handle_config_apply();
-	void handle_config_apply_sub(int);
-	void handle_config_revert();
+	void handle_config_changed();
+	void handle_config_apply(int = -1);
+	void handle_config_revert(int = 0);
 	void handle_config_reload();
 	void handle_config_view_fontsel();
 	void handle_config_edit_fontsel();

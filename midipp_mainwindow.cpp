@@ -432,7 +432,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	mpp_settings = new MppSettings(this, "midipp");
 
-	but_config_apply = new QPushButton(tr("Apply"));
+	tim_config_apply = new QTimer(this);
+        tim_config_apply->setSingleShot(1);
+        connect(tim_config_apply, SIGNAL(timeout()), this, SLOT(handle_config_apply()));
+
 	but_config_revert = new QPushButton(tr("Revert"));
 	but_config_view_fontsel = new QPushButton(tr("Change View Font"));
 	but_config_edit_fontsel = new QPushButton(tr("Change Editor Font"));
@@ -452,20 +455,27 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		char buf[16];
 
 		but_config_mm[n] = new MppButton(tr("MM"), n);
-		but_config_dev[n] = new MppButton(tr("DEV"), n);
-
 		connect(but_config_mm[n], SIGNAL(released(int)), this, SLOT(handle_mute_map(int)));
+
+		but_config_dev[n] = new MppButton(tr("DEV"), n);
 		connect(but_config_dev[n], SIGNAL(released(int)), this, SLOT(handle_config_dev(int)));
 
-		led_config_dev[n] = new QLineEdit(QString());
+		led_config_dev[n] = new QLineEdit();
+		led_config_dev[n]->setMaxLength(256);
+		connect(led_config_dev[n], SIGNAL(textChanged(const QString &)), this, SLOT(handle_config_changed()));
 
-		cbx_config_dev[n][0] = new MppCheckBox();
-		cbx_config_dev[n][1] = new MppCheckBox();
-		cbx_config_dev[n][2] = new MppCheckBox();
+		cbx_config_dev[n][0] = new MppCheckBox(n);
+		connect(cbx_config_dev[n][0], SIGNAL(stateChanged(int,int)), this, SLOT(handle_config_changed()));
+
+		cbx_config_dev[n][1] = new MppCheckBox(n);
+		connect(cbx_config_dev[n][1], SIGNAL(stateChanged(int,int)), this, SLOT(handle_config_changed()));
+
+		cbx_config_dev[n][2] = new MppCheckBox(n);
+		connect(cbx_config_dev[n][2], SIGNAL(stateChanged(int,int)), this, SLOT(handle_config_changed()));
 
 		snprintf(buf, sizeof(buf), "Dev%d:", n);
 
-		gb_config_device->addWidget(new QLabel(tr(buf)), n + 1, 0, 1, 1, Qt::AlignHCenter|Qt::AlignLeft);
+		gb_config_device->addWidget(new QLabel(QString(buf)), n + 1, 0, 1, 1, Qt::AlignHCenter|Qt::AlignLeft);
 		gb_config_device->addWidget(led_config_dev[n], n + 1, 1, 1, 1);
 		gb_config_device->addWidget(cbx_config_dev[n][0], n + 1, 2, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 		gb_config_device->addWidget(cbx_config_dev[n][1], n + 1, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
@@ -475,6 +485,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	}
 
 	led_config_insert = new QLineEdit(QString());
+	led_config_insert->setMaxLength(256);
 
 	gb_config_insert = new MppGroupBox(tr("Scores recording prefix string"));
 	gb_config_insert->addWidget(led_config_insert, 0, 0, 1, 1);
@@ -504,12 +515,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	x++;
 
 	tab_config_gl->addWidget(mpp_settings->but_config_load, x, 0, 1, 1);
-
-	x++;
-
-	tab_config_gl->addWidget(but_config_apply, x, 4, 1, 2);
 	tab_config_gl->addWidget(but_config_revert, x, 6, 1, 2);
-
 	tab_config_gl->addWidget(mpp_settings->but_config_clean, x, 2, 1, 1);
 	tab_config_gl->setColumnStretch(8, 1);
 
@@ -573,8 +579,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		spn_instr_prog[n]->setRange(0, 127);
 		connect(spn_instr_prog[n], SIGNAL(valueChanged(int)), this, SLOT(handle_instr_changed(int)));
 
-		cbx_instr_mute[n] = new MppCheckBox();
-		connect(cbx_instr_mute[n], SIGNAL(stateChanged(int)), this, SLOT(handle_instr_changed(int)));
+		cbx_instr_mute[n] = new MppCheckBox(n);
+		connect(cbx_instr_mute[n], SIGNAL(stateChanged(int,int)), this, SLOT(handle_instr_changed(int)));
 
 		gb_instr_table->addWidget(new QLabel(tr(buf)), (n & 7) + 1, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
 		gb_instr_table->addWidget(spn_instr_bank[n], (n & 7) + 1, 1 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
@@ -648,7 +654,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	connect(but_midi_trigger, SIGNAL(pressed()), this, SLOT(handle_midi_trigger()));
 	connect(but_midi_rewind, SIGNAL(pressed()), this, SLOT(handle_rewind()));
-	connect(but_config_apply, SIGNAL(released()), this, SLOT(handle_config_apply()));
 	connect(but_config_revert, SIGNAL(released()), this, SLOT(handle_config_revert()));
 	connect(but_config_view_fontsel, SIGNAL(released()), this, SLOT(handle_config_view_fontsel()));
 	connect(but_config_edit_fontsel, SIGNAL(released()), this, SLOT(handle_config_edit_fontsel()));
@@ -1425,20 +1430,29 @@ MppMainWindow :: handle_config_reload()
 
 	handle_compile();
 
-	handle_config_revert();
+	handle_config_revert(1);
 }
 
 void
-MppMainWindow :: handle_config_revert()
+MppMainWindow :: handle_config_revert(int block)
 {
 	int n;
 
 	for (n = 0; n != MPP_MAX_DEVS; n++) {
 
+		QString str;
+
+		if (block != 0) {
+			led_config_dev[n]->blockSignals(1);
+			cbx_config_dev[n][0]->blockSignals(1);
+			cbx_config_dev[n][1]->blockSignals(1);
+			cbx_config_dev[n][2]->blockSignals(1);
+		}
+
 		if (deviceName[n] != NULL)
-			led_config_dev[n]->setText(QString(deviceName[n]));
-		else
-			led_config_dev[n]->setText(QString());
+			str = deviceName[n];
+
+		led_config_dev[n]->setText(str);
 
 		cbx_config_dev[n][0]->setChecked(
 		    (deviceBits & (1UL << ((3*n)+0))) ? 1 : 0);
@@ -1448,17 +1462,18 @@ MppMainWindow :: handle_config_revert()
 
 		cbx_config_dev[n][2]->setChecked(
 		    (deviceBits & (1UL << ((3*n)+2))) ? 1 : 0);
+
+		if (block != 0) {
+			led_config_dev[n]->blockSignals(0);
+			cbx_config_dev[n][0]->blockSignals(0);
+			cbx_config_dev[n][1]->blockSignals(0);
+			cbx_config_dev[n][2]->blockSignals(0);
+		}
 	}
 }
 
 void
-MppMainWindow :: handle_config_apply()
-{
-	handle_config_apply_sub(-1);
-}
-
-void
-MppMainWindow :: handle_config_apply_sub(int devno)
+MppMainWindow :: handle_config_apply(int devno)
 {
 	uint8_t ScMidiTriggered;
 	int n;
@@ -2947,7 +2962,7 @@ MppMainWindow :: handle_mute_map(int n)
 	retval = diag.exec();
 
 	if (retval == QDialog::Accepted)
-		handle_config_apply_sub(n);
+		handle_config_apply(n);
 
 	return (retval);
 }
@@ -2974,8 +2989,10 @@ MppMainWindow :: handle_config_dev(int n, int automagic)
 	}
 
 	if (retval == QDialog::Accepted) {
+		led_config_dev[n]->blockSignals(1);
 		led_config_dev[n]->setText(diag.result_dev);
-		handle_config_apply_sub(n);
+		led_config_dev[n]->blockSignals(0);
+		handle_config_apply(n);
 	}
 	return (retval);
 }
@@ -3264,4 +3281,10 @@ MppMainWindow :: resizeEvent(QResizeEvent *event)
 {
 	main_tb->updateHeight(event->size().width());
 	QWidget :: resizeEvent(event);
+}
+
+void
+MppMainWindow :: handle_config_changed()
+{
+	tim_config_apply->start(500);
 }

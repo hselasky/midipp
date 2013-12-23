@@ -42,7 +42,10 @@ MppReplace :: MppReplace(MppMainWindow *_mw, MppScoreMain *_sm,
 	lbl_with = new QLabel(tr("With: "));
 
 	led_replace = new QLineEdit(_match);
+	led_replace->setMaxLength(1024);
+
 	led_with = new QLineEdit(_replace);
+	led_with->setMaxLength(1024);
 
 	but_ok = new QPushButton(tr("Ok"));
 	but_cancel = new QPushButton(tr("Cancel"));

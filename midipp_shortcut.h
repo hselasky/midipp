@@ -83,6 +83,7 @@ public:
 	QPushButton *but_set_all;
 	QPushButton *but_clr_all;
 	QPushButton *but_reset;
+	QPushButton *but_default;
 
 	MppButton *but_rec[MPP_SHORTCUT_MAX];
 	QLineEdit *led_cmd[MPP_SHORTCUT_MAX];
@@ -98,7 +99,8 @@ public slots:
 	void handle_text_changed(const QString &);
 	void handle_clr_all_flat();
 	void handle_set_all_flat();
-	void handle_reset();
+	void handle_reset_all_flat();
+	void handle_default();
 };
 
 #endif		/* _MIDIPP_SHORTCUT_H_ */

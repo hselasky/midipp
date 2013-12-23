@@ -479,10 +479,12 @@ MppDecode :: MppDecode(MppMainWindow *_mw, MppScoreMain *_sm, int is_edit)
 
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
-	lin_edit = new QLineEdit();
-	lin_edit->setText(QString("C"));
+	lin_edit = new QLineEdit(QString('C'));
+	lin_edit->setMaxLength(256);
 
 	lin_out = new QLineEdit();
+	lin_out->setMaxLength(256);
+
 	lbl_format = new QLabel(tr("[CDEFGABH][#b][...][/CDEFGABH[#b]]"));
 	lbl_status = new QLabel(tr(""));
 	lbl_rol = new QLabel(tr("Rotate:"));
@@ -510,7 +512,7 @@ MppDecode :: MppDecode(MppMainWindow *_mw, MppScoreMain *_sm, int is_edit)
 	}
 	connect(lin_edit, SIGNAL(textChanged(const QString &)), this, SLOT(handle_parse_text(const QString &)));
 	connect(spn_rol, SIGNAL(valueChanged(int)), this, SLOT(handle_parse_int(int)));
-	connect(cbx_auto_base, SIGNAL(stateChanged(int)), this, SLOT(handle_parse_int(int)));
+	connect(cbx_auto_base, SIGNAL(stateChanged(int,int)), this, SLOT(handle_parse_int(int)));
 
 	memset(current_score, 0, sizeof(current_score));
 	memset(auto_base, 0, sizeof(auto_base));
