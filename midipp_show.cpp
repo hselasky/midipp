@@ -332,13 +332,13 @@ MppShowControl :: handle_background()
 {
         QFileDialog *diag = 
           new QFileDialog(mw, tr("Select Background File"), 
-                MppHomeDirBackground,
+                Mpp.HomeDirBackground,
                 QString("Image Files (*.BMP *.bmp *.GIF *.gif *.JPG *.jpg *.JPEG "
 		    "*.jpeg *.PNG *.png *.PBM *.pbm *.PGM *.pgm *.PPM *.ppm "
 		    "*.XBM *.xbm *.XPM *.xpm)"));
 
 	if (diag->exec()) {
-                MppHomeDirBackground = diag->directory().path();
+                Mpp.HomeDirBackground = diag->directory().path();
                 background.load(diag->selectedFiles()[0]);
 		transition = 0;
 	}

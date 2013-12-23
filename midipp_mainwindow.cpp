@@ -235,7 +235,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    "/*\n"
 	    " * List of supported chords:\n"
 	    " * =========================\n"
-	    " */\n") + MppVariantList + tr("\n"));
+	    " */\n") + Mpp.VariantList + tr("\n"));
 
 	tab_file_gl = new MppGridLayout();
 	tab_play_gl = new MppPlayGridLayout(this);
@@ -1052,7 +1052,7 @@ MppMainWindow :: handle_midi_file_open(int merge)
 {
 	QFileDialog *diag = 
 	  new QFileDialog(this, tr("Select MIDI File"), 
-		MppHomeDirMid,
+		Mpp.HomeDirMid,
 		QString("MIDI File (*.mid *.MID)"));
 	struct umidi20_song *song_copy;
 	struct umidi20_track *track_copy;
@@ -1065,7 +1065,7 @@ MppMainWindow :: handle_midi_file_open(int merge)
 
 	if (diag->exec()) {
 
-		MppHomeDirMid = diag->directory().path();
+		Mpp.HomeDirMid = diag->directory().path();
 
 		if (merge) {
 			handle_midi_file_clear_name();
@@ -1240,7 +1240,7 @@ MppMainWindow :: handle_midi_file_save_as()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(this, tr("Select MIDI File"), 
-		MppHomeDirMid,
+		Mpp.HomeDirMid,
 		QString("MIDI File (*.mid *.MID)"));
 
 	diag->setAcceptMode(QFileDialog::AcceptSave);
@@ -1249,7 +1249,7 @@ MppMainWindow :: handle_midi_file_save_as()
 
 	if (diag->exec()) {
 
-		MppHomeDirMid = diag->directory().path();
+		Mpp.HomeDirMid = diag->directory().path();
 
 		if (CurrMidiFileName != NULL)
 			delete (CurrMidiFileName);
@@ -2760,7 +2760,7 @@ MppMainWindow :: handle_gpro_file_import(int view)
 {
 	QFileDialog *diag = 
 	  new QFileDialog(this, tr("Select GPro v3 or v4 File"), 
-		MppHomeDirGp3,
+		Mpp.HomeDirGp3,
 		QString("GPro File (*.gp *.gp3 *.gp4 *.GP *.GP3 *.GP4)"));
 	QByteArray data;
 	MppGPro *gpro;
@@ -2771,7 +2771,7 @@ MppMainWindow :: handle_gpro_file_import(int view)
 
 	if (diag->exec()) {
 
-		MppHomeDirGp3 = diag->directory().path();
+		Mpp.HomeDirGp3 = diag->directory().path();
 
 		QString fname(diag->selectedFiles()[0]);
 

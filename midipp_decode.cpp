@@ -82,8 +82,6 @@ static struct score_variant mpp_score_variant[MAX_VAR * MAX_TYPE];
 
 static int mpp_max_variant;
 
-QString MppVariantList;
-
 static uint32_t
 MppRor(uint32_t val, uint8_t n)
 {
@@ -187,7 +185,7 @@ MppScoreVariantInit(void)
 	for (x = 0; x != y; x ++) {
 		int dup = mpp_score_variant[x].duplicate;
 
-		MppVariantList += QString("/* C") +
+		Mpp.VariantList += QString("/* C") +
 		    QString(mpp_score_variant[x].keyword) +
 		    (dup ? QString(" = C") + QString(mpp_score_variant[dup - 1].keyword) : QString()) +
 		    QString(" */\n");
@@ -205,7 +203,7 @@ MppScoreVariantInit(void)
 		}
 	}
 
-	MppVariantList += QString("\n/* Number of supported chords is %1 */\n").arg(y);
+	Mpp.VariantList += QString("\n/* Number of supported chords is %1 */\n").arg(y);
 
 	mpp_max_variant = y;
 }

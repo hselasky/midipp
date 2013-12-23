@@ -36,16 +36,22 @@
 #include "midipp_mainwindow.h"
 #include "midipp_scores.h"
 
-QColor color_black   (0x00, 0x00, 0x00, 0xff);
-QColor color_white   (0xff, 0xff, 0xff, 0xff);
-QColor color_grey    (0xc0, 0xc0, 0xc0, 0xff);
-QColor color_logo    (0xc4, 0x40, 0x20, 0xff);
-QColor color_green   (0x40, 0xc4, 0x20, 0xff);
+Mpp :: Mpp() :
+  ColorBlack(0x00,0x00,0x00,0xff),
+  ColorWhite(0xff,0xff,0xff,0xff),
+  ColorGrey(0xc0,0xc0,0xc0,0xff),
+  ColorLogo(0xc4,0x40,0x20,0xff),
+  ColorGreen(0x40,0xc4,0x20,0xff)
+{
 
-QString MppHomeDirMid;
-QString MppHomeDirTxt;
-QString MppHomeDirGp3;
-QString MppHomeDirBackground;
+}
+
+Mpp :: ~Mpp()
+{
+
+}
+
+class Mpp Mpp;
 
 QString
 MppBaseName(QString fname)
@@ -250,10 +256,10 @@ main(int argc, char **argv)
 
 	QApplication app(argc, argv);
 
-	MppHomeDirMid = QDir::homePath();
-	MppHomeDirTxt = QDir::homePath();
-	MppHomeDirGp3 = QDir::homePath();
-	MppHomeDirBackground = QDir::homePath();
+	Mpp.HomeDirMid = QDir::homePath();
+	Mpp.HomeDirTxt = QDir::homePath();
+	Mpp.HomeDirGp3 = QDir::homePath();
+	Mpp.HomeDirBackground = QDir::homePath();
 
 	signal(SIGPIPE, mask_signal);
 

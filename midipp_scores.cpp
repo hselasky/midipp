@@ -295,16 +295,16 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	picChord[0] = new QPicture();
 	paint.begin(picChord[0]);
 	paint.setRenderHints(QPainter::Antialiasing, 1);
- 	paint.setPen(QPen(color_black, 1));
-	paint.setBrush(QColor(color_black));
+ 	paint.setPen(QPen(Mpp.ColorBlack, 1));
+	paint.setBrush(QColor(Mpp.ColorBlack));
 	paint.drawEllipse(QRect(0,0,MPP_VISUAL_C_MAX,MPP_VISUAL_C_MAX));
 	paint.end();
 
 	picChord[1] = new QPicture();
 	paint.begin(picChord[1]);
 	paint.setRenderHints(QPainter::Antialiasing, 1);
- 	paint.setPen(QPen(color_black, 1));
-	paint.setBrush(QColor(color_black));
+ 	paint.setPen(QPen(Mpp.ColorBlack, 1));
+	paint.setBrush(QColor(Mpp.ColorBlack));
 	paint.drawEllipse(QRect(MPP_VISUAL_C_MAX,0,MPP_VISUAL_C_MAX,MPP_VISUAL_C_MAX));
 	paint.end();
 }
@@ -373,8 +373,8 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 			paint.setRenderHints(QPainter::Antialiasing, 1);
 		}
 
-		paint.setPen(QPen(color_black, 1));
-		paint.setBrush(QColor(color_black));
+		paint.setPen(QPen(Mpp.ColorBlack, 1));
+		paint.setBrush(QColor(Mpp.ColorBlack));
 
 		linebuf = QString();
 		z = 0;
@@ -595,7 +595,7 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 
 	int x;
 
-	paint.fillRect(event->rect(), color_white);
+	paint.fillRect(event->rect(), Mpp.ColorWhite);
 
 	pthread_mutex_lock(&mainWindow->mtx);
 	curr = head.state.curr_start;
@@ -658,8 +658,8 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 	/* overlay (last) */
 
 	if ((curr != last) && (yo_div == y_div) && (podot != 0)) {
-		paint.setPen(QPen(color_green, 4));
-		paint.setBrush(QColor(color_green));
+		paint.setPen(QPen(Mpp.ColorGreen, 4));
+		paint.setBrush(QColor(Mpp.ColorGreen));
 		paint.drawEllipse(QRect(podot->x_off,
 		    podot->y_off + (yo_rem * visual_y_max),
 		    MPP_VISUAL_R_MAX, MPP_VISUAL_R_MAX));
@@ -669,8 +669,8 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 	/* overlay (current) */
 
 	if ((yc_div == y_div) && (pcdot != 0)) {
-		paint.setPen(QPen(color_logo, 4));
-		paint.setBrush(QColor(color_logo));
+		paint.setPen(QPen(Mpp.ColorLogo, 4));
+		paint.setBrush(QColor(Mpp.ColorLogo));
 		paint.drawEllipse(QRect(pcdot->x_off,
 		    pcdot->y_off + (yc_rem * visual_y_max),
 		    MPP_VISUAL_R_MAX, MPP_VISUAL_R_MAX));
@@ -929,14 +929,14 @@ MppScoreMain :: handleScoreFileOpen()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(mainWindow, tr("Select Score File"), 
-		MppHomeDirTxt,
+		Mpp.HomeDirTxt,
 		QString("Score File (*.txt *.TXT)"));
 
 	diag->setAcceptMode(QFileDialog::AcceptOpen);
 	diag->setFileMode(QFileDialog::ExistingFile);
 
 	if (diag->exec()) {
-		MppHomeDirTxt = diag->directory().path();
+		Mpp.HomeDirTxt = diag->directory().path();
 		handleScoreFileOpenSub(diag->selectedFiles()[0]);
 	}
 
@@ -957,7 +957,7 @@ MppScoreMain :: handleScoreFileSaveAs()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(mainWindow, tr("Select Score File"), 
-		MppHomeDirTxt,
+		Mpp.HomeDirTxt,
 		QString("Score File (*.txt *.TXT)"));
 
 	diag->setAcceptMode(QFileDialog::AcceptSave);
@@ -965,7 +965,7 @@ MppScoreMain :: handleScoreFileSaveAs()
 	diag->setDefaultSuffix(QString("txt"));
 
 	if (diag->exec()) {
-		MppHomeDirTxt = diag->directory().path();
+		Mpp.HomeDirTxt = diag->directory().path();
 
 		if (currScoreFileName != NULL)
 			delete (currScoreFileName);
@@ -1543,7 +1543,7 @@ MppScoreMain :: handleScorePrint(void)
 
 		printer.setOutputFileName(temp);
 	} else {
-		printer.setOutputFileName(MppHomeDirTxt + QString("/NewSong.pdf"));
+		printer.setOutputFileName(Mpp.HomeDirTxt + QString("/NewSong.pdf"));
 	}
 
 	printer.setColorMode(QPrinter::Color);
@@ -1661,8 +1661,8 @@ MppScoreMain :: watchdog()
 	cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor, 1);
 
 	format.cursor = cursor;
-	format.format.setForeground(color_black);
-	format.format.setBackground(color_grey);
+	format.format.setForeground(Mpp.ColorBlack);
+	format.format.setBackground(Mpp.ColorGrey);
 
 	QList<QTextEdit::ExtraSelection> extras;
 	extras << format;

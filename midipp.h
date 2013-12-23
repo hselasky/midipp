@@ -172,17 +172,25 @@ struct MppVisualScore {
 	int ndot;
 };
 
-extern QColor color_black;
-extern QColor color_white;
-extern QColor color_grey;
-extern QColor color_logo;
-extern QColor color_green;
+class Mpp {
+public:
+	Mpp();
+	~Mpp();
 
-extern QString MppVariantList;
-extern QString MppHomeDirTxt;
-extern QString MppHomeDirMid;
-extern QString MppHomeDirGp3;
-extern QString MppHomeDirBackground;
+	QColor ColorBlack;
+	QColor ColorWhite;
+	QColor ColorGrey;
+	QColor ColorLogo;
+	QColor ColorGreen;
+
+	QString VariantList;
+	QString HomeDirTxt;
+	QString HomeDirMid;
+	QString HomeDirGp3;
+	QString HomeDirBackground;
+};
+
+extern Mpp Mpp;
 
 extern QString MppBaseName(QString fname);
 extern char *MppQStringToAscii(QString s);
