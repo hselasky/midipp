@@ -514,7 +514,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	x++;
 
 	tab_config_gl->addWidget(mpp_settings->but_config_load, x, 0, 1, 1);
-	tab_config_gl->addWidget(mpp_settings->but_config_clean, x, 2, 1, 1);
+	tab_config_gl->addWidget(mpp_settings->but_config_clean, x, 3, 1, 1);
 	tab_config_gl->setColumnStretch(8, 1);
 
 	/* <Instrument> tab */
