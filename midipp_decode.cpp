@@ -358,7 +358,7 @@ MppDecode :: parseScoreChord(MppChordElement *pinfo)
 	return (0);
 }
 
-uint8_t
+Q_DECL_EXPORT uint8_t
 mpp_find_chord(const char *input, uint8_t *pbase,
     uint8_t *pkey, uint8_t *pvar)
 {
@@ -409,7 +409,7 @@ mpp_find_chord(const char *input, uint8_t *pbase,
 	return (0);
 }
 
-uint8_t
+Q_DECL_EXPORT uint8_t
 mpp_parse_chord(const char *input, int8_t rol,
     uint8_t *pout, uint8_t *pn,
     uint8_t *pvar, int change_var)

@@ -51,16 +51,16 @@ Mpp :: ~Mpp()
 
 }
 
-class Mpp Mpp;
+Q_DECL_EXPORT class Mpp Mpp;
 
-QString
+Q_DECL_EXPORT QString
 MppBaseName(QString fname)
 {
 	QFileInfo fi(fname);
 	return (fi.fileName());
 }
 
-char *
+Q_DECL_EXPORT char *
 MppQStringToAscii(QString s)
 {
 	QByteArray temp = s.toUtf8();
@@ -77,7 +77,7 @@ MppQStringToAscii(QString s)
 	return (ptr);
 }
 
-const char *
+Q_DECL_EXPORT const char *
 MppBaseKeyToString(int key, int sharp)
 {
 	switch (key) {
@@ -125,7 +125,7 @@ MppBaseKeyToString(int key, int sharp)
 	}
 }
 
-QString
+Q_DECL_EXPORT QString
 MppReadFile(QString fname)
 {
 	QFile file(fname);
@@ -153,7 +153,7 @@ error:
 	return (QString());
 }
 
-void
+Q_DECL_EXPORT void
 MppWriteFile(QString fname, QString text)
 {
 	QFile file(fname);
@@ -182,7 +182,7 @@ error:
 	box.exec();
 }
 
-uint8_t
+Q_DECL_EXPORT uint8_t
 MppReadRawFile(QString fname, QByteArray *pdata)
 {
 	QFile file(fname);
@@ -205,7 +205,7 @@ failure:
 	return (1);
 }
 
-uint8_t
+Q_DECL_EXPORT uint8_t
 MppWriteRawFile(QString fname, QByteArray *pdata)
 {
 	QFile file(fname);
@@ -249,7 +249,7 @@ static const struct option midipp_opts[] = {
 	{ NULL, 0, NULL, 0 }
 };
 
-int
+Q_DECL_EXPORT int
 main(int argc, char **argv)
 {
 	int c;

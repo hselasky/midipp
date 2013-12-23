@@ -272,7 +272,7 @@ midipp_import_parse(class midipp_import *ps)
 	return (0);
 }
 
-uint8_t
+Q_DECL_EXPORT uint8_t
 midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm)
 {
 	MppDecode dlg(sm->mainWindow, sm, 0);

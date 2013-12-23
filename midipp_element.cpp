@@ -39,7 +39,7 @@ MppCompareValue(const void *pa, const void *pb)
 	return (0);
 }
 
-int
+Q_DECL_EXPORT int
 MppSpaceOnly(QString &str)
 {
 	int x;
@@ -51,7 +51,7 @@ MppSpaceOnly(QString &str)
 	return (1);
 }
 
-int
+Q_DECL_EXPORT int
 MppIsChord(QString &str)
 {
 	int x;
@@ -86,7 +86,7 @@ MppIsChord(QString &str)
 	return (retval);
 }
 
-QString
+Q_DECL_EXPORT QString
 MppDeQuoteChord(QString &str)
 {
 	int n = str.size();
@@ -98,7 +98,7 @@ MppDeQuoteChord(QString &str)
 	return (str);
 }
 
-QString
+Q_DECL_EXPORT QString
 MppDeQuoteString(QString &str)
 {
 	int n = str.size();
