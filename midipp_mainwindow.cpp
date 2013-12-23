@@ -1811,6 +1811,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 {
 	MppMainWindow *mw = (MppMainWindow *)arg;
 	MppScoreMain *sm;
+	uint32_t what;
 	uint8_t chan;
 	uint8_t ctrl;
 	int key;
@@ -1821,7 +1822,9 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 	pthread_mutex_lock(&mw->mtx);
 
-	if (umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL) {
+	what = umidi20_event_get_what(event);
+
+	if (what & UMIDI20_WHAT_CHANNEL) {
 		if (mw->controlRecordOn != 0 &&
 		    umidi20_event_is_key_end(event) == 0) {
 			if (mw->numControlEvents < MPP_MAX_QUEUE) {
@@ -1871,8 +1874,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 			sm->outputPitch(vel);
 
-		} else if (umidi20_event_get_what(event) &
-		    UMIDI20_WHAT_KEY_PRESSURE) {
+		} else if (what & UMIDI20_WHAT_KEY_PRESSURE) {
 
 			key = umidi20_event_get_key(event) & 0x7F;
 			vel = umidi20_event_get_pressure(event) & 0x7F;
@@ -1888,8 +1890,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 				break;
 			}
 
-		} else if (umidi20_event_get_what(event) &
-		    UMIDI20_WHAT_CHANNEL_PRESSURE) {
+		} else if (what & UMIDI20_WHAT_CHANNEL_PRESSURE) {
 
 			vel = umidi20_event_get_pressure(event) & 0x7F;
 
@@ -1901,12 +1902,6 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			default:
 				break;
 			}
-
-		} else if (ctrl == 0x40 || ctrl == 0x01) {
-
-			vel = umidi20_event_get_control_value(event);
-
-			sm->outputControl(ctrl, vel);
 
 		} else if (umidi20_event_is_key_start(event)) {
 
@@ -1973,6 +1968,11 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 		} else if (mw->do_instr_check(event, &chan)) {
 
+		} else if (what & UMIDI20_WHAT_CONTROL_VALUE) {
+
+			vel = umidi20_event_get_control_value(event);
+
+			sm->outputControl(ctrl, vel);
 		}
 	}
 done:
