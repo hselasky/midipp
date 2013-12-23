@@ -258,7 +258,6 @@ public:
 	uint32_t dirty_config_mask;
 
 	QTimer *tim_config_apply;
-	QPushButton *but_config_revert;
 	QPushButton *but_config_view_fontsel;
 	QPushButton *but_config_edit_fontsel;
 
@@ -355,7 +354,7 @@ public slots:
 	void handle_midi_trigger();
 	void handle_config_changed();
 	void handle_config_apply(int = -1);
-	void handle_config_revert(int = 0);
+	void handle_config_revert();
 	void handle_config_reload();
 	void handle_config_view_fontsel();
 	void handle_config_edit_fontsel();

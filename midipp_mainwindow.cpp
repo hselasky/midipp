@@ -436,7 +436,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
         tim_config_apply->setSingleShot(1);
         connect(tim_config_apply, SIGNAL(timeout()), this, SLOT(handle_config_apply()));
 
-	but_config_revert = new QPushButton(tr("Revert"));
 	but_config_view_fontsel = new QPushButton(tr("Change View Font"));
 	but_config_edit_fontsel = new QPushButton(tr("Change Editor Font"));
 
@@ -515,7 +514,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	x++;
 
 	tab_config_gl->addWidget(mpp_settings->but_config_load, x, 0, 1, 1);
-	tab_config_gl->addWidget(but_config_revert, x, 6, 1, 2);
 	tab_config_gl->addWidget(mpp_settings->but_config_clean, x, 2, 1, 1);
 	tab_config_gl->setColumnStretch(8, 1);
 
@@ -654,7 +652,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	connect(but_midi_trigger, SIGNAL(pressed()), this, SLOT(handle_midi_trigger()));
 	connect(but_midi_rewind, SIGNAL(pressed()), this, SLOT(handle_rewind()));
-	connect(but_config_revert, SIGNAL(released()), this, SLOT(handle_config_revert()));
 	connect(but_config_view_fontsel, SIGNAL(released()), this, SLOT(handle_config_view_fontsel()));
 	connect(but_config_edit_fontsel, SIGNAL(released()), this, SLOT(handle_config_edit_fontsel()));
 
@@ -1430,11 +1427,11 @@ MppMainWindow :: handle_config_reload()
 
 	handle_compile();
 
-	handle_config_revert(1);
+	handle_config_revert();
 }
 
 void
-MppMainWindow :: handle_config_revert(int block)
+MppMainWindow :: handle_config_revert()
 {
 	int n;
 
@@ -1442,12 +1439,10 @@ MppMainWindow :: handle_config_revert(int block)
 
 		QString str;
 
-		if (block != 0) {
-			led_config_dev[n]->blockSignals(1);
-			cbx_config_dev[n][0]->blockSignals(1);
-			cbx_config_dev[n][1]->blockSignals(1);
-			cbx_config_dev[n][2]->blockSignals(1);
-		}
+		led_config_dev[n]->blockSignals(1);
+		cbx_config_dev[n][0]->blockSignals(1);
+		cbx_config_dev[n][1]->blockSignals(1);
+		cbx_config_dev[n][2]->blockSignals(1);
 
 		if (deviceName[n] != NULL)
 			str = deviceName[n];
@@ -1463,12 +1458,10 @@ MppMainWindow :: handle_config_revert(int block)
 		cbx_config_dev[n][2]->setChecked(
 		    (deviceBits & (1UL << ((3*n)+2))) ? 1 : 0);
 
-		if (block != 0) {
-			led_config_dev[n]->blockSignals(0);
-			cbx_config_dev[n][0]->blockSignals(0);
-			cbx_config_dev[n][1]->blockSignals(0);
-			cbx_config_dev[n][2]->blockSignals(0);
-		}
+		led_config_dev[n]->blockSignals(0);
+		cbx_config_dev[n][0]->blockSignals(0);
+		cbx_config_dev[n][1]->blockSignals(0);
+		cbx_config_dev[n][2]->blockSignals(0);
 	}
 }
 
