@@ -46,7 +46,7 @@ public:
 
 class MppTabBar : public QWidget {
 public:
-	MppTabBar(QWidget *);
+	MppTabBar(QWidget * = 0);
 	~MppTabBar();
 
 	void addTab(QWidget *, const QString &);
