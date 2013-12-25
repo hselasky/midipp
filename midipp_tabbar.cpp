@@ -28,8 +28,8 @@
 MppTabBar :: MppTabBar(QWidget *parent)
     : QWidget(parent)
 {
-	right_sw = new QStackedWidget(parent);
-	left_sw = new QStackedWidget(parent);
+	right_sw = new QStackedWidget(this);
+	left_sw = new QStackedWidget(this);
 
 	left_sw->setVisible(0);
 	right_sw->setVisible(1);

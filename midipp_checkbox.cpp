@@ -52,7 +52,6 @@ MppCheckBox :: paintEvent(QPaintEvent *event)
 	QColor black(0,0,0);
 	QColor grey(192,192,192);
 	QColor white(255,255,255);
-	QColor background(0,0,0,0);
 
 	paint.setPen(QPen(black, 4));
 	paint.setBrush(grey);
