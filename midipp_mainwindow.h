@@ -93,6 +93,7 @@ public:
 	void send_byte_event_locked(uint8_t);
 
 	QPlainTextEdit *currEditor();
+	MppScoreMain *currScores();
 
 	pthread_mutex_t mtx;
 
@@ -181,6 +182,7 @@ public:
 	QPushButton *mwCopy;
 	QPushButton *mwUndo;
 	QPushButton *mwRedo;
+	QPushButton *mwEdit;
 
 	/* tab <Scores> */
 
@@ -392,6 +394,7 @@ public slots:
 	void handle_paste();
 	void handle_redo();
 	void handle_undo();
+	void handle_edit();
 };
 
 #endif		/* _MIDIPP_MAINWINDOW_H_ */

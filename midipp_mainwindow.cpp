@@ -108,6 +108,18 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mwCopy = new QPushButton();
 	mwUndo = new QPushButton();
 	mwRedo = new QPushButton();
+	mwEdit = new QPushButton();
+
+	mwRight->setToolTip(tr("Move Left to Right"));
+	mwLeft->setToolTip(tr("Move Right to Left"));
+	mwRewind->setToolTip(tr("Rewind"));
+	mwPlay->setToolTip(tr("Trigger"));
+	mwReload->setToolTip(tr("Recompile"));
+	mwPaste->setToolTip(tr("Paste"));
+	mwCopy->setToolTip(tr("Copy"));
+	mwUndo->setToolTip(tr("Undo"));
+	mwRedo->setToolTip(tr("Redo"));
+	mwEdit->setToolTip(tr("Edit Chord"));
 
 	mwRight->setIcon(QIcon(QString(":/right_arrow.png")));
 	mwLeft->setIcon(QIcon(QString(":/left_arrow.png")));
@@ -118,6 +130,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mwCopy->setIcon(QIcon(QString(":/copy.png")));
 	mwUndo->setIcon(QIcon(QString(":/undo.png")));
 	mwRedo->setIcon(QIcon(QString(":/redo.png")));
+	mwEdit->setIcon(QIcon(QString(":/edit.png")));
 
 	mwRight->setFocusPolicy(Qt::NoFocus);
 	mwLeft->setFocusPolicy(Qt::NoFocus);
@@ -128,6 +141,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mwCopy->setFocusPolicy(Qt::NoFocus);
 	mwUndo->setFocusPolicy(Qt::NoFocus);
 	mwRedo->setFocusPolicy(Qt::NoFocus);
+	mwEdit->setFocusPolicy(Qt::NoFocus);
 
 	connect(mwRight, SIGNAL(released()), this, SLOT(handle_move_right()));
 	connect(mwLeft, SIGNAL(released()), this, SLOT(handle_move_left()));
@@ -138,6 +152,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(mwCopy, SIGNAL(released()), this, SLOT(handle_copy()));
 	connect(mwUndo, SIGNAL(released()), this, SLOT(handle_undo()));
 	connect(mwRedo, SIGNAL(released()), this, SLOT(handle_redo()));
+	connect(mwEdit, SIGNAL(released()), this, SLOT(handle_edit()));
 
 	/* Setup GUI */
 
@@ -145,8 +160,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	main_tb = new MppTabBar();
 	main_gl->addWidget(main_tb,0,0,1,3);
-	main_gl->addWidget(main_tb->right_sw,1,2,15,1);
-	main_gl->addWidget(main_tb->left_sw,1,0,15,1);
+	main_gl->addWidget(main_tb->right_sw,1,2,17,1);
+	main_gl->addWidget(main_tb->left_sw,1,0,17,1);
 
 	/* Watchdog */
 
@@ -161,13 +176,15 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_gl->addWidget(mwCopy,5,1,1,1);
 	main_gl->addWidget(mwPaste,6,1,1,1);
 
-	main_gl->addWidget(mwUndo,8,1,1,1);
-	main_gl->addWidget(mwRedo,9,1,1,1);
+	main_gl->addWidget(mwEdit,8,1,1,1);
 
-	main_gl->addWidget(mwReload,11,1,1,1);
+	main_gl->addWidget(mwUndo,10,1,1,1);
+	main_gl->addWidget(mwRedo,11,1,1,1);
 
-	main_gl->addWidget(mwRight,13,1,1,1);
-	main_gl->addWidget(mwLeft,14,1,1,1);
+	main_gl->addWidget(mwReload,13,1,1,1);
+
+	main_gl->addWidget(mwRight,15,1,1,1);
+	main_gl->addWidget(mwLeft,16,1,1,1);
 
 #ifndef HAVE_NO_SHOW
 	tab_show_control = new MppShowControl(this);
@@ -223,7 +240,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " * Editor shortcuts:\n"
 	    " * =================\n"
 	    " *\n"
-	    " * By double clicking on a score line in the editor window,\n"
+	    " * By double clicking on a score line in the editor window\n"
+	    " * or by pressing the chord edit icon in the middle bar,\n"
 	    " * a chord editor will pop up.\n"
 	    " *\n"
 	    " * CTRL+C: Copy text\n"
@@ -3164,6 +3182,30 @@ MppMainWindow :: currEditor()
 	return (0);
 }
 
+MppScoreMain *
+MppMainWindow :: currScores()
+{
+	QPlainTextEdit *pe;
+	int x;
+	int y = 0;
+	int n = 0;
+
+	for (x = 0; x != MPP_MAX_VIEWS; x++) {
+		pe = scores_main[x]->editWidget;
+		if (pe->hasFocus())
+			return (scores_main[x]);
+		if (main_tb->isVisible(pe)) {
+			y = x;
+			n++;
+		}
+	}
+
+	/* if only one score editor is visible, return that */
+	if (n == 1)
+		return (scores_main[y]);
+	return (0);
+}
+
 void
 MppMainWindow :: handle_copy()
 {
@@ -3194,6 +3236,17 @@ MppMainWindow :: handle_undo()
 	QPlainTextEdit *qedit = currEditor();
 	if (qedit != 0)
 		qedit->undo();
+}
+
+void
+MppMainWindow :: handle_edit()
+{
+	MppScoreMain *sm = currScores();
+	if (sm != 0) {
+		/* edit the line */
+		if (sm->handleEditLine() == 0)
+			sm->mainWindow->handle_compile();
+	}
 }
 
 void
