@@ -119,7 +119,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mwCopy->setToolTip(tr("Copy"));
 	mwUndo->setToolTip(tr("Undo"));
 	mwRedo->setToolTip(tr("Redo"));
-	mwEdit->setToolTip(tr("Edit Chord"));
+	mwEdit->setToolTip(tr("Edit or Insert a Chord"));
 
 	mwRight->setIcon(QIcon(QString(":/right_arrow.png")));
 	mwLeft->setIcon(QIcon(QString(":/left_arrow.png")));
@@ -3242,11 +3242,11 @@ void
 MppMainWindow :: handle_edit()
 {
 	MppScoreMain *sm = currScores();
-	if (sm != 0) {
-		/* edit the line */
-		if (sm->handleEditLine() == 0)
-			sm->mainWindow->handle_compile();
-	}
+	if (sm == 0)
+		return;
+	/* edit the line */
+	if (sm->handleEditLine() == 0)
+		handle_compile();
 }
 
 void

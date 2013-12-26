@@ -206,8 +206,6 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	butScoreFileSetFlat = new QPushButton(tr("Set b"));
 	butScoreFileAutoMel[0] = new MppButton(tr("AutoMel 1"), 0);
 	butScoreFileAutoMel[1] = new MppButton(tr("AutoMel 2"), 1);
-	butScoreFileEditChord = new QPushButton(tr("Edit Chord"));
-	butScoreFileInsertChord = new QPushButton(tr("Insert Chord"));
 	butScoreFileReplaceAll = new QPushButton(tr("Replace All"));
 	butScoreFileExport = new QPushButton(tr("To Lyrics"));
 
@@ -230,10 +228,8 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	gbScoreFile->addWidget(butScoreFileSetFlat, 8, 1, 1, 1);
 	gbScoreFile->addWidget(butScoreFileAutoMel[0], 9, 0, 1, 1);
 	gbScoreFile->addWidget(butScoreFileAutoMel[1], 9, 1, 1, 1);
-	gbScoreFile->addWidget(butScoreFileEditChord, 10, 0, 1, 1);
-	gbScoreFile->addWidget(butScoreFileInsertChord, 10, 1, 1, 1);
-	gbScoreFile->addWidget(butScoreFileReplaceAll, 11, 0, 1, 2);
-	gbScoreFile->addWidget(butScoreFileExport, 12, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileReplaceAll, 10, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileExport, 11, 0, 1, 2);
 
 	connect(butScoreFileNew, SIGNAL(released()), this, SLOT(handleScoreFileNew()));
 	connect(butScoreFileOpen, SIGNAL(released()), this, SLOT(handleScoreFileOpen()));
@@ -248,8 +244,6 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	connect(butScoreFileScale, SIGNAL(released()), this, SLOT(handleScoreFileScale()));
 	connect(butScoreFileAutoMel[0], SIGNAL(released(int)), this, SLOT(handleScoreFileAutoMelody(int)));
 	connect(butScoreFileAutoMel[1], SIGNAL(released(int)), this, SLOT(handleScoreFileAutoMelody(int)));
-	connect(butScoreFileEditChord, SIGNAL(released()), this, SLOT(handleScoreFileEditChord()));
-	connect(butScoreFileInsertChord, SIGNAL(released()), this, SLOT(handleScoreFileInsertChord()));
 	connect(butScoreFileReplaceAll, SIGNAL(released()), this, SLOT(handleScoreFileReplaceAll()));
 	connect(butScoreFileExport, SIGNAL(released()), this, SLOT(handleScoreFileExport()));
 
@@ -1842,11 +1836,28 @@ MppScoreMain :: handleEditLine(void)
 	cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::MoveAnchor, 1);
 	cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor, 1);
 
+	/* check if the line is empty */
+	if (cursor.selectedText().simplified().size() == 0) {
+		MppDecode dlg(mainWindow, this, 0);
+
+		if(dlg.exec() == QDialog::Accepted) {
+			cursor.beginEditBlock();
+			cursor.removeSelectedText();
+			cursor.insertText(mainWindow->led_config_insert->text());
+			cursor.insertText(dlg.getText());
+			cursor.insertText(QString("\n"));
+			cursor.endEditBlock();
+			retval = 0;
+		}
+		return (retval);
+	}
+
 	row = cursor.blockNumber();
 
 	temp += editWidget->toPlainText();
 	temp.flush();
 
+	/* check if the chord is valid */
 	if (temp.getChord(row, &info) != 0) {
 
 		MppDecode dlg(mainWindow, this, 1);
@@ -2096,28 +2107,4 @@ MppScoreMain :: getCurrLabel(void)
 		}
 	}
 	return (retval);
-}
-
-void
-MppScoreMain :: handleScoreFileInsertChord(void)
-{
-	MppDecode dlg(mainWindow, this, 0);
-
-        if(dlg.exec() == QDialog::Accepted) {
-		QTextCursor cursor(editWidget->textCursor());
-		cursor.beginEditBlock();
-		cursor.insertText(mainWindow->led_config_insert->text());
-		cursor.insertText(dlg.getText());
-		cursor.insertText(QString("\n"));
-		cursor.endEditBlock();
-		mainWindow->handle_compile();
-		mainWindow->handle_make_tab_visible(editWidget);
-	}
-}
-
-void
-MppScoreMain :: handleScoreFileEditChord(void)
-{
-	if (handleEditLine() == 0)
-		mainWindow->handle_compile();
 }

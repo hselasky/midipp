@@ -127,8 +127,6 @@ public:
 	QPushButton *butScoreFileStepDown;
 	QPushButton *butScoreFileSetSharp;
 	QPushButton *butScoreFileSetFlat;
-	QPushButton *butScoreFileEditChord;
-	QPushButton *butScoreFileInsertChord;
 	QPushButton *butScoreFileExport;
 	MppButton *butScoreFileAutoMel[2];
 	QPushButton *butScoreFileReplaceAll;
@@ -187,8 +185,6 @@ public slots:
 	void handleScoreFileAutoMelody(int);
 	void handleScoreFileExport(void);
 	void handleScrollChanged(int value);
-	void handleScoreFileInsertChord(void);
-	void handleScoreFileEditChord(void);
 	void handleScoreFileReplaceAll(void);
 };
 

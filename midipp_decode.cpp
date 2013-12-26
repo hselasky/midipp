@@ -471,9 +471,9 @@ MppDecode :: MppDecode(MppMainWindow *_mw, MppScoreMain *_sm, int is_edit)
 	gl = new QGridLayout(this);
 
 	if (is_edit)
-		setWindowTitle(tr("Edit chord"));
+		setWindowTitle(tr("Editing a chord"));
 	else
-		setWindowTitle(tr("Chord decoder"));
+		setWindowTitle(tr("Inserting a chord"));
 
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
