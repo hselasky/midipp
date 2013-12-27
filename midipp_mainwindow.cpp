@@ -1465,7 +1465,8 @@ MppMainWindow :: handle_config_revert()
 		if (deviceName[n] != NULL)
 			str = deviceName[n];
 
-		led_config_dev[n]->setText(str);
+		if (led_config_dev[n]->text() != str)
+			led_config_dev[n]->setText(str);
 
 		cbx_config_dev[n][0]->setChecked(
 		    (deviceBits & (1UL << ((3*n)+0))) ? 1 : 0);
@@ -1994,7 +1995,10 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 		} else if (mw->do_instr_check(event, &chan)) {
 
-		} else if (what & UMIDI20_WHAT_CONTROL_VALUE) {
+		} else if ((what & UMIDI20_WHAT_CONTROL_VALUE) &&
+		    (ctrl < 120)) {
+
+			/* Only pass non-channel-mode control messages */
 
 			vel = umidi20_event_get_control_value(event);
 
