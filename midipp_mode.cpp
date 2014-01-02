@@ -55,7 +55,7 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 
 	lbl_norm = new QLabel(tr("Normalize chord pressure"));
 	lbl_base = new QLabel(tr("Base play key"));
-	lbl_chan = new QLabel(tr("Synth channel"));
+	lbl_chan = new QLabel(tr("Synth MIDI channel"));
 
 	cbx_norm = new MppCheckBox();
 	cbx_norm->setChecked(1);
