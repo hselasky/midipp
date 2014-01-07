@@ -71,9 +71,7 @@ public:
 
 	void update_play_device_no(void);
 
-	void do_bpm_stats(void);
 	void do_clock_stats(void);
-	void do_update_bpm(void);
 	void do_key_press(int key, int vel, int dur);
 	void output_key(int chan, int key, int vel, int delay, int dur);
 
@@ -109,7 +107,6 @@ public:
 	uint32_t convLineEnd[MPP_MAX_LINES];
 	uint32_t convIndex;
 
-	uint32_t bpmData[MPP_MAX_BPM];
 	uint32_t lastKeyPress;
 	uint32_t lastInputEvent;
 	uint32_t noiseRem;
@@ -146,8 +143,6 @@ public:
 	uint8_t controlEvents[MPP_MAX_QUEUE][4];
 	uint8_t numControlEvents;
 	uint8_t playKey;
-	uint8_t bpmAvgLength;
-	uint8_t bpmAvgPos;
 	uint8_t cursorUpdate;
 
 	uint8_t nonChannelMuted;

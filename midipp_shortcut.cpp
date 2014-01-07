@@ -237,8 +237,7 @@ MppShortcutTab :: handle_event_received_locked(MppScoreMain *sm,
 			break;
 		case MPP_SHORTCUT_BPM_TOGGLE:
 			mw->dlg_bpm->enabled ^= 1;
-			mw->dlg_bpm->skip_bpm = 0;
-			mw->dlg_bpm->handle_update(1);
+			mw->dlg_bpm->handle_update(mw->dlg_bpm->enabled);
 			mw->doOperation |= MPP_OPERATION_BPM;
 			break;
 		default:

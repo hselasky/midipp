@@ -263,7 +263,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	gl_ctrl = new MppGroupBox(tr("Main controls"));
 	gl_time = new MppGroupBox(tr("Time counter"));
-	gl_bpm = new MppGroupBox(tr("Average Beats Per Minute, BPM, for view A"));
+	gl_bpm = new MppGroupBox(tr("Average Beats Per Minute, BPM, for generator"));
 	gl_synth_play = new MppGroupBox(tr("Synth and Play controls"));
 
 	/* Fill up tabbar */
@@ -344,7 +344,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* <Play> Tab */
 
-	but_bpm = new QPushButton(tr("BP&M"));
+	but_bpm = new QPushButton(tr("BP&M generator"));
 	connect(but_bpm, SIGNAL(released()), this, SLOT(handle_bpm()));
 
 	dlg_bpm = new MppBpm(this);
@@ -846,9 +846,9 @@ MppMainWindow :: handle_play_press(int which)
 	} else if (sm->keyMode != MM_PASS_ALL) {
 		sm->handleKeyPress(playKey, 90);
 	} else {
+		dlg_bpm->handle_beat_event_locked(sm->unit);
 		output_key(sm->synthChannel, playKey, 90, 0, 0);
 	}
-	do_update_bpm();
 	pthread_mutex_unlock(&mtx);
 }
 
@@ -894,6 +894,7 @@ void
 MppMainWindow :: handle_watchdog()
 {
 	uint32_t delta;
+	int bpm;
 	char buf[32];
 	uint8_t events_copy[MPP_MAX_QUEUE][4];
 	uint8_t num_events;
@@ -919,6 +920,7 @@ MppMainWindow :: handle_watchdog()
 	keyModeUpdated = 0;
 	ops = doOperation;
 	doOperation = 0;
+	bpm = dlg_bpm->bpm_other;
 
 	if (num_events != 0) {
 		delta =  umidi20_get_curr_position() - lastInputEvent;
@@ -994,7 +996,12 @@ MppMainWindow :: handle_watchdog()
 	if (instr_update)
 		handle_instr_changed(0);
 
-	do_bpm_stats();
+	if (bpm < 0)
+		bpm = 0;
+	else if (bpm > 9999)
+		bpm = 9999;
+
+	lbl_bpm_avg_val->display(bpm);
 
 	do_clock_stats();
 
@@ -1740,30 +1747,6 @@ MppMainWindow :: handle_stop(int flag)
 	midiRecordOff = ScMidiRecordOff;
 }
 
-/* This function must be called locked */
-
-void
-MppMainWindow :: do_update_bpm(void)
-{
-	uint32_t delta;
-	uint32_t curr;
-
-	curr = umidi20_get_curr_position();
-	delta = curr - lastKeyPress;
-	lastKeyPress = curr;
-
-	/* too big delay */
-	if (delta >= (UMIDI20_BPM / 15))
-		return;
-
-	/* store statistics */
-	bpmData[bpmAvgPos] = delta;
-	bpmAvgPos++;
-
-	if (bpmAvgPos >= bpmAvgLength)
-		bpmAvgPos = 0;
-}
-
 uint32_t
 MppMainWindow :: get_time_offset(void)
 {
@@ -1796,40 +1779,6 @@ MppMainWindow :: do_clock_stats(void)
 	snprintf(buf, sizeof(buf), "%u.%03u", time_offset / 1000, time_offset % 1000);
 
 	lbl_curr_time_val->display(QString(buf));
-}
-
-void
-MppMainWindow :: do_bpm_stats(void)
-{
-	uint32_t sum = 0;
-	uint32_t val;
-	uint8_t x;
-	uint8_t len;
-
-	len = bpmAvgLength;
-
-	if (len == 0)
-		return;
-
-	pthread_mutex_lock(&mtx);
-
-	for (x = 0; x != len; x++) {
-		val = bpmData[x];
-
-		sum += val;
-	}
-
-	pthread_mutex_unlock(&mtx);
-
-	if (sum == 0)
-		sum = 1;
-
-	sum = (len * UMIDI20_BPM) / sum;
-
-	if (sum > 9999)
-		sum = 9999;
-
-	lbl_bpm_avg_val->display((int)sum);
 }
 
 /* NOTE: Is called unlocked */
@@ -1876,10 +1825,8 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			}
 		}
 
-		if (mw->tab_loop->handle_trigN(key, vel)) {
-			mw->do_update_bpm();
+		if (mw->tab_loop->handle_trigN(key, vel))
 			goto done;
-		}
 	}
 
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
@@ -1955,12 +1902,9 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 				} else if (sm->setPressedKey(chan, key, 255, 0) == 0) {
 					mw->output_key(chan, key, vel, 0, 0);
-					mw->do_update_bpm();
 				}
 			} else if (sm->setPressedKey(chan, key, 255, 0) == 0) {
-
 				mw->output_key(chan, key, vel, 0, 0);
-				mw->do_update_bpm();
 			}
 
 		} else if (umidi20_event_is_key_end(event)) {
@@ -2842,7 +2786,6 @@ MppMainWindow :: MidiInit(void)
 	deviceName[1] = strdup("D:/dev/umidi0.0");
 	deviceName[2] = strdup("D:/dev/umidi1.0");
 	deviceName[3] = strdup("D:/dev/umidi2.0");
-	bpmAvgLength = 4;
 
 	handle_midi_record(0);
 	handle_midi_play(0);
@@ -3080,8 +3023,8 @@ MppMainWindow :: output_key(int chan, int key, int vel, int delay, int dur)
 	uint8_t y;
 
 	/* check for time scaling */
-	if (dlg_bpm->period != 0 && dlg_bpm->bpm != 0)
-		delay = (dlg_bpm->ref * delay) / dlg_bpm->bpm;
+	if (dlg_bpm->period_cur != 0 && dlg_bpm->bpm_other != 0)
+		delay = (dlg_bpm->period_ref * delay) / dlg_bpm->bpm_other;
 
 	/* output note to all synths first */
 	for (y = 0; y != MPP_MAX_DEVS; y++) {

@@ -750,8 +750,8 @@ MppScoreMain :: handleParse(const QString &pstr)
 				case MPP_CMD_BPM_REF:
 					/* update BPM timer */
 					pthread_mutex_lock(&mainWindow->mtx);
-					mainWindow->dlg_bpm->ref = ptr->value[1];
-					mainWindow->dlg_bpm->period = ptr->value[2];
+					mainWindow->dlg_bpm->period_ref = ptr->value[1];
+					mainWindow->dlg_bpm->period_cur = ptr->value[2];
 					mainWindow->dlg_bpm->handle_update();
 					pthread_mutex_unlock(&mainWindow->mtx);
 					break;
@@ -1003,6 +1003,8 @@ MppScoreMain :: handleLabelJump(int pos)
 	if (checkLabelJump(pos) == 0)
 		return;
 
+	mainWindow->dlg_bpm->handle_jump_event_locked(unit);
+
 	head.jumpLabel(pos);
 	head.syncLast();
 
@@ -1126,6 +1128,8 @@ MppScoreMain :: handleChordsLoad(void)
 	head.stepLine(&start, &stop);
 
 	mainWindow->cursorUpdate = 1;
+
+	mainWindow->dlg_bpm->handle_beat_event_locked(unit);
 }
 
 /* must be called locked */
@@ -1215,10 +1219,6 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 		/* silent keys */
 		return;
 	}
-
-	if (mainWindow->scores_main[0] == this)
-		mainWindow->do_update_bpm();
-
 	mainWindow->cursorUpdate = 1;
 }
 
@@ -1463,8 +1463,7 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 
 	/* update bpm, if any */
 
-	if (mainWindow->scores_main[0] == this)
-		mainWindow->do_update_bpm();
+	mainWindow->dlg_bpm->handle_beat_event_locked(unit);
 }
 
 /* must be called locked */
