@@ -413,7 +413,7 @@ MppBpm :: handle_config_apply()
 	val[7] = (cbx_midi_beat->checkState() != Qt::Unchecked);
 
 	pthread_mutex_lock(&mw->mtx);
-	bpm_cur = val[0];
+	bpm_other = bpm_cur = val[0];
 	duty = val[1];
 	amp = val[2];
 	key = val[3];
