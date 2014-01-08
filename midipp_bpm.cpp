@@ -433,7 +433,7 @@ MppBpm :: handle_config_apply()
 void
 MppBpm :: handle_config_change(int val)
 {
-	tim_config->start(250);
+	tim_config->start(2000);
 }
 
 void
