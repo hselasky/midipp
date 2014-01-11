@@ -1,0 +1,67 @@
++==============================+
+| MIDI Player Pro History file |
++==============================+
+
+MIDI Player Pro allows you to play any kind of MIDI music in seconds
+with your fingertips.
+
+Changes for v1.0.5:
+- Added support for defining drum patterns.
+- Some minor GUI refactoring.
+
+Changes for v1.0.11:
+- Support for transposing all chords in a song
+- Support for editing chords
+- Many more chord variants have been added
+- Improved support for importing Lyrics
+- Support for exporting back to Lyrics
+- Removed not so useful echo tab
+- Improved help tab
+- Minor updates to GUI
+- Added display of more error messages
+- Removed redundant spaces in PDF printouts
+- Compile fixes for Linux
+
+Changes for v1.0.19:
+- GUI fixes and misc improvements.
+
+Changes for v1.0.20:
+- Minor bug fixes.
+
+Changes for v1.1.2:
+- UI polish and tweaks.
+
+Changes for v1.1.3:
+- Fix regressions, Fix crash on shift+play.
+
+Changes for v1.2.0:
+- Improved undo/redo support.
+- New editing tools.
+- New show mode, which allows showing of lyrics in a different window or
+  monitor while playing.
+
+Changes for v1.2.1:
+- Multiple GUI related fixes
+- Added support for sending and muting non-channel MIDI events
+- Added support for sending custom MIDI events
+- Removed superfluous MIDI channel reset events from the beginning of the
+  initial MIDI recording.
+- Added support for sending MIDI beat and song events
+- Fixed international language support when importing Lyrics
+
+Changes for v1.2.3:
+- Fix undo/redo/copy/paste buttons.
+
+Changes for v1.2.4:
+- New MIDI shortcuts TAB
+- Fixes for building using Qt v.5.x.
+- Passthrough of more MIDI control events
+- New Edit/Insert chord icon
+- Some minor GUI changes
+- The configuration is now fully automatic.
+  No more need to "apply" the configuration.
+
+Changes for v1.2.5:
+- Reworked BPM generator
+- Fixed a deadlock situation
+
