@@ -80,6 +80,7 @@
 
 #include <umidi20.h>
 
+#define	MPP_MAX_CHORD_MAP	30
 #define	MPP_MAX_BUTTON_MAP	16
 #define	MPP_MAX_VIEWS	2
 #define	MPP_MAX_LINES	8192

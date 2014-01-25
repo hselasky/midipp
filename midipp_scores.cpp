@@ -672,7 +672,8 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 
 	/* overlay (active chord) */
 
-	if (keyMode == MM_PASS_NONE_CHORD) {
+	if (keyMode == MM_PASS_NONE_CHORD_PIANO ||
+	    keyMode == MM_PASS_NONE_CHORD_GUITAR) {
 		int width = viewWidgetSub->width();
 		int mask;
 
@@ -1016,6 +1017,92 @@ MppScoreMain :: handleLabelJump(int pos)
 		mainWindow->send_song_select_locked(pos);
 }
 
+#define	MPP_CHORD_MAP_KEY 0x0F
+#define	MPP_CHORD_MAP_CUR 0x10
+#define	MPP_CHORD_MAP_A	0x20
+#define	MPP_CHORD_MAP_B	0x40
+#define	MPP_CHORD_MAP_BASE 0x80
+
+#if C0 != 0
+#error "C is not starting the scale"
+#endif
+
+static const uint8_t mpp_piano_chord_map[MPP_MAX_CHORD_MAP] = {
+  /* 1st octave */
+  /* [C0] = */ 0,	/* dead */
+  /* [D0B] = */ MPP_CHORD_MAP_A | 2 | MPP_CHORD_MAP_BASE,
+  /* [D0] = */ MPP_CHORD_MAP_A | 0 | MPP_CHORD_MAP_BASE,
+  /* [E0B] = */ MPP_CHORD_MAP_A | 3 | MPP_CHORD_MAP_BASE,
+  /* [E0] = */ MPP_CHORD_MAP_A | 1 | MPP_CHORD_MAP_BASE,
+
+  /* [F0] = */ MPP_CHORD_MAP_A | 0,
+  /* [G0B] = */ MPP_CHORD_MAP_A | 4,
+  /* [G0] = */ MPP_CHORD_MAP_A | 1,
+  /* [A0B] = */ MPP_CHORD_MAP_A | 5,
+  /* [A0] = */ MPP_CHORD_MAP_A | 2,
+  /* [H0B] = */ MPP_CHORD_MAP_A | 6,
+  /* [H0] = */ MPP_CHORD_MAP_A | 3,
+
+  /* 2nd octave */
+  /* [C1] = */ 0,	/* dead */
+  /* [D1B] = */ MPP_CHORD_MAP_B | 2 | MPP_CHORD_MAP_BASE,
+  /* [D1] = */ MPP_CHORD_MAP_B | 0 | MPP_CHORD_MAP_BASE,
+  /* [E1B] = */ MPP_CHORD_MAP_B | 3 | MPP_CHORD_MAP_BASE,
+  /* [E1] = */ MPP_CHORD_MAP_B | 1 | MPP_CHORD_MAP_BASE,
+
+  /* [F1] = */ MPP_CHORD_MAP_B | 0,
+  /* [G1B] = */ MPP_CHORD_MAP_B | 4,
+  /* [G1] = */ MPP_CHORD_MAP_B | 1,
+  /* [A1B] = */ MPP_CHORD_MAP_B | 5,
+  /* [A1] = */ MPP_CHORD_MAP_B | 2,
+  /* [H1B] = */ MPP_CHORD_MAP_B | 6,
+  /* [H1] = */ MPP_CHORD_MAP_B | 3,
+};
+
+static const uint8_t mpp_guitar_chord_map[MPP_MAX_CHORD_MAP] = {
+  /* E - string */
+  /* [C0] = */ MPP_CHORD_MAP_CUR | 0 | MPP_CHORD_MAP_BASE,
+  /* [D0B] = */ MPP_CHORD_MAP_A | 0 | MPP_CHORD_MAP_BASE,
+  /* [D0] = */ MPP_CHORD_MAP_A | 1 | MPP_CHORD_MAP_BASE,
+  /* [E0B] = */ MPP_CHORD_MAP_B | 0 | MPP_CHORD_MAP_BASE,
+  /* [E0] = */ MPP_CHORD_MAP_B | 1 | MPP_CHORD_MAP_BASE,
+
+  /* A - string */
+  /* [F0] = */ MPP_CHORD_MAP_CUR | 0,
+  /* [G0B] = */ MPP_CHORD_MAP_A | 0,
+  /* [G0] = */ MPP_CHORD_MAP_A | 5,
+  /* [A0B] = */ MPP_CHORD_MAP_B | 0,
+  /* [A0] = */ MPP_CHORD_MAP_B | 5,
+
+  /* D - string */
+  /* [H0B] = */ MPP_CHORD_MAP_CUR | 1,
+  /* [H0] = */ MPP_CHORD_MAP_A | 1,
+  /* [C1] = */ MPP_CHORD_MAP_A | 6,
+  /* [D1B] = */ MPP_CHORD_MAP_B | 1,
+  /* [D1] = */ MPP_CHORD_MAP_B | 6,
+
+  /* G - string */
+  /* [E1B] = */ MPP_CHORD_MAP_CUR | 2,
+  /* [E1] = */ MPP_CHORD_MAP_A | 2,
+  /* [F1] = */ MPP_CHORD_MAP_A | 7,
+  /* [G1B] = */ MPP_CHORD_MAP_B | 2,
+  /* [G1] = */ MPP_CHORD_MAP_B | 7,
+
+  /* B - string */
+  /* [A1B] = */ MPP_CHORD_MAP_CUR | 3,
+  /* [A1] = */ MPP_CHORD_MAP_A | 3,
+  /* [H1B] = */ MPP_CHORD_MAP_A | 8,
+  /* [H1] = */ MPP_CHORD_MAP_B | 3,
+  /* [C2] = */ MPP_CHORD_MAP_B | 8,
+
+  /* E - string */
+  /* [D2B] = */ MPP_CHORD_MAP_CUR | 4,
+  /* [D2] = */ MPP_CHORD_MAP_A | 4,
+  /* [E2B] = */ MPP_CHORD_MAP_A | 9,
+  /* [E2] = */ MPP_CHORD_MAP_B | 4,
+  /* [F2] = */ MPP_CHORD_MAP_B | 9,
+};
+
 void
 MppScoreMain :: handleChordsLoad(void)
 {
@@ -1032,7 +1119,8 @@ MppScoreMain :: handleChordsLoad(void)
 	uint8_t base[12];
 	uint8_t key[12];
 
-	memset(score_future, 0, sizeof(score_future));
+	memset(score_future_base, 0, sizeof(score_future_base));
+	memset(score_future_treble, 0, sizeof(score_future_treble));
 
 	nb = 0;
 	nk = 0;
@@ -1075,53 +1163,21 @@ MppScoreMain :: handleChordsLoad(void)
 	}
 
 	if (nb != 0) {
-		score_future[2].dur = 1;
-		score_future[2].key = base[0];
-		score_future[2].channel = chan;
-		mid_trans(base, nb, 1);
-		score_future[4].dur = 1;
-		score_future[4].key = base[0];
-		score_future[4].channel = chan;
-		mid_trans(base, nb, 1);
-		score_future[1].dur = 1;
-		score_future[1].key = base[0];
-		score_future[1].channel = chan;
-		mid_trans(base, nb, 1);
-		score_future[3].dur = 1;
-		score_future[3].key = base[0];
-		score_future[3].channel = chan;
-		mid_trans(base, nb, 1);
+		for (x = 0; x != 12; x++) {
+			score_future_base[x].dur = 1;
+			score_future_base[x].key = base[0];
+			score_future_base[x].channel = chan;
+			mid_trans(base, nb, 1);
+		}
 	}
 
 	if (nk != 0) {
-		score_future[5].dur = 1;
-		score_future[5].key = key[0];
-		score_future[5].channel = chan;
-		mid_trans(key, nk, 1);
-		score_future[7].dur = 1;
-		score_future[7].key = key[0];
-		score_future[7].channel = chan;
-		mid_trans(key, nk, 1);
-		score_future[9].dur = 1;
-		score_future[9].key = key[0];
-		score_future[9].channel = chan;
-		mid_trans(key, nk, 1);
-		score_future[11].dur = 1;
-		score_future[11].key = key[0];
-		score_future[11].channel = chan;
-		mid_trans(key, nk, 1);
-		score_future[6].dur = 1;
-		score_future[6].key = key[0];
-		score_future[6].channel = chan;
-		mid_trans(key, nk, 1);
-		score_future[8].dur = 1;
-		score_future[8].key = key[0];
-		score_future[8].channel = chan;
-		mid_trans(key, nk, 1);
-		score_future[10].dur = 1;
-		score_future[10].key = key[0];
-		score_future[10].channel = chan;
-		mid_trans(key, nk, 1);
+		for (x = 0; x != 12; x++) {
+			score_future_treble[x].dur = 1;
+			score_future_treble[x].key = key[0];
+			score_future_treble[x].channel = chan;
+			mid_trans(key, nk, 1);
+		}
 	}
 
 	head.syncLast();
@@ -1142,7 +1198,7 @@ MppScoreMain :: handleKeyRemovePast(MppScoreEntry *pn, uint32_t key_delay)
 
 	chan = (synthChannel + pn->channel) & 0xF;
 
-	for (x = 0; x != 24; x++) {
+	for (x = 0; x != MPP_MAX_CHORD_MAP; x++) {
 		if (score_past[x].dur != 0 &&
 		    score_past[x].key == pn->key &&
 		    score_past[x].channel == chan) {
@@ -1165,60 +1221,60 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 {
 	MppScoreEntry *pn;
 	int off;
+	uint8_t map;
 
 	off = (int)in_key - (int)baseKey;
 
-	if (off >= 1 && off < 12) {
-
-		if (pressed_future == 0 || head.isFirst()) {
-			pressed_future = 1;
-			handleChordsLoad();
-		}
-
-		pn = &score_future[off];
-
-		/* check for silent key */
-		if (pn->dur == 0)
-			return;
-
-		/* remove key if already pressed */
-		if (handleKeyRemovePast(pn, key_delay))
-			key_delay++;
-
-		score_past[off].channel = (synthChannel + pn->channel) & 0xF;
-		score_past[off].key = pn->key;
-		score_past[off].dur = 1;
-
-		mainWindow->output_key(score_past[off].channel, score_past[off].key,
-		    vel, key_delay, 0);
-
-	} else if (off >= 13 && off < 24) {
-
-		if (pressed_future == 1 || head.isFirst()) {
-			pressed_future = 0;
-			handleChordsLoad();
-		}
-
-		pn = &score_future[off - 12];
-
-		/* check for silent key */
-		if (pn->dur == 0)
-			return;
-
-		/* remove key if already pressed */
-		if (handleKeyRemovePast(pn, key_delay))
-			key_delay++;
-
-		score_past[off].channel = (synthChannel + pn->channel) & 0xF;
-		score_past[off].key = pn->key;
-		score_past[off].dur = 1;
-
-		mainWindow->output_key(score_past[off].channel, score_past[off].key,
-		    vel, key_delay, 0);
-	} else {
-		/* silent keys */
+	if (off < 0 || off >= MPP_MAX_CHORD_MAP)
 		return;
+
+	if (keyMode == MM_PASS_NONE_CHORD_PIANO)
+		map = mpp_piano_chord_map[off];
+	else
+		map = mpp_guitar_chord_map[off];
+
+	if (map & MPP_CHORD_MAP_CUR) {
+		if (head.isFirst()) {
+			handleChordsLoad();
+			pressed_future = 2;
+		}
+	} else if (map & MPP_CHORD_MAP_A) {
+		if (pressed_future == 0 || head.isFirst())
+			handleChordsLoad();
+		if (pressed_future != 1)
+			pressed_future = 1;
+	} else if (map & MPP_CHORD_MAP_B) {
+		if (pressed_future == 1 || head.isFirst())
+			handleChordsLoad();
+		if (pressed_future != 0)
+			pressed_future = 0;
+	} else {
+		return;	/* dead keys */
 	}
+
+	if (map & MPP_CHORD_MAP_BASE)
+		pn = &score_future_base[map & MPP_CHORD_MAP_KEY];
+	else
+		pn = &score_future_treble[map & MPP_CHORD_MAP_KEY];
+
+	/* check for nonexisting key */
+	if (pn->dur == 0)
+		return;
+
+	/* remove key if already pressed */
+	if (handleKeyRemovePast(pn, key_delay))
+		key_delay++;
+
+	score_past[off].channel = (synthChannel + pn->channel) & 0xF;
+	score_past[off].key = pn->key;
+	score_past[off].dur = 1;
+
+	/* store information for pressure command */
+	score_pressure[off] = score_past[off];
+
+	mainWindow->output_key(score_past[off].channel, score_past[off].key,
+	    vel, key_delay, 0);
+
 	mainWindow->cursorUpdate = 1;
 }
 
@@ -1231,17 +1287,13 @@ MppScoreMain :: handleKeyPressureChord(int in_key, int vel, uint32_t key_delay)
 
 	off = (int)in_key - (int)baseKey;
 
-	if (off == 0 || off == 12)
+	if (off < 0 || off >= MPP_MAX_CHORD_MAP)
 		return;
 
-	if (off >= 0 && off < 24) {
+	pn = &score_pressure[off];
 
-		pn = &score_pressure[off];
-
-		if (pn->dur != 0) {
-			outputKeyPressure(pn->channel, pn->key, vel);
-		}
-	}
+	if (pn->dur != 0)
+		outputKeyPressure(pn->channel, pn->key, vel);
 }
 
 /* must be called locked */
@@ -1253,23 +1305,15 @@ MppScoreMain :: handleKeyReleaseChord(int in_key, uint32_t key_delay)
 
 	off = (int)in_key - (int)baseKey;
 
-	if (off == 0 || off == 12)
+	if (off < 0 || off >= MPP_MAX_CHORD_MAP)
 		return;
 
-	if (off >= 0 && off < 24) {
+	pn = &score_past[off];
 
-		pn = &score_past[off];
-
-		if (pn->dur != 0) {
-
-			/* store score for pressure */
-			score_pressure[off] = score_past[off];
-
-			mainWindow->output_key(pn->channel, pn->key, 0, key_delay, 0);
-
-			/* only release once */
-			pn->dur = 0;
-		}
+	/* release key once, if any */
+	if (pn->dur != 0) {
+		mainWindow->output_key(pn->channel, pn->key, 0, key_delay, 0);
+		pn->dur = 0;
 	}
 }
 

@@ -135,9 +135,10 @@ public:
 	QLabel *lblFileStatus;
 	QPicture *picChord[2];
 
-	MppScoreEntry score_past[24];
-	MppScoreEntry score_pressure[24];
-	MppScoreEntry score_future[12];
+	MppScoreEntry score_past[MPP_MAX_CHORD_MAP];
+	MppScoreEntry score_pressure[MPP_MAX_CHORD_MAP];
+	MppScoreEntry score_future_base[12];
+	MppScoreEntry score_future_treble[12];
 
 	int visual_max;
 	int visual_p_max;

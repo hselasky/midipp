@@ -388,7 +388,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mbm_score_record = new MppButtonMap("Score recording\0" "OFF\0" "ON\0", 2, 2);
 	connect(mbm_score_record, SIGNAL(selectionChanged(int)), this, SLOT(handle_score_record(int)));
 
-	mbm_key_mode = new MppButtonMap("Key Mode for view A\0" "ALL\0" "MIXED\0" "FIXED\0" "TRANSP\0" "CHORD\0", 5, 3);
+	mbm_key_mode = new MppButtonMap("Key Mode for view A\0" "ALL\0" "MIXED\0" "FIXED\0" "TRANSP\0" "CHORD-PIANO\0" "CHORD-GUITAR\0", 6, 3);
 	connect(mbm_key_mode, SIGNAL(selectionChanged(int)), this, SLOT(handle_key_mode(int)));
 
 	but_play[0] = new MppButton(tr("Shift+Play+A"), 0);
@@ -1857,7 +1857,8 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			case MM_PASS_ALL:
 				sm->outputKeyPressure(sm->synthChannel, key, vel);
 				break;
-			case MM_PASS_NONE_CHORD:
+			case MM_PASS_NONE_CHORD_PIANO:
+			case MM_PASS_NONE_CHORD_GUITAR:
 				sm->handleKeyPressureChord(key, vel);
 				break;
 			default:
@@ -1870,7 +1871,8 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 			switch (sm->keyMode) {
 			case MM_PASS_ALL:
-			case MM_PASS_NONE_CHORD:
+			case MM_PASS_NONE_CHORD_PIANO:
+			case MM_PASS_NONE_CHORD_GUITAR:
 				sm->outputChanPressure(sm->synthChannel, vel);
 				break;
 			default:
@@ -1882,59 +1884,62 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			key = umidi20_event_get_key(event) & 0x7F;
 			vel = umidi20_event_get_velocity(event);
 
-			if (sm->keyMode != MM_PASS_ALL) {
-				if ((sm->keyMode == MM_PASS_NONE_FIXED) ||
-				    (sm->keyMode == MM_PASS_NONE_TRANS) ||
-				    (sm->keyMode == MM_PASS_NONE_CHORD)) {
-
-					if (sm->keyMode == MM_PASS_NONE_FIXED)
-						key = mw->playKey;
-
-					if (sm->keyMode != MM_PASS_NONE_CHORD)
-						sm->handleKeyPress(key, vel);
-					else
-						sm->handleKeyPressChord(key, vel);
-
-				} else if (sm->checkHalfPassThru(key) != 0) {
-
+			switch (sm->keyMode) {
+			case MM_PASS_NONE_FIXED:
+				sm->handleKeyPress(mw->playKey, vel);
+				break;
+			case MM_PASS_NONE_TRANS:
+				sm->handleKeyPress(key, vel);
+				break;
+			case MM_PASS_NONE_CHORD_PIANO:
+			case MM_PASS_NONE_CHORD_GUITAR:
+				sm->handleKeyPressChord(key, vel);
+				break;
+			case MM_PASS_ALL:
+				if (sm->setPressedKey(chan, key, 255, 0) == 0)
+					mw->output_key(chan, key, vel, 0, 0);
+				break;
+			case MM_PASS_ONE_MIXED:
+				if (sm->checkHalfPassThru(key) != 0) {
 					if (key == sm->baseKey)
 						sm->handleKeyPress(key, vel);
-
 				} else if (sm->setPressedKey(chan, key, 255, 0) == 0) {
 					mw->output_key(chan, key, vel, 0, 0);
 				}
-			} else if (sm->setPressedKey(chan, key, 255, 0) == 0) {
-				mw->output_key(chan, key, vel, 0, 0);
+				break;
+			default:
+				break;
 			}
 
 		} else if (umidi20_event_is_key_end(event)) {
 
 			key = umidi20_event_get_key(event) & 0x7F;
 
-			if (sm->keyMode != MM_PASS_ALL) {
-				if ((sm->keyMode == MM_PASS_NONE_FIXED) ||
-				    (sm->keyMode == MM_PASS_NONE_TRANS) ||
-				    (sm->keyMode == MM_PASS_NONE_CHORD)) {
-
-				  if (sm->keyMode == MM_PASS_NONE_FIXED)
-					key = mw->playKey;
-
-				  if (sm->keyMode != MM_PASS_NONE_CHORD)
-					sm->handleKeyRelease(key);
-				  else
-					sm->handleKeyReleaseChord(key);
-
-				} else if (sm->checkHalfPassThru(key) != 0) {
-
+			switch (sm->keyMode) {
+			case MM_PASS_NONE_FIXED:
+				sm->handleKeyRelease(mw->playKey);
+				break;
+			case MM_PASS_NONE_TRANS:
+				sm->handleKeyRelease(key);
+				break;
+			case MM_PASS_NONE_CHORD_PIANO:
+			case MM_PASS_NONE_CHORD_GUITAR:
+				sm->handleKeyReleaseChord(key);
+				break;
+			case MM_PASS_ONE_MIXED:
+				if (sm->checkHalfPassThru(key) != 0) {
 					if (key == sm->baseKey)
 						sm->handleKeyRelease(key);
-
 				} else if (sm->setPressedKey(chan, key, 0, 0) == 0) {
 					mw->output_key(chan, key, 0, 0, 0);
 				}
-			} else if (sm->setPressedKey(chan, key, 0, 0) == 0) {
-
-				mw->output_key(chan, key, 0, 0, 0);
+				break;
+			case MM_PASS_ALL:
+				if (sm->setPressedKey(chan, key, 0, 0) == 0)
+					mw->output_key(chan, key, 0, 0, 0);
+				break;
+			default:
+				break;
 			}
 
 		} else if (mw->do_instr_check(event, &chan)) {
