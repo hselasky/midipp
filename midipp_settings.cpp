@@ -147,6 +147,8 @@ MppSettings :: doSave(void)
 			setValue("inmask", mw->scores_main[x]->devInputMask);
 			setValue("keymode", mw->scores_main[x]->keyMode);
 			setValue("synthchannel", mw->scores_main[x]->synthChannel);
+			setValue("synthchannelbase", mw->scores_main[x]->synthChannelBase);
+			setValue("synthchanneltreb", mw->scores_main[x]->synthChannelTreb);
 			setValue("chordcontrast", mw->scores_main[x]->chordContrast);
 			setValue("chordnormalize", mw->scores_main[x]->chordNormalize);
 			endGroup();
@@ -247,6 +249,8 @@ MppSettings :: doLoad(void)
 			int devInputMask = valueDefault(concat("view%d/inmask", x), x ? 0 : -1);
 			int keyMode = valueDefault(concat("view%d/keymode", x), 0);
 			int synthChannel = valueDefault(concat("view%d/synthchannel", x), 0);
+			int synthChannelBase = valueDefault(concat("view%d/synthchannelbase", x), -1);
+			int synthChannelTreb = valueDefault(concat("view%d/synthchanneltreb", x), -1);
 			int chordContrast = valueDefault(concat("view%d/chordcontrast", x), 128);
 			int chordNormalize = valueDefault(concat("view%d/chordnormalize", x), 128);
 
@@ -258,6 +262,10 @@ MppSettings :: doLoad(void)
 				keyMode = 0;
 			if (synthChannel < 0 || synthChannel > 15)
 				synthChannel = 0;
+			if (synthChannelBase < -1 || synthChannelBase > 15)
+				synthChannelBase = -1;
+			if (synthChannelTreb < -1 || synthChannelTreb > 15)
+				synthChannelTreb = -1;
 			if (chordContrast < 0 || chordContrast > 255)
 				chordContrast = 128;
 			if (chordNormalize < 0 || chordNormalize > 1)
@@ -269,6 +277,8 @@ MppSettings :: doLoad(void)
 			mw->scores_main[x]->devInputMask = devInputMask;
 			mw->scores_main[x]->keyMode = keyMode;
 			mw->scores_main[x]->synthChannel = synthChannel;
+			mw->scores_main[x]->synthChannelBase = synthChannelBase;
+			mw->scores_main[x]->synthChannelTreb = synthChannelTreb;
 			mw->scores_main[x]->chordContrast = chordContrast;
 			mw->scores_main[x]->chordNormalize = chordNormalize;
 			pthread_mutex_unlock(&mw->mtx);

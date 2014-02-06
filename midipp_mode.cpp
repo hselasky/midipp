@@ -53,21 +53,12 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	setWindowTitle(tr("View ") + QChar('A' + _vi) + tr(" mode"));
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
-	lbl_norm = new QLabel(tr("Normalize chord pressure"));
-	lbl_base = new QLabel(tr("Base play key"));
-	lbl_chan = new QLabel(tr("Synth MIDI channel"));
-
 	cbx_norm = new MppCheckBox();
 	cbx_norm->setChecked(1);
 
 	for (x = 0; x != MPP_MAX_DEVS; x++) {
-
-		snprintf(buf, sizeof(buf), "Dev%d", x);
-
 		cbx_dev[x] = new MppCheckBox();
 		cbx_dev[x]->setChecked(view_index == 0);
-
-		lbl_dev[x] = new QLabel(tr(buf));
 	}
 
 	sli_contrast = new QSlider();
@@ -103,46 +94,61 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	sli_delay->setRange(0, 256);
 	sli_delay->setValue(0);
 	sli_delay->setOrientation(Qt::Horizontal);
-	connect(sli_delay, SIGNAL(valueChanged(int)),
-	    this, SLOT(handle_delay_changed(int)));
+	connect(sli_delay, SIGNAL(valueChanged(int)), this, SLOT(handle_delay_changed(int)));
 	handle_delay_changed(sli_delay->value());
 	gl_delay->addWidget(sli_delay,0,0,1,1);
 
-	spn_chan = new QSpinBox();
-	spn_chan->setRange(0, 15);
-	spn_chan->setValue(0);
+	spn_pri_chan = new QSpinBox();
+	spn_pri_chan->setRange(0, 15);
+	spn_pri_chan->setValue(0);
+
+	spn_sec_base_chan = new QSpinBox();
+	spn_sec_base_chan->setRange(-1, 15);
+	spn_sec_base_chan->setValue(-1);
+
+	spn_sec_treb_chan = new QSpinBox();
+	spn_sec_treb_chan->setRange(-1, 15);
+	spn_sec_treb_chan->setValue(-1);
 
 	for (x = 0; x != MPP_MAX_DEVS; x++) {
-		gl_idev->addWidget(lbl_dev[x], x, 0, 1, 1, Qt::AlignCenter);
+		snprintf(buf, sizeof(buf), "Dev%d", x);
+
+		gl_idev->addWidget(new QLabel(tr(buf)), x, 0, 1, 1, Qt::AlignCenter);
 		gl_idev->addWidget(cbx_dev[x], x, 1, 1, 1, Qt::AlignCenter);
 	}
 
-	gl->addWidget(gb_idev, 0, 0, 8, 2);
+	gl->addWidget(gb_idev, 0, 0, 10, 2);
 
-	gl->addWidget(lbl_base, 0, 2, 1, 1);
+	gl->addWidget(new QLabel(tr("MIDI input Play Key")), 0, 2, 1, 1);
 	gl->addWidget(spn_base, 0, 3, 1, 1);
 
-	gl->addWidget(lbl_chan, 1, 2, 1, 1);
-	gl->addWidget(spn_chan, 1, 3, 1, 1);
+	gl->addWidget(new QLabel(tr("Primary MIDI output channel")), 1, 2, 1, 1);
+	gl->addWidget(spn_pri_chan, 1, 3, 1, 1);
 
-	gl->addWidget(lbl_norm, 2, 2, 1, 1);
-	gl->addWidget(cbx_norm, 2, 3, 1, 1);
+	gl->addWidget(new QLabel(tr("Secondary base MIDI output channel")), 2, 2, 1, 1);
+	gl->addWidget(spn_sec_base_chan, 2, 3, 1, 1);
 
-	gl->addWidget(gb_delay, 3, 2, 1, 2);
+	gl->addWidget(new QLabel(tr("Secondary treble MIDI output channel")), 3, 2, 1, 1);
+	gl->addWidget(spn_sec_treb_chan, 3, 3, 1, 1);
 
-	gl->addWidget(gb_contrast, 4, 2, 1, 2);
+	gl->addWidget(new QLabel(tr("Normalize chord pressure")), 4, 2, 1, 1);
+	gl->addWidget(cbx_norm, 4, 3, 1, 1);
 
-	gl->addWidget(but_song_events, 5, 2, 1, 2);
+	gl->addWidget(gb_delay, 5, 2, 1, 2);
 
-	gl->addWidget(but_mode, 6, 2, 2, 2);
+	gl->addWidget(gb_contrast, 6, 2, 1, 2);
 
-	gl->setRowStretch(8, 1);
+	gl->addWidget(but_song_events, 7, 2, 1, 2);
+
+	gl->addWidget(but_mode, 8, 2, 2, 2);
+
+	gl->setRowStretch(10, 1);
 	gl->setColumnStretch(4, 1);
 
-	gl->addWidget(but_set_all, 9, 0, 1, 1);
-	gl->addWidget(but_clear_all, 9, 1, 1, 1);
-	gl->addWidget(but_reset, 9, 2, 1, 1);
-	gl->addWidget(but_done, 9, 3, 1, 1);
+	gl->addWidget(but_set_all, 11, 0, 1, 1);
+	gl->addWidget(but_clear_all, 11, 1, 1, 1);
+	gl->addWidget(but_reset, 11, 2, 1, 1);
+	gl->addWidget(but_done, 11, 3, 1, 1);
 }
 
 MppMode :: ~MppMode()
@@ -156,6 +162,8 @@ MppMode :: update_all(void)
 	int base_key;
 	int key_delay;
 	int channel;
+	int channelBase;
+	int channelTreb;
 	int key_mode;
 	int input_mask;
 	int chord_contrast;
@@ -167,6 +175,8 @@ MppMode :: update_all(void)
 	base_key = sm->baseKey;
 	key_delay = sm->delayNoise;
 	channel = sm->synthChannel;
+	channelBase = sm->synthChannelBase;
+	channelTreb = sm->synthChannelTreb;
 	key_mode = sm->keyMode;
 	input_mask = sm->devInputMask;
 	chord_contrast = sm->chordContrast;
@@ -180,7 +190,9 @@ MppMode :: update_all(void)
 	spn_base->setValue(base_key);
 	sli_delay->setValue(key_delay);
 	sli_contrast->setValue(chord_contrast);
-	spn_chan->setValue(channel);
+	spn_pri_chan->setValue(channel);
+	spn_sec_base_chan->setValue(channelBase);
+	spn_sec_treb_chan->setValue(channelTreb);
 	but_mode->setSelection(key_mode);
 	cbx_norm->setChecked(chord_norm);
 	but_song_events->setSelection(song_events);
@@ -236,7 +248,9 @@ MppMode :: handle_reset()
 	sli_contrast->setValue(128);
 	sli_delay->setValue(25);
 	spn_base->setValue(MPP_DEFAULT_BASE_KEY);
-	spn_chan->setValue(0);
+	spn_pri_chan->setValue(0);
+	spn_sec_base_chan->setValue(-1);
+	spn_sec_treb_chan->setValue(-1);
 	cbx_norm->setChecked(1);
 	but_mode->setSelection(0);
 	but_song_events->setSelection(0);
@@ -251,6 +265,8 @@ MppMode :: handle_done()
 	int base_key;
 	int key_delay;
 	int channel;
+	int channelBase;
+	int channelTreb;
 	int key_mode;
 	int input_mask;
 	int chord_contrast;
@@ -267,7 +283,9 @@ MppMode :: handle_done()
 
 	base_key = spn_base->value();
 	key_delay = sli_delay->value();
-	channel = spn_chan->value();
+	channel = spn_pri_chan->value();
+	channelBase = spn_sec_base_chan->value();
+	channelTreb = spn_sec_treb_chan->value();
 	chord_contrast = sli_contrast->value();
 	chord_norm = cbx_norm->isChecked();
 	key_mode = but_mode->currSelection;
@@ -280,6 +298,8 @@ MppMode :: handle_done()
 	sm->baseKey = base_key;
 	sm->delayNoise = key_delay;
 	sm->synthChannel = channel;
+	sm->synthChannelBase = channelBase;
+	sm->synthChannelTreb = channelTreb;
 	sm->keyMode = key_mode;
 	sm->devInputMask = input_mask;
 	sm->chordContrast = chord_contrast;

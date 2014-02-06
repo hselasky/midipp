@@ -179,6 +179,8 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	delayNoise = 25;
 	chordContrast = 128;
 	chordNormalize = 1;
+	synthChannelBase = -1;
+	synthChannelTreb = -1;
 	unit = _unit;
 
 	/* Set parent */
@@ -1205,6 +1207,12 @@ MppScoreMain :: handleKeyRemovePast(MppScoreEntry *pn, uint32_t key_delay)
 
 			mainWindow->output_key(chan, pn->key, 0, key_delay, 0);
 
+			/* check for secondary event */
+			if (score_past[x].channelSec != 0) {
+				mainWindow->output_key(score_past[x].channelSec - 1,
+				    pn->key, 0, key_delay, 0);
+			}
+
 			/* kill past score */
 			score_past[x].dur = 0;
 
@@ -1268,6 +1276,15 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 	score_past[off].channel = (synthChannel + pn->channel) & 0xF;
 	score_past[off].key = pn->key;
 	score_past[off].dur = 1;
+	score_past[off].channelSec = 0;
+
+	if (map & MPP_CHORD_MAP_BASE) {
+		if (synthChannelBase != (int)score_past[off].channel)
+			score_past[off].channelSec = synthChannelBase + 1;
+	} else {
+		if (synthChannelTreb != (int)score_past[off].channel)
+			score_past[off].channelSec = synthChannelTreb + 1;
+	}
 
 	/* store information for pressure command */
 	score_pressure[off] = score_past[off];
@@ -1275,6 +1292,11 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 	mainWindow->output_key(score_past[off].channel, score_past[off].key,
 	    vel, key_delay, 0);
 
+	/* check for secondary event */
+	if (score_past[off].channelSec != 0) {
+		mainWindow->output_key(score_past[off].channelSec - 1,
+		    score_past[off].key, vel, key_delay, 0);
+	}
 	mainWindow->cursorUpdate = 1;
 }
 
@@ -1292,8 +1314,13 @@ MppScoreMain :: handleKeyPressureChord(int in_key, int vel, uint32_t key_delay)
 
 	pn = &score_pressure[off];
 
-	if (pn->dur != 0)
+	if (pn->dur != 0) {
 		outputKeyPressure(pn->channel, pn->key, vel);
+
+		/* check for secondary event */
+		if (pn->channelSec != 0)
+			outputKeyPressure(pn->channelSec - 1, pn->key, vel);
+	}
 }
 
 /* must be called locked */
@@ -1313,6 +1340,10 @@ MppScoreMain :: handleKeyReleaseChord(int in_key, uint32_t key_delay)
 	/* release key once, if any */
 	if (pn->dur != 0) {
 		mainWindow->output_key(pn->channel, pn->key, 0, key_delay, 0);
+
+		/* check for secondary event */
+		if (pn->channelSec != 0)
+			mainWindow->output_key(pn->channelSec - 1, pn->key, 0, key_delay, 0);
 		pn->dur = 0;
 	}
 }

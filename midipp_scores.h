@@ -153,6 +153,8 @@ public:
 	uint16_t active_channels;
 
 	uint8_t synthChannel;
+	int8_t synthChannelBase;
+	int8_t synthChannelTreb;
 	uint8_t baseKey;
 	uint8_t delayNoise;
 	uint8_t whatPlayKeyLocked;

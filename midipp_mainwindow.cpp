@@ -1726,13 +1726,17 @@ MppMainWindow :: handle_stop(int flag)
 
 		ps = &scores_main[z]->score_past[x];
 
-		if (ps->dur != 0) {
+		if (ps->dur == 0)
+			continue;
 
-			/* only release once */
-			ps->dur = 0;
+		/* only release once */
+		ps->dur = 0;
 
-			output_key(ps->channel, ps->key, 0, 0, 0);
-		}
+		output_key(ps->channel, ps->key, 0, 0, 0);
+
+		/* check for secondary event */
+		if (ps->channelSec != 0)
+			output_key(ps->channelSec - 1, ps->key, 0, 0, 0);
 	    }
 
 	    /* check if we should kill the pedal, modulation and pitch */

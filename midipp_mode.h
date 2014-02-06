@@ -63,11 +63,6 @@ public:
 	QGroupBox *gb_contrast;
 	QGroupBox *gb_delay;
 
-	QLabel *lbl_norm;
-	QLabel *lbl_chan;
-	QLabel *lbl_base;
-	QLabel *lbl_dev[MPP_MAX_DEVS];
-
 	MppCheckBox *cbx_norm;
 	MppCheckBox *cbx_dev[MPP_MAX_DEVS];
 
@@ -83,7 +78,9 @@ public:
 
 	MppSpinBox *spn_base;
 
-	QSpinBox *spn_chan;
+	QSpinBox *spn_pri_chan;
+	QSpinBox *spn_sec_base_chan;
+	QSpinBox *spn_sec_treb_chan;
 
 public slots:
 

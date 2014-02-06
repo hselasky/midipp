@@ -150,6 +150,7 @@ struct MppScoreEntry {
 	uint8_t key;
 	uint8_t dur;
 	uint8_t channel;
+	uint8_t channelSec;
 };
 
 struct MppInstr {
