@@ -77,9 +77,10 @@ public:
 	void handleScoreFileOpenRaw(char *, uint32_t);
 	void handlePrintSub(QPrinter *pd, QPoint orig, float scale_f);
 	int handleScoreFileOpenSub(QString fname);
+	uint16_t outputMaskGet(void);
 	void outputControl(uint8_t ctrl, uint8_t val);
 	void outputKeyPressure(uint8_t chan, uint8_t key, uint8_t pressure);
-	void outputChanPressure(uint8_t chan, uint8_t pressure);
+	void outputChanPressure(uint8_t pressure);
 	void outputPitch(uint16_t val);
 	int getCurrLabel(void);
 	void handleScoreFileEffect(int, int, int);

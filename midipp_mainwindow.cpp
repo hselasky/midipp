@@ -1877,7 +1877,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			case MM_PASS_ALL:
 			case MM_PASS_NONE_CHORD_PIANO:
 			case MM_PASS_NONE_CHORD_GUITAR:
-				sm->outputChanPressure(sm->synthChannel, vel);
+				sm->outputChanPressure(vel);
 				break;
 			default:
 				break;

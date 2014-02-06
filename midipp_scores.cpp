@@ -2003,6 +2003,31 @@ MppScoreMain :: handleScoreFileReplaceAll(void)
 }
 
 /* must be called locked */
+uint16_t
+MppScoreMain :: outputMaskGet(void)
+{
+	uint16_t mask;
+
+	switch (keyMode) {
+	case MM_PASS_ALL:
+		mask = 1U;
+		break;
+	case MM_PASS_NONE_CHORD_PIANO:
+	case MM_PASS_NONE_CHORD_GUITAR:
+		mask = active_channels;
+		if (synthChannelBase > -1)
+			mask |= 1U << ((synthChannelBase - synthChannel) & 0xF);
+		if (synthChannelTreb > -1)
+			mask |= 1U << ((synthChannelTreb - synthChannel) & 0xF);
+		break;
+	default:
+		mask = active_channels;
+		break;
+	}
+	return (mask);
+}
+
+/* must be called locked */
 void
 MppScoreMain :: outputControl(uint8_t ctrl, uint8_t val)
 {
@@ -2013,11 +2038,7 @@ MppScoreMain :: outputControl(uint8_t ctrl, uint8_t val)
 	uint8_t chan;
 
 	chan = synthChannel;
-
-	if (keyMode == MM_PASS_ALL)
-		mask = 1;
-	else
-		mask = active_channels;
+	mask = outputMaskGet();
 
 	/* the control event is distributed to all active channels */
 	while (mask) {
@@ -2049,50 +2070,36 @@ MppScoreMain :: outputKeyPressure(uint8_t chan, uint8_t key, uint8_t pressure)
 {
 	MppMainWindow *mw = mainWindow;
 	struct mid_data *d = &mw->mid_data;
-	uint16_t mask;
 	uint8_t x;
 	uint8_t buf[4];
-
-	if (keyMode == MM_PASS_ALL)
-		mask = 1;
-	else
-		mask = active_channels;
 
 	buf[0] = 0xA0;
 	buf[1] = key & 0x7F;
 	buf[2] = pressure & 0x7F;
 	buf[3] = 0;
 
-	/* the pressure event is distributed to all active channels */
-	while (mask) {
-		if (mask & 1) {
-			for (x = 0; x != MPP_MAX_DEVS; x++) {
-				if (mw->check_synth(x, chan, 0))
-					mid_add_raw(d, buf, 3, 0);
-			}
-			if (mw->check_record(chan, 0))
-				mid_add_raw(d, buf, 3, 0);
-		}
-		mask /= 2;
-		chan++;
-		chan &= 0xF;
+	/* the pressure event is distributed to the specified channel */
+	for (x = 0; x != MPP_MAX_DEVS; x++) {
+		if (mw->check_synth(x, chan, 0))
+			mid_add_raw(d, buf, 3, 0);
 	}
+	if (mw->check_record(chan, 0))
+		mid_add_raw(d, buf, 3, 0);
 }
 
 /* must be called locked */
 void
-MppScoreMain :: outputChanPressure(uint8_t chan, uint8_t pressure)
+MppScoreMain :: outputChanPressure(uint8_t pressure)
 {
 	MppMainWindow *mw = mainWindow;
 	struct mid_data *d = &mw->mid_data;
 	uint16_t mask;
+	uint8_t chan;
 	uint8_t x;
 	uint8_t buf[4];
 
-	if (keyMode == MM_PASS_ALL)
-		mask = 1;
-	else
-		mask = active_channels;
+	chan = synthChannel;
+	mask = outputMaskGet();
 
 	buf[0] = 0xD0;
 	buf[1] = pressure & 0x7F;
