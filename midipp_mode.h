@@ -55,13 +55,12 @@ public:
 
 public:
 	QGridLayout *gl;
-	QGridLayout *gl_idev;
-	QGridLayout *gl_contrast;
-	QGridLayout *gl_delay;
 
-	QGroupBox *gb_idev;
-	QGroupBox *gb_contrast;
-	QGroupBox *gb_delay;
+	MppGroupBox *gb_iconfig;
+	MppGroupBox *gb_oconfig;
+	MppGroupBox *gb_idev;
+	MppGroupBox *gb_contrast;
+	MppGroupBox *gb_delay;
 
 	MppCheckBox *cbx_norm;
 	MppCheckBox *cbx_dev[MPP_MAX_DEVS];
@@ -78,6 +77,7 @@ public:
 
 	MppSpinBox *spn_base;
 
+	QSpinBox *spn_input_chan;
 	QSpinBox *spn_pri_chan;
 	QSpinBox *spn_sec_base_chan;
 	QSpinBox *spn_sec_treb_chan;

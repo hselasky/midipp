@@ -1836,8 +1836,15 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
 		sm = mw->scores_main[n];
 
+		/* filter on device, if any */
 		if (!(sm->devInputMask & (1U << device_no)))
 			continue;
+
+		/* filter on channel, if any */
+		if ((what & UMIDI20_WHAT_CHANNEL) && (sm->inputChannel > -1)) {
+			if ((uint8_t)sm->inputChannel != umidi20_event_get_channel(event))
+					continue;
+		}
 
 		chan = sm->synthChannel;
 

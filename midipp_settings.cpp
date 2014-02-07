@@ -146,6 +146,7 @@ MppSettings :: doSave(void)
 			setValue("delay", mw->scores_main[x]->delayNoise);
 			setValue("inmask", mw->scores_main[x]->devInputMask);
 			setValue("keymode", mw->scores_main[x]->keyMode);
+			setValue("inputchannel", mw->scores_main[x]->inputChannel);
 			setValue("synthchannel", mw->scores_main[x]->synthChannel);
 			setValue("synthchannelbase", mw->scores_main[x]->synthChannelBase);
 			setValue("synthchanneltreb", mw->scores_main[x]->synthChannelTreb);
@@ -248,6 +249,7 @@ MppSettings :: doLoad(void)
 			int delayNoise = valueDefault(concat("view%d/delay", x), 25);
 			int devInputMask = valueDefault(concat("view%d/inmask", x), x ? 0 : -1);
 			int keyMode = valueDefault(concat("view%d/keymode", x), 0);
+			int inputChannel = valueDefault(concat("view%d/inputchannel", x), -1);
 			int synthChannel = valueDefault(concat("view%d/synthchannel", x), 0);
 			int synthChannelBase = valueDefault(concat("view%d/synthchannelbase", x), -1);
 			int synthChannelTreb = valueDefault(concat("view%d/synthchanneltreb", x), -1);
@@ -260,11 +262,13 @@ MppSettings :: doLoad(void)
 				delayNoise = 0;
 			if (keyMode < 0 || keyMode >= MM_PASS_MAX)
 				keyMode = 0;
+			if (inputChannel < 0 || inputChannel > 15)
+				inputChannel = -1;
 			if (synthChannel < 0 || synthChannel > 15)
 				synthChannel = 0;
-			if (synthChannelBase < -1 || synthChannelBase > 15)
+			if (synthChannelBase < 0 || synthChannelBase > 15)
 				synthChannelBase = -1;
-			if (synthChannelTreb < -1 || synthChannelTreb > 15)
+			if (synthChannelTreb < 0 || synthChannelTreb > 15)
 				synthChannelTreb = -1;
 			if (chordContrast < 0 || chordContrast > 255)
 				chordContrast = 128;
@@ -276,6 +280,7 @@ MppSettings :: doLoad(void)
 			mw->scores_main[x]->delayNoise = delayNoise;
 			mw->scores_main[x]->devInputMask = devInputMask;
 			mw->scores_main[x]->keyMode = keyMode;
+			mw->scores_main[x]->inputChannel = inputChannel;
 			mw->scores_main[x]->synthChannel = synthChannel;
 			mw->scores_main[x]->synthChannelBase = synthChannelBase;
 			mw->scores_main[x]->synthChannelTreb = synthChannelTreb;

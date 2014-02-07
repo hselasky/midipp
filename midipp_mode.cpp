@@ -29,6 +29,7 @@
 #include "midipp_scores.h"
 #include "midipp_mainwindow.h"
 #include "midipp_checkbox.h"
+#include "midipp_groupbox.h"
 
 MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 {
@@ -40,15 +41,11 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 
 	gl = new QGridLayout(this);
 
-	gb_contrast = new QGroupBox();
-	gb_delay = new QGroupBox();
-
-	gb_idev = new QGroupBox();
-	gb_idev->setTitle(tr("Input devices"));
-
-	gl_contrast = new QGridLayout(gb_contrast);
-	gl_delay = new QGridLayout(gb_delay);
-	gl_idev = new QGridLayout(gb_idev);
+	gb_iconfig = new MppGroupBox(tr("MIDI input config"));
+	gb_oconfig = new MppGroupBox(tr("MIDI output config"));
+	gb_contrast = new MppGroupBox(QString());
+	gb_delay = new MppGroupBox(QString());
+	gb_idev = new MppGroupBox(tr("MIDI input devices"));
 
 	setWindowTitle(tr("View ") + QChar('A' + _vi) + tr(" mode"));
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
@@ -68,7 +65,6 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	connect(sli_contrast, SIGNAL(valueChanged(int)),
 	    this, SLOT(handle_contrast_changed(int)));
 	handle_contrast_changed(sli_contrast->value());
-	gl_contrast->addWidget(sli_contrast,0,0,1,1);
 
 	but_song_events = new MppButtonMap("Send MIDI song events\0OFF\0ON\0", 2, 2);
 
@@ -96,7 +92,10 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	sli_delay->setOrientation(Qt::Horizontal);
 	connect(sli_delay, SIGNAL(valueChanged(int)), this, SLOT(handle_delay_changed(int)));
 	handle_delay_changed(sli_delay->value());
-	gl_delay->addWidget(sli_delay,0,0,1,1);
+
+	spn_input_chan = new QSpinBox();
+	spn_input_chan->setRange(-1, 15);
+	spn_input_chan->setValue(-1);
 
 	spn_pri_chan = new QSpinBox();
 	spn_pri_chan->setRange(0, 15);
@@ -113,42 +112,42 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	for (x = 0; x != MPP_MAX_DEVS; x++) {
 		snprintf(buf, sizeof(buf), "Dev%d", x);
 
-		gl_idev->addWidget(new QLabel(tr(buf)), x, 0, 1, 1, Qt::AlignCenter);
-		gl_idev->addWidget(cbx_dev[x], x, 1, 1, 1, Qt::AlignCenter);
+		gb_idev->addWidget(new QLabel(tr(buf)), x, 0, 1, 1, Qt::AlignCenter);
+		gb_idev->addWidget(cbx_dev[x], x, 1, 1, 1, Qt::AlignCenter);
 	}
 
-	gl->addWidget(gb_idev, 0, 0, 10, 2);
-
-	gl->addWidget(new QLabel(tr("MIDI input Play Key")), 0, 2, 1, 1);
-	gl->addWidget(spn_base, 0, 3, 1, 1);
-
-	gl->addWidget(new QLabel(tr("Primary MIDI output channel")), 1, 2, 1, 1);
-	gl->addWidget(spn_pri_chan, 1, 3, 1, 1);
-
-	gl->addWidget(new QLabel(tr("Secondary base MIDI output channel")), 2, 2, 1, 1);
-	gl->addWidget(spn_sec_base_chan, 2, 3, 1, 1);
-
-	gl->addWidget(new QLabel(tr("Secondary treble MIDI output channel")), 3, 2, 1, 1);
-	gl->addWidget(spn_sec_treb_chan, 3, 3, 1, 1);
-
-	gl->addWidget(new QLabel(tr("Normalize chord pressure")), 4, 2, 1, 1);
-	gl->addWidget(cbx_norm, 4, 3, 1, 1);
-
-	gl->addWidget(gb_delay, 5, 2, 1, 2);
-
-	gl->addWidget(gb_contrast, 6, 2, 1, 2);
-
-	gl->addWidget(but_song_events, 7, 2, 1, 2);
-
-	gl->addWidget(but_mode, 8, 2, 2, 2);
-
-	gl->setRowStretch(10, 1);
+	gl->addWidget(gb_idev, 0, 0, 6, 2);
+	gl->addWidget(gb_iconfig, 0, 2, 1, 2);
+	gl->addWidget(gb_oconfig, 1, 2, 1, 2);
+	gl->addWidget(gb_delay, 2, 2, 1, 2);
+	gl->addWidget(gb_contrast, 3, 2, 1, 2);
+	gl->addWidget(but_song_events, 4, 2, 1, 2);
+	gl->addWidget(but_mode, 5, 2, 1, 2);
+	gl->setRowStretch(6, 1);
 	gl->setColumnStretch(4, 1);
 
-	gl->addWidget(but_set_all, 11, 0, 1, 1);
-	gl->addWidget(but_clear_all, 11, 1, 1, 1);
-	gl->addWidget(but_reset, 11, 2, 1, 1);
-	gl->addWidget(but_done, 11, 3, 1, 1);
+	gl->addWidget(but_set_all, 7, 0, 1, 1);
+	gl->addWidget(but_clear_all, 7, 1, 1, 1);
+	gl->addWidget(but_reset, 7, 2, 1, 1);
+	gl->addWidget(but_done, 7, 3, 1, 1);
+
+	gb_delay->addWidget(sli_delay, 0, 0, 1, 1);
+
+	gb_contrast->addWidget(sli_contrast, 0, 0, 1, 2);
+	gb_contrast->addWidget(new QLabel(tr("Normalize chord pressure")), 1, 0, 1, 1);
+	gb_contrast->addWidget(cbx_norm, 1, 1, 1, 1);
+
+	gb_iconfig->addWidget(new QLabel(tr("Play Key")), 0, 0, 1, 1);
+	gb_iconfig->addWidget(spn_base, 0, 1, 1, 1);
+	gb_iconfig->addWidget(new QLabel(tr("Channel")), 1, 0, 1, 1);
+	gb_iconfig->addWidget(spn_input_chan, 1, 1, 1, 1);
+
+	gb_oconfig->addWidget(new QLabel(tr("Primary channel")), 0, 0, 1, 1);
+	gb_oconfig->addWidget(spn_pri_chan, 0, 1, 1, 1);
+	gb_oconfig->addWidget(new QLabel(tr("Secondary base channel")), 1, 0, 1, 1);
+	gb_oconfig->addWidget(spn_sec_base_chan, 1, 1, 1, 1);
+	gb_oconfig->addWidget(new QLabel(tr("Secondary treble channel")), 2, 0, 1, 1);
+	gb_oconfig->addWidget(spn_sec_treb_chan, 2, 1, 1, 1);
 }
 
 MppMode :: ~MppMode()
@@ -161,6 +160,7 @@ MppMode :: update_all(void)
 {
 	int base_key;
 	int key_delay;
+	int channelInput;
 	int channel;
 	int channelBase;
 	int channelTreb;
@@ -174,6 +174,7 @@ MppMode :: update_all(void)
 	pthread_mutex_lock(&sm->mainWindow->mtx);
 	base_key = sm->baseKey;
 	key_delay = sm->delayNoise;
+	channelInput = sm->inputChannel;
 	channel = sm->synthChannel;
 	channelBase = sm->synthChannelBase;
 	channelTreb = sm->synthChannelTreb;
@@ -190,6 +191,7 @@ MppMode :: update_all(void)
 	spn_base->setValue(base_key);
 	sli_delay->setValue(key_delay);
 	sli_contrast->setValue(chord_contrast);
+	spn_input_chan->setValue(channelInput);
 	spn_pri_chan->setValue(channel);
 	spn_sec_base_chan->setValue(channelBase);
 	spn_sec_treb_chan->setValue(channelTreb);
@@ -247,6 +249,7 @@ MppMode :: handle_reset()
 
 	sli_contrast->setValue(128);
 	sli_delay->setValue(25);
+	spn_input_chan->setValue(-1);
 	spn_base->setValue(MPP_DEFAULT_BASE_KEY);
 	spn_pri_chan->setValue(0);
 	spn_sec_base_chan->setValue(-1);
@@ -264,6 +267,7 @@ MppMode :: handle_done()
 {
 	int base_key;
 	int key_delay;
+	int channelInput;
 	int channel;
 	int channelBase;
 	int channelTreb;
@@ -283,6 +287,7 @@ MppMode :: handle_done()
 
 	base_key = spn_base->value();
 	key_delay = sli_delay->value();
+	channelInput = spn_input_chan->value();
 	channel = spn_pri_chan->value();
 	channelBase = spn_sec_base_chan->value();
 	channelTreb = spn_sec_treb_chan->value();
@@ -297,6 +302,7 @@ MppMode :: handle_done()
 	pthread_mutex_lock(&sm->mainWindow->mtx);
 	sm->baseKey = base_key;
 	sm->delayNoise = key_delay;
+	sm->inputChannel = channelInput;
 	sm->synthChannel = channel;
 	sm->synthChannelBase = channelBase;
 	sm->synthChannelTreb = channelTreb;

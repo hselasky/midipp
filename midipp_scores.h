@@ -153,6 +153,7 @@ public:
 	int picScroll;
 	uint16_t active_channels;
 
+	int8_t inputChannel;
 	uint8_t synthChannel;
 	int8_t synthChannelBase;
 	int8_t synthChannelTreb;
