@@ -74,7 +74,7 @@ MppSettings :: valueDefault(const QString &str, int n)
 	int val;
 
 	if (contains(str))
-		val = value(str).toUInt();
+		val = value(str).toInt();
 	else
 		val = n;
 
