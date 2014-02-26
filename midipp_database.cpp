@@ -127,7 +127,7 @@ tar_match(void *arg, const char *str)
 	uint8_t x;
 
 	for (x = 0; x != filter->match_count; x++) {
-		if (strstr(str, filter->match_word[x]) == NULL)
+		if (strcasestr(str, filter->match_word[x]) == NULL)
 			return (0);
 	}
 	return (1);
