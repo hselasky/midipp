@@ -65,3 +65,8 @@ Changes for v1.2.5:
 - Reworked BPM generator
 - Fixed a deadlock situation
 
+Changes for v1.2.6:
+- Added experimental support for guitar synths, like Roland GR 55
+- Added support for separate base and treble channels in chord mode
+- Some minor GUI rework
+
