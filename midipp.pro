@@ -2,7 +2,10 @@ TEMPLATE	= app
 CONFIG		+= qt warn_on release
 QT		+= core gui network
 greaterThan(QT_MAJOR_VERSION, 4) {
-QT += widgets printsupport
+QT += widgets
+  isEmpty(HAVE_IOS) {
+    QT += printsupport
+  }
 }
 
 !isEmpty(HAVE_IOS) {
