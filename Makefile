@@ -49,7 +49,6 @@ clean: Makefile.unix
 package: clean
 
 	tar -cvf temp.tar --exclude="*~" --exclude="*#" \
-		--gid 0 --uid 0 \
 		--exclude=".svn" --exclude="*.orig" --exclude="*.rej" \
 		Makefile midipp*.pro midipp*.qrc midipp*.plist \
 		midipp.icns HISTORY.TXT \
@@ -64,4 +63,4 @@ package: clean
 
 	rm -rf temp.tar
 
-	tar -jcvf midipp-${VERSION}.tar.bz2 midipp-${VERSION}
+	tar --uid=0 --gid=0 -jcvf midipp-${VERSION}.tar.bz2 midipp-${VERSION}
