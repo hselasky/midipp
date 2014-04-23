@@ -1143,7 +1143,7 @@ load_file:
 	        if (umidi20_event_is_voice(event) ||
 		    umidi20_event_is_sysex(event)) {
 
-		    if (do_instr_check(event, NULL)) {
+		    if (do_instr_check(event, NULL) != 0) {
 			event_copy = NULL;
 		    } else {
 			if (umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL) {
@@ -1153,15 +1153,20 @@ load_file:
 			}
 			event_copy = umidi20_event_copy(event, 0);
 		    }
+		} else if (umidi20_event_get_what(event) &
+		    (UMIDI20_WHAT_SONG_EVENT | UMIDI20_WHAT_BEAT_EVENT)) {
+			event_copy = umidi20_event_copy(event, 0);
+		} else {
+			event_copy = NULL;
+		}
 
-		    if (event_copy != NULL) {
+		if (event_copy != NULL) {
 			/* reserve low positions for channel program events */
 			if (event_copy->position < MPP_MIN_POS)
 				event_copy->position = MPP_MIN_POS;
 
 			umidi20_event_queue_insert(&(track->queue),
 			    event_copy, UMIDI20_CACHE_INPUT);
-		    }
 		}
 	    }
 	}
