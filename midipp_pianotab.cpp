@@ -76,10 +76,18 @@ MppPianoTab :: mousePressEvent(QMouseEvent *event)
 		repaint();
 	}
 	if (r_shift.contains(p) != 0) {
+		/* release keys, if any when shifting octave */
+		for (x = 0; x != 12; x++) {
+			if (state.pressed[x] == 0)
+				continue;
+			state.pressed[x] = 0;
+			int key = MPP_DEFAULT_BASE_KEY + x + (state.shift ? 12 : 0);
+			mw->handle_play_release(key, state.view_index);
+		}
 		state.shift = state.shift ? 0 : 1;
 		if (state.sustain != 0) {
-			mw->handle_sustain_press(state.view_index);
 			mw->handle_sustain_release(state.view_index);
+			mw->handle_sustain_press(state.view_index);
 		}
 		repaint();
 	}
