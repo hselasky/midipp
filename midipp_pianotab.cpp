@@ -168,6 +168,7 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 	qreal ypos;
 	int w = width();
 	int h = height();
+	int z;
 	const char *buf;
 
 	QColor black(0,0,0);
@@ -179,6 +180,10 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 	paint.fillRect(QRectF(0,0,w,h), white);
 
 	paint.setRenderHints(QPainter::Antialiasing, 1);
+
+	z = (h + (2 * h / 3));
+	if (w > z)
+		w = z;
 
 	unit = 2.0 * w / 21.0;
 	uh = 1.0 * w / 21.0;
@@ -226,7 +231,7 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 	paint.setFont(fnt);
 
 	xpos = 0;
-	ypos = h - (3.0 * unit);
+	ypos = h - (3*unit);
 	r_label[0] = drawText(paint, black, (state.last_jump == 0) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L0");
 	xpos += 2;
 	r_label[1] = drawText(paint, black, (state.last_jump == 1) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L1");
