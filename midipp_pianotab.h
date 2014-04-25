@@ -41,19 +41,18 @@ public:
 	MppMainWindow *mw;
 
 	struct {
-		uint8_t pressed[12];
+		uint8_t pressed[24];
 		uint8_t sustain;
 		uint8_t view_index;
-		uint8_t shift;
 		uint8_t last_jump;
+		uint8_t last_octave;
 	} state;
 
-	QRect r_pressed[12];
+	QRect r_pressed[24];
 	QRect r_view_a;
 	QRect r_view_b;
 	QRect r_sustain_on;
 	QRect r_sustain_off;
-	QRect r_shift;
 	QRect r_label[MPP_PIANO_TAB_LABELS];
 
 	void mousePressEvent(QMouseEvent *event);

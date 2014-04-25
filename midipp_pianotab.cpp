@@ -47,13 +47,31 @@ MppPianoTab :: mousePressEvent(QMouseEvent *event)
 	QPoint p = event->pos();
 	unsigned x;
 
-	for (x = 0; x != 12; x++) {
+	for (x = 0; x != 24; x++) {
 		if (r_pressed[x].contains(p) == 0)
 			continue;
 		if (state.pressed[x] != 0)
 			continue;
+		uint8_t curr_octave = (x >= 12);
+		if (state.last_octave != curr_octave) {
+			unsigned y;
+			state.last_octave = curr_octave;
+
+			/* release keys, when shifting octave */
+			for (y = 0; y != 24; y++) {
+				if (state.pressed[y] == 0)
+					continue;
+				state.pressed[y] = 0;
+				int key = MPP_DEFAULT_BASE_KEY + y;
+				mw->handle_play_release(key, state.view_index);
+			}
+			if (state.sustain != 0) {
+				mw->handle_sustain_release(state.view_index);
+				mw->handle_sustain_press(state.view_index);
+			}
+		}
 		state.pressed[x] = 1;
-		int key = MPP_DEFAULT_BASE_KEY + x + (state.shift ? 12 : 0);
+		int key = MPP_DEFAULT_BASE_KEY + x;
 		mw->handle_play_press(key, state.view_index);
 		repaint();
 	}
@@ -75,30 +93,14 @@ MppPianoTab :: mousePressEvent(QMouseEvent *event)
 		state.view_index = 1;
 		repaint();
 	}
-	if (r_shift.contains(p) != 0) {
-		/* release keys, if any when shifting octave */
-		for (x = 0; x != 12; x++) {
-			if (state.pressed[x] == 0)
-				continue;
-			state.pressed[x] = 0;
-			int key = MPP_DEFAULT_BASE_KEY + x + (state.shift ? 12 : 0);
-			mw->handle_play_release(key, state.view_index);
-		}
-		state.shift = state.shift ? 0 : 1;
-		if (state.sustain != 0) {
-			mw->handle_sustain_release(state.view_index);
-			mw->handle_sustain_press(state.view_index);
-		}
-		repaint();
-	}
 	for (x = 0; x != MPP_PIANO_TAB_LABELS; x++) {
 		if (r_label[x].contains(p) == 0)
 			continue;
 		state.last_jump = x;
 		mw->handle_jump(x);
 		if (state.sustain != 0) {
-			mw->handle_sustain_press(state.view_index);
 			mw->handle_sustain_release(state.view_index);
+			mw->handle_sustain_press(state.view_index);
 		}
 		repaint();
 	}
@@ -110,13 +112,13 @@ MppPianoTab :: mouseReleaseEvent(QMouseEvent *event)
 	QPoint p = event->pos();
 	unsigned x;
 
-	for (x = 0; x != 12; x++) {
+	for (x = 0; x != 24; x++) {
 		if (r_pressed[x].contains(p) == 0)
 			continue;
 		if (state.pressed[x] == 0)
 			continue;
 		state.pressed[x] = 0;
-		int key = MPP_DEFAULT_BASE_KEY + x + (state.shift ? 12 : 0);
+		int key = MPP_DEFAULT_BASE_KEY + x;
 		mw->handle_play_release(key, state.view_index);
 		repaint();
 	}
@@ -182,43 +184,68 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 	fnt.setPixelSize(uf);
 	paint.setFont(fnt);
 
-	ypos = h + unit + uh;
-	r_pressed[0] = drawText(paint, black, state.pressed[0] ? grey : white, unit, unit, uq + (unit + uh) * 0.0, ypos, "C");
-	r_pressed[2] = drawText(paint, black, state.pressed[2] ? grey : white, unit, unit, uq + (unit + uh) * 1.0, ypos, "D");
-	r_pressed[4] = drawText(paint, black, state.pressed[4] ? grey : white, unit, unit, uq + (unit + uh) * 2.0, ypos, "E");
-	r_pressed[5] = drawText(paint, black, state.pressed[5] ? grey : white, unit, unit, uq + (unit + uh) * 3.0, ypos, "F");
-	r_pressed[7] = drawText(paint, black, state.pressed[7] ? grey : white, unit, unit, uq + (unit + uh) * 4.0, ypos, "G");
-	r_pressed[9] = drawText(paint, black, state.pressed[9] ? grey : white, unit, unit, uq + (unit + uh) * 5.0, ypos, "A");
-	r_pressed[11] = drawText(paint, black, state.pressed[11] ? grey : white, unit, unit, uq + (unit + uh) * 6.0, ypos, "H");
-
-	ypos = h;
+	ypos = h - 2 * unit + uh;
 	r_pressed[1] = drawText(paint, black, state.pressed[1] ? grey : white, unit, unit, uq + uh + uq + (unit + uh) * 0.0, ypos, "C#");
 	r_pressed[3] = drawText(paint, black, state.pressed[3] ? grey : white, unit, unit, uq + uh + uq + (unit + uh) * 1.0, ypos, "D#");
 	r_pressed[6] = drawText(paint, black, state.pressed[6] ? grey : white, unit, unit, uq + uh + uq + (unit + uh) * 3.0, ypos, "F#");
 	r_pressed[8] = drawText(paint, black, state.pressed[8] ? grey : white, unit, unit, uq + uh + uq + (unit + uh) * 4.0, ypos, "G#");
 	r_pressed[10] = drawText(paint, black, state.pressed[10] ? grey : white, unit, unit, uq + uh + uq + (unit + uh) * 5.0, ypos, "A#");
 
-	ypos = h - (3.0 * unit);
-	r_label[0] = drawText(paint, black, (state.last_jump == 0) ? yellow : white, unit, unit, uq + unit * 0.0, ypos, "L0");
-	r_label[1] = drawText(paint, black, (state.last_jump == 1) ? yellow : white, unit, unit, uq + unit * 1.0, ypos, "L1");
-	r_label[2] = drawText(paint, black, (state.last_jump == 2) ? yellow : white, unit, unit, uq + unit * 2.0, ypos, "L2");
-	r_label[3] = drawText(paint, black, (state.last_jump == 3) ? yellow : white, unit, unit, uq + unit * 3.0, ypos, "L3");
-	r_label[4] = drawText(paint, black, (state.last_jump == 4) ? yellow : white, unit, unit, uq + unit * 4.0, ypos, "L4");
-	r_label[5] = drawText(paint, black, (state.last_jump == 5) ? yellow : white, unit, unit, uq + unit * 5.0, ypos, "L5");
-	r_label[6] = drawText(paint, black, (state.last_jump == 6) ? yellow : white, unit, unit, uq + unit * 6.0, ypos, "L6");
-	r_label[7] = drawText(paint, black, (state.last_jump == 7) ? yellow : white, unit, unit, uq + unit * 7.0, ypos, "L7");
-	r_label[8] = drawText(paint, black, (state.last_jump == 8) ? yellow : white, unit, unit, uq + unit * 8.0, ypos, "L8");
-	r_label[9] = drawText(paint, black, (state.last_jump == 9) ? yellow : white, unit, unit, uq + unit * 9.0, ypos, "L9");
-#if MPP_PIANO_TAB_LABELS != 10
-#error "MPP_PIANO_TAB_LABELS != 10"
-#endif
+	ypos = h - unit + uh;
+	r_pressed[0] = drawText(paint, black, state.pressed[0] ? grey : white, unit, unit, uq + (unit + uh) * 0.0, ypos, "C5");
+	r_pressed[2] = drawText(paint, black, state.pressed[2] ? grey : white, unit, unit, uq + (unit + uh) * 1.0, ypos, "D5");
+	r_pressed[4] = drawText(paint, black, state.pressed[4] ? grey : white, unit, unit, uq + (unit + uh) * 2.0, ypos, "E5");
+	r_pressed[5] = drawText(paint, black, state.pressed[5] ? grey : white, unit, unit, uq + (unit + uh) * 3.0, ypos, "F5");
+	r_pressed[7] = drawText(paint, black, state.pressed[7] ? grey : white, unit, unit, uq + (unit + uh) * 4.0, ypos, "G5");
+	r_pressed[9] = drawText(paint, black, state.pressed[9] ? grey : white, unit, unit, uq + (unit + uh) * 5.0, ypos, "A5");
+	r_pressed[11] = drawText(paint, black, state.pressed[11] ? grey : white, unit, unit, uq + (unit + uh) * 6.0, ypos, "H5");
+
+	ypos = h + unit;
+	r_pressed[12+1] = drawText(paint, black, state.pressed[12+1] ? grey : white, unit, unit, uq + uh + uq + (unit + uh) * 0.0, ypos, "C#");
+	r_pressed[12+3] = drawText(paint, black, state.pressed[12+3] ? grey : white, unit, unit, uq + uh + uq + (unit + uh) * 1.0, ypos, "D#");
+	r_pressed[12+6] = drawText(paint, black, state.pressed[12+6] ? grey : white, unit, unit, uq + uh + uq + (unit + uh) * 3.0, ypos, "F#");
+	r_pressed[12+8] = drawText(paint, black, state.pressed[12+8] ? grey : white, unit, unit, uq + uh + uq + (unit + uh) * 4.0, ypos, "G#");
+	r_pressed[12+10] = drawText(paint, black, state.pressed[12+10] ? grey : white, unit, unit, uq + uh + uq + (unit + uh) * 5.0, ypos, "A#");
+
+	ypos = h + 2*unit;
+	r_pressed[12+0] = drawText(paint, black, state.pressed[12+0] ? grey : white, unit, unit, uq + (unit + uh) * 0.0, ypos, "C6");
+	r_pressed[12+2] = drawText(paint, black, state.pressed[12+2] ? grey : white, unit, unit, uq + (unit + uh) * 1.0, ypos, "D6");
+	r_pressed[12+4] = drawText(paint, black, state.pressed[12+4] ? grey : white, unit, unit, uq + (unit + uh) * 2.0, ypos, "E6");
+	r_pressed[12+5] = drawText(paint, black, state.pressed[12+5] ? grey : white, unit, unit, uq + (unit + uh) * 3.0, ypos, "F6");
+	r_pressed[12+7] = drawText(paint, black, state.pressed[12+7] ? grey : white, unit, unit, uq + (unit + uh) * 4.0, ypos, "G6");
+	r_pressed[12+9] = drawText(paint, black, state.pressed[12+9] ? grey : white, unit, unit, uq + (unit + uh) * 5.0, ypos, "A6");
+	r_pressed[12+11] = drawText(paint, black, state.pressed[12+11] ? grey : white, unit, unit, uq + (unit + uh) * 6.0, ypos, "H6");
+
 	uf /= 3.0;
 	fnt.setPixelSize(uf);
 	paint.setFont(fnt);
 
 	xpos = 0;
-	ypos = h - (2.0 * unit) + uf;
+	ypos = h - (3.0 * unit);
+	r_label[0] = drawText(paint, black, (state.last_jump == 0) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L0");
+	xpos += 2;
+	r_label[1] = drawText(paint, black, (state.last_jump == 1) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L1");
+	xpos += 2;
+	r_label[2] = drawText(paint, black, (state.last_jump == 2) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L2");
+	xpos += 2;
+	r_label[3] = drawText(paint, black, (state.last_jump == 3) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L3");
+	xpos += 2;
+	r_label[4] = drawText(paint, black, (state.last_jump == 4) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L4");
+	xpos += 2;
+	r_label[5] = drawText(paint, black, (state.last_jump == 5) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L5");
+	xpos += 2;
+	r_label[6] = drawText(paint, black, (state.last_jump == 6) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L6");
+	xpos += 2;
+	r_label[7] = drawText(paint, black, (state.last_jump == 7) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L7");
+	xpos += 2;
+	r_label[8] = drawText(paint, black, (state.last_jump == 8) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L8");
+	xpos += 2;
+	r_label[9] = drawText(paint, black, (state.last_jump == 9) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L9");
+	xpos += 2;
 
+#if MPP_PIANO_TAB_LABELS != 10
+#error "MPP_PIANO_TAB_LABELS != 10"
+#endif
 	buf = "A-View";
 	len = strlen(buf) + 2;
 	r_view_a = drawText(paint, black, (state.view_index == 0) ? grey : white, uf * len, unit, uq + xpos * uf, ypos, buf);
@@ -237,10 +264,5 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 	buf = "Sustain-ON";
 	len = strlen(buf) + 2;
 	r_sustain_on = drawText(paint, black, state.sustain ? grey : white , uf * len, unit, uq + xpos * uf, ypos, buf);
-	xpos += len;
-
-	buf = "Transpose C5->C6";
-	len = strlen(buf) + 2;
-	r_shift = drawText(paint, red, state.shift ? grey : white, uf * len, unit, uq + xpos * uf, ypos, buf);
 	xpos += len;
 }
