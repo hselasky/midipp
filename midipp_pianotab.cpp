@@ -54,6 +54,7 @@ MppPianoTab :: mousePressEvent(QMouseEvent *event)
 			state.pressed[x] = 0;
 			int key = MPP_DEFAULT_BASE_KEY + x;
 			mw->handle_play_release(key, state.view_index);
+			repaint();
 			continue;
 		}
 		uint8_t curr_octave = (x >= 12);
