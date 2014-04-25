@@ -2190,3 +2190,65 @@ MppScoreMain :: getCurrLabel(void)
 	}
 	return (retval);
 }
+
+void
+MppScoreMain :: handleMidiKeyPressLocked(int chan, int key, int vel)
+{
+	switch (keyMode) {
+	case MM_PASS_NONE_FIXED:
+		handleKeyPress(baseKey, vel);
+		break;
+	case MM_PASS_NONE_TRANS:
+		handleKeyPress(key, vel);
+		break;
+	case MM_PASS_NONE_CHORD_PIANO:
+	case MM_PASS_NONE_CHORD_GUITAR:
+		handleKeyPressChord(key, vel);
+		break;
+	case MM_PASS_ALL:
+		if (setPressedKey(chan, key, 255, 0) == 0)
+			mainWindow->output_key(chan, key, vel, 0, 0);
+		break;
+	case MM_PASS_ONE_MIXED:
+		if (checkHalfPassThru(key) != 0) {
+			if (key == baseKey)
+				handleKeyPress(key, vel);
+		} else if (setPressedKey(chan, key, 255, 0) == 0) {
+			mainWindow->output_key(chan, key, vel, 0, 0);
+		}
+		break;
+	default:
+		break;
+	}
+}
+
+void
+MppScoreMain :: handleMidiKeyReleaseLocked(int chan, int key)
+{
+	switch (keyMode) {
+	case MM_PASS_NONE_FIXED:
+		handleKeyRelease(baseKey);
+		break;
+	case MM_PASS_NONE_TRANS:
+		handleKeyRelease(key);
+		break;
+	case MM_PASS_NONE_CHORD_PIANO:
+	case MM_PASS_NONE_CHORD_GUITAR:
+		handleKeyReleaseChord(key);
+		break;
+	case MM_PASS_ONE_MIXED:
+		if (checkHalfPassThru(key) != 0) {
+			if (key == baseKey)
+				handleKeyRelease(key);
+		} else if (setPressedKey(chan, key, 0, 0) == 0) {
+			mainWindow->output_key(chan, key, 0, 0, 0);
+		}
+		break;
+	case MM_PASS_ALL:
+		if (setPressedKey(chan, key, 0, 0) == 0)
+			mainWindow->output_key(chan, key, 0, 0, 0);
+		break;
+	default:
+		break;
+	}
+}

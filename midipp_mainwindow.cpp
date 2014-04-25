@@ -811,39 +811,30 @@ MppMainWindow :: handle_midi_record(int value)
 }
 
 void
-MppMainWindow :: handle_play_press(int playKey, int which)
+MppMainWindow :: handle_play_press(int key, int which)
 {
 	if (which < 0 || which >= MPP_MAX_VIEWS)
 		which = 0;
 
-	MppScoreMain *sm = scores_main[which];
-
 	pthread_mutex_lock(&mtx);
-	if (tab_loop->handle_trigN(playKey, 90)) {
+	if (tab_loop->handle_trigN(key, 90) != 0) {
 		/* ignore */
-	} else if (sm->keyMode != MM_PASS_ALL) {
-		sm->handleKeyPress(playKey, 90);
 	} else {
-		dlg_bpm->handle_beat_event_locked(sm->unit);
-		output_key(sm->synthChannel, playKey, 90, 0, 0);
+		MppScoreMain *sm = scores_main[which];
+		sm->handleMidiKeyPressLocked(0, key, 90);
 	}
 	pthread_mutex_unlock(&mtx);
 }
 
 void
-MppMainWindow :: handle_play_release(int playKey, int which)
+MppMainWindow :: handle_play_release(int key, int which)
 {
 	if (which < 0 || which >= MPP_MAX_VIEWS)
 		which = 0;
 
-	MppScoreMain *sm = scores_main[which];
-
 	pthread_mutex_lock(&mtx);
-	if (sm->keyMode != MM_PASS_ALL) {
-		sm->handleKeyRelease(playKey);
-	} else {
-		output_key(sm->synthChannel, playKey, 0, 0, 0);
-	}
+	MppScoreMain *sm = scores_main[which];
+	sm->handleMidiKeyReleaseLocked(0, key);
 	pthread_mutex_unlock(&mtx);
 }
 
@@ -1904,63 +1895,13 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			key = umidi20_event_get_key(event) & 0x7F;
 			vel = umidi20_event_get_velocity(event);
 
-			switch (sm->keyMode) {
-			case MM_PASS_NONE_FIXED:
-				sm->handleKeyPress(sm->baseKey, vel);
-				break;
-			case MM_PASS_NONE_TRANS:
-				sm->handleKeyPress(key, vel);
-				break;
-			case MM_PASS_NONE_CHORD_PIANO:
-			case MM_PASS_NONE_CHORD_GUITAR:
-				sm->handleKeyPressChord(key, vel);
-				break;
-			case MM_PASS_ALL:
-				if (sm->setPressedKey(chan, key, 255, 0) == 0)
-					mw->output_key(chan, key, vel, 0, 0);
-				break;
-			case MM_PASS_ONE_MIXED:
-				if (sm->checkHalfPassThru(key) != 0) {
-					if (key == sm->baseKey)
-						sm->handleKeyPress(key, vel);
-				} else if (sm->setPressedKey(chan, key, 255, 0) == 0) {
-					mw->output_key(chan, key, vel, 0, 0);
-				}
-				break;
-			default:
-				break;
-			}
+			sm->handleMidiKeyPressLocked(chan, key, vel);
 
 		} else if (umidi20_event_is_key_end(event)) {
 
 			key = umidi20_event_get_key(event) & 0x7F;
 
-			switch (sm->keyMode) {
-			case MM_PASS_NONE_FIXED:
-				sm->handleKeyRelease(sm->baseKey);
-				break;
-			case MM_PASS_NONE_TRANS:
-				sm->handleKeyRelease(key);
-				break;
-			case MM_PASS_NONE_CHORD_PIANO:
-			case MM_PASS_NONE_CHORD_GUITAR:
-				sm->handleKeyReleaseChord(key);
-				break;
-			case MM_PASS_ONE_MIXED:
-				if (sm->checkHalfPassThru(key) != 0) {
-					if (key == sm->baseKey)
-						sm->handleKeyRelease(key);
-				} else if (sm->setPressedKey(chan, key, 0, 0) == 0) {
-					mw->output_key(chan, key, 0, 0, 0);
-				}
-				break;
-			case MM_PASS_ALL:
-				if (sm->setPressedKey(chan, key, 0, 0) == 0)
-					mw->output_key(chan, key, 0, 0, 0);
-				break;
-			default:
-				break;
-			}
+			sm->handleMidiKeyReleaseLocked(chan, key);
 
 		} else if (mw->do_instr_check(event, &chan)) {
 
