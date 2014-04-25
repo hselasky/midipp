@@ -142,7 +142,6 @@ public:
 	uint8_t numInputEvents;
 	uint8_t controlEvents[MPP_MAX_QUEUE][4];
 	uint8_t numControlEvents;
-	uint8_t playKey;
 	uint8_t cursorUpdate;
 
 	uint8_t nonChannelMuted;
@@ -218,17 +217,14 @@ public:
 
 	MppPlayGridLayout *tab_play_gl;
 
-	QLabel	*lbl_play_key;
-	MppSpinBox *spn_play_key;
-
 	MppButtonMap *mbm_midi_play;
 	MppButtonMap *mbm_midi_record;
 	MppButtonMap *mbm_score_record;
-	MppButtonMap *mbm_key_mode;
+	MppButtonMap *mbm_key_mode_a;
+	MppButtonMap *mbm_key_mode_b;
 
 	QPushButton *but_jump[MPP_MAX_LBUTTON];
 	QPushButton *but_compile;
-	MppButton *but_play[2];
 	QPushButton *but_midi_pause;
 	QPushButton *but_midi_trigger;
 	QPushButton *but_midi_rewind;
@@ -238,6 +234,10 @@ public:
 	MppMode *dlg_mode[MPP_MAX_VIEWS];
 
 	MppBpm *dlg_bpm;
+
+	/* tab <PianoTab> */
+
+	MppPianoTab *tab_pianotab;
 
 	/* tab <Configuration> */
 
@@ -332,15 +332,16 @@ public:
 
 public slots:
 	void handle_quit();
-	void handle_play_key_changed(int);
 	void handle_jump(int index);
 	void handle_compile(int force = 0);
 	void handle_score_record(int);
 	void handle_midi_record(int);
 	void handle_midi_pause();
 	void handle_midi_play(int);
-	void handle_play_press(int);
-	void handle_play_release(int);
+	void handle_play_press(int, int);
+	void handle_play_release(int, int);
+	void handle_sustain_press(int);
+	void handle_sustain_release(int);
 	void handle_watchdog();
 	void handle_midi_file_new();
 	void handle_midi_file_merge_open();
@@ -378,7 +379,8 @@ public slots:
 	void handle_bpm();
 	void handle_mode(int,int = 1);
 
-	void handle_key_mode(int);
+	void handle_key_mode_a(int);
+	void handle_key_mode_b(int);
 
 	void handle_move_right();
 	void handle_move_left();

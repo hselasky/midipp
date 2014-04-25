@@ -256,8 +256,8 @@ main(int argc, char **argv)
 
 	QApplication app(argc, argv);
 
-	/* make sure we don't detect double click on the play buttons */
-	app.setDoubleClickInterval(0);
+	/* set consistent double click interval */
+	app.setDoubleClickInterval(150);
 
 	Mpp.HomeDirMid = QDir::homePath();
 	Mpp.HomeDirTxt = QDir::homePath();

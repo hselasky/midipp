@@ -48,6 +48,7 @@
 #include "midipp_custom.h"
 #include "midipp_tabbar.h"
 #include "midipp_shortcut.h"
+#include "midipp_pianotab.h"
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -257,6 +258,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_file_gl = new MppGridLayout();
 	tab_play_gl = new MppPlayGridLayout(this);
+	tab_pianotab = new MppPianoTab(this);
 	tab_config_gl = new MppGridLayout();
 	tab_instr_gl = new MppGridLayout();
 	tab_volume_gl = new MppGridLayout();
@@ -286,6 +288,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_tb->addTab(tab_loop, tr("Loop"));
 	main_tb->addTab(tab_file_gl, tr("File"));
 	main_tb->addTab(tab_play_gl, tr("Play"));
+	main_tb->addTab(tab_pianotab, tr("PianoTab"));
 	main_tb->addTab(tab_config_gl, tr("Config"));
 	main_tb->addTab(tab_custom, tr("Custom"));
 	main_tb->addTab(tab_shortcut->gl, tr("Shortcut"));
@@ -388,24 +391,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mbm_score_record = new MppButtonMap("Score recording\0" "OFF\0" "ON\0", 2, 2);
 	connect(mbm_score_record, SIGNAL(selectionChanged(int)), this, SLOT(handle_score_record(int)));
 
-	mbm_key_mode = new MppButtonMap("Key Mode for view A\0" "ALL\0" "MIXED\0" "FIXED\0" "TRANSP\0" "CHORD-PIANO\0" "CHORD-GUITAR\0", 6, 3);
-	connect(mbm_key_mode, SIGNAL(selectionChanged(int)), this, SLOT(handle_key_mode(int)));
+	mbm_key_mode_a = new MppButtonMap("Key Mode for view A\0" "ALL\0" "MIXED\0" "FIXED\0" "TRANSP\0" "CHORD-PIANO\0" "CHORD-GUITAR\0", 6, 3);
+	connect(mbm_key_mode_a, SIGNAL(selectionChanged(int)), this, SLOT(handle_key_mode_a(int)));
 
-	but_play[0] = new MppButton(tr("Shift+Play+A"), 0);
-	but_play[0]->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-	connect(but_play[0], SIGNAL(pressed(int)), this, SLOT(handle_play_press(int)));
-	connect(but_play[0], SIGNAL(released(int)), this, SLOT(handle_play_release(int)));
-
-	but_play[1] = new MppButton(tr("Shift+Play+B"), 1);
-	but_play[1]->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-	connect(but_play[1], SIGNAL(pressed(int)), this, SLOT(handle_play_press(int)));
-	connect(but_play[1], SIGNAL(released(int)), this, SLOT(handle_play_release(int)));
-
-	lbl_play_key = new QLabel(tr("Play Key"));
-	spn_play_key = new MppSpinBox();
-	connect(spn_play_key, SIGNAL(valueChanged(int)), this, SLOT(handle_play_key_changed(int)));
-	spn_play_key->setRange(0, 127);
-	spn_play_key->setValue(MPP_DEFAULT_BASE_KEY);
+	mbm_key_mode_b = new MppButtonMap("Key Mode for view B\0" "ALL\0" "MIXED\0" "FIXED\0" "TRANSP\0" "CHORD-PIANO\0" "CHORD-GUITAR\0", 6, 3);
+	connect(mbm_key_mode_b, SIGNAL(selectionChanged(int)), this, SLOT(handle_key_mode_b(int)));
 
 	/* First column */
 
@@ -413,16 +403,14 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_play_gl->addWidget(gl_ctrl,1,0,1,1);
 	tab_play_gl->addWidget(mbm_midi_play, 2,0,1,1);
 	tab_play_gl->addWidget(mbm_midi_record, 3,0,1,1);
-	tab_play_gl->addWidget(mbm_key_mode, 4,0,1,1);
+	tab_play_gl->addWidget(mbm_key_mode_a, 4,0,1,1);
 
 	/* Second column */
 
 	tab_play_gl->addWidget(gl_synth_play,0,1,2,2);
 	tab_play_gl->addWidget(mbm_score_record, 2,1,1,2);
 	tab_play_gl->addWidget(gl_bpm, 3,1,1,2);
-
-	tab_play_gl->addWidget(but_play[0], 4, 1, 1, 1);
-	tab_play_gl->addWidget(but_play[1], 4, 2, 1, 1);
+	tab_play_gl->addWidget(mbm_key_mode_b, 4,1,1,2);
 
 	tab_play_gl->setRowStretch(5, 1);
 	tab_play_gl->setColumnStretch(4, 1);
@@ -437,8 +425,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	gl_ctrl->addWidget(but_compile, 3, 0, 1, 1);
 
 	gl_synth_play->addWidget(but_bpm, 0, 0, 1, 2);
-	gl_synth_play->addWidget(lbl_play_key, 1, 0, 1, 1);
-	gl_synth_play->addWidget(spn_play_key, 1, 1, 1, 1);
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++)
 		gl_synth_play->addWidget(but_mode[x], x, 2, 1, 2);
@@ -733,14 +719,6 @@ MppMainWindow :: handle_jump(int index)
 }
 
 void
-MppMainWindow :: handle_play_key_changed(int key)
-{
-	pthread_mutex_lock(&mtx);
-	playKey = key & 0x7F;
-	pthread_mutex_unlock(&mtx);
-}
-
-void
 MppMainWindow :: handle_non_channel_muted_changed(int value)
 {
 	pthread_mutex_lock(&mtx);
@@ -833,7 +811,7 @@ MppMainWindow :: handle_midi_record(int value)
 }
 
 void
-MppMainWindow :: handle_play_press(int which)
+MppMainWindow :: handle_play_press(int playKey, int which)
 {
 	if (which < 0 || which >= MPP_MAX_VIEWS)
 		which = 0;
@@ -853,7 +831,7 @@ MppMainWindow :: handle_play_press(int which)
 }
 
 void
-MppMainWindow :: handle_play_release(int which)
+MppMainWindow :: handle_play_release(int playKey, int which)
 {
 	if (which < 0 || which >= MPP_MAX_VIEWS)
 		which = 0;
@@ -866,6 +844,32 @@ MppMainWindow :: handle_play_release(int which)
 	} else {
 		output_key(sm->synthChannel, playKey, 0, 0, 0);
 	}
+	pthread_mutex_unlock(&mtx);
+}
+
+void
+MppMainWindow :: handle_sustain_press(int which)
+{
+	if (which < 0 || which >= MPP_MAX_VIEWS)
+		which = 0;
+
+	MppScoreMain *sm = scores_main[which];
+
+	pthread_mutex_lock(&mtx);
+	sm->outputControl(0x40, 127);
+	pthread_mutex_unlock(&mtx);
+}
+
+void
+MppMainWindow :: handle_sustain_release(int which)
+{
+	if (which < 0 || which >= MPP_MAX_VIEWS)
+		which = 0;
+
+	MppScoreMain *sm = scores_main[which];
+
+	pthread_mutex_lock(&mtx);
+	sm->outputControl(0x40, 0);
 	pthread_mutex_unlock(&mtx);
 }
 
@@ -1902,7 +1906,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 			switch (sm->keyMode) {
 			case MM_PASS_NONE_FIXED:
-				sm->handleKeyPress(mw->playKey, vel);
+				sm->handleKeyPress(sm->baseKey, vel);
 				break;
 			case MM_PASS_NONE_TRANS:
 				sm->handleKeyPress(key, vel);
@@ -1933,7 +1937,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 			switch (sm->keyMode) {
 			case MM_PASS_NONE_FIXED:
-				sm->handleKeyRelease(mw->playKey);
+				sm->handleKeyRelease(sm->baseKey);
 				break;
 			case MM_PASS_NONE_TRANS:
 				sm->handleKeyRelease(key);
@@ -2890,15 +2894,6 @@ MppPlayGridLayout :: keyPressEvent(QKeyEvent *event)
 {
 	/* fake pedal down event */
 	switch (event->key()) {
-	case Qt::Key_Shift:
-		pthread_mutex_lock(&mw->mtx);
-		if (mw->midiTriggered != 0) {
-			unsigned int x;
-			for (x = 0; x != MPP_MAX_VIEWS; x++)
-				mw->scores_main[x]->outputControl(0x40, 127);
-		}
-		pthread_mutex_unlock(&mw->mtx);
-		break;
 	case Qt::Key_0:
 	case Qt::Key_1:
 	case Qt::Key_2:
@@ -2919,16 +2914,6 @@ MppPlayGridLayout :: keyPressEvent(QKeyEvent *event)
 void
 MppPlayGridLayout :: keyReleaseEvent(QKeyEvent *event)
 {
-	/* fake pedal up event */
-	if (event->key() == Qt::Key_Shift) {
-		pthread_mutex_lock(&mw->mtx);
-		if (mw->midiTriggered != 0) {
-			unsigned int x;
-			for (x = 0; x != MPP_MAX_VIEWS; x++)
-				mw->scores_main[x]->outputControl(0x40, 0);
-		}
-		pthread_mutex_unlock(&mw->mtx);
-	}
 }
 
 int
@@ -3074,30 +3059,45 @@ MppMainWindow :: handle_bpm()
 void
 MppMainWindow :: handle_mode(int index, int dialog)
 {
+	int value;
+
 	dlg_mode[index]->update_all();
 
 	if (dialog != 0)
 		dlg_mode[index]->exec();
 
 	if (index == 0) {
-		int value;
-
 		pthread_mutex_lock(&mtx);
 		value = scores_main[0]->keyMode;
 		pthread_mutex_unlock(&mtx);
-
-		mbm_key_mode->setSelection(value);
+		mbm_key_mode_a->setSelection(value);
+	} else 	if (index == 1) {
+		pthread_mutex_lock(&mtx);
+		value = scores_main[1]->keyMode;
+		pthread_mutex_unlock(&mtx);
+		mbm_key_mode_b->setSelection(value);
 	}
 }
 
 void
-MppMainWindow :: handle_key_mode(int value)
+MppMainWindow :: handle_key_mode_a(int value)
 {
 	if (value < 0 || value >= MM_PASS_MAX)
 		value = 0;
 
 	pthread_mutex_lock(&mtx);
 	scores_main[0]->keyMode = value;
+	pthread_mutex_unlock(&mtx);
+}
+
+void
+MppMainWindow :: handle_key_mode_b(int value)
+{
+	if (value < 0 || value >= MM_PASS_MAX)
+		value = 0;
+
+	pthread_mutex_lock(&mtx);
+	scores_main[1]->keyMode = value;
 	pthread_mutex_unlock(&mtx);
 }
 

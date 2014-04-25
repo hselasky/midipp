@@ -70,6 +70,11 @@ Changes for v1.2.6:
 - Added support for separate base and treble channels in chord mode
 - Some minor GUI rework
 
-Changes for v1.2.9
+Changes for v1.2.9:
 - Fixed loading and saving MIDI beat and song events
 - Fixed double click delay on play button
+
+Changes for v1.2.10:
+- Implemented PianoTab for playing via the GUI
+- Minor GUI rework
+

@@ -291,13 +291,15 @@ MppSettings :: doLoad(void)
 			mw->dlg_mode[x]->update_all();
 		}
 
-		int value;
+		int value[2];
 
 		pthread_mutex_lock(&mw->mtx);
-		value = mw->scores_main[0]->keyMode;
+		value[0] = mw->scores_main[0]->keyMode;
+		value[1] = mw->scores_main[1]->keyMode;
 		pthread_mutex_unlock(&mw->mtx);
 
-		mw->mbm_key_mode->setSelection(value);
+		mw->mbm_key_mode_a->setSelection(value[0]);
+		mw->mbm_key_mode_b->setSelection(value[1]);
 	}
 
 	if (save_volume > 0) {
