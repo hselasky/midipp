@@ -257,7 +257,7 @@ main(int argc, char **argv)
 	QApplication app(argc, argv);
 
 	/* set consistent double click interval */
-	app.setDoubleClickInterval(150);
+	app.setDoubleClickInterval(250);
 
 	Mpp.HomeDirMid = QDir::homePath();
 	Mpp.HomeDirTxt = QDir::homePath();
