@@ -50,8 +50,12 @@ MppPianoTab :: mousePressEvent(QMouseEvent *event)
 	for (x = 0; x != 24; x++) {
 		if (r_pressed[x].contains(p) == 0)
 			continue;
-		if (state.pressed[x] != 0)
+		if (state.pressed[x] != 0) {
+			state.pressed[x] = 0;
+			int key = MPP_DEFAULT_BASE_KEY + x;
+			mw->handle_play_release(key, state.view_index);
 			continue;
+		}
 		uint8_t curr_octave = (x >= 12);
 		if (state.last_octave != curr_octave) {
 			unsigned y;
