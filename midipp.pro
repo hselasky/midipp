@@ -34,6 +34,10 @@ OTHER_FILES += MidiPlayerPro.entitlements
 DEFINES += HAVE_NO_SHOW
 }
 
+!isEmpty(HAVE_SCREENSHOT) {
+DEFINES += HAVE_SCREENSHOT
+}
+
 HEADERS		+= midipp.h
 HEADERS		+= midipp_bpm.h
 HEADERS		+= midipp_button.h

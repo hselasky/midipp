@@ -49,6 +49,8 @@
 #include "midipp_tabbar.h"
 #include "midipp_shortcut.h"
 #include "midipp_pianotab.h"
+#include "midipp_decode.h"
+#include "midipp_replace.h"
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -3243,3 +3245,42 @@ MppMainWindow :: handle_config_changed()
 {
 	tim_config_apply->start(500);
 }
+
+#ifdef HAVE_SCREENSHOT
+void
+MppMainWindow :: ScreenShot(void)
+{
+	int x;
+
+	for (x = 0; x != main_tb->ntabs; x++) {
+		main_tb->changeTab(x);
+		MppScreenShot(this);
+	}
+
+	MppMuteMap diag0(this, this, 0);
+	diag0.exec();
+	MppScreenShot(&diag0);
+
+	MppDevices diag1(this);
+	diag1.exec();
+	MppScreenShot(&diag1);
+
+	dlg_bpm->exec();
+	MppScreenShot(dlg_bpm);
+
+	dlg_mode[0]->exec();
+	MppScreenShot(dlg_mode[0]);
+
+	MppDecode diag2(this, scores_main[0], 0);
+	diag2.exec();
+	MppScreenShot(&diag2);
+
+	MppReplace diag3(this, scores_main[0], QString(), QString());
+	diag3.exec();
+	MppScreenShot(&diag3);
+
+	tab_show_control->curr_st = MPP_SHOW_ST_LYRICS;
+	tab_show_control->handle_show();
+	MppScreenShot(tab_show_control->wg_show);
+}
+#endif

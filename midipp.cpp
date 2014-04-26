@@ -229,6 +229,19 @@ failure:
 	return (1);
 }
 
+#ifdef HAVE_SCREENSHOT
+Q_DECL_EXPORT void
+MppScreenShot(QWidget *widget)
+{
+	static uint32_t counter;
+	QString fname;
+	fname.sprintf("screenshot%03d.png", counter++);
+	QPixmap pixmap(widget->size());
+	widget->render(&pixmap);
+	pixmap.save(fname, "PNG");
+}
+#endif
+
 static void
 mask_signal(int sig)
 {
@@ -333,6 +346,9 @@ main(int argc, char **argv)
 			}
 		}
 		main.show();
+#ifdef HAVE_SCREENSHOT
+		main.ScreenShot();
+#endif
 	}
 	return (app.exec());
 }

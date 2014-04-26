@@ -50,6 +50,9 @@ public:
 	MppMainWindow(QWidget *parent = 0);
 	~MppMainWindow();
 
+#ifdef HAVE_SCREENSHOT
+	void ScreenShot(void);
+#endif
 	void MidiInit(void);
 	void MidiUnInit(void);
 

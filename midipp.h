@@ -207,4 +207,8 @@ extern uint8_t MppWriteRawFile(QString fname, QByteArray *pdata);
 extern const char *MppBaseKeyToString(int key, int sharp);
 extern void MppScoreVariantInit(void);
 
+#ifdef HAVE_SCREENSHOT
+extern void MppScreenShot(QWidget *);
+#endif
+
 #endif	/* _MIDIPP_H_ */

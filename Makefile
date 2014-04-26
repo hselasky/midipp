@@ -29,12 +29,17 @@
 VERSION=1.2.11
 
 PREFIX?=/usr/local
+HAVE_SCREENSHOT?=
 
 all: Makefile.unix
 	make -f Makefile.unix -j2 all
 
 Makefile.unix: midipp.pro
+.if ${HAVE_SCREENSHOT} != ""
+	qmake-qt4 HAVE_SCREENSHOT=YES PREFIX=${PREFIX} -o Makefile.unix midipp.pro
+.else
 	qmake-qt4 PREFIX=${PREFIX} -o Makefile.unix midipp.pro
+.endif
 
 help:
 	@echo "Targets are: all, install, clean, package, help"
