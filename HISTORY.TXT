@@ -79,3 +79,5 @@ Changes for v1.2.10:
 - Minor GUI rework
 - Fixed double click function in editor views
 
+Changes for v1.2.11:
+
