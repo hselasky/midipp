@@ -77,4 +77,5 @@ Changes for v1.2.9:
 Changes for v1.2.10:
 - Implemented PianoTab for playing via the GUI
 - Minor GUI rework
+- Fixed double click function in editor views
 
