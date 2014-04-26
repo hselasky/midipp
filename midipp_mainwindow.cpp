@@ -3252,6 +3252,9 @@ MppMainWindow :: ScreenShot(void)
 {
 	int x;
 
+	/* dummy - refresh */
+	main_tb->changeTab(1);
+
 	for (x = 0; x != main_tb->ntabs; x++) {
 		main_tb->changeTab(x);
 		MppScreenShot(this);
