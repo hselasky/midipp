@@ -3260,6 +3260,11 @@ MppMainWindow :: ScreenShot(void)
 		MppScreenShot(this);
 	}
 
+	main_tb->changeTab(0);
+	handle_move_left();
+	main_tb->changeTab(8);
+	MppScreenShot(this);
+
 	MppMuteMap diag0(this, this, 0);
 	diag0.exec();
 	MppScreenShot(&diag0);
