@@ -107,7 +107,7 @@
 #define	MPP_VOLUME_MAX		511	/* inclusivly */
 #define	MPP_CUSTOM_MAX		10
 #define	MPP_LOOP_MAX		8
-#define	MPP_MAX_TABS		16
+#define	MPP_MAX_TABS		20
 #define	MPP_PIANO_TAB_LABELS	10	/* hard coded */
 
 #define	STRLCPY(a,b,c) do { \
