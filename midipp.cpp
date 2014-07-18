@@ -242,11 +242,6 @@ MppScreenShot(QWidget *widget)
 }
 #endif
 
-static void
-mask_signal(int sig)
-{
-}
-
 static const char *mpp_input_file;
 static int mpp_pdf_print;
 
@@ -276,8 +271,6 @@ main(int argc, char **argv)
 	Mpp.HomeDirTxt = QDir::homePath();
 	Mpp.HomeDirGp3 = QDir::homePath();
 	Mpp.HomeDirBackground = QDir::homePath();
-
-	signal(SIGPIPE, mask_signal);
 
 	while ((c = getopt_long_only(argc, argv, "f:ph", midipp_opts, NULL)) != -1) {
 		switch (c) {
