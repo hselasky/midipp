@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2014 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,62 +23,58 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _MIDIPP_IMPORT_H_
-#define	_MIDIPP_IMPORT_H_
+#include "midipp_editor.h"
 
-#include "midipp.h"
-
-#define	MIDIPP_IMPORT_MW	64
-
-class midipp_word {
-public:
-	int off;
-	QString name;
-};
-
-class midipp_import {
-public:
-	QString line_buffer;
-
-	midipp_word d_word[2][MIDIPP_IMPORT_MW];
-	uint8_t d_chords[2];
-
-	MppScoreMain *sm;
-
-	MppDecode *dlg;
-
-	int n_word[2];
-	int max_off;
-
-	uint8_t index;
-	uint8_t load_more;
-};
-
-class MppImportTab : public QObject
+MppEditor :: MppEditor(QWidget * parent) :
+    QPlainTextEdit(parent)
 {
-	Q_OBJECT;
-public:
+	timer.setSingleShot(1);
+	connect(&timer, SIGNAL(timeout()), this, SLOT(handle_timeout()));
+}
 
-	MppImportTab(MppMainWindow *parent);
-	~MppImportTab();
+MppEditor :: MppEditor(const QString &str, QWidget * parent) :
+    QPlainTextEdit(str, parent)
+{
+	timer.setSingleShot(1);
+	connect(&timer, SIGNAL(timeout()), this, SLOT(handle_timeout()));
+}
 
-	MppMainWindow *mainWindow;
+MppEditor :: ~MppEditor()
+{
+	timer.stop();
+}
 
-	MppEditor *editWidget;
-	QPushButton *butImportFileNew;
-	QPushButton *butImportFileOpen;
-	QPushButton *butImportFileSaveAs;
-	MppButton *butImport[MPP_MAX_VIEWS];
-	MppGroupBox *gbImport;
+void
+MppEditor :: mousePressEvent(QMouseEvent *event)
+{
+	if (event->buttons() & Qt::LeftButton)
+		timer.start(MPP_POPUP_DELAY);
 
-public slots:
+	QPlainTextEdit::mousePressEvent(event);
+}
 
-	void handleImportNew();
-	void handleImportOpen();
-	void handleImportSaveAs();
-	void handleImport(int);
-};
+void
+MppEditor :: mouseMoveEvent(QMouseEvent *event)
+{
+	if (event->buttons() & Qt::LeftButton)
+		timer.start(MPP_POPUP_DELAY);
 
-extern uint8_t midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm);
+	QPlainTextEdit::mouseMoveEvent(event);
+}
 
-#endif		/* _MIDIPP_IMPORT_H_ */
+void
+MppEditor :: mouseReleaseEvent(QMouseEvent *event)
+{
+	QPlainTextEdit::mouseReleaseEvent(event);
+
+	if (event->button() == Qt::LeftButton)
+		timer.stop();
+}
+
+void
+MppEditor :: handle_timeout()
+{
+	QMenu *menu = createStandardContextMenu();
+	menu->exec(mapToGlobal(pos()));
+	delete menu;
+}

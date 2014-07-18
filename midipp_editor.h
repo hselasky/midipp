@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2014 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,62 +23,28 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _MIDIPP_IMPORT_H_
-#define	_MIDIPP_IMPORT_H_
+#ifndef _MIDIPP_EDITOR_H_
+#define	_MIDIPP_EDITOR_H_
 
 #include "midipp.h"
 
-#define	MIDIPP_IMPORT_MW	64
-
-class midipp_word {
-public:
-	int off;
-	QString name;
-};
-
-class midipp_import {
-public:
-	QString line_buffer;
-
-	midipp_word d_word[2][MIDIPP_IMPORT_MW];
-	uint8_t d_chords[2];
-
-	MppScoreMain *sm;
-
-	MppDecode *dlg;
-
-	int n_word[2];
-	int max_off;
-
-	uint8_t index;
-	uint8_t load_more;
-};
-
-class MppImportTab : public QObject
+class MppEditor : public QPlainTextEdit
 {
 	Q_OBJECT;
+
 public:
+	MppEditor(QWidget * parent = 0);
+	MppEditor(const QString &, QWidget * parent = 0);
+	~MppEditor();
 
-	MppImportTab(MppMainWindow *parent);
-	~MppImportTab();
+	void mousePressEvent(QMouseEvent *);
+	void mouseMoveEvent(QMouseEvent *);
+	void mouseReleaseEvent(QMouseEvent *);
 
-	MppMainWindow *mainWindow;
-
-	MppEditor *editWidget;
-	QPushButton *butImportFileNew;
-	QPushButton *butImportFileOpen;
-	QPushButton *butImportFileSaveAs;
-	MppButton *butImport[MPP_MAX_VIEWS];
-	MppGroupBox *gbImport;
+	QTimer timer;
 
 public slots:
-
-	void handleImportNew();
-	void handleImportOpen();
-	void handleImportSaveAs();
-	void handleImport(int);
+	void handle_timeout();
 };
 
-extern uint8_t midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm);
-
-#endif		/* _MIDIPP_IMPORT_H_ */
+#endif		/* _MIDIPP_EDITOR_H_ */

@@ -68,6 +68,7 @@
 #include <QListWidget>
 #include <QIcon>
 #include <QCloseEvent>
+#include <QMenu>
 #include <QMessageBox>
 #include <QDir>
 #include <QGroupBox>
@@ -109,6 +110,7 @@
 #define	MPP_LOOP_MAX		8
 #define	MPP_MAX_TABS		20
 #define	MPP_PIANO_TAB_LABELS	10	/* hard coded */
+#define	MPP_POPUP_DELAY		2000	/* ms */
 
 #define	STRLCPY(a,b,c) do { \
     strncpy(a,b,c); ((char *)(a))[(c)-1] = 0; \
@@ -122,6 +124,7 @@ class MppCustomTab;
 class MppDataBase;
 class MppDecode;
 class MppDevices;
+class MppEditor;
 class MppElement;
 class MppGPro;
 class MppGridLayout;

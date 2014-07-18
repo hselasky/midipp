@@ -207,7 +207,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_shortcut = 	new MppShortcutTab(this);
 
-	tab_help = new QPlainTextEdit();
+	tab_help = new MppEditor();
 	tab_help->setFont(editFont);
 	tab_help->setLineWrapMode(QPlainTextEdit::NoWrap);
 	tab_help->setPlainText(tr(

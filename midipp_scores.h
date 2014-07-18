@@ -28,6 +28,7 @@
 
 #include "midipp.h"
 #include "midipp_element.h"
+#include "midipp_editor.h"
 
 class MppScoreView : public QWidget
 {
@@ -44,7 +45,7 @@ protected:
 	MppScoreMain *pScores;
 };
 
-class MppScoreTextEdit : public QPlainTextEdit
+class MppScoreTextEdit : public MppEditor
 {
 public:
 	MppScoreMain *sm;
