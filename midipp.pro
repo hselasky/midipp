@@ -100,8 +100,9 @@ SOURCES		+= midipp_tabbar.cpp
 SOURCES		+= midipp_spinbox.cpp
 SOURCES		+= midipp_shortcut.cpp
 SOURCES		+= midipp_volume.cpp
+SOURCES		+= midipp_qrc.cpp
 
-RESOURCES	+= midipp.qrc
+#RESOURCES	+= midipp.qrc
 
 isEmpty(HAVE_MACOSX) {
 TARGET		= midipp
