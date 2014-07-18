@@ -262,6 +262,9 @@ main(int argc, char **argv)
 {
 	int c;
 
+	/* must be first, before any threads are created */
+	signal(SIGPIPE, SIG_IGN);
+
 	QApplication app(argc, argv);
 
 	/* set consistent double click interval */
