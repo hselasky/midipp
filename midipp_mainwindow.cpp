@@ -112,6 +112,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mwUndo = new QPushButton();
 	mwRedo = new QPushButton();
 	mwEdit = new QPushButton();
+	mwUpDown = new QPushButton();
 
 	mwRight->setToolTip(tr("Move Left to Right"));
 	mwLeft->setToolTip(tr("Move Right to Left"));
@@ -123,6 +124,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mwUndo->setToolTip(tr("Undo"));
 	mwRedo->setToolTip(tr("Redo"));
 	mwEdit->setToolTip(tr("Edit or Insert a Chord"));
+	mwUpDown->setToolTip(tr("Move menu Up or Down"));
 
 	mwRight->setIcon(QIcon(QString(":/right_arrow.png")));
 	mwLeft->setIcon(QIcon(QString(":/left_arrow.png")));
@@ -134,6 +136,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mwUndo->setIcon(QIcon(QString(":/undo.png")));
 	mwRedo->setIcon(QIcon(QString(":/redo.png")));
 	mwEdit->setIcon(QIcon(QString(":/edit.png")));
+	mwUpDown->setIcon(QIcon(QString(":/up_down.png")));
 
 	mwRight->setFocusPolicy(Qt::NoFocus);
 	mwLeft->setFocusPolicy(Qt::NoFocus);
@@ -145,6 +148,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mwUndo->setFocusPolicy(Qt::NoFocus);
 	mwRedo->setFocusPolicy(Qt::NoFocus);
 	mwEdit->setFocusPolicy(Qt::NoFocus);
+	mwUpDown->setFocusPolicy(Qt::NoFocus);
 
 	connect(mwRight, SIGNAL(released()), this, SLOT(handle_move_right()));
 	connect(mwLeft, SIGNAL(released()), this, SLOT(handle_move_left()));
@@ -156,15 +160,18 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(mwUndo, SIGNAL(released()), this, SLOT(handle_undo()));
 	connect(mwRedo, SIGNAL(released()), this, SLOT(handle_redo()));
 	connect(mwEdit, SIGNAL(released()), this, SLOT(handle_edit()));
+	connect(mwUpDown, SIGNAL(released()), this, SLOT(handle_up_down()));
 
 	/* Setup GUI */
 
 	main_gl = new QGridLayout(this);
 
 	main_tb = new MppTabBar();
-	main_gl->addWidget(main_tb,0,0,1,3);
-	main_gl->addWidget(main_tb->right_sw,1,2,17,1);
-	main_gl->addWidget(main_tb->left_sw,1,0,17,1);
+	main_tb_state = 0;
+
+	main_gl->addWidget(main_tb,0,0,1,2);
+	main_gl->addWidget(main_tb->right_sw,1,1,1,1);
+	main_gl->addWidget(main_tb->left_sw,1,0,1,1);
 
 	/* Watchdog */
 
@@ -173,21 +180,24 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* Buttons */
 
-	main_gl->addWidget(mwPlay,2,1,1,1);
-	main_gl->addWidget(mwRewind,3,1,1,1);
-
-	main_gl->addWidget(mwCopy,5,1,1,1);
-	main_gl->addWidget(mwPaste,6,1,1,1);
-
-	main_gl->addWidget(mwEdit,8,1,1,1);
-
-	main_gl->addWidget(mwUndo,10,1,1,1);
-	main_gl->addWidget(mwRedo,11,1,1,1);
-
-	main_gl->addWidget(mwReload,13,1,1,1);
-
-	main_gl->addWidget(mwRight,15,1,1,1);
-	main_gl->addWidget(mwLeft,16,1,1,1);
+	main_tb->addWidget(0);
+	main_tb->addWidget(mwPlay);
+	main_tb->addWidget(mwRewind);
+	main_tb->addWidget(0);
+	main_tb->addWidget(mwCopy);
+	main_tb->addWidget(mwPaste);
+	main_tb->addWidget(0);
+	main_tb->addWidget(mwEdit);
+	main_tb->addWidget(0);
+	main_tb->addWidget(mwUndo);
+	main_tb->addWidget(mwRedo);
+	main_tb->addWidget(0);
+	main_tb->addWidget(mwReload);
+	main_tb->addWidget(0);
+	main_tb->addWidget(mwLeft);
+	main_tb->addWidget(mwRight);
+	main_tb->addWidget(0);
+	main_tb->addWidget(mwUpDown);
 
 #ifndef HAVE_NO_SHOW
 	tab_show_control = new MppShowControl(this);
@@ -207,7 +217,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_shortcut = 	new MppShortcutTab(this);
 
-	tab_help = new MppEditor();
+	tab_help = new QPlainTextEdit();
 	tab_help->setFont(editFont);
 	tab_help->setLineWrapMode(QPlainTextEdit::NoWrap);
 	tab_help->setPlainText(tr(
@@ -260,6 +270,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_file_gl = new MppGridLayout();
 	tab_play_gl = new MppPlayGridLayout(this);
+	tab_chord_gl = new MppDecodeTab(this);
 	tab_pianotab = new MppPianoTab(this);
 	tab_config_gl = new MppGridLayout();
 	tab_instr_gl = new MppGridLayout();
@@ -290,6 +301,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_tb->addTab(tab_loop, tr("Loop"));
 	main_tb->addTab(tab_file_gl, tr("File"));
 	main_tb->addTab(tab_play_gl, tr("Play"));
+	main_tb->addTab(tab_chord_gl, tr("Chord"));
 	main_tb->addTab(tab_pianotab, tr("PianoTab"));
 	main_tb->addTab(tab_config_gl, tr("Config"));
 	main_tb->addTab(tab_custom, tr("Custom"));
@@ -3156,8 +3168,7 @@ MppMainWindow :: handle_edit()
 	if (sm == 0)
 		return;
 	/* edit the line */
-	if (sm->handleEditLine() == 0)
-		handle_compile();
+	sm->handleEditLine();
 }
 
 void
@@ -3244,6 +3255,18 @@ void
 MppMainWindow :: handle_config_changed()
 {
 	tim_config_apply->start(500);
+}
+
+void
+MppMainWindow :: handle_up_down()
+{
+    main_tb_state = !main_tb_state;
+    main_gl->removeWidget(main_tb);
+    if (main_tb_state)
+        main_gl->addWidget(main_tb,2,0,1,2);
+    else
+        main_gl->addWidget(main_tb,0,0,1,2);
+
 }
 
 #ifdef HAVE_SCREENSHOT

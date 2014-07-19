@@ -36,13 +36,13 @@ struct score_variant {
 	uint32_t duplicate;
 };
 
-class MppDecode : public QDialog
+class MppDecodeTab : public QWidget
 {
 	Q_OBJECT;
 
 public:
-	MppDecode(MppMainWindow *, MppScoreMain *, int);
-	~MppDecode();
+	MppDecodeTab(MppMainWindow *);
+	~MppDecodeTab();
 
 	QString getText();
 	void setText(QString);
@@ -51,37 +51,36 @@ public:
 	void wheelEvent(QWheelEvent *);
 
 	MppMainWindow *mw;
-	MppScoreMain *sm;
 
 	QGridLayout *gl;
+	MppGroupBox *gb;
 
 	QLineEdit *lin_edit;
 	QLineEdit *lin_out;
 
-	QLabel *lbl_format;
+	QPushButton *but_rol_up;
+	QPushButton *but_rol_down;
+
 	QLabel *lbl_status;
-	QLabel *lbl_rol;
-	QLabel *lbl_auto_base;
 
 	MppCheckBox *cbx_auto_base;
 
-	QSpinBox *spn_rol;
+	MppButton *but_play[MPP_MAX_VIEWS][3];
 
-	MppButton *but_play[3];
-	QPushButton *but_ok;
-	QPushButton *but_cancel;
+	QPushButton *but_insert;
+
+	int rol_value;
 
 	uint8_t current_score[MPP_MAX_VAR_OFF];
 	uint8_t auto_base[MPP_MAX_VAR_OFF];
 
 public slots:
 
+	void handle_rol_up();
+	void handle_rol_down();
 	void handle_play_press(int);
 	void handle_play_release(int);
-	void handle_ok();
-	void handle_cancel();
-	void handle_parse_int(int x);
-	void handle_parse_text(const QString &x);
+	void handle_insert();
 	void handle_parse(int = 0);
 };
 

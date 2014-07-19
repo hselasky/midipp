@@ -45,8 +45,6 @@ public:
 
 	MppScoreMain *sm;
 
-	MppDecode *dlg;
-
 	int n_word[2];
 	int max_off;
 
@@ -64,7 +62,7 @@ public:
 
 	MppMainWindow *mainWindow;
 
-	MppEditor *editWidget;
+	QPlainTextEdit *editWidget;
 	QPushButton *butImportFileNew;
 	QPushButton *butImportFileOpen;
 	QPushButton *butImportFileSaveAs;

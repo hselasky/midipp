@@ -167,6 +167,7 @@ public:
 	QGridLayout *main_gl;
 
 	MppTabBar *main_tb;
+	int main_tb_state;
 
 	/* main <> */
 
@@ -180,6 +181,7 @@ public:
 	QPushButton *mwUndo;
 	QPushButton *mwRedo;
 	QPushButton *mwEdit;
+    QPushButton *mwUpDown;
 
 	/* tab <Scores> */
 
@@ -237,6 +239,10 @@ public:
 	MppMode *dlg_mode[MPP_MAX_VIEWS];
 
 	MppBpm *dlg_bpm;
+
+	/* tab <Chord> */
+
+	MppDecodeTab *tab_chord_gl;
 
 	/* tab <PianoTab> */
 
@@ -395,6 +401,7 @@ public slots:
 	void handle_redo();
 	void handle_undo();
 	void handle_edit();
+    void handle_up_down();
 };
 
 #endif		/* _MIDIPP_MAINWINDOW_H_ */

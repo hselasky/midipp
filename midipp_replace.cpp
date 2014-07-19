@@ -85,8 +85,5 @@ MppReplace :: accept(void)
 void
 MppReplace :: edit(void)
 {
-	MppDecode dlg(mw, sm, 0);
-
-	if (dlg.exec() == QDialog::Accepted)
-		led_with->setText(dlg.getText());
+	led_with->setText(mw->tab_chord_gl->getText());
 }

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010,2012 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010,2012,2014 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,6 +29,7 @@
 #include "midipp_button.h"
 #include "midipp_checkbox.h"
 #include "midipp_element.h"
+#include "midipp_groupbox.h"
 
 /* The list is sorted by priority. C5 is base. */
 
@@ -263,7 +264,7 @@ mpp_get_key(char *ptr, char **pp)
 }
 
 uint8_t
-MppDecode :: parseScoreChord(MppChordElement *pinfo)
+MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 {
 	QString out;
 	uint8_t temp[12];
@@ -324,9 +325,7 @@ MppDecode :: parseScoreChord(MppChordElement *pinfo)
 	rol = 0;
 	flags = 0;
 
-	while (flags != 3 &&
-	    rol < (spn_rol->maximum() - 1) &&
-	    rol > (spn_rol->minimum() + 1)) {
+	while (flags != 3 && rol < 126 && rol > -126) {
 
 		mid_sort(temp, n);
 
@@ -343,7 +342,7 @@ MppDecode :: parseScoreChord(MppChordElement *pinfo)
 		}
 	}
 
-	spn_rol->setValue(rol);
+	rol_value = rol;
 
 	out += MppBaseKeyToString(y, is_sharp);
 	out += mpp_score_variant[x].keyword;
@@ -460,22 +459,22 @@ mpp_parse_chord(const char *input, int8_t rol,
 	return (0);
 }
 
-MppDecode :: MppDecode(MppMainWindow *_mw, MppScoreMain *_sm, int is_edit)
-  : QDialog(0)
+MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
+  : QWidget()
 {
+	int x;
 	int n;
 
+	rol_value = 0;
+
 	mw = _mw;
-	sm = _sm;
 
 	gl = new QGridLayout(this);
 
-	if (is_edit)
-		setWindowTitle(tr("Editing a chord"));
-	else
-		setWindowTitle(tr("Inserting a chord"));
-
-	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+	gb = new MppGroupBox(tr("Chord Selector"));
+	gl->addWidget(gb, 0,0,1,1);
+	gl->setRowStretch(1,1);
+	gl->setColumnStretch(1,1);
 
 	lin_edit = new QLineEdit(QString('C'));
 	lin_edit->setMaxLength(256);
@@ -483,68 +482,71 @@ MppDecode :: MppDecode(MppMainWindow *_mw, MppScoreMain *_sm, int is_edit)
 	lin_out = new QLineEdit();
 	lin_out->setMaxLength(256);
 
-	lbl_format = new QLabel(tr("[CDEFGABH][#b][...][/CDEFGABH[#b]]"));
 	lbl_status = new QLabel(tr(""));
-	lbl_rol = new QLabel(tr("Rotate:"));
-	lbl_auto_base = new QLabel(tr("Add auto base:"));
-
-	spn_rol = new QSpinBox();
-	spn_rol->setMaximum(127);
-	spn_rol->setMinimum(-127);
-	spn_rol->setValue(0);
 
 	cbx_auto_base = new MppCheckBox();
 	cbx_auto_base->setChecked(1);
 
-	but_ok = new QPushButton(tr("Ok"));
-	but_cancel = new QPushButton(tr("Cancel"));
-	but_play[0] = new MppButton(tr("Play &90"), 90);
-	but_play[1] = new MppButton(tr("Play &60"), 60);
-	but_play[2] = new MppButton(tr("Play &30"), 30);
+	but_insert = new QPushButton(tr("Insert"));
+	but_rol_up = new QPushButton(tr("Roll Up"));
+	but_rol_down = new QPushButton(tr("Roll Down"));
 
-	connect(but_ok, SIGNAL(released()), this, SLOT(handle_ok()));
-	connect(but_cancel, SIGNAL(released()), this, SLOT(handle_cancel()));
-	for (n = 0; n != 3; n++) {
-		connect(but_play[n], SIGNAL(pressed(int)), this, SLOT(handle_play_press(int)));
-		connect(but_play[n], SIGNAL(released(int)), this, SLOT(handle_play_release(int)));
+	for (x = 0; x != MPP_MAX_VIEWS; x++) {
+		char ch = 'A' + x;
+
+		but_play[x][0] = new MppButton(tr("View %1\nPlay &90").arg(ch), 90 + (128 * x));
+		but_play[x][1] = new MppButton(tr("View %1\nPlay &60").arg(ch), 60 + (128 * x));
+		but_play[x][2] = new MppButton(tr("View %1\nPlay &30").arg(ch), 30 + (128 * x));
+
+		for (n = 0; n != 3; n++) {
+			connect(but_play[x][n], SIGNAL(pressed(int)), this, SLOT(handle_play_press(int)));
+			connect(but_play[x][n], SIGNAL(released(int)), this, SLOT(handle_play_release(int)));
+		}
 	}
-	connect(lin_edit, SIGNAL(textChanged(const QString &)), this, SLOT(handle_parse_text(const QString &)));
-	connect(spn_rol, SIGNAL(valueChanged(int)), this, SLOT(handle_parse_int(int)));
-	connect(cbx_auto_base, SIGNAL(stateChanged(int,int)), this, SLOT(handle_parse_int(int)));
+	connect(but_insert, SIGNAL(released()), this, SLOT(handle_insert()));
+	connect(but_rol_up, SIGNAL(released()), this, SLOT(handle_rol_up()));
+	connect(but_rol_down, SIGNAL(released()), this, SLOT(handle_rol_down()));
+	connect(lin_edit, SIGNAL(textChanged(const QString &)), this, SLOT(handle_parse()));
+	connect(cbx_auto_base, SIGNAL(stateChanged(int,int)), this, SLOT(handle_parse()));
 
 	memset(current_score, 0, sizeof(current_score));
 	memset(auto_base, 0, sizeof(auto_base));
 
-	gl->addWidget(lbl_format, 0,0,1,5, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb->addWidget(new QLabel(tr("[CDEFGABH][#b][...][/CDEFGABH[#b]]")),
+	    0,0,1,5, Qt::AlignHCenter|Qt::AlignVCenter);
 
-	gl->addWidget(lbl_rol, 2,0,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(spn_rol, 2,1,1,2);
+	gb->addWidget(but_rol_up, 2,1,1,1);
+	gb->addWidget(but_rol_down, 2,2,1,1);
 
-	gl->addWidget(lin_edit, 3,0,1,5);
-	gl->addWidget(lbl_status, 2,4,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb->addWidget(lin_edit, 3,0,1,5);
+	gb->addWidget(lbl_status, 2,4,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
 
-	gl->addWidget(lin_out, 4,0,1,5);
+	gb->addWidget(lin_out, 4,0,1,5);
 
-	gl->addWidget(lbl_auto_base, 5,0,1,4, Qt::AlignRight|Qt::AlignVCenter);
-	gl->addWidget(cbx_auto_base, 5,4,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb->addWidget(new QLabel(tr("Add auto base:")), 5,0,1,4, Qt::AlignRight|Qt::AlignVCenter);
+	gb->addWidget(cbx_auto_base, 5,4,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
 
-	for (n = 0; n != 3; n++)
-		gl->addWidget(but_play[n], 6, n, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-
-	gl->addWidget(but_ok, 6, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(but_cancel, 6, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	for (x = 0; x != MPP_MAX_VIEWS; x++) {
+		for (n = 0; n != 3; n++)
+			gb->addWidget(but_play[x][n], 6 + x, n, 1, 1);
+	}
+	gb->addWidget(but_insert, 6, 3, MPP_MAX_VIEWS, 2);
 
 	handle_parse();
+    
+	but_insert->setFocus();
 }
 
-MppDecode :: ~MppDecode()
+MppDecodeTab :: ~MppDecodeTab()
 {
 
 }
 
 void
-MppDecode :: handle_play_press(int vel)
+MppDecodeTab :: handle_play_press(int value)
 {
+	MppScoreMain *sm = mw->scores_main[value / 128];
+	uint8_t vel = value & 127;
 	uint8_t x;
 
 	pthread_mutex_lock(&mw->mtx);
@@ -559,8 +561,9 @@ MppDecode :: handle_play_press(int vel)
 }
 
 void
-MppDecode :: handle_play_release(int vel)
+MppDecodeTab :: handle_play_release(int value)
 {
+	MppScoreMain *sm = mw->scores_main[value / 128];
 	uint8_t x;
 
 	pthread_mutex_lock(&mw->mtx);
@@ -575,31 +578,82 @@ MppDecode :: handle_play_release(int vel)
 }
 
 void
-MppDecode :: handle_ok()
+MppDecodeTab :: handle_insert()
 {
-	this->accept();
+	QPlainTextEdit *qedit = mw->currEditor();
+	if (qedit == 0)
+		return;
+
+	QTextCursor cursor(qedit->textCursor());
+	MppChordElement info;
+	MppElement *ptr;
+	MppHead temp;
+	int row;
+
+	temp += qedit->toPlainText();
+	temp.flush();
+
+	row = cursor.blockNumber();
+
+	cursor.beginEditBlock();
+
+	/* check if the chord is valid */
+	if (temp.getChord(row, &info) != 0) {
+		if (info.chord != 0) {
+			info.chord->txt = QChar('(') + lin_edit->text().trimmed() + QChar(')');
+
+			cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor, 1);
+			cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, info.chord->line);
+			cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::MoveAnchor, 1);
+			cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor, 1);
+			cursor.removeSelectedText();
+			cursor.insertText(temp.toPlain(info.chord->line).replace("\n", ""));
+		}
+		if (info.start != 0) {
+			for (ptr = info.start; ptr != info.stop;
+			    ptr = TAILQ_NEXT(ptr, entry)) {
+				ptr->txt = QString();
+			}
+
+			info.start->txt = mw->led_config_insert->text() +
+			    getText();
+
+			cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor, 1);
+			cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, row);
+			cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::MoveAnchor, 1);
+			cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor, 1);
+			cursor.removeSelectedText();
+			cursor.insertText(temp.toPlain(info.start->line).replace("\n", ""));
+		}
+	} else {
+		cursor.removeSelectedText();
+		cursor.insertText(mw->led_config_insert->text() + getText() + QChar('\n'));
+	}
+	cursor.endEditBlock();
+
+	mw->handle_compile();
 }
 
 void
-MppDecode :: handle_cancel()
+MppDecodeTab :: handle_rol_up()
 {
-	this->reject();
-}
-
-void
-MppDecode :: handle_parse_int(int x)
-{
+	rol_value++;
+	if (rol_value > 127)
+		rol_value = 127;
 	handle_parse();
 }
 
 void
-MppDecode :: handle_parse_text(const QString &x)
+MppDecodeTab :: handle_rol_down()
 {
+	rol_value--;
+	if (rol_value < -127)
+		rol_value = -127;
 	handle_parse();
 }
 
 void
-MppDecode :: handle_parse(int change_var)
+MppDecodeTab :: handle_parse(int change_var)
 {
 	QString out;
 
@@ -607,7 +661,6 @@ MppDecode :: handle_parse(int change_var)
 
 	int error;
 	int b_auto;
-	int rol;
 	int x;
 
 	uint8_t n;
@@ -619,13 +672,11 @@ MppDecode :: handle_parse(int change_var)
 
 	out += QString("U1 ");
 
-	rol = spn_rol->value();
-
 	memset(current_score, 0, sizeof(current_score));
 	memset(auto_base, 0, sizeof(auto_base));
 
 	n = sizeof(current_score) / sizeof(current_score[0]);
-	error = mpp_parse_chord(ptr, rol, current_score,
+	error = mpp_parse_chord(ptr, rol_value, current_score,
 	    &n, &var, change_var);
 
 	if (error == 0) {
@@ -692,13 +743,13 @@ done:
 }
 
 QString
-MppDecode :: getText()
+MppDecodeTab :: getText()
 {
 	return (lin_out->text());
 }
 
 void
-MppDecode :: setText(QString str)
+MppDecodeTab :: setText(QString str)
 {
 	lin_edit->setText(str);
 
@@ -706,7 +757,7 @@ MppDecode :: setText(QString str)
 }
 
 void
-MppDecode :: keyPressEvent(QKeyEvent *event)
+MppDecodeTab :: keyPressEvent(QKeyEvent *event)
 {
 	switch (event->key()) {
 	case Qt::Key_Up:
@@ -721,7 +772,7 @@ MppDecode :: keyPressEvent(QKeyEvent *event)
 }
 
 void
-MppDecode :: wheelEvent(QWheelEvent *event)
+MppDecodeTab :: wheelEvent(QWheelEvent *event)
 {
 	int num = event->delta();
 

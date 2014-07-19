@@ -59,15 +59,16 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 
 				if (ptr != NULL &&
 				    mpp_find_chord(ptr, NULL, NULL, NULL) == 0) {
+					MppDecodeTab *ptab = ps->sm->mainWindow->tab_chord_gl;
+
 					out += ".(";
 					out += ps->d_word[i_score][ai].name;
 					out += ")";
 
-					ps->dlg->setText(ptr);
+					ptab->setText(ptr);
 
-					scs += ps->sm->mainWindow->
-					    led_config_insert->text() +
-					    ps->dlg->getText() +
+					scs += ps->sm->mainWindow->led_config_insert->text() +
+					    ptab->getText() +
 					    "\n";
 				}
 
@@ -275,7 +276,6 @@ midipp_import_parse(class midipp_import *ps)
 Q_DECL_EXPORT uint8_t
 midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm)
 {
-	MppDecode dlg(sm->mainWindow, sm, 0);
 	QChar ch;
 	int off;
 
@@ -286,7 +286,6 @@ midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm)
 	ps->d_chords[0] = 0;
 	ps->d_chords[1] = 0;
 	ps->sm = sm;
-	ps->dlg = &dlg;
 	ps->n_word[0] = 0;
 	ps->n_word[1] = 0;
 	ps->max_off = 0;
@@ -338,7 +337,7 @@ MppImportTab :: MppImportTab(MppMainWindow *parent)
 
 	mainWindow = parent;
 
-	editWidget = new MppEditor();
+	editWidget = new QPlainTextEdit();
 	editWidget->setFont(mainWindow->editFont);
 	editWidget->setLineWrapMode(QPlainTextEdit::NoWrap);
 	editWidget->setPlainText(tr(

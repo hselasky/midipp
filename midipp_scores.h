@@ -28,7 +28,6 @@
 
 #include "midipp.h"
 #include "midipp_element.h"
-#include "midipp_editor.h"
 
 class MppScoreView : public QWidget
 {
@@ -45,7 +44,7 @@ protected:
 	MppScoreMain *pScores;
 };
 
-class MppScoreTextEdit : public MppEditor
+class MppScoreTextEdit : public QPlainTextEdit
 {
 public:
 	MppScoreMain *sm;
@@ -87,8 +86,7 @@ public:
 	void outputPitch(uint16_t val);
 	int getCurrLabel(void);
 	void handleScoreFileEffect(int, int, int);
-
-	uint8_t handleEditLine(void);
+	void handleEditLine(void);
 
 	void viewPaintEvent(QPaintEvent *event);
 	void viewMousePressEvent(QMouseEvent *e);

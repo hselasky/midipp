@@ -35,6 +35,7 @@
 #include "midipp_groupbox.h"
 #include "midipp_button.h"
 #include "midipp_show.h"
+#include "midipp_tabbar.h"
 
 static int
 MppCountNewline(const QString &str)
@@ -142,8 +143,7 @@ void
 MppScoreTextEdit :: mouseDoubleClickEvent(QMouseEvent *e)
 {
 	/* edit the line */
-	if (sm->handleEditLine() == 0)
-		sm->mainWindow->handle_compile();
+	sm->handleEditLine();
 }
 
 MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
@@ -1898,34 +1898,20 @@ MppScoreMain :: handleScoreFileExport(void)
 	mainWindow->handle_make_tab_visible(mainWindow->tab_import->editWidget);
 }
 
-uint8_t
+void
 MppScoreMain :: handleEditLine(void)
 {
 	MppHead temp;
 	MppChordElement info;
-	MppElement *ptr;
 	QTextCursor cursor(editWidget->textCursor());
 	int row;
-	int retval = 1;
 
 	cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::MoveAnchor, 1);
 	cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor, 1);
 
 	/* check if the line is empty */
-	if (cursor.selectedText().simplified().size() == 0) {
-		MppDecode dlg(mainWindow, this, 0);
-
-		if(dlg.exec() == QDialog::Accepted) {
-			cursor.beginEditBlock();
-			cursor.removeSelectedText();
-			cursor.insertText(mainWindow->led_config_insert->text());
-			cursor.insertText(dlg.getText());
-			cursor.insertText(QString("\n"));
-			cursor.endEditBlock();
-			retval = 0;
-		}
-		return (retval);
-	}
+	if (cursor.selectedText().simplified().size() == 0)
+		return;
 
 	row = cursor.blockNumber();
 
@@ -1934,49 +1920,12 @@ MppScoreMain :: handleEditLine(void)
 
 	/* check if the chord is valid */
 	if (temp.getChord(row, &info) != 0) {
-
-		MppDecode dlg(mainWindow, this, 1);
-
-		if (dlg.parseScoreChord(&info) == 0) {
-
-			if (dlg.exec() == QDialog::Accepted) {
-
-				cursor.beginEditBlock();
-
-				if (info.chord != 0) {
-
-					info.chord->txt = QChar('(') + dlg.lin_edit->text().trimmed() + QChar(')');
-
-					cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor, 1);
-					cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, info.chord->line);
-					cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::MoveAnchor, 1);
-					cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor, 1);
-					cursor.removeSelectedText();
-					cursor.insertText(temp.toPlain(info.chord->line).replace("\n", ""));
-				}
-
-				if (info.start != 0) {
-					for (ptr = info.start; ptr != info.stop;
-					    ptr = TAILQ_NEXT(ptr, entry)) {
-						ptr->txt = QString();
-					}
-
-					info.start->txt = mainWindow->led_config_insert->text() +
-					    dlg.getText();
-
-					cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor, 1);
-					cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, row);
-					cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::MoveAnchor, 1);
-					cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor, 1);
-					cursor.removeSelectedText();
-					cursor.insertText(temp.toPlain(info.start->line).replace("\n", ""));
-				}
-				cursor.endEditBlock();
-				retval = 0;
-			}
+		MppMainWindow *mw = mainWindow;
+		if (mw->tab_chord_gl->parseScoreChord(&info) == 0) {
+			mw->main_tb->makeWidgetVisible(mw->tab_chord_gl, this->editWidget);
 		}
 	}
-	return (retval);
+	editWidget->setTextCursor(cursor);
 }
 
 void

@@ -28,6 +28,17 @@
 
 #include "midipp.h"
 
+class MppTabWidget {
+public:
+	MppTabWidget() {
+		pWidget = 0;
+	}
+	~MppTabWidget() {
+	}
+	QRect area;
+	QWidget *pWidget;
+};
+
 class MppTab {
 public:
 	MppTab() {
@@ -50,8 +61,11 @@ public:
 	~MppTabBar();
 
 	void addTab(QWidget *, const QString &);
+	void addWidget(QWidget *);
 	void mousePressEvent(QMouseEvent *);
-	void makeWidgetVisible(QWidget *);
+	void mouseMoveEvent(QMouseEvent *);
+	void mouseReleaseEvent(QMouseEvent *);
+	void makeWidgetVisible(QWidget *, QWidget * = 0);
 	void moveCurrWidgetLeft();
 	void moveCurrWidgetRight();
 	void changeTab(int);
@@ -64,6 +78,7 @@ public:
 	QStackedWidget *right_sw;
 	QStackedWidget *left_sw;
 
+	int nwidgets;
 	int ntabs;
 	int basic_size;
 
@@ -72,6 +87,7 @@ public:
 		FLAG_RIGHT = 0x02,
 	};
 
+	MppTabWidget widgets[MPP_MAX_WIDGETS];
 	MppTab tabs[MPP_MAX_TABS];
 };
 
