@@ -269,7 +269,16 @@ MppTabBar :: computeWidth(int n) const
 void
 MppTabBar :: paintEvent(QPaintEvent *event)
 {
+	int ht = computeHeight(width());
+
+	if (ht != height()) {
+		setFixedHeight(ht);
+		update();
+		return;
+	}
+
 	QPainter paint(this);
+
 	int w = width();
 	int h = height();
 	int x_off = 0;
@@ -347,7 +356,7 @@ MppTabBar :: paintEvent(QPaintEvent *event)
 		r++;
 	}
 	for (n = 0; n != nwidgets; n++) {
-		int dw = 4 * basic_size;
+		int dw = (widgets[n].pWidget ? 4 : 3) * basic_size;
 		if (x_off != 0 && x_off + dw >= w) {
 			x_off = 0;
 			r++;
@@ -362,15 +371,6 @@ MppTabBar :: paintEvent(QPaintEvent *event)
 		QObject::eventFilter(widgets[n].pWidget, event);
 	}
 	y_off = (r + 1) * basic_size * 2;
-}
-
-void
-MppTabBar :: updateHeight(int w)
-{
-	int h = computeHeight(w);
-
-	if (h != height())
-		setFixedHeight(h);
 }
 
 int
@@ -393,7 +393,7 @@ MppTabBar :: computeHeight(int w) const
 		r++;
 	}
 	for (n = 0; n != nwidgets; n++) {
-		int dw = 4 * basic_size;
+		int dw = (widgets[n].pWidget ? 4 : 3) * basic_size;
 		if (x_off != 0 && x_off + dw >= w) {
 			x_off = 0;
 			r++;

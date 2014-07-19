@@ -56,7 +56,6 @@ public:
 	void MidiInit(void);
 	void MidiUnInit(void);
 
-	void resizeEvent(QResizeEvent *);
 	void closeEvent(QCloseEvent *event);
 	void handle_stop(int flag = 0);
 	void handle_midi_file_open(int merge);

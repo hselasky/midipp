@@ -70,7 +70,6 @@ public:
 	void moveCurrWidgetRight();
 	void changeTab(int);
 	void paintEvent(QPaintEvent *);
-	void updateHeight(int);
 	int isVisible(QWidget *);
 	int computeWidth(int) const;
 	int computeHeight(int) const;

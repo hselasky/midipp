@@ -3245,13 +3245,6 @@ MppMainWindow :: send_song_select_locked(uint8_t which)
 }
 
 void
-MppMainWindow :: resizeEvent(QResizeEvent *event)
-{
-	main_tb->updateHeight(event->size().width());
-	QWidget :: resizeEvent(event);
-}
-
-void
 MppMainWindow :: handle_config_changed()
 {
 	tim_config_apply->start(500);
