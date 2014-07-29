@@ -26,7 +26,7 @@
 #include "midipp_tabbar.h"
 
 MppTabBar :: MppTabBar(QWidget *parent)
-    : QWidget(parent)
+    : QWidget(parent), MppTabBarRepaint(this)
 {
 	right_sw = new QStackedWidget(this);
 	left_sw = new QStackedWidget(this);
@@ -94,7 +94,7 @@ MppTabBar :: mousePressEvent(QMouseEvent *event)
 		if (widgets[x].pWidget == 0)
 			continue;
 		if (widgets[x].area.contains(pos))
-			QObject::eventFilter(widgets[x].pWidget, event);
+			QWidget::eventFilter(widgets[x].pWidget, event);
 	}
 	event->accept();
 }
@@ -115,7 +115,7 @@ MppTabBar :: mouseReleaseEvent(QMouseEvent *event)
 		if (widgets[x].pWidget == 0)
 			continue;
 		if (widgets[x].area.contains(pos))
-			QObject::eventFilter(widgets[x].pWidget, event);
+			QWidget::eventFilter(widgets[x].pWidget, event);
 	}
 	event->accept();
 }
@@ -130,7 +130,7 @@ MppTabBar :: mouseMoveEvent(QMouseEvent *event)
 		if (widgets[x].pWidget == 0)
 			continue;
 		if (widgets[x].area.contains(pos))
-			QObject::eventFilter(widgets[x].pWidget, event);
+			QWidget::eventFilter(widgets[x].pWidget, event);
 	}
 	event->accept();
 }
@@ -271,11 +271,8 @@ MppTabBar :: paintEvent(QPaintEvent *event)
 {
 	int ht = computeHeight(width());
 
-	if (ht != height()) {
-		setFixedHeight(ht);
-		update();
-		return;
-	}
+	if (ht != height())
+		doRepaintEnqueue();
 
 	QPainter paint(this);
 
@@ -368,7 +365,7 @@ MppTabBar :: paintEvent(QPaintEvent *event)
 		widgets[n].area = QRect(x_off - dw, y_off,
 		    4 * basic_size, 2 * basic_size);
 		widgets[n].pWidget->setGeometry(widgets[n].area);
-		QObject::eventFilter(widgets[n].pWidget, event);
+		QWidget::eventFilter(widgets[n].pWidget, event);
 	}
 	y_off = (r + 1) * basic_size * 2;
 }
@@ -403,3 +400,22 @@ MppTabBar :: computeHeight(int w) const
 	return ((r + 1) * basic_size * 2);
 }
 
+MppTabBarRepaint :: MppTabBarRepaint(MppTabBar *_parent)
+{
+	parent = _parent;
+	connect(this, SIGNAL(doRepaintEnqueue()), this, SLOT(doRepaintCb()));
+}
+
+MppTabBarRepaint :: ~MppTabBarRepaint()
+{
+
+}
+
+void
+MppTabBarRepaint :: doRepaintCb()
+{
+	int ht = parent->computeHeight(parent->width());
+
+	parent->setFixedHeight(ht);
+	parent->update();
+}

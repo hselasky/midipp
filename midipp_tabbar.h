@@ -55,7 +55,21 @@ public:
 	int flags;
 };
 
-class MppTabBar : public QWidget {
+class MppTabBarRepaint : private QObject {
+	Q_OBJECT;
+public:
+	MppTabBarRepaint(MppTabBar *);
+	~MppTabBarRepaint();
+
+	MppTabBar *parent;
+
+public slots:
+	void doRepaintCb();
+signals:
+	void doRepaintEnqueue();
+};
+
+class MppTabBar : public QWidget, public MppTabBarRepaint {
 public:
 	MppTabBar(QWidget * = 0);
 	~MppTabBar();
