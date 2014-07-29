@@ -1195,18 +1195,16 @@ MppScoreMain :: handleChordsLoad(void)
 uint8_t
 MppScoreMain :: handleKeyRemovePast(MppScoreEntry *pn, uint32_t key_delay)
 {
-	int x;
-	uint8_t chan;
 	uint8_t retval = 0;
-
-	chan = (synthChannel + pn->channel) & 0xF;
+	unsigned x;
 
 	for (x = 0; x != MPP_MAX_CHORD_MAP; x++) {
 		if (score_past[x].dur != 0 &&
 		    score_past[x].key == pn->key &&
-		    score_past[x].channel == chan) {
+		    score_past[x].channel == pn->channel) {
 
-			mainWindow->output_key(chan, pn->key, 0, key_delay, 0);
+			mainWindow->output_key(score_past[x].channel,
+			    pn->key, 0, key_delay, 0);
 
 			/* check for secondary event */
 			if (score_past[x].channelSec != 0) {
@@ -1228,12 +1226,11 @@ MppScoreMain :: handleKeyRemovePast(MppScoreEntry *pn, uint32_t key_delay)
 void
 MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 {
-	MppScoreEntry *pn;
-	int off;
+	MppScoreEntry mse;
 	uint8_t map;
+	int off;
 
-	off = (int)in_key - (int)baseKey;
-
+	off = in_key - (int)baseKey;
 	if (off < 0 || off >= MPP_MAX_CHORD_MAP)
 		return;
 
@@ -1261,42 +1258,43 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 		return;	/* dead keys */
 	}
 
-	if (map & MPP_CHORD_MAP_BASE)
-		pn = &score_future_base[map & MPP_CHORD_MAP_KEY];
-	else
-		pn = &score_future_treble[map & MPP_CHORD_MAP_KEY];
-
-	/* check for nonexisting key */
-	if (pn->dur == 0)
-		return;
-
-	/* remove key if already pressed */
-	if (handleKeyRemovePast(pn, key_delay))
-		key_delay++;
-
-	score_past[off].channel = (synthChannel + pn->channel) & 0xF;
-	score_past[off].key = pn->key;
-	score_past[off].dur = 1;
-	score_past[off].channelSec = 0;
-
 	if (map & MPP_CHORD_MAP_BASE) {
-		if (synthChannelBase != (int)score_past[off].channel)
-			score_past[off].channelSec = synthChannelBase + 1;
+		mse = score_future_base[map & MPP_CHORD_MAP_KEY];
 	} else {
-		if (synthChannelTreb != (int)score_past[off].channel)
-			score_past[off].channelSec = synthChannelTreb + 1;
+		mse = score_future_treble[map & MPP_CHORD_MAP_KEY];
 	}
 
-	/* store information for pressure command */
-	score_pressure[off] = score_past[off];
+	/* check for nonexisting key */
+	if (mse.dur == 0)
+		return;
 
-	mainWindow->output_key(score_past[off].channel, score_past[off].key,
-	    vel, key_delay, 0);
+	/* update channel */
+	mse.channel = (mse.channel + synthChannel) & 0xF;
+
+	/* remove key if already pressed */
+	if (handleKeyRemovePast(&mse, key_delay))
+		key_delay++;
+
+	if (map & MPP_CHORD_MAP_BASE) {
+		if (synthChannelBase != (int)mse.channel)
+			mse.channelSec = synthChannelBase + 1;
+	} else {
+		if (synthChannelTreb != (int)mse.channel)
+			mse.channelSec = synthChannelTreb + 1;
+	}
+
+	/* store informatino for key release command */
+	score_past[off] = mse;
+
+	/* store information for pressure command */
+	score_pressure[off] = mse;
+
+	mainWindow->output_key(mse.channel, mse.key, vel, key_delay, 0);
 
 	/* check for secondary event */
-	if (score_past[off].channelSec != 0) {
-		mainWindow->output_key(score_past[off].channelSec - 1,
-		    score_past[off].key, vel, key_delay, 0);
+	if (mse.channelSec != 0) {
+		mainWindow->output_key(mse.channelSec - 1,
+		    mse.key, vel, key_delay, 0);
 	}
 	mainWindow->cursorUpdate = 1;
 }
@@ -1308,8 +1306,7 @@ MppScoreMain :: handleKeyPressureChord(int in_key, int vel, uint32_t key_delay)
 	MppScoreEntry *pn;
 	int off;
 
-	off = (int)in_key - (int)baseKey;
-
+	off = in_key - (int)baseKey;
 	if (off < 0 || off >= MPP_MAX_CHORD_MAP)
 		return;
 
@@ -1331,8 +1328,7 @@ MppScoreMain :: handleKeyReleaseChord(int in_key, uint32_t key_delay)
 	MppScoreEntry *pn;
 	int off;
 
-	off = (int)in_key - (int)baseKey;
-
+	off = in_key - (int)baseKey;
 	if (off < 0 || off >= MPP_MAX_CHORD_MAP)
 		return;
 
