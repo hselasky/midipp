@@ -1735,7 +1735,7 @@ MppMainWindow :: handle_stop(int flag)
 
 	    /* CHORD mode cleanup */
 
-	    for (x = 0; x != 24; x++) {
+	    for (x = 0; x != MPP_MAX_CHORD_MAP; x++) {
 		struct MppScoreEntry *ps;
 
 		ps = &scores_main[z]->score_past[x];
