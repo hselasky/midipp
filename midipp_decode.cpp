@@ -490,6 +490,8 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	but_insert = new QPushButton(tr("Insert"));
 	but_rol_up = new QPushButton(tr("Roll Up"));
 	but_rol_down = new QPushButton(tr("Roll Down"));
+	but_mod_up = new QPushButton(tr("Mod Up"));
+	but_mod_down = new QPushButton(tr("Mod Down"));
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
 		char ch = 'A' + x;
@@ -506,6 +508,8 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	connect(but_insert, SIGNAL(released()), this, SLOT(handle_insert()));
 	connect(but_rol_up, SIGNAL(released()), this, SLOT(handle_rol_up()));
 	connect(but_rol_down, SIGNAL(released()), this, SLOT(handle_rol_down()));
+	connect(but_mod_up, SIGNAL(released()), this, SLOT(handle_mod_up()));
+	connect(but_mod_down, SIGNAL(released()), this, SLOT(handle_mod_down()));
 	connect(lin_edit, SIGNAL(textChanged(const QString &)), this, SLOT(handle_parse()));
 	connect(cbx_auto_base, SIGNAL(stateChanged(int,int)), this, SLOT(handle_parse()));
 
@@ -513,18 +517,20 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	memset(auto_base, 0, sizeof(auto_base));
 
 	gb->addWidget(new QLabel(tr("[CDEFGABH][#b][...][/CDEFGABH[#b]]")),
-	    0,0,1,5, Qt::AlignHCenter|Qt::AlignVCenter);
+	    0,0,1,4, Qt::AlignHCenter|Qt::AlignVCenter);
 
+	gb->addWidget(but_rol_down, 2,0,1,1);
 	gb->addWidget(but_rol_up, 2,1,1,1);
-	gb->addWidget(but_rol_down, 2,2,1,1);
 
-	gb->addWidget(lin_edit, 3,0,1,5);
-	gb->addWidget(lbl_status, 2,4,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb->addWidget(but_mod_down, 2,2,1,1);
+	gb->addWidget(but_mod_up, 2,3,1,1);
 
-	gb->addWidget(lin_out, 4,0,1,5);
+	gb->addWidget(lin_edit, 3,0,1,4);
+	gb->addWidget(lin_out, 4,0,1,4);
 
-	gb->addWidget(new QLabel(tr("Add auto base:")), 5,0,1,4, Qt::AlignRight|Qt::AlignVCenter);
-	gb->addWidget(cbx_auto_base, 5,4,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb->addWidget(lbl_status, 5,0,1,2, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb->addWidget(new QLabel(tr("Add auto base:")), 5,2,1,1, Qt::AlignRight|Qt::AlignVCenter);
+	gb->addWidget(cbx_auto_base, 5,3,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
 		for (n = 0; n != 3; n++)
@@ -650,6 +656,18 @@ MppDecodeTab :: handle_rol_down()
 	if (rol_value < -127)
 		rol_value = -127;
 	handle_parse();
+}
+
+void
+MppDecodeTab :: handle_mod_up()
+{
+	handle_parse(1);
+}
+
+void
+MppDecodeTab :: handle_mod_down()
+{
+	handle_parse(-1);
 }
 
 void

@@ -61,6 +61,9 @@ public:
 	QPushButton *but_rol_up;
 	QPushButton *but_rol_down;
 
+	QPushButton *but_mod_up;
+	QPushButton *but_mod_down;
+
 	QLabel *lbl_status;
 
 	MppCheckBox *cbx_auto_base;
@@ -78,6 +81,8 @@ public slots:
 
 	void handle_rol_up();
 	void handle_rol_down();
+	void handle_mod_up();
+	void handle_mod_down();
 	void handle_play_press(int);
 	void handle_play_release(int);
 	void handle_insert();
