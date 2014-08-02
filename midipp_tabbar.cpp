@@ -48,6 +48,7 @@ MppTabBar :: MppTabBar(QWidget *parent)
 	setMouseTracking(1);
 
 	split = new QSplitter();
+	split->setHandleWidth(20);
 	split->addWidget(left_sw);
 	split->addWidget(right_sw);
 }
