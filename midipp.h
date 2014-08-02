@@ -80,6 +80,7 @@
 #include <QWheelEvent>
 #include <QColorDialog>
 #include <QPoint>
+#include <QSplitter>
 
 #include <umidi20.h>
 

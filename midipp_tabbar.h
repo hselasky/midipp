@@ -88,6 +88,7 @@ public:
 	int computeWidth(int) const;
 	int computeHeight(int) const;
 
+	QSplitter *split;
 	QStackedWidget *right_sw;
 	QStackedWidget *left_sw;
 

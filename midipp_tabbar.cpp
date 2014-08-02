@@ -46,6 +46,10 @@ MppTabBar :: MppTabBar(QWidget *parent)
 
 	setFixedHeight(2 * basic_size);
 	setMouseTracking(1);
+
+	split = new QSplitter();
+	split->addWidget(left_sw);
+	split->addWidget(right_sw);
 }
 
 MppTabBar :: ~MppTabBar()

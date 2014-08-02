@@ -170,8 +170,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_tb_state = 0;
 
 	main_gl->addWidget(main_tb,0,0,1,2);
-	main_gl->addWidget(main_tb->right_sw,1,1,1,1);
-	main_gl->addWidget(main_tb->left_sw,1,0,1,1);
+	main_gl->addWidget(main_tb->split,1,0,1,2);
 
 	/* Watchdog */
 
