@@ -80,4 +80,11 @@ Changes for v1.2.10:
 - Fixed double click function in editor views
 
 Changes for v1.2.11:
+- Reworked Chord Selector into new tab widget
+- Moved all icons to tabbar
+- Fixed some CoreMIDI dynamic attach/detach bugs
+- Allow tabbar to be placed on top or bottom
+- Use QSplitter() for right and left widget.
+
+Changes for v1.2.12:
 
