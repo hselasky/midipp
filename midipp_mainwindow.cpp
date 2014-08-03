@@ -3294,10 +3294,6 @@ MppMainWindow :: ScreenShot(void)
 	dlg_mode[0]->exec();
 	MppScreenShot(dlg_mode[0]);
 
-	MppDecode diag2(this, scores_main[0], 0);
-	diag2.exec();
-	MppScreenShot(&diag2);
-
 	MppReplace diag3(this, scores_main[0], QString(), QString());
 	diag3.exec();
 	MppScreenShot(&diag3);
