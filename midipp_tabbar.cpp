@@ -48,7 +48,11 @@ MppTabBar :: MppTabBar(QWidget *parent)
 	setMouseTracking(1);
 
 	split = new QSplitter();
-	split->setHandleWidth(20);
+#if defined(TARGET_OS_IPHONE) || defined(TARGET_IPHONE_SIMULATOR)
+	split->setHandleWidth(32);
+#else
+	split->setHandleWidth(16);
+#endif
 	split->addWidget(left_sw);
 	split->addWidget(right_sw);
 }

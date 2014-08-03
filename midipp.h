@@ -84,6 +84,10 @@
 
 #include <umidi20.h>
 
+#ifdef __APPLE__
+#include "TargetConditionals.h"
+#endif
+
 #define	MPP_MAX_CHORD_MAP	30
 #define	MPP_MAX_BUTTON_MAP	16
 #define	MPP_MAX_VIEWS	2
