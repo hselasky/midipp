@@ -7,7 +7,7 @@
 	<key>CFBundleGetInfoString</key>
 	<string>Created by Qt/QMake</string>
 	<key>CFBundleIconFile</key>
-	<string>midipp</string>
+	<string>MidiPlayerPro</string>
 	<key>CFBundleIdentifier</key>
 	<string>org.selasky.osx.midipp</string>
 	<key>CFBundlePackageType</key>

@@ -59,7 +59,7 @@ package: midipp_qrc.cpp clean
 	tar -cvf temp.tar --exclude="*~" --exclude="*#" \
 		--exclude=".svn" --exclude="*.orig" --exclude="*.rej" \
 		Makefile midipp*.pro midipp*.qrc midipp*.plist \
-		midipp.icns HISTORY.TXT \
+		MidiPlayerPro.icns HISTORY.TXT \
 		MidiPlayerPro*.entitlements \
 		midipp*.cpp midipp*.h *.png midipp*.desktop
 
