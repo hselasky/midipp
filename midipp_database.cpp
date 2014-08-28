@@ -123,7 +123,7 @@ tar_filter_name(char *name, uint32_t size)
 static int
 tar_match(void *arg, const char *str)
 {
-	struct filter *filter = (struct filter *)arg;
+	const struct filter *filter = (struct filter *)arg;
 	uint8_t x;
 
 	for (x = 0; x != filter->match_count; x++) {
