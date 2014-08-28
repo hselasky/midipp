@@ -51,7 +51,7 @@ public:
 	~MppMainWindow();
 
 #ifdef HAVE_SCREENSHOT
-	void ScreenShot(void);
+	void ScreenShot(QApplication &);
 #endif
 	void MidiInit(void);
 	void MidiUnInit(void);

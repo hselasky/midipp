@@ -225,7 +225,7 @@ extern const char *MppBaseKeyToString(int key, int sharp);
 extern void MppScoreVariantInit(void);
 
 #ifdef HAVE_SCREENSHOT
-extern void MppScreenShot(QWidget *);
+extern void MppScreenShot(QWidget *, QApplication &);
 #endif
 
 #endif	/* _MIDIPP_H_ */

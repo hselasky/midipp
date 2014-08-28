@@ -3263,7 +3263,7 @@ MppMainWindow :: handle_up_down()
 
 #ifdef HAVE_SCREENSHOT
 void
-MppMainWindow :: ScreenShot(void)
+MppMainWindow :: ScreenShot(QApplication &app)
 {
 	int x;
 
@@ -3272,34 +3272,34 @@ MppMainWindow :: ScreenShot(void)
 
 	for (x = 0; x != main_tb->ntabs; x++) {
 		main_tb->changeTab(x);
-		MppScreenShot(this);
+		MppScreenShot(this, app);
 	}
 
 	main_tb->changeTab(0);
 	handle_move_left();
 	main_tb->changeTab(8);
-	MppScreenShot(this);
+	MppScreenShot(this, app);
 
 	MppMuteMap diag0(this, this, 0);
 	diag0.exec();
-	MppScreenShot(&diag0);
+	MppScreenShot(&diag0, app);
 
 	MppDevices diag1(this);
 	diag1.exec();
-	MppScreenShot(&diag1);
+	MppScreenShot(&diag1, app);
 
 	dlg_bpm->exec();
-	MppScreenShot(dlg_bpm);
+	MppScreenShot(dlg_bpm, app);
 
 	dlg_mode[0]->exec();
-	MppScreenShot(dlg_mode[0]);
+	MppScreenShot(dlg_mode[0], app);
 
 	MppReplace diag3(this, scores_main[0], QString(), QString());
 	diag3.exec();
-	MppScreenShot(&diag3);
+	MppScreenShot(&diag3, app);
 
 	tab_show_control->curr_st = MPP_SHOW_ST_LYRICS;
 	tab_show_control->handle_show();
-	MppScreenShot(tab_show_control->wg_show);
+	MppScreenShot(tab_show_control->wg_show, app);
 }
 #endif

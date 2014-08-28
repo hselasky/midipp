@@ -231,9 +231,13 @@ failure:
 
 #ifdef HAVE_SCREENSHOT
 Q_DECL_EXPORT void
-MppScreenShot(QWidget *widget)
+MppScreenShot(QWidget *widget, QApplication &app)
 {
 	static uint32_t counter;
+
+	/* make sure drawing and resizing is complete */
+	app.processEvents();
+
 	QString fname;
 	fname.sprintf("screenshot%03d.png", counter++);
 	QPixmap pixmap(widget->size());
@@ -343,7 +347,7 @@ main(int argc, char **argv)
 		}
 		main.show();
 #ifdef HAVE_SCREENSHOT
-		main.ScreenShot();
+		main.ScreenShot(app);
 #endif
 	}
 	return (app.exec());
