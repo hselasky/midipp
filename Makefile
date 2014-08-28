@@ -28,6 +28,7 @@
 
 VERSION=1.2.12
 
+DESTDIR?=
 PREFIX?=/usr/local
 HAVE_SCREENSHOT?=
 
@@ -35,11 +36,8 @@ all: midipp_qrc.cpp Makefile.unix
 	make -f Makefile.unix -j2 all
 
 Makefile.unix: midipp.pro
-.if ${HAVE_SCREENSHOT} != ""
-	qmake-qt4 HAVE_SCREENSHOT=YES PREFIX=${PREFIX} -o Makefile.unix midipp.pro
-.else
-	qmake-qt4 PREFIX=${PREFIX} -o Makefile.unix midipp.pro
-.endif
+	qmake-qt4 HAVE_SCREENSHOT=${HAVE_SCREENSHOT} PREFIX=${PREFIX} \
+		DESTDIR=${DESTDIR} -o Makefile.unix midipp.pro
 
 midipp_qrc.cpp: midipp.qrc *.png
 	rcc -name midipp midipp.qrc -o midipp_qrc.cpp
