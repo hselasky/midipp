@@ -1313,7 +1313,7 @@ MppMainWindow :: handle_rewind()
 		pthread_mutex_unlock(&mtx);
 
 		/* wait for MIDI events to propagate */
-		usleep(100000);
+		MppSleep::msleep(100 /* ms */);
 	}
 
 	pthread_mutex_lock(&mtx);
@@ -1531,7 +1531,7 @@ MppMainWindow :: handle_config_apply(int devno)
 	handle_config_reload();
 
 	/* wait for MIDI devices to be opened */
-	usleep(100000);
+	MppSleep::msleep(100 /* ms */);
 
 	pthread_mutex_lock(&mtx);
 	ScMidiTriggered = midiTriggered;

@@ -81,6 +81,7 @@
 #include <QColorDialog>
 #include <QPoint>
 #include <QSplitter>
+#include <QThread>    
 
 #include <umidi20.h>
 
@@ -202,6 +203,14 @@ public:
 	QString HomeDirMid;
 	QString HomeDirGp3;
 	QString HomeDirBackground;
+};
+
+class MppSleep : public QThread
+{
+public:
+    static void usleep(unsigned long usecs) { QThread::usleep(usecs); }
+    static void msleep(unsigned long msecs) { QThread::msleep(msecs); }
+    static void sleep(unsigned long secs) { QThread::sleep(secs); }
 };
 
 extern Mpp Mpp;
