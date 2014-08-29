@@ -31,13 +31,15 @@ VERSION=1.2.12
 DESTDIR?=
 PREFIX?=/usr/local
 HAVE_SCREENSHOT?=
+HAVE_STATIC?=
 
 all: midipp_qrc.cpp Makefile.unix
 	make -f Makefile.unix -j2 all
 
 Makefile.unix: midipp.pro
 	qmake-qt4 HAVE_SCREENSHOT=${HAVE_SCREENSHOT} PREFIX=${PREFIX} \
-		DESTDIR=${DESTDIR} -o Makefile.unix midipp.pro
+		DESTDIR=${DESTDIR} HAVE_STATIC=${HAVE_STATIC} \
+		-o Makefile.unix midipp.pro
 
 midipp_qrc.cpp: midipp.qrc *.png
 	rcc -name midipp midipp.qrc -o midipp_qrc.cpp
@@ -59,7 +61,8 @@ package: midipp_qrc.cpp clean
 		Makefile midipp*.pro midipp*.qrc midipp*.plist \
 		MidiPlayerPro.icns HISTORY.TXT \
 		MidiPlayerPro*.entitlements \
-		midipp*.cpp midipp*.h *.png midipp*.desktop
+		midipp*.cpp midipp*.h *.png midipp*.desktop \
+		midipp*.spec
 
 	rm -rf midipp-${VERSION}
 

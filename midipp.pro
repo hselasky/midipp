@@ -30,6 +30,10 @@ QMAKE_INFO_PLIST= midipp_osx.plist
 OTHER_FILES += MidiPlayerPro.entitlements
 }
 
+isEmpty(LIBUMIDIPATH) {
+LIBUMIDIPATH=../libumidi20
+}
+
 !isEmpty(HAVE_NO_SHOW) {
 DEFINES += HAVE_NO_SHOW
 }
@@ -114,22 +118,22 @@ isEmpty(HAVE_STATIC) {
 LIBS		+= -L$${PREFIX}/lib -lumidi20
 INCLUDEPATH	+= $${PREFIX}/include
 } else {
-SOURCES		+= ../libumidi20/umidi20.c
-SOURCES		+= ../libumidi20/umidi20_file.c
-SOURCES		+= ../libumidi20/umidi20_gen.c
-INCLUDEPATH	+= ../libumidi20
+SOURCES		+= $${LIBUMIDIPATH}/umidi20.c
+SOURCES		+= $${LIBUMIDIPATH}/umidi20_file.c
+SOURCES		+= $${LIBUMIDIPATH}/umidi20_gen.c
+INCLUDEPATH	+= $${LIBUMIDIPATH}
  isEmpty(HAVE_JACK) {
- SOURCES	+= ../libumidi20/umidi20_jack_dummy.c
+ SOURCES	+= $${LIBUMIDIPATH}/umidi20_jack_dummy.c
  } else {
  LIBS		+= -L${PREFIX}/lib -ljack
  INCLUDEPATH	+= -I${PREFIX}/include
- SOURCES	+= ../libumidi20/umidi20_jack.c
+ SOURCES	+= $${LIBUMIDIPATH}/umidi20_jack.c
  }
  isEmpty(HAVE_COREMIDI) {
- SOURCES	+= ../libumidi20/umidi20_coremidi_dummy.c
+ SOURCES	+= $${LIBUMIDIPATH}/umidi20_coremidi_dummy.c
  } else {
  LIBS		+= -framework CoreMIDI
- SOURCES	+= ../libumidi20/umidi20_coremidi.c
+ SOURCES	+= $${LIBUMIDIPATH}/umidi20_coremidi.c
  }
 }
 
