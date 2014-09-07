@@ -137,8 +137,10 @@ MppVolume :: paintEvent(QPaintEvent *event)
 	const int m = 4;
 	int w = width();
 	int h = height();
-	int angle = ((value() - min) * 270 * 16) / (max - min + 1);
-	int color = ((value() - min) * (255 - 128)) / (max - min + 1);
+	int val = value() - min;
+	int div = mid - min;
+	int angle = (val * 270 * 16) / (max - min + 1);
+	int color = (val * (255 - 128)) / (max - min + 1);
 
 	paint.setRenderHints(QPainter::Antialiasing, 1);
 
@@ -150,8 +152,12 @@ MppVolume :: paintEvent(QPaintEvent *event)
 
 	fnt.setPixelSize(3*m);
 
+	if (div == 0)
+		div = 1;
+
 	snprintf(buffer, sizeof(buffer), "-%d.%02d+",
-	    value() / mid, ((value() * 100) / mid) % 100);
+	    val / div, ((val * 100) / div) % 100);
+
 	QString descr(buffer);
 
 	paint.fillRect(QRectF(0,0,w,h), background);
