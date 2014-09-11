@@ -33,17 +33,13 @@ PREFIX?=/usr/local
 HAVE_SCREENSHOT?=
 HAVE_STATIC?=
 
-all: midipp_qrc.cpp Makefile.unix
+all: Makefile.unix
 	make -f Makefile.unix -j2 all
 
 Makefile.unix: midipp.pro
 	qmake-qt4 HAVE_SCREENSHOT=${HAVE_SCREENSHOT} PREFIX=${PREFIX} \
 		DESTDIR=${DESTDIR} HAVE_STATIC=${HAVE_STATIC} \
 		-o Makefile.unix midipp.pro
-
-midipp_qrc.cpp: midipp.qrc *.png
-	rcc -name midipp midipp.qrc -o midipp_qrc.cpp
-
 help:
 	@echo "Targets are: all, install, clean, package, help"
 
@@ -54,7 +50,7 @@ clean: Makefile.unix
 	make -f Makefile.unix clean
 	rm -f Makefile.unix
 
-package: midipp_qrc.cpp clean
+package: clean
 
 	tar -cvf temp.tar --exclude="*~" --exclude="*#" \
 		--exclude=".svn" --exclude="*.orig" --exclude="*.rej" \
