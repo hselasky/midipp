@@ -64,13 +64,10 @@ public:
 	MppButton *but_import[MPP_LOOP_MAX][MPP_MAX_VIEWS];
 	MppButton *but_clear[MPP_LOOP_MAX];
 	MppButton *but_trig[MPP_LOOP_MAX];
-	QPushButton *but_loop_on;
-	QPushButton *but_pedal_rec;
-	QPushButton *but_loop_multi;
+	MppButtonMap *mbm_loop;
+	MppButtonMap *mbm_pedal_rec;
+	MppButtonMap *mbm_multi;
 
-	QLabel *lbl_pedal_rec;
-	QLabel *lbl_loop_on;
-	QLabel *lbl_loop_multi;
 	QLabel *lbl_chn_title;
 	QLabel *lbl_dur_title;
 	QLabel *lbl_state_title;
@@ -99,12 +96,12 @@ public:
 public slots:
 
 	void watchdog();
-	void handle_pedal();
-	void handle_loop();
+	void handle_pedal_rec(int);
+	void handle_loop(int);
 	void handle_reset();
 	void handle_clear(int);
 	void handle_trig(int);
-	void handle_multi();
+	void handle_multi(int);
 	void handle_import(int);
 	void handle_value_changed(int);
 };

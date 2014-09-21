@@ -25,6 +25,7 @@
 
 #include "midipp.h"
 
+#include "midipp_buttonmap.h"
 #include "midipp_chansel.h"
 #include "midipp_mainwindow.h"
 #include "midipp_scores.h"
@@ -90,7 +91,7 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 	}
 
 	gl->setRowStretch(2 + MPP_LOOP_MAX, 1);
-	gl->setColumnStretch(6 + MPP_MAX_VIEWS, 1);
+	gl->setColumnStretch(7 + MPP_MAX_VIEWS, 1);
 
 	lbl_chn_title = new QLabel(tr("Channel"));
 	lbl_dur_title = new QLabel(tr("Dur-s"));
@@ -103,34 +104,20 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 	gl->addWidget(lbl_mkey_title, 1, 3 + MPP_MAX_VIEWS, 1, 1);
 
 	but_reset = new QPushButton(tr("Reset"));
-
 	connect(but_reset, SIGNAL(released()), this, SLOT(handle_reset()));
+	gl->addWidget(but_reset, 0, 7, 1, 2);
 
-	gl->addWidget(but_reset, 0, 6, 1, 2);
+	mbm_loop = new MppButtonMap("Looping feature\0" "OFF\0" "ON\0", 2, 2);
+	connect(mbm_loop, SIGNAL(selectionChanged(int)), this, SLOT(handle_loop(int)));
+	gl->addWidget(mbm_loop, 0, 0, 1, 2);
 
-	but_loop_on = new QPushButton(tr("Loop"));
-	lbl_loop_on = new QLabel(tr("OFF"));
+	mbm_multi = new MppButtonMap("Multiple keys feature\0" "OFF\0" "ON\0", 2, 2);
+	connect(mbm_multi, SIGNAL(selectionChanged(int)), this, SLOT(handle_multi(int)));
+	gl->addWidget(mbm_multi, 0, 2, 1, 2);
 
-	gl->addWidget(but_loop_on, 0, 0, 1, 2);
-	gl->addWidget(lbl_loop_on, 0, 2, 1, 1);
-
-	connect(but_loop_on, SIGNAL(released()), this, SLOT(handle_loop()));
-
-	but_pedal_rec = new QPushButton(tr("Record Pedal"));
-	lbl_pedal_rec = new QLabel(tr("OFF"));
-
-	connect(but_pedal_rec, SIGNAL(released()), this, SLOT(handle_pedal()));
-
-	gl->addWidget(but_pedal_rec, 1, 0, 1, 2);
-	gl->addWidget(lbl_pedal_rec, 1, 2, 1, 1);
-
-	but_loop_multi = new QPushButton(tr("Multi"));
-	lbl_loop_multi = new QLabel(tr("OFF"));
-
-	gl->addWidget(but_loop_multi, 0, 3, 1, 1);
-	gl->addWidget(lbl_loop_multi, 0, 4, 1, 1);
-
-	connect(but_loop_multi, SIGNAL(released()), this, SLOT(handle_multi()));
+	mbm_pedal_rec = new MppButtonMap("Record pedal\0" "OFF\0" "ON\0", 2, 2);
+	connect(mbm_pedal_rec, SIGNAL(selectionChanged(int)), this, SLOT(handle_pedal_rec(int)));
+	gl->addWidget(mbm_pedal_rec, 0, 4, 1, 2);
 
 	pthread_mutex_lock(&mw->mtx);
 
@@ -397,9 +384,17 @@ MppLoopTab :: handle_reset()
 	pthread_mutex_lock(&mw->mtx);
 	for (n = 0; n != MPP_LOOP_MAX; n++)
 		handle_clearN(n);
-
 	last_loop = 0;
 	pthread_mutex_unlock(&mw->mtx);
+
+	mbm_loop->setSelection(0);
+	mbm_pedal_rec->setSelection(0);
+	mbm_multi->setSelection(0);
+
+	for (n = 0; n != MPP_LOOP_MAX; n++) {
+		spn_chan[n]->setValue(0);
+		spn_key[n]->setValue(12 * n);
+	}
 }
 
 void
@@ -426,33 +421,27 @@ MppLoopTab :: handle_value_changed(int dummy)
 }
 
 void
-MppLoopTab :: handle_pedal()
+MppLoopTab :: handle_pedal_rec(int value)
 {
 	pthread_mutex_lock(&mw->mtx);
-	pedal_rec ^= 1;
+	pedal_rec = value;
 	pthread_mutex_unlock(&mw->mtx);
-
-	lbl_pedal_rec->setText(tr(pedal_rec ? "ON" : "OFF"));
 }
 
 void
-MppLoopTab :: handle_loop()
+MppLoopTab :: handle_loop(int value)
 {
 	pthread_mutex_lock(&mw->mtx);
-	loop_on ^= 1;
+	loop_on = value;
 	pthread_mutex_unlock(&mw->mtx);
-
-	lbl_loop_on->setText(tr(loop_on ? "ON" : "OFF"));
 }
 
 void
-MppLoopTab :: handle_multi()
+MppLoopTab :: handle_multi(int value)
 {
 	pthread_mutex_lock(&mw->mtx);
-	is_multi ^= 1;
+	is_multi = value;
 	pthread_mutex_unlock(&mw->mtx);
-
-	lbl_loop_multi->setText(tr(is_multi ? "ON" : "OFF"));
 }
 
 void
