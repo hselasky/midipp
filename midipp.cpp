@@ -53,15 +53,25 @@ Mpp :: ~Mpp()
 
 Q_DECL_EXPORT class Mpp Mpp;
 
+Q_DECL_EXPORT const QString
+MppChanName(int channel)
+{
+	if (channel == -1)
+		return (QString("CH::ANY"));
+	if (channel == 9)
+		return (QString("DRUMS"));
+	return (QString("CH::%1").arg(channel + 1));
+}
+
 Q_DECL_EXPORT QString
-MppBaseName(QString fname)
+MppBaseName(const QString & fname)
 {
 	QFileInfo fi(fname);
 	return (fi.fileName());
 }
 
 Q_DECL_EXPORT char *
-MppQStringToAscii(QString s)
+MppQStringToAscii(const QString &s)
 {
 	QByteArray temp = s.toUtf8();
 	int len = temp.size();
@@ -126,7 +136,7 @@ MppBaseKeyToString(int key, int sharp)
 }
 
 Q_DECL_EXPORT QString
-MppReadFile(QString fname)
+MppReadFile(const QString &fname)
 {
 	QFile file(fname);
 	QString retval;
@@ -154,7 +164,7 @@ error:
 }
 
 Q_DECL_EXPORT void
-MppWriteFile(QString fname, QString text)
+MppWriteFile(const QString &fname, QString text)
 {
 	QFile file(fname);
 	QMessageBox box;
@@ -183,7 +193,7 @@ error:
 }
 
 Q_DECL_EXPORT uint8_t
-MppReadRawFile(QString fname, QByteArray *pdata)
+MppReadRawFile(const QString &fname, QByteArray *pdata)
 {
 	QFile file(fname);
 
@@ -206,7 +216,7 @@ failure:
 }
 
 Q_DECL_EXPORT uint8_t
-MppWriteRawFile(QString fname, QByteArray *pdata)
+MppWriteRawFile(const QString &fname, QByteArray *pdata)
 {
 	QFile file(fname);
 

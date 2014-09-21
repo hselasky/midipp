@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2014 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,73 +23,52 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _MIDIPP_MODE_H_
-#define	_MIDIPP_MODE_H_
+#ifndef _MIDIPP_CHANSEL_H_
+#define	_MIDIPP_CHANSEL_H_
 
 #include "midipp.h"
+#include "midipp_gridlayout.h"
 
-enum {
-	MM_PASS_ALL,
-	MM_PASS_ONE_MIXED,
-	MM_PASS_NONE_FIXED,
-	MM_PASS_NONE_TRANS,
-	MM_PASS_NONE_CHORD_PIANO,
-	MM_PASS_NONE_CHORD_GUITAR,
-	MM_PASS_MAX,
+class MppChanSelDiagValue : public QObject
+{
+	Q_OBJECT;
+public:
+	MppChanSelDiagValue() { };
+	~MppChanSelDiagValue() { };
+	int value;
+	QDialog *parent;
+
+public slots:
+	void handle_released(int);
 };
 
-class MppMode : public QDialog
+class MppChanSelDiag : public QDialog, public QGridLayout
+{
+public:
+	MppChanSelDiag(QWidget *, int, int);
+	~MppChanSelDiag();
+
+	MppChanSelDiagValue value;
+};
+
+class MppChanSel : public QPushButton
 {
 	Q_OBJECT;
 
 public:
-	MppMode(MppScoreMain *_parent, uint8_t _vi);
-	~MppMode();
+	MppChanSel(int, int);
+	~MppChanSel();
 
-	MppScoreMain *sm;
-
-	void update_all(void);
-
-	/* view number */
-	uint8_t view_index;
-
-public:
-	QGridLayout *gl;
-
-	MppGroupBox *gb_iconfig;
-	MppGroupBox *gb_oconfig;
-	MppGroupBox *gb_idev;
-	MppGroupBox *gb_contrast;
-	MppGroupBox *gb_delay;
-
-	MppCheckBox *cbx_norm;
-	MppCheckBox *cbx_dev[MPP_MAX_DEVS];
-
-	MppButtonMap *but_song_events;
-	MppButtonMap *but_mode;
-	QPushButton *but_done;
-	QPushButton *but_set_all;
-	QPushButton *but_clear_all;
-	QPushButton *but_reset;
-
-	QSlider *sli_contrast;
-	QSlider *sli_delay;
-
-	MppSpinBox *spn_base;
-
-	MppChanSel *spn_input_chan;
-	MppChanSel *spn_pri_chan;
-	MppChanSel *spn_sec_base_chan;
-	MppChanSel *spn_sec_treb_chan;
+	void setValue(int);
+	int value();
+private:
+	int channel;
+	int haveAny;
 
 public slots:
-
-	void handle_done();
-	void handle_reset();
-	void handle_set_all_devs();
-	void handle_clear_all_devs();
-	void handle_contrast_changed(int);
-	void handle_delay_changed(int);
+	void handle_released();
+signals:
+	void valueChanged(int);
 };
 
-#endif		/* _MIDIPP_MODE_H_ */
+#endif		/* _MIDIPP_CHANSEL_H_ */

@@ -286,7 +286,7 @@ public:
 	MppGroupBox *gb_instr_select;
 	MppGroupBox *gb_instr_table;
 
-	QSpinBox *spn_instr_curr_chan;
+	MppChanSel *spn_instr_curr_chan;
 	QSpinBox *spn_instr_curr_bank;
 	QSpinBox *spn_instr_curr_prog;
 	QSpinBox *spn_instr_bank[16];

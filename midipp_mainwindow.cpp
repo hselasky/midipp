@@ -25,6 +25,7 @@
 
 #include <unistd.h>
 
+#include "midipp_chansel.h"
 #include "midipp_mainwindow.h"
 #include "midipp_scores.h"
 #include "midipp_mutemap.h"
@@ -546,10 +547,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_instr_mute_all = new QPushButton(tr("Mute all"));
 	but_instr_unmute_all = new QPushButton(tr("Unmute all"));
 
-	spn_instr_curr_chan = new QSpinBox();
+	spn_instr_curr_chan = new MppChanSel(0, 0);
 	connect(spn_instr_curr_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_instr_channel_changed(int)));
-	spn_instr_curr_chan->setRange(0, 15);
-	spn_instr_curr_chan->setValue(0);
 
 	spn_instr_curr_bank = new QSpinBox();
 	spn_instr_curr_bank->setRange(0, 16383);
@@ -582,10 +581,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	for (n = 0; n != 16; n++) {
 		int y_off = (n & 8) ? 4 : 0;
 
-		char buf[16];
-
-		snprintf(buf, sizeof(buf), "Ch%X", n);
-
 		spn_instr_bank[n] = new QSpinBox();
 		spn_instr_bank[n]->setRange(0, 16383);
 		connect(spn_instr_bank[n], SIGNAL(valueChanged(int)), this, SLOT(handle_instr_changed(int)));
@@ -597,7 +592,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		cbx_instr_mute[n] = new MppCheckBox(n);
 		connect(cbx_instr_mute[n], SIGNAL(stateChanged(int,int)), this, SLOT(handle_instr_changed(int)));
 
-		gb_instr_table->addWidget(new QLabel(tr(buf)), (n & 7) + 1, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
+		gb_instr_table->addWidget(new QLabel(MppChanName(n)), (n & 7) + 1, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
 		gb_instr_table->addWidget(spn_instr_bank[n], (n & 7) + 1, 1 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
 		gb_instr_table->addWidget(spn_instr_prog[n], (n & 7) + 1, 2 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
 		gb_instr_table->addWidget(cbx_instr_mute[n], (n & 7) + 1, 3 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
@@ -626,10 +621,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	for (n = 0; n != 16; n++) {
 		int y_off = (n & 8) ? 2 : 0;
 
-		char buf[16];
-
-		snprintf(buf, sizeof(buf), "Ch%X", n);
-
 		spn_volume_synth[n] = new MppVolume();
 		spn_volume_synth[n]->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
 		connect(spn_volume_synth[n], SIGNAL(valueChanged(int)), this, SLOT(handle_volume_changed(int)));
@@ -638,10 +629,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		spn_volume_play[n]->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
 		connect(spn_volume_play[n], SIGNAL(valueChanged(int)), this, SLOT(handle_volume_changed(int)));
 
-		gb_volume_play->addWidget(new QLabel(buf), (n & 7) + x, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
+		gb_volume_play->addWidget(new QLabel(MppChanName(n)), (n & 7) + x, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
 		gb_volume_play->addWidget(spn_volume_play[n], (n & 7) + x, 1 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
 
-		gb_volume_synth->addWidget(new QLabel(buf), (n & 7) + x, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
+		gb_volume_synth->addWidget(new QLabel(MppChanName(n)), (n & 7) + x, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
 		gb_volume_synth->addWidget(spn_volume_synth[n], (n & 7) + x, 1 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
 	}
 

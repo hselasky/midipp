@@ -25,6 +25,7 @@
 
 #include "midipp.h"
 
+#include "midipp_chansel.h"
 #include "midipp_mainwindow.h"
 #include "midipp_scores.h"
 #include "midipp_looptab.h"
@@ -48,9 +49,7 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 	gl = new QGridLayout(this);
 
 	for (n = 0; n != MPP_LOOP_MAX; n++) {
-		spn_chan[n] = new QSpinBox();
-		spn_chan[n]->setRange(0, 15);
-		spn_chan[n]->setValue(0);
+		spn_chan[n] = new MppChanSel(0, 0);
 
 		spn_key[n] = new MppSpinBox();
 		spn_key[n]->setRange(0, 127);
@@ -93,7 +92,7 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 	gl->setRowStretch(2 + MPP_LOOP_MAX, 1);
 	gl->setColumnStretch(6 + MPP_MAX_VIEWS, 1);
 
-	lbl_chn_title = new QLabel(tr("Chan."));
+	lbl_chn_title = new QLabel(tr("Channel"));
 	lbl_dur_title = new QLabel(tr("Dur-s"));
 	lbl_state_title = new QLabel(tr("State"));
 	lbl_mkey_title = new QLabel(tr("Key-m"));

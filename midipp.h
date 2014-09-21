@@ -126,6 +126,8 @@
 class MppBpm;
 class MppButton;
 class MppButtonMap;
+class MppChanSel;
+class MppChanSelDiag;
 class MppCheckBox;
 class MppCustomTab;
 class MppDataBase;
@@ -215,12 +217,13 @@ public:
 
 extern Mpp Mpp;
 
-extern QString MppBaseName(QString fname);
-extern char *MppQStringToAscii(QString s);
-extern QString MppReadFile(QString fname);
-extern void MppWriteFile(QString fname, QString text);
-extern uint8_t MppReadRawFile(QString fname, QByteArray *pdata);
-extern uint8_t MppWriteRawFile(QString fname, QByteArray *pdata);
+extern const QString MppChanName(int);
+extern QString MppBaseName(const QString &);
+extern char *MppQStringToAscii(const QString &);
+extern QString MppReadFile(const QString &);
+extern void MppWriteFile(const QString &, QString text);
+extern uint8_t MppReadRawFile(const QString &, QByteArray *pdata);
+extern uint8_t MppWriteRawFile(const QString &, QByteArray *pdata);
 extern const char *MppBaseKeyToString(int key, int sharp);
 extern void MppScoreVariantInit(void);
 

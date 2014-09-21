@@ -54,7 +54,7 @@ public:
 
 	QGridLayout *gl;
 
-	QSpinBox *spn_chan[MPP_LOOP_MAX];
+	MppChanSel *spn_chan[MPP_LOOP_MAX];
 	MppSpinBox *spn_key[MPP_LOOP_MAX];
 
 	QLabel *lbl_dur[MPP_LOOP_MAX];

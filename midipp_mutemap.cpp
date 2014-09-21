@@ -82,14 +82,12 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 		int x_off;
 		int y_off;
 
-		snprintf(buf, sizeof(buf), "Ch%X", n);
-
 		cbx_mute[n] = new MppCheckBox();
 
 		x_off = (n & 8) ? 2: 0;
 		y_off = (n & 7) + 1;
 
-		gb_mute->addWidget(new QLabel(tr(buf)),
+		gb_mute->addWidget(new QLabel(MppChanName(n)),
 		    y_off, x_off + 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 		gb_mute->addWidget(cbx_mute[n],
 		    y_off, x_off + 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);

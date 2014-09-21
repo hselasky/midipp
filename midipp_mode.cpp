@@ -23,6 +23,9 @@
  * SUCH DAMAGE.
  */
 
+#include "midipp.h"
+
+#include "midipp_chansel.h"
 #include "midipp_buttonmap.h"
 #include "midipp_mode.h"
 #include "midipp_spinbox.h"
@@ -93,21 +96,10 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	connect(sli_delay, SIGNAL(valueChanged(int)), this, SLOT(handle_delay_changed(int)));
 	handle_delay_changed(sli_delay->value());
 
-	spn_input_chan = new QSpinBox();
-	spn_input_chan->setRange(-1, 15);
-	spn_input_chan->setValue(-1);
-
-	spn_pri_chan = new QSpinBox();
-	spn_pri_chan->setRange(0, 15);
-	spn_pri_chan->setValue(0);
-
-	spn_sec_base_chan = new QSpinBox();
-	spn_sec_base_chan->setRange(-1, 15);
-	spn_sec_base_chan->setValue(-1);
-
-	spn_sec_treb_chan = new QSpinBox();
-	spn_sec_treb_chan->setRange(-1, 15);
-	spn_sec_treb_chan->setValue(-1);
+	spn_input_chan = new MppChanSel(-1, 1);
+	spn_pri_chan = new MppChanSel(0, 0);
+	spn_sec_base_chan = new MppChanSel(-1, 1);
+	spn_sec_treb_chan = new MppChanSel(-1, 1);
 
 	for (x = 0; x != MPP_MAX_DEVS; x++) {
 		snprintf(buf, sizeof(buf), "Dev%d", x);
