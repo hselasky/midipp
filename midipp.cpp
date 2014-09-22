@@ -336,28 +336,28 @@ main(int argc, char **argv)
 
 	MppScoreVariantInit();
 
-	MppMainWindow main;
+	MppMainWindow *pmain = new MppMainWindow();
 
 	if (mpp_input_file != NULL) {
-		if (main.scores_main[0]->handleScoreFileOpenSub(
+		if (pmain->scores_main[0]->handleScoreFileOpenSub(
 		    QString(mpp_input_file)) != 0) {
 			errx(1, "Could not open file '%s'", mpp_input_file);
 		}
 	}
 
 	if (mpp_pdf_print) {
-		main.scores_main[0]->handleScorePrint();
+		pmain->scores_main[0]->handleScorePrint();
 		exit(0);
 	} else {
 		/* show configuration window by default */
-		if (strcmp(main.deviceName[0], "X:") == 0) {
-			if (main.handle_config_dev(0, 1) == QDialog::Accepted) {
-				main.handle_config_apply(0);
+		if (strcmp(pmain->deviceName[0], "X:") == 0) {
+			if (pmain->handle_config_dev(0, 1) == QDialog::Accepted) {
+				pmain->handle_config_apply(0);
 			}
 		}
-		main.show();
+		pmain->show();
 #ifdef HAVE_SCREENSHOT
-		main.ScreenShot(app);
+		pmain->ScreenShot(app);
 #endif
 	}
 	return (app.exec());
