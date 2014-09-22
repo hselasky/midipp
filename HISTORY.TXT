@@ -10,6 +10,8 @@ Changes for v1.2.13:
 Changes for v1.2.12:
 - Created RPM package.
 - Some minor compile fixes.
+- Changed MIDI start channel from zero to one.
+- Updated GUI a bit.
 
 Changes for v1.2.11:
 - Reworked Chord Selector into new tab widget
