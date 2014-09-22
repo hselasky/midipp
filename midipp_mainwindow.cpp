@@ -3289,6 +3289,10 @@ MppMainWindow :: ScreenShot(QApplication &app)
 	diag3.exec();
 	MppScreenShot(&diag3, app);
 
+	MppChanSelDiag diag4(this, 0, 1);
+	diag4.exec();
+	MppScreenShot(&diag4, app);
+
 	tab_show_control->curr_st = MPP_SHOW_ST_LYRICS;
 	tab_show_control->handle_show();
 	MppScreenShot(tab_show_control->wg_show, app);
