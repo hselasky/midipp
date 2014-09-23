@@ -96,10 +96,10 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	connect(sli_delay, SIGNAL(valueChanged(int)), this, SLOT(handle_delay_changed(int)));
 	handle_delay_changed(sli_delay->value());
 
-	spn_input_chan = new MppChanSel(-1, 1);
+	spn_input_chan = new MppChanSel(-1, MPP_CHAN_ANY);
 	spn_pri_chan = new MppChanSel(0, 0);
-	spn_sec_base_chan = new MppChanSel(-1, 1);
-	spn_sec_treb_chan = new MppChanSel(-1, 1);
+	spn_sec_base_chan = new MppChanSel(-1, MPP_CHAN_NONE);
+	spn_sec_treb_chan = new MppChanSel(-1, MPP_CHAN_NONE);
 
 	for (x = 0; x != MPP_MAX_DEVS; x++) {
 		snprintf(buf, sizeof(buf), "Dev%d", x);

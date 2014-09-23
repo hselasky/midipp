@@ -41,15 +41,24 @@ MppChanSelDiag :: MppChanSelDiag(QWidget *parent, int val, int have_any) :
 	setWindowTitle(QDialog::tr("Select MIDI Channel"));
 
 	for (x = 0; x != 16; x++) {
-		pmb = new MppButton(MppChanName(x), x);
+		pmb = new MppButton(MppChanName(x, have_any), x);
 		QDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int))); 
 		addWidget(pmb, x / 4, x % 4, 1, 1);
 	}
 
-	if (have_any) {
-		pmb = new MppButton(MppChanName(-1), -1);
+	switch (have_any) {
+	case 1:
+		pmb = new MppButton(MppChanName(-1, have_any), -1);
 		QDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int))); 
 		addWidget(pmb, 4, 0, 1, 1);
+		break;
+	case 2:
+		pmb = new MppButton(MppChanName(-1, have_any), -1);
+		QDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int))); 
+		addWidget(pmb, 4, 0, 1, 1);
+		break;
+	default:
+		break;
 	}
 
 	pmb = new MppButton(QDialog :: tr("Cancel"), 17);
@@ -81,7 +90,7 @@ MppChanSel :: MppChanSel(int val, int have_any) :
 	channel = val;
 	haveAny = have_any;
 
-	setText(MppChanName(val));
+	setText(MppChanName(val, haveAny));
 	connect(this, SIGNAL(released()), this, SLOT(handle_released()));
 }
 
@@ -96,7 +105,7 @@ MppChanSel :: setValue(int value)
 
 	if (channel != value) {
 		channel = value;
-		setText(MppChanName(value));
+		setText(MppChanName(value, haveAny));
 		valueChanged(value);
 	}
 }

@@ -118,6 +118,8 @@
 #define	MPP_MAX_WIDGETS		32
 #define	MPP_PIANO_TAB_LABELS	10	/* hard coded */
 #define	MPP_POPUP_DELAY		2000	/* ms */
+#define	MPP_CHAN_ANY		1
+#define	MPP_CHAN_NONE		2
 
 #define	STRLCPY(a,b,c) do { \
     strncpy(a,b,c); ((char *)(a))[(c)-1] = 0; \
@@ -217,7 +219,7 @@ public:
 
 extern Mpp Mpp;
 
-extern const QString MppChanName(int);
+extern const QString MppChanName(int, int = 0);
 extern QString MppBaseName(const QString &);
 extern char *MppQStringToAscii(const QString &);
 extern QString MppReadFile(const QString &);
