@@ -1,5 +1,5 @@
 Name:           midipp
-Version:        1.2.12
+Version:        1.2.13
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
@@ -48,6 +48,8 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Fri Aug 29 2014 HPS hps@selasky.org 1.2.12-1
+* Fri Sep 23 2014 HPS hps@selasky.org 1.2.13-1
+* Fri Sep 23 2014 HPS hps@selasky.org 1.2.12-1
 - Created RPM package.
 - Some minor compile fixes.
+
