@@ -3,7 +3,7 @@ Version:        1.2.13
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
-License:        BSD
+License:        BSD-2-Clause
 URL:            http://www.selasky.org/hans_petter/midistudio
 Source0:        http://www.selasky.org/hans_petter/distfiles/%{name}-%{version}.tar.bz2
 Source1:        http://www.selasky.org/hans_petter/distfiles/libumidi-2.0.13.tar.bz2
