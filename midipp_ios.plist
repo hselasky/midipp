@@ -45,5 +45,7 @@
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 	</array>
+	<key>LSRequiresIPhoneOS</key>
+	<string>YES</string>
 </dict>
 </plist>
