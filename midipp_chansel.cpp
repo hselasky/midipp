@@ -44,6 +44,8 @@ MppChanSelDiag :: MppChanSelDiag(QWidget *parent, int val, int have_any) :
 		pmb = new MppButton(MppChanName(x, have_any), x);
 		QDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int))); 
 		addWidget(pmb, x / 4, x % 4, 1, 1);
+		if (x == val)
+			pmb->setFocus();
 	}
 
 	switch (have_any) {
@@ -51,11 +53,15 @@ MppChanSelDiag :: MppChanSelDiag(QWidget *parent, int val, int have_any) :
 		pmb = new MppButton(MppChanName(-1, have_any), -1);
 		QDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int))); 
 		addWidget(pmb, 4, 0, 1, 1);
+		if (val == -1)
+			pmb->setFocus();
 		break;
 	case 2:
 		pmb = new MppButton(MppChanName(-1, have_any), -1);
 		QDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int))); 
 		addWidget(pmb, 4, 0, 1, 1);
+		if (val == -1)
+			pmb->setFocus();
 		break;
 	default:
 		break;
