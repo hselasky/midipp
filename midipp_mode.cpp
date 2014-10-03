@@ -72,6 +72,7 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	but_song_events = new MppButtonMap("Send MIDI song events\0OFF\0ON\0", 2, 2);
 
 	but_mode = new MppButtonMap("Key mode\0" "ALL\0" "MIXED\0" "FIXED\0" "TRANSP\0" "CHORD-PIANO\0" "CHORD-GUITAR\0", 6, 3);
+	connect(but_mode, SIGNAL(selectionChanged(int)), this, SLOT(handle_changed()));
 
 	but_reset = new QPushButton(tr("Reset"));
 	connect(but_reset, SIGNAL(released()), this, SLOT(handle_reset()));
