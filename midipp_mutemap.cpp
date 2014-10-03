@@ -40,8 +40,8 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 
 	gl = new QGridLayout(this);
 
-	gb_mute = new MppGroupBox("MIDI Channel Mute Map");
-	gb_other = new MppGroupBox("MIDI Mute");
+	gb_mute = new MppGroupBox("MIDI Output Channel Mute Map");
+	gb_other = new MppGroupBox("MIDI Output Mute");
 
 	snprintf(buf, sizeof(buf), "- MIDI Output Mute "
 	    "Map For Device %d -", _devno);

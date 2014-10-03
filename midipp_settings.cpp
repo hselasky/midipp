@@ -490,7 +490,7 @@ MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
 
 	gl->addWidget(new QLabel(tr("Save volume settings")), 0, 0, 1, 1);
 	gl->addWidget(new QLabel(tr("Save instrument settings")), 1, 0, 1, 1);
-	gl->addWidget(new QLabel(tr("Save view mode")), 2, 0, 1, 1);
+	gl->addWidget(new QLabel(tr("Save A- and B-view settings")), 2, 0, 1, 1);
 	gl->addWidget(new QLabel(tr("Save device configuration")), 3, 0, 1, 1);
 	gl->addWidget(new QLabel(tr("Save font selection")), 4, 0, 1, 1);
 	gl->addWidget(new QLabel(tr("Save database URL")), 5, 0, 1, 1);
