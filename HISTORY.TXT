@@ -5,7 +5,11 @@
 MIDI Player Pro allows you to play any kind of MIDI music in seconds
 with your fingertips.
 
+Changes for v1.2.14:
+
 Changes for v1.2.13:
+- Updated ViewMode selection to be more interactive
+- Moved all device selection to configuration tab
 
 Changes for v1.2.12:
 - Created RPM package.

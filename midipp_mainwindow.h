@@ -258,7 +258,7 @@ public:
 	MppButton *but_config_dev[MPP_MAX_DEVS];
 	MppButton *but_config_mm[MPP_MAX_DEVS];
 	QLineEdit *led_config_dev[MPP_MAX_DEVS];
-	MppCheckBox *cbx_config_dev[MPP_MAX_DEVS][3];
+	MppCheckBox *cbx_config_dev[MPP_MAX_DEVS][3 + MPP_MAX_VIEWS];
 
 	uint32_t dirty_config_mask;
 

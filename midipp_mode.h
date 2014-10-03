@@ -58,7 +58,6 @@ public:
 
 	MppGroupBox *gb_iconfig;
 	MppGroupBox *gb_oconfig;
-	MppGroupBox *gb_idev;
 	MppGroupBox *gb_contrast;
 	MppGroupBox *gb_delay;
 
@@ -68,8 +67,6 @@ public:
 	MppButtonMap *but_song_events;
 	MppButtonMap *but_mode;
 	QPushButton *but_done;
-	QPushButton *but_set_all;
-	QPushButton *but_clear_all;
 	QPushButton *but_reset;
 
 	QSlider *sli_contrast;
@@ -83,13 +80,10 @@ public:
 	MppChanSel *spn_sec_treb_chan;
 
 public slots:
-
-	void handle_done();
 	void handle_reset();
-	void handle_set_all_devs();
-	void handle_clear_all_devs();
-	void handle_contrast_changed(int);
-	void handle_delay_changed(int);
+	void handle_changed();
+	void handle_contrast_label(int v);
+	void handle_delay_label(int v);
 };
 
 #endif		/* _MIDIPP_MODE_H_ */

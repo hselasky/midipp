@@ -384,11 +384,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		connect(but_mode[n], SIGNAL(released(int)), this, SLOT(handle_mode(int)));
 	}
 
-	for (n = 0; n != MPP_MAX_LBUTTON; n++) {
-		char buf[8];
-		snprintf(buf, sizeof(buf), "J%u", n);
-		but_jump[n] = new MppButton(tr(buf), n);
-	}
+	for (n = 0; n != MPP_MAX_LBUTTON; n++)
+		but_jump[n] = new MppButton(tr("J%1").arg(n), n);
 
 	but_compile = new QPushButton(tr("Com&pile"));
 
@@ -463,14 +460,14 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	gb_config_device->addWidget(new QLabel(tr("Play")), 0, 2, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	gb_config_device->addWidget(new QLabel(tr("Rec.")), 0, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	gb_config_device->addWidget(new QLabel(tr("Synth")), 0, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gb_config_device->addWidget(new QLabel(tr("Mute Map")), 0, 5, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gb_config_device->addWidget(new QLabel(tr("DevSel")), 0, 6, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	for (x = 0; x != MPP_MAX_VIEWS; x++)
+		gb_config_device->addWidget(new QLabel(tr("View-%1").arg(QChar('A' + x))), 0, 5 + x, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb_config_device->addWidget(new QLabel(tr("Mute Map")), 0, 5 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb_config_device->addWidget(new QLabel(tr("DevSel")), 0, 6 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	gb_config_device->setColumnStretch(1, 1);
 
 	for (n = 0; n != MPP_MAX_DEVS; n++) {
-		char buf[16];
-
 		but_config_mm[n] = new MppButton(tr("MM"), n);
 		connect(but_config_mm[n], SIGNAL(released(int)), this, SLOT(handle_mute_map(int)));
 
@@ -490,15 +487,15 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		cbx_config_dev[n][2] = new MppCheckBox(n);
 		connect(cbx_config_dev[n][2], SIGNAL(stateChanged(int,int)), this, SLOT(handle_config_changed()));
 
-		snprintf(buf, sizeof(buf), "Dev%d:", n);
-
-		gb_config_device->addWidget(new QLabel(QString(buf)), n + 1, 0, 1, 1, Qt::AlignHCenter|Qt::AlignLeft);
+		gb_config_device->addWidget(new QLabel(tr("Dev%1:").arg(n)), n + 1, 0, 1, 1, Qt::AlignHCenter|Qt::AlignLeft);
 		gb_config_device->addWidget(led_config_dev[n], n + 1, 1, 1, 1);
 		gb_config_device->addWidget(cbx_config_dev[n][0], n + 1, 2, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 		gb_config_device->addWidget(cbx_config_dev[n][1], n + 1, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 		gb_config_device->addWidget(cbx_config_dev[n][2], n + 1, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		gb_config_device->addWidget(but_config_mm[n], n + 1, 5, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		gb_config_device->addWidget(but_config_dev[n], n + 1, 6, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		for (x = 0; x != MPP_MAX_VIEWS; x++)
+			gb_config_device->addWidget(dlg_mode[x]->cbx_dev[n], n + 1, 5 + x, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		gb_config_device->addWidget(but_config_mm[n], n + 1, 5 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		gb_config_device->addWidget(but_config_dev[n], n + 1, 6 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	}
 
 	led_config_insert = new QLineEdit(QString());

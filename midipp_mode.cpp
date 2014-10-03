@@ -37,7 +37,6 @@
 MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 {
 	uint32_t x;
-	char buf[64];
 
 	sm = _parent;
 	view_index = _vi;
@@ -48,26 +47,27 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	gb_oconfig = new MppGroupBox(tr("MIDI output config"));
 	gb_contrast = new MppGroupBox(QString());
 	gb_delay = new MppGroupBox(QString());
-	gb_idev = new MppGroupBox(tr("MIDI input devices"));
 
-	setWindowTitle(tr("View ") + QChar('A' + _vi) + tr(" mode"));
+	setWindowTitle(tr("View %1 mode").arg(QChar('A' + _vi)));
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 
 	cbx_norm = new MppCheckBox();
 	cbx_norm->setChecked(1);
+	connect(cbx_norm, SIGNAL(stateChanged(int,int)), this, SLOT(handle_changed()));
 
 	for (x = 0; x != MPP_MAX_DEVS; x++) {
 		cbx_dev[x] = new MppCheckBox();
 		cbx_dev[x]->setChecked(view_index == 0);
+		connect(cbx_dev[x], SIGNAL(stateChanged(int,int)), this, SLOT(handle_changed()));
 	}
 
 	sli_contrast = new QSlider();
 	sli_contrast->setRange(0, 255);
 	sli_contrast->setOrientation(Qt::Horizontal);
 	sli_contrast->setValue(128);
-	connect(sli_contrast, SIGNAL(valueChanged(int)),
-	    this, SLOT(handle_contrast_changed(int)));
-	handle_contrast_changed(sli_contrast->value());
+	connect(sli_contrast, SIGNAL(valueChanged(int)), this, SLOT(handle_contrast_label(int)));
+	connect(sli_contrast, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	handle_contrast_label(sli_contrast->value());
 
 	but_song_events = new MppButtonMap("Send MIDI song events\0OFF\0ON\0", 2, 2);
 
@@ -77,51 +77,43 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	connect(but_reset, SIGNAL(released()), this, SLOT(handle_reset()));
 
 	but_done = new QPushButton(tr("Close"));
-	connect(but_done, SIGNAL(released()), this, SLOT(handle_done()));
-
-	but_set_all = new QPushButton(tr("All devs"));
-	connect(but_set_all, SIGNAL(released()), this, SLOT(handle_set_all_devs()));
-
-	but_clear_all = new QPushButton(tr("No devs"));
-	connect(but_clear_all, SIGNAL(released()), this, SLOT(handle_clear_all_devs()));
+	connect(but_done, SIGNAL(released()), this, SLOT(accept()));
 
 	spn_base = new MppSpinBox();
 	spn_base->setRange(0, 127);
 	spn_base->setValue(0);
+	connect(spn_base, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
 	sli_delay = new QSlider();
 	sli_delay->setRange(0, 256);
 	sli_delay->setValue(0);
 	sli_delay->setOrientation(Qt::Horizontal);
-	connect(sli_delay, SIGNAL(valueChanged(int)), this, SLOT(handle_delay_changed(int)));
-	handle_delay_changed(sli_delay->value());
+	connect(sli_delay, SIGNAL(valueChanged(int)), this, SLOT(handle_delay_label(int)));
+	connect(sli_delay, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	handle_delay_label(sli_delay->value());
 
 	spn_input_chan = new MppChanSel(-1, MPP_CHAN_ANY);
+	connect(spn_input_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+
 	spn_pri_chan = new MppChanSel(0, 0);
+	connect(spn_pri_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+
 	spn_sec_base_chan = new MppChanSel(-1, MPP_CHAN_NONE);
+	connect(spn_sec_base_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+
 	spn_sec_treb_chan = new MppChanSel(-1, MPP_CHAN_NONE);
+	connect(spn_sec_treb_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
-	for (x = 0; x != MPP_MAX_DEVS; x++) {
-		snprintf(buf, sizeof(buf), "Dev%d", x);
-
-		gb_idev->addWidget(new QLabel(tr(buf)), x, 0, 1, 1, Qt::AlignCenter);
-		gb_idev->addWidget(cbx_dev[x], x, 1, 1, 1, Qt::AlignCenter);
-	}
-
-	gl->addWidget(gb_idev, 0, 0, 6, 2);
-	gl->addWidget(gb_iconfig, 0, 2, 1, 2);
-	gl->addWidget(gb_oconfig, 1, 2, 1, 2);
-	gl->addWidget(gb_delay, 2, 2, 1, 2);
-	gl->addWidget(gb_contrast, 3, 2, 1, 2);
-	gl->addWidget(but_song_events, 4, 2, 1, 2);
-	gl->addWidget(but_mode, 5, 2, 1, 2);
+	gl->addWidget(gb_iconfig, 0, 0, 1, 2);
+	gl->addWidget(gb_oconfig, 1, 0, 1, 2);
+	gl->addWidget(gb_delay, 2, 0, 1, 2);
+	gl->addWidget(gb_contrast, 3, 0, 1, 2);
+	gl->addWidget(but_song_events, 4, 0, 1, 2);
+	gl->addWidget(but_mode, 5, 0, 1, 2);
+	gl->addWidget(but_reset, 7, 0, 1, 1);
+	gl->addWidget(but_done, 7, 1, 1, 1);
 	gl->setRowStretch(6, 1);
-	gl->setColumnStretch(4, 1);
-
-	gl->addWidget(but_set_all, 7, 0, 1, 1);
-	gl->addWidget(but_clear_all, 7, 1, 1, 1);
-	gl->addWidget(but_reset, 7, 2, 1, 1);
-	gl->addWidget(but_done, 7, 3, 1, 1);
+	gl->setColumnStretch(2, 1);
 
 	gb_delay->addWidget(sli_delay, 0, 0, 1, 1);
 
@@ -193,25 +185,7 @@ MppMode :: update_all(void)
 }
 
 void
-MppMode :: handle_set_all_devs()
-{
-	uint32_t x;
-
-	for (x = 0; x != MPP_MAX_DEVS; x++)
-		cbx_dev[x]->setChecked(1);
-}
-
-void
-MppMode :: handle_clear_all_devs()
-{
-	uint32_t x;
-
-	for (x = 0; x != MPP_MAX_DEVS; x++)
-		cbx_dev[x]->setChecked(0);
-}
-
-void
-MppMode :: handle_contrast_changed(int v)
+MppMode :: handle_contrast_label(int v)
 {
 	char buf[32];
 	v = ((v - 128) * 100) / 127;
@@ -227,7 +201,7 @@ MppMode :: handle_contrast_changed(int v)
 }
 
 void
-MppMode :: handle_delay_changed(int v)
+MppMode :: handle_delay_label(int v)
 {
 	char buf[32];
 	snprintf(buf, sizeof(buf), "Random T/F/M key delay (%dms)", v);
@@ -237,8 +211,6 @@ MppMode :: handle_delay_changed(int v)
 void
 MppMode :: handle_reset()
 {
-	uint32_t x;
-
 	sli_contrast->setValue(128);
 	sli_delay->setValue(25);
 	spn_input_chan->setValue(-1);
@@ -249,13 +221,10 @@ MppMode :: handle_reset()
 	cbx_norm->setChecked(1);
 	but_mode->setSelection(0);
 	but_song_events->setSelection(0);
-
-	for (x = 0; x != MPP_MAX_DEVS; x++)
-		cbx_dev[x]->setChecked(1);
 }
 
 void
-MppMode :: handle_done()
+MppMode :: handle_changed()
 {
 	int base_key;
 	int key_delay;
@@ -304,6 +273,4 @@ MppMode :: handle_done()
 	sm->chordNormalize = chord_norm;
 	sm->songEventsOn = song_events;
 	pthread_mutex_unlock(&sm->mainWindow->mtx);
-
-	accept();
 }
