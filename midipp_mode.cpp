@@ -36,8 +36,6 @@
 
 MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 {
-	uint32_t x;
-
 	sm = _parent;
 	view_index = _vi;
 
@@ -54,12 +52,6 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	cbx_norm = new MppCheckBox();
 	cbx_norm->setChecked(1);
 	connect(cbx_norm, SIGNAL(stateChanged(int,int)), this, SLOT(handle_changed()));
-
-	for (x = 0; x != MPP_MAX_DEVS; x++) {
-		cbx_dev[x] = new MppCheckBox();
-		cbx_dev[x]->setChecked(view_index == 0);
-		connect(cbx_dev[x], SIGNAL(stateChanged(int,int)), this, SLOT(handle_changed()));
-	}
 
 	sli_contrast = new QSlider();
 	sli_contrast->setRange(0, 255);
@@ -150,11 +142,9 @@ MppMode :: update_all(void)
 	int channelBase;
 	int channelTreb;
 	int key_mode;
-	int input_mask;
 	int chord_contrast;
 	int chord_norm;
 	int song_events;
-	int x;
 
 	pthread_mutex_lock(&sm->mainWindow->mtx);
 	base_key = sm->baseKey;
@@ -164,14 +154,10 @@ MppMode :: update_all(void)
 	channelBase = sm->synthChannelBase;
 	channelTreb = sm->synthChannelTreb;
 	key_mode = sm->keyMode;
-	input_mask = sm->devInputMask;
 	chord_contrast = sm->chordContrast;
 	chord_norm = sm->chordNormalize;
 	song_events = sm->songEventsOn;
 	pthread_mutex_unlock(&sm->mainWindow->mtx);
-
-	for (x = 0; x != MPP_MAX_DEVS; x++)
-		cbx_dev[x]->setChecked((input_mask >> x) & 1);
 
 	spn_base->setValue(base_key);
 	sli_delay->setValue(key_delay);
@@ -234,18 +220,9 @@ MppMode :: handle_changed()
 	int channelBase;
 	int channelTreb;
 	int key_mode;
-	int input_mask;
 	int chord_contrast;
 	int chord_norm;
 	int song_events;
-	int x;
-
-	input_mask = 0;
-
-	for (x = 0; x != MPP_MAX_DEVS; x++) {
-		if (cbx_dev[x]->isChecked())
-			input_mask |= (1U << x);
-	}
 
 	base_key = spn_base->value();
 	key_delay = sli_delay->value();
@@ -269,7 +246,6 @@ MppMode :: handle_changed()
 	sm->synthChannelBase = channelBase;
 	sm->synthChannelTreb = channelTreb;
 	sm->keyMode = key_mode;
-	sm->devInputMask = input_mask;
 	sm->chordContrast = chord_contrast;
 	sm->chordNormalize = chord_norm;
 	sm->songEventsOn = song_events;

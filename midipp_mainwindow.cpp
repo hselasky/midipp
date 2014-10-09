@@ -205,8 +205,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	for (x = 0; x != MPP_MAX_VIEWS; x++)
 		scores_main[x] = new MppScoreMain(this, x);
 
-	scores_main[0]->devInputMask = -1U;
-
 	tab_import = new MppImportTab(this);
 
 	tab_loop = new MppLoopTab(this, this);
@@ -478,22 +476,14 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		led_config_dev[n]->setMaxLength(256);
 		connect(led_config_dev[n], SIGNAL(textChanged(const QString &)), this, SLOT(handle_config_changed()));
 
-		cbx_config_dev[n][0] = new MppCheckBox(n);
-		connect(cbx_config_dev[n][0], SIGNAL(stateChanged(int,int)), this, SLOT(handle_config_changed()));
-
-		cbx_config_dev[n][1] = new MppCheckBox(n);
-		connect(cbx_config_dev[n][1], SIGNAL(stateChanged(int,int)), this, SLOT(handle_config_changed()));
-
-		cbx_config_dev[n][2] = new MppCheckBox(n);
-		connect(cbx_config_dev[n][2], SIGNAL(stateChanged(int,int)), this, SLOT(handle_config_changed()));
+		for (x = 0; x != (3 + MPP_MAX_VIEWS); x++) {
+			cbx_config_dev[n][x] = new MppCheckBox(n);
+			connect(cbx_config_dev[n][x], SIGNAL(stateChanged(int,int)), this, SLOT(handle_config_changed()));
+			gb_config_device->addWidget(cbx_config_dev[n][x], n + 1, 2 + x, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		}
 
 		gb_config_device->addWidget(new QLabel(tr("Dev%1:").arg(n)), n + 1, 0, 1, 1, Qt::AlignHCenter|Qt::AlignLeft);
 		gb_config_device->addWidget(led_config_dev[n], n + 1, 1, 1, 1);
-		gb_config_device->addWidget(cbx_config_dev[n][0], n + 1, 2, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		gb_config_device->addWidget(cbx_config_dev[n][1], n + 1, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		gb_config_device->addWidget(cbx_config_dev[n][2], n + 1, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		for (x = 0; x != MPP_MAX_VIEWS; x++)
-			gb_config_device->addWidget(dlg_mode[x]->cbx_dev[n], n + 1, 5 + x, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 		gb_config_device->addWidget(but_config_mm[n], n + 1, 5 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 		gb_config_device->addWidget(but_config_dev[n], n + 1, 6 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	}
@@ -1452,54 +1442,18 @@ MppMainWindow :: handle_config_reload()
 	umidi20_config_import(&cfg);
 
 	handle_compile();
-
-	handle_config_revert();
-}
-
-void
-MppMainWindow :: handle_config_revert()
-{
-	int n;
-
-	for (n = 0; n != MPP_MAX_DEVS; n++) {
-
-		QString str;
-
-		led_config_dev[n]->blockSignals(1);
-		cbx_config_dev[n][0]->blockSignals(1);
-		cbx_config_dev[n][1]->blockSignals(1);
-		cbx_config_dev[n][2]->blockSignals(1);
-
-		if (deviceName[n] != NULL)
-			str = deviceName[n];
-
-		if (led_config_dev[n]->text() != str)
-			led_config_dev[n]->setText(str);
-
-		cbx_config_dev[n][0]->setChecked(
-		    (deviceBits & (1UL << ((3*n)+0))) ? 1 : 0);
-
-		cbx_config_dev[n][1]->setChecked(
-		    (deviceBits & (1UL << ((3*n)+1))) ? 1 : 0);
-
-		cbx_config_dev[n][2]->setChecked(
-		    (deviceBits & (1UL << ((3*n)+2))) ? 1 : 0);
-
-		led_config_dev[n]->blockSignals(0);
-		cbx_config_dev[n][0]->blockSignals(0);
-		cbx_config_dev[n][1]->blockSignals(0);
-		cbx_config_dev[n][2]->blockSignals(0);
-	}
 }
 
 void
 MppMainWindow :: handle_config_apply(int devno)
 {
 	uint8_t ScMidiTriggered;
+	uint32_t devInputMaskCopy[MPP_MAX_DEVS];
 	int n;
 	int x;
 
 	deviceBits = 0;
+	memset(devInputMaskCopy, 0, sizeof(devInputMaskCopy));
 
 	for (n = 0; n != MPP_MAX_DEVS; n++) {
 
@@ -1514,6 +1468,10 @@ MppMainWindow :: handle_config_apply(int devno)
 			deviceBits |= 1UL << ((3*n)+1);
 		if (cbx_config_dev[n][2]->isChecked())
 			deviceBits |= 1UL << ((3*n)+2);
+		for (x = 0; x != MPP_MAX_VIEWS; x++) {
+			if (cbx_config_dev[n][3 + x]->isChecked())
+				devInputMaskCopy[n] |= (1U << x);
+		}
 	}
 
 	handle_config_reload();
@@ -1522,6 +1480,7 @@ MppMainWindow :: handle_config_apply(int devno)
 	MppSleep::msleep(100 /* ms */);
 
 	pthread_mutex_lock(&mtx);
+	memcpy(devInputMask, devInputMaskCopy, sizeof(devInputMask));
 	ScMidiTriggered = midiTriggered;
 	midiTriggered = 1;
 
@@ -1838,7 +1797,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 		sm = mw->scores_main[n];
 
 		/* filter on device, if any */
-		if (!(sm->devInputMask & (1U << device_no)))
+		if (!(mw->devInputMask[device_no] & (1U << n)))
 			continue;
 
 		/* filter on channel, if any */
@@ -2748,11 +2707,13 @@ MppMainWindow :: MidiInit(void)
 {
 	int n;
 
-	deviceBits = MPP_DEV0_SYNTH | MPP_DEV0_PLAY | MPP_DEV0_RECORD;
-	deviceName[0] = strdup("X:");
-	deviceName[1] = strdup("D:/dev/umidi0.0");
-	deviceName[2] = strdup("D:/dev/umidi1.0");
-	deviceName[3] = strdup("D:/dev/umidi2.0");
+	cbx_config_dev[0][0]->setChecked(1);	/* Play */
+	cbx_config_dev[0][1]->setChecked(1);	/* Record */
+	cbx_config_dev[0][2]->setChecked(1);	/* Synth */
+	for (n = 0; n != MPP_MAX_DEVS; n++)
+		cbx_config_dev[n][3]->setChecked(1);	/* View-A */
+
+	led_config_dev[0]->setText(QString("X:"));
 
 	handle_midi_record(0);
 	handle_midi_play(0);

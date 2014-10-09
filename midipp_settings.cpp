@@ -144,7 +144,6 @@ MppSettings :: doSave(void)
 			beginGroup(concat("view%d", x));
 			setValue("basekey", mw->scores_main[x]->baseKey);
 			setValue("delay", mw->scores_main[x]->delayNoise);
-			setValue("inmask", mw->scores_main[x]->devInputMask);
 			setValue("keymode", mw->scores_main[x]->keyMode);
 			setValue("inputchannel", mw->scores_main[x]->inputChannel);
 			setValue("synthchannel", mw->scores_main[x]->synthChannel);
@@ -189,7 +188,8 @@ MppSettings :: doSave(void)
 			setValue("disablelocalkeys", mw->disableLocalKeys[y]);
 			setValue("mutenonchannel", mw->muteAllNonChannel[y]);
 			setValue("muteallcontrol", mw->muteAllControl[y]);
-
+			for (x = 0; x != MPP_MAX_VIEWS; x++)
+				setValue(concat("view%d", x), (int)mw->cbx_config_dev[y][3 + x]->isChecked());
 			for (x = 0; x != 16; x++)
 				setValue(concat("mute%d", x), mw->muteMap[y][x]);
 			endGroup();
@@ -247,7 +247,6 @@ MppSettings :: doLoad(void)
 		for (x = 0; x != MPP_MAX_VIEWS; x++) {
 			int baseKey = valueDefault(concat("view%d/basekey", x), MPP_DEFAULT_BASE_KEY);
 			int delayNoise = valueDefault(concat("view%d/delay", x), 25);
-			int devInputMask = valueDefault(concat("view%d/inmask", x), x ? 0 : -1);
 			int keyMode = valueDefault(concat("view%d/keymode", x), 0);
 			int inputChannel = valueDefault(concat("view%d/inputchannel", x), -1);
 			int synthChannel = valueDefault(concat("view%d/synthchannel", x), 0);
@@ -278,7 +277,6 @@ MppSettings :: doLoad(void)
 			pthread_mutex_lock(&mw->mtx);
 			mw->scores_main[x]->baseKey = baseKey;
 			mw->scores_main[x]->delayNoise = delayNoise;
-			mw->scores_main[x]->devInputMask = devInputMask;
 			mw->scores_main[x]->keyMode = keyMode;
 			mw->scores_main[x]->inputChannel = inputChannel;
 			mw->scores_main[x]->synthChannel = synthChannel;
@@ -332,7 +330,10 @@ MppSettings :: doLoad(void)
 			mw->cbx_config_dev[y][0]->setChecked(valueDefault(concat("device%d/play", y), 0) ? 1 : 0);
 			mw->cbx_config_dev[y][1]->setChecked(valueDefault(concat("device%d/rec", y), 0) ? 1 : 0);
 			mw->cbx_config_dev[y][2]->setChecked(valueDefault(concat("device%d/synth", y), 0) ? 1 : 0);
-
+			for (x = 0; x != MPP_MAX_VIEWS; x++) {
+				mw->cbx_config_dev[y][3 + x]->setChecked(
+				    valueDefault(concat("device%d/view%d", y, x), (x == 0)));
+			}
 			int muteProgram = valueDefault(concat("device%d/muteprog", y), 0) ? 1 : 0;
 			int mutePedal = valueDefault(concat("device%d/mutepedal", y), 0) ? 1 : 0;
 			int enableLocalKeys = valueDefault(concat("device%d/enablelocalkeys", y), 0) ? 1 : 0;
@@ -490,7 +491,7 @@ MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
 
 	gl->addWidget(new QLabel(tr("Save volume settings")), 0, 0, 1, 1);
 	gl->addWidget(new QLabel(tr("Save instrument settings")), 1, 0, 1, 1);
-	gl->addWidget(new QLabel(tr("Save A- and B-view settings")), 2, 0, 1, 1);
+	gl->addWidget(new QLabel(tr("Save view mode settings")), 2, 0, 1, 1);
 	gl->addWidget(new QLabel(tr("Save device configuration")), 3, 0, 1, 1);
 	gl->addWidget(new QLabel(tr("Save font selection")), 4, 0, 1, 1);
 	gl->addWidget(new QLabel(tr("Save database URL")), 5, 0, 1, 1);

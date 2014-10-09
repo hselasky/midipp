@@ -149,7 +149,6 @@ public:
 
 	uint32_t pressedKeys[MPP_PRESSED_MAX];
 	uint32_t frozenKeys[MPP_PRESSED_MAX];
-	uint32_t devInputMask;
 
 	int picScroll;
 	uint16_t active_channels;

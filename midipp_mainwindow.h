@@ -113,6 +113,7 @@ public:
 	uint32_t lastInputEvent;
 	uint32_t noiseRem;
 
+	uint32_t devInputMask[MPP_MAX_DEVS];
 	uint32_t chanUsageMask;
 	uint32_t startPosition;
 	uint32_t pausePosition;
@@ -180,7 +181,7 @@ public:
 	QPushButton *mwUndo;
 	QPushButton *mwRedo;
 	QPushButton *mwEdit;
-    QPushButton *mwUpDown;
+	QPushButton *mwUpDown;
 
 	/* tab <Scores> */
 
@@ -360,7 +361,6 @@ public slots:
 	void handle_midi_trigger();
 	void handle_config_changed();
 	void handle_config_apply(int = -1);
-	void handle_config_revert();
 	void handle_config_reload();
 	void handle_config_view_fontsel();
 	void handle_config_edit_fontsel();
