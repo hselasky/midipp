@@ -24,14 +24,3 @@
  */
 
 #include "midipp_gridlayout.h"
-
-MppGridLayout :: MppGridLayout()
-  : QWidget(), QGridLayout(this)
-{
-
-}
-
-MppGridLayout :: ~MppGridLayout()
-{
-
-}

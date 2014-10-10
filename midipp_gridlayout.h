@@ -31,8 +31,8 @@
 class MppGridLayout : public QWidget, public QGridLayout
 {
 public:
-	MppGridLayout();
-	~MppGridLayout();
+	MppGridLayout() : QWidget(), QGridLayout(this) { };
+	~MppGridLayout() { };
 };
 
 #endif		/* _MIDIPP_GRIDLAYOUT_H_ */
