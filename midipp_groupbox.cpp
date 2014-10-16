@@ -24,14 +24,3 @@
  */
 
 #include "midipp_groupbox.h"
-
-MppGroupBox :: MppGroupBox(QString title)
-  : QGroupBox(title), QGridLayout(this)
-{
-
-}
-
-MppGroupBox :: ~MppGroupBox()
-{
-
-}

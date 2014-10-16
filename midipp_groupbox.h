@@ -31,8 +31,9 @@
 class MppGroupBox : public QGroupBox, public QGridLayout
 {
 public:
-	MppGroupBox(QString);
-	~MppGroupBox();
+	MppGroupBox(const QString &title) : QGroupBox(title),
+	    QGridLayout(this) { };
+	~MppGroupBox() { };
 };
 
 #endif		/* _MIDIPP_GROUPBOX_H_ */
