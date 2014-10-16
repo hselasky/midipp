@@ -48,7 +48,9 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Fri Sep 23 2014 HPS hps@selasky.org 1.2.13-1
+* Thu Oct 16 2014 HPS hps@selasky.org 1.2.13-1
+- Updated ViewMode selection to be more interactive
+- Moved all device selection to configuration tab
 * Fri Sep 23 2014 HPS hps@selasky.org 1.2.12-1
 - Created RPM package.
 - Some minor compile fixes.
