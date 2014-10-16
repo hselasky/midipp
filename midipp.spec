@@ -1,5 +1,5 @@
 Name:           midipp
-Version:        1.2.13
+Version:        1.2.14
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
@@ -48,6 +48,7 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
+* Thu Oct 16 2014 HPS hps@selasky.org 1.2.14-1
 * Thu Oct 16 2014 HPS hps@selasky.org 1.2.13-1
 - Updated ViewMode selection to be more interactive
 - Moved all device selection to configuration tab
