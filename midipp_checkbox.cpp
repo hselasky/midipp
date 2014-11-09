@@ -79,7 +79,7 @@ MppCheckBox :: mousePressEvent(QMouseEvent *event)
 	if (other != state) {
 		other = state;
 		stateChanged(other, id);
-		repaint();
+		update();
 	}
 	event->accept();
 }
@@ -91,7 +91,7 @@ MppCheckBox :: setCheckState(Qt::CheckState _state)
 	if (other != state) {
 		other = state;
 		stateChanged(other, id);
-		repaint();
+		update();
 	}
 }
 
@@ -111,7 +111,7 @@ MppCheckBox :: setChecked(bool _enable)
 	if (other != state) {
 		other = state;
 		stateChanged(other, id);
-		repaint();
+		update();
 	}
 }
 

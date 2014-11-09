@@ -54,7 +54,7 @@ MppPianoTab :: mousePressEvent(QMouseEvent *event)
 			state.pressed[x] = 0;
 			int key = MPP_DEFAULT_BASE_KEY + x;
 			mw->handle_play_release(key, state.view_index);
-			repaint();
+			update();
 			continue;
 		}
 		uint8_t curr_octave = (x >= 12);
@@ -78,25 +78,25 @@ MppPianoTab :: mousePressEvent(QMouseEvent *event)
 		state.pressed[x] = 1;
 		int key = MPP_DEFAULT_BASE_KEY + x;
 		mw->handle_play_press(key, state.view_index);
-		repaint();
+		update();
 	}
 	if (r_sustain_on.contains(p) != 0) {
 		state.sustain = 1;
 		mw->handle_sustain_press(state.view_index);
-		repaint();
+		update();
 	}
 	if (r_sustain_off.contains(p) != 0) {
 		state.sustain = 0;
 		mw->handle_sustain_release(state.view_index);
-		repaint();
+		update();
 	}
 	if (r_view_a.contains(p) != 0) {
 		state.view_index = 0;
-		repaint();
+		update();
 	}
 	if (r_view_b.contains(p) != 0) {
 		state.view_index = 1;
-		repaint();
+		update();
 	}
 	for (x = 0; x != MPP_PIANO_TAB_LABELS; x++) {
 		if (r_label[x].contains(p) == 0)
@@ -107,7 +107,7 @@ MppPianoTab :: mousePressEvent(QMouseEvent *event)
 			mw->handle_sustain_release(state.view_index);
 			mw->handle_sustain_press(state.view_index);
 		}
-		repaint();
+		update();
 	}
 }
 
@@ -125,7 +125,7 @@ MppPianoTab :: mouseReleaseEvent(QMouseEvent *event)
 		state.pressed[x] = 0;
 		int key = MPP_DEFAULT_BASE_KEY + x;
 		mw->handle_play_release(key, state.view_index);
-		repaint();
+		update();
 	}
 }
 

@@ -61,7 +61,7 @@ MppVolume :: mouseReleaseEvent(QMouseEvent *event)
 		curr_delta = 0;
 
 		emit valueChanged(curr_pos);
-		repaint();
+		update();
 	}
 }
 
@@ -78,7 +78,7 @@ MppVolume :: mouseMoveEvent(QMouseEvent *event)
 
 		emit valueChanged(curr_pos + curr_delta);
 
-		repaint();
+		update();
 	}
 }
 
@@ -111,21 +111,21 @@ MppVolume :: setValue(int value)
 
 	emit valueChanged(curr_pos);
 
-	repaint();
+	update();
 }
 
 void
 MppVolume :: enterEvent(QEvent *event)
 {
 	focus = 1;
-	repaint();
+	update();
 }
 
 void
 MppVolume :: leaveEvent(QEvent *event)
 {
 	focus = 0;
-	repaint();
+	update();
 }
 
 void

@@ -319,7 +319,7 @@ MppShowControl :: handle_watchdog()
 	}
 	if (transition < MPP_TRAN_MAX) {
 		transition++;
-		wg_show->repaint();
+		wg_show->update();
 	} else if (transition == MPP_TRAN_MAX) {
 		transition++;
 		last_label = curr_label;

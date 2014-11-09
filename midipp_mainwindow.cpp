@@ -873,7 +873,7 @@ MppMainWindow :: handle_watchdog_sub(MppScoreMain *sm, int update_cursor)
 		sm->watchdog();
 	}
 
-	sm->viewWidgetSub->repaint();
+	sm->viewWidgetSub->update();
 }
 
 void

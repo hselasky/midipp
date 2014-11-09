@@ -1762,7 +1762,7 @@ MppScoreMain :: handleScrollChanged(int value)
 	picScroll = value;
 	pthread_mutex_unlock(&mainWindow->mtx);
 
-	viewWidgetSub->repaint();
+	viewWidgetSub->update();
 }
 
 void
