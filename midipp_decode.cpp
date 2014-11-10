@@ -40,6 +40,7 @@ static const struct score_variant score_internal[] = {
   { "M", MASK(C5)| MASK(E5)| MASK(G5), 0 },
   { "m", MASK(C5)| MASK(E5B)| MASK(G5), 0 },
 
+  { "+", MASK(C5)| MASK(E5)| MASK(A5B), 0 },
   { "+3", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5 - 3), 0 },
   { "+5", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5 - 5), 0 },
   { "+9", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5 - 9), 0 },
@@ -47,6 +48,7 @@ static const struct score_variant score_internal[] = {
   { "2", MASK(C5)| MASK(D5)| MASK(E5)| MASK(G5), 0 },
   { "4", MASK(C5)| MASK(E5)| MASK(G5), 0 },
   { "5", MASK(C5)| MASK(G5), 0 },
+  { "1", MASK(C5)| MASK(G5), 0 },
   { "6", MASK(C5)| MASK(E5)| MASK(G5)| MASK(A5), 0 },
   { "7", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5B), 0 },
   { "9", MASK(C5)| MASK(D5)| MASK(E5)| MASK(G5)| MASK(H5B), 0 },
