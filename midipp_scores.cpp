@@ -209,7 +209,8 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	butScoreFileAutoMel[0] = new MppButton(tr("AutoMel 1"), 0);
 	butScoreFileAutoMel[1] = new MppButton(tr("AutoMel 2"), 1);
 	butScoreFileReplaceAll = new QPushButton(tr("Replace All"));
-	butScoreFileExport = new QPushButton(tr("To Lyrics"));
+	butScoreFileExport = new QPushButton(tr("To Lyrics\n" "with chords"));
+	butScoreFileExportNoChords = new QPushButton(tr("To Lyrics\n" "without chords"));
 
 #ifdef QT_NO_PRINTER
 	butScoreFilePrint->hide();
@@ -232,6 +233,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	gbScoreFile->addWidget(butScoreFileAutoMel[1], 9, 1, 1, 1);
 	gbScoreFile->addWidget(butScoreFileReplaceAll, 10, 0, 1, 2);
 	gbScoreFile->addWidget(butScoreFileExport, 11, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileExportNoChords, 12, 0, 1, 2);
 
 	connect(butScoreFileNew, SIGNAL(released()), this, SLOT(handleScoreFileNew()));
 	connect(butScoreFileOpen, SIGNAL(released()), this, SLOT(handleScoreFileOpen()));
@@ -248,6 +250,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	connect(butScoreFileAutoMel[1], SIGNAL(released(int)), this, SLOT(handleScoreFileAutoMelody(int)));
 	connect(butScoreFileReplaceAll, SIGNAL(released()), this, SLOT(handleScoreFileReplaceAll()));
 	connect(butScoreFileExport, SIGNAL(released()), this, SLOT(handleScoreFileExport()));
+	connect(butScoreFileExportNoChords, SIGNAL(released()), this, SLOT(handleScoreFileExportNoChords()));
 
 	/* Widget */
 
@@ -1887,7 +1890,32 @@ MppScoreMain :: handleScoreFileExport(void)
 	QTextCursor cursor(mainWindow->tab_import->editWidget->textCursor());
 
 	cursor.beginEditBlock();
-	cursor.insertText(temp.toLyrics());
+	cursor.insertText(temp.toLyrics(0));
+	cursor.endEditBlock();
+
+	mainWindow->handle_make_tab_visible(mainWindow->tab_import->editWidget);
+}
+
+void
+MppScoreMain :: handleScoreFileExportNoChords(void)
+{
+	QTextCursor input(editWidget->textCursor());
+	QString sel;
+
+	if (input.hasSelection() == 0)
+		sel = editWidget->toPlainText();
+	else
+		sel = input.selectedText();
+
+	MppHead temp;
+
+	temp += sel;
+	temp.flush();
+
+	QTextCursor cursor(mainWindow->tab_import->editWidget->textCursor());
+
+	cursor.beginEditBlock();
+	cursor.insertText(temp.toLyrics(1));
 	cursor.endEditBlock();
 
 	mainWindow->handle_make_tab_visible(mainWindow->tab_import->editWidget);

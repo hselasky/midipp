@@ -313,6 +313,9 @@ midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm)
 			ps->line_buffer += "       ";
 
 		if (ch == '\n') {
+			/* remove spaces from end of line */
+			ps->line_buffer =
+			    ps->line_buffer.replace(QRegExp("\\s*$"), "");
 			if (midipp_import_parse(ps))
 				goto done;
 			ps->line_buffer = QString();
@@ -320,6 +323,9 @@ midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm)
 			ps->line_buffer += ch;
 		}
 	}
+	/* remove spaces from end of line */
+	ps->line_buffer =
+	    ps->line_buffer.replace(QRegExp("\\s*$"), "");
 	midipp_import_parse(ps);
 
 	if (ps->line_buffer.size() != 0 && ps->load_more == 0) {

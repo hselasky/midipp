@@ -1246,7 +1246,7 @@ MppHead :: getMaxLines()
 }
 
 QString
-MppHead :: toLyrics()
+MppHead :: toLyrics(int no_chords)
 {
 	MppElement *start;
 	MppElement *stop;
@@ -1279,14 +1279,16 @@ MppHead :: toLyrics()
 		}
 
 		/* Export Chord Line */
-		if (linebuf[0].size() > 0) {
-			out += linebuf[0];
+		if (no_chords == 0 && linebuf[0].size() > 0) {
+			/* remove white space at end of line */
+			out += linebuf[0].replace(QRegExp("\\s*$"), "");
 			out += '\n';
 		}
 
 		/* Export Text Line */
 		if (linebuf[1].size() > 0) {
-			out += linebuf[1];
+			/* remove white space at end of line */
+			out += linebuf[1].replace(QRegExp("\\s*$"), "");
 			out += '\n';
 		}
 	}

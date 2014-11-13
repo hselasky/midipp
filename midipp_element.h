@@ -142,7 +142,7 @@ public:
 	int getPlaytime();
 	void flush();
 	QString toPlain(int = -1);
-	QString toLyrics();
+	QString toLyrics(int no_chords = 0);
 	void toLyrics(QString *pstr);
 	int foreachLine(MppElement **, MppElement **);
 	int getMaxLines();

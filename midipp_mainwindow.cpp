@@ -335,7 +335,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	gb_gpro_file_import = new MppGroupBox(tr("GPro v3/4"));
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
-		but_gpro_file_import[x] = new MppButton(QString("Open In %1-Scores").arg(QChar('A' + x)), x);
+		but_gpro_file_import[x] = new MppButton(QString("Import and\n" "open In %1-Scores").arg(QChar('A' + x)), x);
 		gb_gpro_file_import->addWidget(but_gpro_file_import[x], x, 0, 1, 1);
 		connect(but_gpro_file_import[x], SIGNAL(released(int)), this, SLOT(handle_gpro_file_import(int)));
 	}
