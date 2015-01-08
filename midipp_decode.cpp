@@ -125,6 +125,7 @@ static const struct score_variant_initial score_initial[] = {
 	{ { "6", "$M6", "dom6" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(D5) | MASK(F5) | MASK(A5) },
 	{ { "62" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(A5) | MASK(D5) },
 	{ { "69" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(A5) | MASK(D5) },
+	{ { "64" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(A5) | MASK(F5) },
 	{ { "$m6", "$m$M6" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(D5) | MASK(F5) | MASK(A5) },
 	{ { "$a6", "6$s5", "$a$M6" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(D5) | MASK(F5) | MASK(A5) },
 	{ { "$h6" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(D5) | MASK(F5) | MASK(A5) },
