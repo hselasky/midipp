@@ -35,55 +35,137 @@
 
 #define MASK(x) (1U << ((x) % 12))
 
-static const struct score_variant score_internal[] = {
-  { "", MASK(C5)| MASK(E5)| MASK(G5), 0 },
-  { "M", MASK(C5)| MASK(E5)| MASK(G5), 0 },
-  { "m", MASK(C5)| MASK(E5B)| MASK(G5), 0 },
-
-  { "+", MASK(C5)| MASK(E5)| MASK(A5B), 0 },
-  { "+3", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5 - 3), 0 },
-  { "+5", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5 - 5), 0 },
-  { "+9", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5 - 9), 0 },
-
-  { "2", MASK(C5)| MASK(D5)| MASK(E5)| MASK(G5), 0 },
-  { "4", MASK(C5)| MASK(E5)| MASK(G5), 0 },
-  { "5", MASK(C5)| MASK(G5), 0 },
-  { "1", MASK(C5)| MASK(G5), 0 },
-  { "6", MASK(C5)| MASK(E5)| MASK(G5)| MASK(A5), 0 },
-  { "7", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5B), 0 },
-  { "9", MASK(C5)| MASK(D5)| MASK(E5)| MASK(G5)| MASK(H5B), 0 },
-  { "11", MASK(C5)| MASK(D5)| MASK(E5)| MASK(F5)| MASK(G5)| MASK(H5B), 0 },
-  { "13", MASK(C5)| MASK(D5)| MASK(F5)| MASK(A5)| MASK(H5B), 0 },
-
-  { "69", MASK(C5)| MASK(D5)| MASK(E5)| MASK(G5)| MASK(A5), 0 },
-
-  { "7b5", MASK(C5)| MASK(E5)| MASK(G5B)| MASK(H5B), 0 },
-  { "7#5", MASK(C5)| MASK(E5)| MASK(A5B)| MASK(H5B), 0 },
-  { "7b9", MASK(C5)| MASK(D5B)| MASK(E5)| MASK(G5)| MASK(H5B), 0 },
-  { "7#9", MASK(C5)| MASK(E5B)| MASK(E5)| MASK(G5)| MASK(H5B), 0 },
-
-  { "add3", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5 - 3), 0 },
-  { "add5", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5 - 5), 0 },
-  { "add9", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5 - 9), 0 },
-
-  { "maj", MASK(C5)| MASK(E5)| MASK(G5), 0 },
-  { "major", MASK(C5)| MASK(E5)| MASK(G5), 0 },
-
-  { "min", MASK(C5)| MASK(E5B)| MASK(G5), 0 },
-  { "minor", MASK(C5)| MASK(E5B)| MASK(G5), 0 },
-
-  { "maj7", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5), 0 },
-  { "maj8", MASK(C5)| MASK(E5)| MASK(G5)| MASK(H5B), 0 },
-  { "maj9", MASK(C5)| MASK(E5)| MASK(G5)| MASK(A5), 0 },
-  { "maj10", MASK(C5)| MASK(E5)| MASK(G5)| MASK(A5B), 0 },
+static const char *score_major[] = {
+	"$M", "M", "Δ", "j", "Ma", "maj", "major", 0
 };
 
-#define	MAX_VAR (sizeof(score_internal)/sizeof(score_internal[0]))
-#define	MAX_TYPE 5
+static const char *score_minor[] = {
+	"$m", "m", "-", "Mi", "min", "minor", 0
+};
 
-static struct score_variant mpp_score_variant[MAX_VAR * MAX_TYPE];
+static const char *score_aug[] = {
+  	"$a", "+", "aug", 0
+};
 
-static int mpp_max_variant;
+static const char *score_dim[] = {
+  	"$d", "°", "o", "dim", 0
+};
+
+static const char *score_sharp[] = {
+	"$s", "+", "#", 0
+};
+
+static const char *score_flat[] = {
+	"$f", "b", "°", "o", "dim", 0
+};
+
+static const char *score_half_dim[] = {
+	"$h", "ø", "Ø", 0
+};
+
+static const char **score_macros[] = {
+	score_major,
+	score_minor,
+	score_aug,
+	score_dim,
+	score_sharp,
+	score_flat,
+	score_half_dim,
+	0
+};
+
+static const char *score_bits[13] = {
+	"C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Hb", "H", "?"
+};
+
+static const struct score_variant_initial score_initial[] = {
+	/* one */
+	{ { "1" }, MASK(C5) },
+
+	/* third */
+	{ { "5" }, MASK(C5) | MASK(G5) },
+
+	/* triads */
+	{ { "", "$M" }, MASK(C5) | MASK(E5) | MASK(G5) },
+	{ { "$m" }, MASK(C5) | MASK(E5B) | MASK(G5) },
+	{ { "$a", "$M$s5" }, MASK(C5) | MASK(E5) | MASK(A5B) },
+	{ { "$d", "$m$f5" }, MASK(C5) | MASK(E5B) | MASK(G5B) },
+
+	/* seventh */
+	{ { "7", "dom7" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5B) },
+	{ { "$h", "$h7", "$m7$f5" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(H5B) },
+	{ { "7$f5", "dom7$f5" }, MASK(C5) | MASK(E5) | MASK(G5B) | MASK(H5B) },
+	{ { "7$f9" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(D5B) | MASK(H5B) },
+	{ { "7$s9" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(E5B) | MASK(H5B) },
+	{ { "7$f2" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(D5B) | MASK(H5B) },
+	{ { "7$s2" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(E5B) | MASK(H5B) },
+	{ { "$M7" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5) },
+	{ { "$m$M7", "$m$s7" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5) },
+	{ { "$m7" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5B) },
+	{ { "$a$M7", "$M7$s5" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5) },
+	{ { "$a7", "7$s" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5B) },
+	{ { "$d7" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(A5) },
+
+	/* second */
+	{ { "2", "$M2", "dom2" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(D5) },
+	{ { "$m$M2" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(D5) },
+	{ { "$m2" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(D5) },
+	{ { "$a$M2" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(D5) },
+	{ { "$a2", "2$s5" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(D5) },
+	{ { "$h2" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(D5) },
+	{ { "$h$f2" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(D5B) },
+
+	/* fourth */
+	{ { "4", "$M4", "dom4" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(D5) | MASK(F5) },
+	{ { "$m4", "$m$M4" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(D5) | MASK(F5) },
+	{ { "$a4", "4$s5", "$a$M4" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(D5) | MASK(F5) },
+	{ { "$h4" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(D5B) | MASK(F5) },
+
+  	/* sixth */
+	{ { "6", "$M6", "dom6" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(D5) | MASK(F5) | MASK(A5) },
+	{ { "62" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(A5) | MASK(D5) },
+	{ { "69" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(A5) | MASK(D5) },
+	{ { "$m6", "$m$M6" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(D5) | MASK(F5) | MASK(A5) },
+	{ { "$a6", "6$s5", "$a$M6" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(D5) | MASK(F5) | MASK(A5) },
+	{ { "$h6" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(D5) | MASK(F5) | MASK(A5) },
+
+	/* ninth */
+	{ { "9", "dom9" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5B) | MASK(D5) },
+	{ { "$M9" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5) | MASK(D5) },
+	{ { "$m$M9" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5) | MASK(D5) },
+	{ { "$m9" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5B) | MASK(D5) },
+	{ { "$a$M9" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5) | MASK(D5) },
+	{ { "$a9", "9$s5" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5B) | MASK(D5) },
+	{ { "$h9" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(H5B) | MASK(D5) },
+	{ { "$h$f9" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(H5B) | MASK(D5B) },
+	{ { "$d9" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(A5) | MASK(D5) },
+	{ { "$db9" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(A5) | MASK(D5B) },
+
+	/* eleventh */
+	{  { "11", "dom11" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5B) | MASK(D5) | MASK(F5) },
+	{  { "$M11" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5) | MASK(D5) | MASK(F5) },
+	{  { "$m$M11" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5) | MASK(D5) | MASK(F5) },
+	{  { "$m11" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5B) | MASK(D5) | MASK(F5) },
+	{  { "$a$M11" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5) | MASK(D5) | MASK(F5) },
+	{  { "$a11", "11$s5" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5B) | MASK(D5) | MASK(F5) },
+	{  { "$h11" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(H5B) | MASK(D5B) | MASK(F5) },
+	{  { "$d11" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(A5) | MASK(D5B) | MASK(E5) },
+
+	/* thirteenth */
+	{  { "13", "dom13" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5B) | MASK(D5) | MASK(F5) | MASK(A5) },
+	{  { "$M13" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5) | MASK(D5) | MASK(F5) | MASK(A5) },
+	{  { "$m$M13" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5) | MASK(D5) | MASK(F5) | MASK(A5) },
+	{  { "$m13" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5B) | MASK(D5) | MASK(F5) | MASK(A5) },
+	{  { "$a$M13" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5) | MASK(D5) | MASK(F5) | MASK(A5) },
+	{  { "$a13", "13$s5" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5B) | MASK(D5) | MASK(F5) | MASK(A5) },
+	{  { "$h13" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(H5B) | MASK(D5) | MASK(F5) | MASK(A5) },
+};
+
+#define	MAX_SCORES (3*1024)
+
+static class score_variant *mpp_score_variant;
+
+static uint32_t mpp_max_variant;
 
 static uint32_t
 MppRor(uint32_t val, uint8_t n)
@@ -102,98 +184,202 @@ MppSumbits(uint32_t val)
 	return (val);
 }
 
-static uint8_t
-score_variant_init_sub(unsigned int x, struct score_variant *ps)
+static const QString
+MppBitsToString(uint32_t bits)
 {
-	unsigned int type;
-	unsigned int what;
-	uint32_t e_mask = 0;
-	uint32_t g_mask = 0;
+	QString temp;
+	uint8_t x;
+	for (x = 0; x != 12; x++) {
+		if (bits & 1) {
+			temp += QString(score_bits[x]);
+			if (bits != 1)
+				temp += QString("-");
+		}
+		bits >>= 1;
+	}
+	return (temp);
+}
 
-	type = x / MAX_VAR;
-	what = x % MAX_VAR;
+static void
+MppScoreStoreSus(const class score_variant &orig, unsigned &y, const int sus)
+{
+	enum {
+		MASK_SUS2 = MASK(E5) | MASK(D5),
+		MASK_SUS4 = MASK(E5) | MASK(F5),
+	};
+	class score_variant temp = orig;
 
-	e_mask = score_internal[what].footprint & MASK(E5);
-	g_mask = score_internal[what].footprint & MASK(G5);
-
-	if (type != 0 && (e_mask == 0 || g_mask == 0))
-		return (1);
-
-	switch (type) {
-	case 1:
-		/* minors */
-		ps->keyword[0] = 'm';
-		STRLCPY(ps->keyword + 1, score_internal[what].keyword,
-		    sizeof(ps->keyword) - 1);
-		ps->footprint = (score_internal[what].footprint ^ e_mask) | (e_mask / 2);
-		break;
+	switch (sus) {
 	case 2:
-		/* dim */
-		ps->keyword[0] = 'd';
-		ps->keyword[1] = 'i';
-		ps->keyword[2] = 'm';
-
-		STRLCPY(ps->keyword + 3, score_internal[what].keyword,
-		    sizeof(ps->keyword) - 3);
-		ps->footprint = (score_internal[what].footprint ^
-		    e_mask ^ g_mask) | (e_mask / 2) | (g_mask / 2);
-		break;
-	case 3:
-		/* aug */
-		ps->keyword[0] = 'a';
-		ps->keyword[1] = 'u';
-		ps->keyword[2] = 'g';
-
-		STRLCPY(ps->keyword + 3, score_internal[what].keyword,
-		    sizeof(ps->keyword) - 3);
-
-		ps->footprint = (score_internal[what].footprint ^
-		    g_mask) | (g_mask / 2);
+	  	if ((temp.footprint & MASK_SUS2) != MASK(E5))
+			return;
+		temp.keyword.append(QString("sus2"));
+		temp.footprint ^= MASK(E5) ^ MASK(D5);
 		break;
 	case 4:
-		/* sus */
-		ps->keyword[0] = 's';
-		ps->keyword[1] = 'u';
-		ps->keyword[2] = 's';
-
-		STRLCPY(ps->keyword + 3, score_internal[what].keyword,
-		    sizeof(ps->keyword) - 3);
-		ps->footprint = (score_internal[what].footprint ^
-		    e_mask) | (e_mask * 2);
+		if ((temp.footprint & MASK_SUS4) != MASK(E5))
+			return;
+		temp.keyword.append(QString("sus4"));
+		temp.footprint ^= MASK(E5) ^ MASK(F5);
 		break;
 	default:
-		/* others */
-		STRLCPY(ps->keyword, score_internal[what].keyword,
-		    sizeof(ps->keyword));
-		ps->footprint = score_internal[what].footprint;
+		if ((temp.footprint & MASK_SUS4) != MASK(E5))
+			return;
+		temp.keyword.append(QString("sus"));
+		temp.footprint ^= MASK(E5) ^ MASK(F5);
 		break;
 	}
+	if (y < MAX_SCORES)
+		mpp_score_variant[y++] = temp;
+}
+
+static void
+MppScoreStoreAdd(const class score_variant &orig, unsigned &y, const int add)
+{
+	enum {
+		MASK_ADD2 = MASK(D5) | MASK(H5),
+		MASK_ADD4 = MASK(F5) | MASK(H5),
+		MASK_ADD6 = MASK(A5) | MASK(H5),
+		MASK_ADD9 = MASK(D5) | MASK(H5),
+		MASK_ADD11 = MASK(F5) | MASK(H5),
+		MASK_ADD13 = MASK(A5) | MASK(H5),
+	};
+	class score_variant temp = orig;
+
+	switch (add) {
+	case 2:
+	  	if ((temp.footprint & MASK_ADD2) != 0)
+			return;
+		temp.keyword.append(QString("add2"));
+		temp.footprint |= MASK(D5);
+		break;
+	case 4:
+		if ((temp.footprint & MASK_ADD4) != 0)
+			return;
+		temp.keyword.append(QString("add4"));
+		temp.footprint |= MASK(F5);
+		break;
+	case 6:
+		if ((temp.footprint & MASK_ADD6) != 0)
+			return;
+		temp.keyword.append(QString("add6"));
+		temp.footprint |= MASK(A5);
+		break;
+	case 9:
+		if ((temp.footprint & MASK_ADD9) != 0)
+			return;
+		temp.keyword.append(QString("add9"));
+		temp.footprint |= MASK(D5);
+		break;
+	case 11:
+		if ((temp.footprint & MASK_ADD11) != 0)
+			return;
+		temp.keyword.append(QString("add11"));
+		temp.footprint |= MASK(F5);
+		break;
+	case 13:
+		if ((temp.footprint & MASK_ADD13) != 0)
+			return;
+		temp.keyword.append(QString("add13"));
+		temp.footprint |= MASK(A5);
+		break;
+	default:
+		return;
+	}
+	if (y < MAX_SCORES)
+		mpp_score_variant[y++] = temp;
+}
+
+static void
+MppScoreExpand(const class score_variant &orig, unsigned &y)
+{
+	class score_variant temp;
+	unsigned x;
+	unsigned z;
+
+	for (x = 0; score_macros[x]; x++) {
+		if (orig.keyword.indexOf(QString(score_macros[x][0])) != -1)
+			break;
+	}
+	if (score_macros[x] == 0) {
+	  	if (y < MAX_SCORES)
+			mpp_score_variant[y++] = orig;
+		MppScoreStoreSus(orig, y, 0);
+		MppScoreStoreSus(orig, y, 2);
+		MppScoreStoreSus(orig, y, 4);
+		MppScoreStoreAdd(orig, y, 2);
+		MppScoreStoreAdd(orig, y, 4);
+		MppScoreStoreAdd(orig, y, 6);
+		MppScoreStoreAdd(orig, y, 9);
+		MppScoreStoreAdd(orig, y, 11);
+		MppScoreStoreAdd(orig, y, 13);
+	} else for (z = 1; score_macros[x][z]; z++) {
+		temp = orig;
+		temp.keyword.replace(QString(score_macros[x][0]),
+		    QString::fromUtf8(score_macros[x][z]));
+		MppScoreExpand(temp, y);
+	}
+}
+
+static const QString MppScorePattern = QString::fromUtf8("[Δ\\-o]");
+
+static int
+MppScoreVariantCmp(const void *pa, const void *pb)
+{
+	const class score_variant *sa = (const class score_variant *)pa;
+	const class score_variant *sb = (const class score_variant *)pb;
+	bool ca;
+	bool cb;
+
+	if (sa->keyword.length() > sb->keyword.length())
+		return (1);
+	if (sa->keyword.length() < sb->keyword.length())
+		return (-1);
+
+	QRegExp rx(MppScorePattern);
+	ca = sa->keyword.contains(rx);
+	cb = sb->keyword.contains(rx);
+	if (ca > cb)
+		return (1);
+	if (ca < cb)
+		return (-1);
+
+	if (sa->keyword > sb->keyword)
+		return (1);
+	if (sa->keyword < sb->keyword)
+		return (-1);
 	return (0);
 }
 
 void
 MppScoreVariantInit(void)
 {
-	unsigned int x;
-	unsigned int y;
-	unsigned int z;
-	unsigned int t;
+	class score_variant temp;
+	unsigned x;
+	unsigned y;
+	unsigned z;
+	unsigned t;
 
-	for (x = y = 0; x != (MAX_VAR * MAX_TYPE); x++) {
-		if (score_variant_init_sub(x, &mpp_score_variant[y]) != 0)
-			continue;
-		y++;
+	/* allocate array for score variants */
+	mpp_score_variant = new score_variant [MAX_SCORES];
+
+	for (x = y = 0; x != (sizeof(score_initial) / sizeof(score_initial[0])); x++) {
+		const struct score_variant_initial *ps = score_initial + x;
+		for (z = 0; z != MPP_SCORE_KEYMAX; z++) {
+			if (ps->keyword[z] == 0)
+				continue;
+
+			temp.keyword = QString::fromUtf8(ps->keyword[z]);
+			temp.footprint = ps->footprint;
+
+			MppScoreExpand(temp, y);
+		}
 	}
 
-	for (x = 0; x != y; x ++) {
-		int dup = mpp_score_variant[x].duplicate;
+	qsort(mpp_score_variant, y, sizeof(mpp_score_variant[0]), &MppScoreVariantCmp);
 
-		Mpp.VariantList += QString("/* C") +
-		    QString(mpp_score_variant[x].keyword) +
-		    (dup ? QString(" = C") + QString(mpp_score_variant[dup - 1].keyword) : QString()) +
-		    QString(" */\n");
-
-		if (dup)
+	for (x = 0; x != y; x++) {
+		if (mpp_score_variant[x].duplicate)
 			continue;
 		for (z = x + 1; z != y; z++) {
 			for (t = 0; t != 12; t++) {
@@ -206,8 +392,33 @@ MppScoreVariantInit(void)
 		}
 	}
 
-	Mpp.VariantList += QString("\n/* Number of supported chords is %1 */\n").arg(y);
+	for (x = z = 0; x != y; x++) {
+		if (mpp_score_variant[x].duplicate != 0)
+			continue;
+		Mpp.VariantList += QString("/* C") + mpp_score_variant[x].keyword +
+		    QString(" = ") + MppBitsToString(mpp_score_variant[x].footprint) + QString(" */\n");
+		z++;
+	}
+	Mpp.VariantList += QString("\n/* Number of supported uniqe chords is %1 */\n\n").arg(z);
 
+	for (x = z = 0; x != y; x++) {
+		if (mpp_score_variant[x].duplicate == 0)
+			continue;
+		temp = mpp_score_variant[mpp_score_variant[x].duplicate - 1];
+
+		for (t = 0; t != 12; t++) {
+			if (MppRor(mpp_score_variant[x].footprint, t) == temp.footprint)
+				break;
+		}
+		
+		Mpp.VariantList += QString("/* C") + mpp_score_variant[x].keyword +
+		    QString(" = ") + QString(score_bits[t]) + temp.keyword +
+		    QString(" */\n");
+		z++;
+	}
+	Mpp.VariantList += QString("\n/* Number of supported chord variants is %1 */\n\n").arg(z);
+
+	/* store maximum number of variants */
 	mpp_max_variant = y;
 }
 
@@ -271,14 +482,14 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 	QString out;
 	uint8_t temp[12];
 	uint32_t footprint = 0;
-	int x;
+	unsigned int x;
 	int y;
 	int z;
 	int n;
 	int is_sharp;
 	int rol;
 	int flags;
-	int best_x;
+	unsigned best_x;
 	int best_y;
 	int best_z;
 
@@ -361,14 +572,14 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 
 Q_DECL_EXPORT uint8_t
 mpp_find_chord(const char *input, uint8_t *pbase,
-    uint8_t *pkey, uint8_t *pvar)
+    uint8_t *pkey, uint32_t *pvar)
 {
 	char *ptr;
 	char *pb2;
 	char buffer[16];
+	uint32_t x;
 	uint8_t key;
 	uint8_t base;
-	uint8_t x;
 
 	if (pbase != NULL)
 		*pbase = 0;
@@ -392,8 +603,10 @@ mpp_find_chord(const char *input, uint8_t *pbase,
 			base = key;
 	}
 
+	QString chord = QString::fromUtf8(ptr);
+
 	for (x = 0; x != mpp_max_variant; x++) {
-		if (strcmp(ptr, mpp_score_variant[x].keyword) == 0)
+		if (chord == mpp_score_variant[x].keyword)
 			break;
 	}
 
@@ -412,13 +625,13 @@ mpp_find_chord(const char *input, uint8_t *pbase,
 
 Q_DECL_EXPORT uint8_t
 mpp_parse_chord(const char *input, int8_t rol,
-    uint8_t *pout, uint8_t *pn,
-    uint8_t *pvar, int change_var)
+    uint8_t *pout, uint8_t *pn, uint32_t *pvar,
+    int change_var)
 {
+	uint32_t x;
 	uint8_t error = 0;
 	uint8_t base;
 	uint8_t key;
-	uint8_t x;
 	uint8_t y;
 	uint8_t n;
 
@@ -683,8 +896,8 @@ MppDecodeTab :: handle_parse(int change_var)
 	int b_auto;
 	int x;
 
+	uint32_t var;
 	uint8_t n;
-	uint8_t var;
 
 	ptr = MppQStringToAscii(lin_edit->text().trimmed());
 	if (ptr == NULL)

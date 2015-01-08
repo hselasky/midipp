@@ -82,6 +82,7 @@
 #include <QPoint>
 #include <QSplitter>
 #include <QThread>    
+#include <QRegExp>
 
 #include <umidi20.h>
 
