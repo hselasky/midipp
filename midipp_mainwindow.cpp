@@ -220,7 +220,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_help->setLineWrapMode(QPlainTextEdit::NoWrap);
 	tab_help->setPlainText(tr(
 	    "/*\n"
-	    " * Copyright (c) 2009-2014 Hans Petter Selasky. All rights reserved.\n"
+	    " * Copyright (c) 2009-2015 Hans Petter Selasky. All rights reserved.\n"
 	    " */\n"
 
 	    "\n"

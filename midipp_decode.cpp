@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010,2012,2014 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010-2015 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,6 +35,9 @@
 
 #define MASK(x) (1U << ((x) % 12))
 
+
+/* common standard */
+
 static const char *score_major[] = {
 	"$M", "M", "Δ", "j", "Ma", "maj", "major", 0
 };
@@ -44,15 +47,31 @@ static const char *score_minor[] = {
 };
 
 static const char *score_aug[] = {
-  	"$a", "+", "aug", 0
+	"$a", "+", "aug", 0
 };
 
 static const char *score_dim[] = {
-  	"$d", "°", "o", "dim", 0
+	"$d", "°", "o", "dim", 0
 };
 
+/* custom */
+
+static const char *score_and[] = {
+	"$A", "&", "and", 0
+};
+
+static const char *score_orr[] = {
+	"$O", "|", "orr", 0
+};
+
+static const char *score_xor[] = {
+	"$X", "^", "xor", 0
+};
+
+/* common standard */
+
 static const char *score_sharp[] = {
-	"$s", "+", "#", 0
+	"$S", "+", "#", 0
 };
 
 static const char *score_flat[] = {
@@ -68,6 +87,9 @@ static const char **score_macros[] = {
 	score_minor,
 	score_aug,
 	score_dim,
+	score_and,
+	score_orr,
+	score_xor,
 	score_sharp,
 	score_flat,
 	score_half_dim,
@@ -78,6 +100,14 @@ static const char *score_bits[13] = {
 	"C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Hb", "H", "?"
 };
 
+static const char *score_name_sharp[13] = {
+	"1", "$S1", "2", "$S2", "3", "4", "$S4", "5", "$S5", "6", "$S6", "7", "?"
+};
+
+static const char *score_name_flat[13] = {
+	"1", "$f2", "2", "$f3", "3", "4", "$f5", "5", "$f6", "6", "$f7", "7", "?"
+};
+
 static const struct score_variant_initial score_initial[] = {
 	/* one */
 	{ { "1" }, MASK(C5) },
@@ -86,49 +116,97 @@ static const struct score_variant_initial score_initial[] = {
 	{ { "5" }, MASK(C5) | MASK(G5) },
 
 	/* triads */
-	{ { "", "$M" }, MASK(C5) | MASK(E5) | MASK(G5) },
-	{ { "$m" }, MASK(C5) | MASK(E5B) | MASK(G5) },
-	{ { "$a", "$M$s5" }, MASK(C5) | MASK(E5) | MASK(A5B) },
+	{ { "$A" }, MASK(C5) | MASK(D5B) | MASK(D5) },	/* custom */
+	{ { "$O" }, MASK(C5) | MASK(D5B) | MASK(E5B) },	/* custom */
+	{ { "$X" }, MASK(C5) | MASK(D5) | MASK(E5B) },	/* custom */
 	{ { "$d", "$m$f5" }, MASK(C5) | MASK(E5B) | MASK(G5B) },
+	{ { "$m", "sus$S2", "sus$f3" }, MASK(C5) | MASK(E5B) | MASK(G5) },
+	{ { "$a", "$M$S5" }, MASK(C5) | MASK(E5) | MASK(A5B) },
+	{ { "", "$M" }, MASK(C5) | MASK(E5) | MASK(G5) },
+
+	/* augumented and major triads with susXXX */
+	{ { "sus$S1", "sus$f2" }, MASK(C5) | MASK(D5B) | MASK(G5) },
+	{ { "$asus$S1", "$asus$f2" }, MASK(C5) | MASK(D5B) | MASK(A5B) },
+	{ { "sus2" }, MASK(C5) | MASK(D5) | MASK(G5) },
+	{ { "$asus2" }, MASK(C5) | MASK(D5) | MASK(A5B) },
+	{ { "sus$S2", "sus$f3" }, MASK(C5) | MASK(E5B) | MASK(G5) },
+	{ { "$asus$S2", "$asus$f3" }, MASK(C5) | MASK(E5B) | MASK(A5B) },
+	{ { "sus4", "sus" }, MASK(C5) | MASK(F5) | MASK(G5) },
+	{ { "$asus4", "$asus" }, MASK(C5) | MASK(F5) | MASK(A5B) },
+	{ { "sus$S4", "sus$f5" }, MASK(C5) | MASK(G5B) | MASK(G5) },
+	{ { "$asus$S4", "$asus$f5" }, MASK(C5) | MASK(G5B) | MASK(A5B) },
+	{ { "$asus5" }, MASK(C5) | MASK(G5) | MASK(A5B) },
+	{ { "sus$S5", "sus$f6" }, MASK(C5) | MASK(G5) | MASK(A5B) },
+	{ { "sus6" }, MASK(C5) | MASK(G5) | MASK(A5) },
+	{ { "$asus6" }, MASK(C5) | MASK(A5B) | MASK(A5) },
+	{ { "sus$S6", "sus$f7" }, MASK(C5) | MASK(G5) | MASK(H5B) },
+	{ { "$asus$S6", "$asus$f7" }, MASK(C5) | MASK(A5B) | MASK(H5B) },
+	{ { "sus7" }, MASK(C5) | MASK(G5) | MASK(H5) },
+	{ { "$asus7" }, MASK(C5) | MASK(A5B) | MASK(H5) },
 
 	/* seventh */
 	{ { "7", "dom7" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5B) },
+	{ { "$a7", "7$S" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5B) },
 	{ { "$h", "$h7", "$m7$f5" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(H5B) },
 	{ { "7$f5", "dom7$f5" }, MASK(C5) | MASK(E5) | MASK(G5B) | MASK(H5B) },
 	{ { "7$f9" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(D5B) | MASK(H5B) },
-	{ { "7$s9" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(E5B) | MASK(H5B) },
+	{ { "7$S9" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(E5B) | MASK(H5B) },
 	{ { "7$f2" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(D5B) | MASK(H5B) },
-	{ { "7$s2" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(E5B) | MASK(H5B) },
+	{ { "7$S2" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(E5B) | MASK(H5B) },
 	{ { "$M7" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5) },
-	{ { "$m$M7", "$m$s7" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5) },
+	{ { "$a$M7", "$M7$S5" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5) },
+	{ { "$m$M7" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5) },
 	{ { "$m7" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5B) },
-	{ { "$a$M7", "$M7$s5" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5) },
-	{ { "$a7", "7$s" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5B) },
 	{ { "$d7" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(A5) },
 
 	/* second */
 	{ { "2", "$M2", "dom2" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(D5) },
+	{ { "$a2", "2$S5" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(D5) },
 	{ { "$m$M2" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(D5) },
 	{ { "$m2" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(D5) },
 	{ { "$a$M2" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(D5) },
-	{ { "$a2", "2$s5" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(D5) },
 	{ { "$h2" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(D5) },
 	{ { "$h$f2" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(D5B) },
+
+	/* agumented and major seconds and sevenths susXXX */
+	{ { "7sus$S1", "7sus$f2" }, MASK(C5) | MASK(D5B) | MASK(G5) | MASK(H5B) },
+	{ { "$a7sus$S1", "$a7sus$f2" }, MASK(C5) | MASK(D5B) | MASK(A5B) | MASK(H5B) },
+	{ { "2sus$S1", "2sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(G5) },
+	{ { "$a2sus$S1", "$a2sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(A5B) },
+	{ { "7sus2" }, MASK(C5) | MASK(D5) | MASK(G5) | MASK(H5B) },
+	{ { "$a7sus2" }, MASK(C5) | MASK(D5) | MASK(A5B) | MASK(H5B) },
+	{ { "7sus$S2", "7sus$f3" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5B) },
+	{ { "$a7sus$S2", "$a7sus$f3" }, MASK(C5) | MASK(E5B) | MASK(A5B) | MASK(H5B) },
+	{ { "2sus$S2", "2sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(G5) },
+	{ { "$a2sus$S2", "$a2sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(A5B) },
+	{ { "7sus4", "7sus" }, MASK(C5) | MASK(F5) | MASK(G5) | MASK(H5B) },
+	{ { "$a7sus4", "$a7sus" }, MASK(C5) | MASK(F5) | MASK(A5B) | MASK(H5B) },
+	{ { "2sus4", "2sus" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) },
+	{ { "$a2sus4", "$a2sus" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(A5B) },
+	{ { "7sus$S4", "7sus$f5" }, MASK(C5) | MASK(G5B) | MASK(G5) | MASK(H5B) },
+	{ { "$a7sus$S4", "$a7sus$f5" }, MASK(C5) | MASK(G5B) | MASK(A5B) | MASK(H5B) },
+	{ { "2sus$S4", "2sus$f5" }, MASK(C5) | MASK(D5) | MASK(G5B) | MASK(G5) },
+	{ { "$a2sus$S4", "$a2sus$f5" }, MASK(C5) | MASK(D5) | MASK(G5B) | MASK(A5B) },
+	{ { "$a7sus5" }, MASK(C5) | MASK(G5) | MASK(A5B) | MASK(H5B) },
+	{ { "$a2sus5" }, MASK(C5) | MASK(D5) | MASK(G5) | MASK(A5B) },
+	{ { "7sus$S5", "7sus$f6" }, MASK(C5) | MASK(G5) | MASK(A5B) | MASK(H5B) },
+	{ { "2sus$S5", "2sus$f6" }, MASK(C5) | MASK(D5) | MASK(G5) | MASK(A5B) },
+	{ { "7sus6" }, MASK(C5) | MASK(G5) | MASK(A5) | MASK(H5B) },
+	{ { "$a7sus6" }, MASK(C5) | MASK(A5B) | MASK(A5) | MASK(H5B) },
+	{ { "2sus6" }, MASK(C5) | MASK(D5) | MASK(G5) | MASK(A5) },
+	{ { "$a2sus6" }, MASK(C5) | MASK(D5) | MASK(A5B) | MASK(A5) },
+	{ { "2sus$S6", "2sus$f7" }, MASK(C5) | MASK(D5) | MASK(G5) | MASK(H5B) },
+	{ { "$a2sus$S6", "$a2sus$f7" }, MASK(C5) | MASK(D5) | MASK(A5B) | MASK(H5B) },
+	{ { "7sus7" }, MASK(C5) | MASK(G5) | MASK(H5B) | MASK(H5) },
+	{ { "$a7sus7" }, MASK(C5) | MASK(A5B) | MASK(H5B) | MASK(H5) },
+	{ { "2sus7" }, MASK(C5) | MASK(D5) | MASK(G5) | MASK(H5) },
+	{ { "$a2sus7" }, MASK(C5) | MASK(D5) | MASK(A5B) | MASK(H5) },
 
 	/* fourth */
 	{ { "4", "$M4", "dom4" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(D5) | MASK(F5) },
 	{ { "$m4", "$m$M4" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(D5) | MASK(F5) },
-	{ { "$a4", "4$s5", "$a$M4" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(D5) | MASK(F5) },
+	{ { "$a4", "4$S5", "$a$M4" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(D5) | MASK(F5) },
 	{ { "$h4" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(D5B) | MASK(F5) },
-
-  	/* sixth */
-	{ { "6", "$M6", "dom6" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(D5) | MASK(F5) | MASK(A5) },
-	{ { "62" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(A5) | MASK(D5) },
-	{ { "69" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(A5) | MASK(D5) },
-	{ { "64" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(A5) | MASK(F5) },
-	{ { "$m6", "$m$M6" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(D5) | MASK(F5) | MASK(A5) },
-	{ { "$a6", "6$s5", "$a$M6" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(D5) | MASK(F5) | MASK(A5) },
-	{ { "$h6" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(D5) | MASK(F5) | MASK(A5) },
 
 	/* ninth */
 	{ { "9", "dom9" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5B) | MASK(D5) },
@@ -136,11 +214,50 @@ static const struct score_variant_initial score_initial[] = {
 	{ { "$m$M9" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5) | MASK(D5) },
 	{ { "$m9" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5B) | MASK(D5) },
 	{ { "$a$M9" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5) | MASK(D5) },
-	{ { "$a9", "9$s5" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5B) | MASK(D5) },
+	{ { "$a9", "9$S5" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5B) | MASK(D5) },
 	{ { "$h9" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(H5B) | MASK(D5) },
 	{ { "$h$f9" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(H5B) | MASK(D5B) },
 	{ { "$d9" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(A5) | MASK(D5) },
 	{ { "$db9" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(A5) | MASK(D5B) },
+
+	/* agumented and major fourths and ninths susXXX */
+	{ { "4sus$S1", "4sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(F5) | MASK(G5) },
+	{ { "$a4sus$S1", "$a4sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(F5) | MASK(A5B) },
+	{ { "9sus$S1", "9sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(G5) | MASK(H5B) },
+	{ { "$a9sus$S1", "$a9sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(A5B) | MASK(H5B) },
+	{ { "4sus$S2", "4sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(F5) | MASK(G5) },
+	{ { "$a4sus$S2", "$a4sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(F5) | MASK(A5B) },
+	{ { "9sus$S2", "9sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(G5) | MASK(H5B) },
+	{ { "$a9sus$S2", "$a9sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(A5B) | MASK(H5B) },
+	{ { "9sus4", "9sus" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(H5B) },
+	{ { "$a9sus4", "$a9sus" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(H5B) },
+	{ { "4sus$S4", "4sus$f5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5B) | MASK(G5) },
+	{ { "$a4sus$S4", "$a4sus$f5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5B) | MASK(A5B) },
+	{ { "9sus$S4", "9sus$f5" }, MASK(C5) | MASK(D5) | MASK(G5B) | MASK(G5) | MASK(H5B) },
+	{ { "$a9sus$S4", "$a9sus$f5" }, MASK(C5) | MASK(D5) | MASK(G5B) | MASK(A5B) | MASK(H5B) },
+	{ { "$a4sus5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5B) },
+	{ { "$a9sus5" }, MASK(C5) | MASK(D5) | MASK(G5) | MASK(A5B) | MASK(H5B) },
+	{ { "4sus$S5", "4sus$f6" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5B) },
+	{ { "9sus$S5", "9sus$f6" }, MASK(C5) | MASK(D5) | MASK(G5) | MASK(A5B) | MASK(H5B) },
+	{ { "4sus6" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5) },
+	{ { "$a4sus6" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(A5) },
+	{ { "9sus6" }, MASK(C5) | MASK(D5) | MASK(G5) | MASK(A5) | MASK(H5B) },
+	{ { "$a9sus6" }, MASK(C5) | MASK(D5) | MASK(A5B) | MASK(A5) | MASK(H5B) },
+	{ { "4sus$S6", "4sus$f7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(H5B) },
+	{ { "$a4sus$S6", "$a4sus$f7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(H5B) },
+	{ { "4sus7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(H5) },
+	{ { "$a4sus7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(H5) },
+	{ { "9sus7" }, MASK(C5) | MASK(D5) | MASK(G5) | MASK(H5B) | MASK(H5) },
+	{ { "$a9sus7" }, MASK(C5) | MASK(D5) | MASK(A5B) | MASK(H5B) | MASK(H5) },
+
+	/* sixth */
+	{ { "6", "$M6", "dom6" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(D5) | MASK(F5) | MASK(A5) },
+	{ { "62" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(A5) | MASK(D5) },
+	{ { "69" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(A5) | MASK(D5) },
+	{ { "64" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(A5) | MASK(F5) },
+	{ { "$m6", "$m$M6" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(D5) | MASK(F5) | MASK(A5) },
+	{ { "$a6", "6$S5", "$a$M6" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(D5) | MASK(F5) | MASK(A5) },
+	{ { "$h6" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(D5) | MASK(F5) | MASK(A5) },
 
 	/* eleventh */
 	{  { "11", "dom11" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5B) | MASK(D5) | MASK(F5) },
@@ -148,25 +265,63 @@ static const struct score_variant_initial score_initial[] = {
 	{  { "$m$M11" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5) | MASK(D5) | MASK(F5) },
 	{  { "$m11" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5B) | MASK(D5) | MASK(F5) },
 	{  { "$a$M11" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5) | MASK(D5) | MASK(F5) },
-	{  { "$a11", "11$s5" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5B) | MASK(D5) | MASK(F5) },
+	{  { "$a11", "11$S5" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5B) | MASK(D5) | MASK(F5) },
 	{  { "$h11" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(H5B) | MASK(D5B) | MASK(F5) },
 	{  { "$d11" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(A5) | MASK(D5B) | MASK(E5) },
 
+	/* agumented and major sixths and elevenths susXXX */
+	{ { "6sus$S1", "6sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5) },
+	{ { "$a6sus$S1", "$a6sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(A5) },
+	{ { "11sus$S1", "11sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(H5B) },
+	{ { "$a11sus$S1", "$a11sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(H5B) },
+	{ { "6sus$S2", "6sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(F5) | MASK(G5) | MASK(A5) },
+	{ { "$a6sus$S2", "$a6sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(F5) | MASK(A5B) | MASK(A5) },
+	{ { "11sus$S2", "11sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(F5) | MASK(G5) | MASK(H5B) },
+	{ { "$a11sus$S2", "$a11sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(F5) | MASK(A5B) | MASK(H5B) },
+	{ { "6sus$S4", "6sus$f5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5B) | MASK(G5) | MASK(A5) },
+	{ { "$a6sus$S4", "$a6sus$f5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5B) | MASK(A5B) | MASK(A5) },
+	{ { "11sus$S4", "11sus$f5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5B) | MASK(G5) | MASK(H5B) },
+	{ { "$a11sus$S4", "$a11sus$f5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5B) | MASK(A5B) | MASK(H5B) },
+	{ { "$a6sus5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5B) | MASK(A5) },
+	{ { "$a11sus5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5B) | MASK(H5B) },
+	{ { "6sus$S5", "6sus$f6" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5B) | MASK(A5) },
+	{ { "11sus$S5", "11sus$f6" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5B) | MASK(H5B) },
+	{ { "11sus6" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5) | MASK(H5B) },
+	{ { "$a11sus6" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(A5) | MASK(H5B) },
+	{ { "6sus$S6", "6sus$f7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5) | MASK(H5B) },
+	{ { "$a6sus$S6", "$a6sus$f7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(A5) | MASK(H5B) },
+	{ { "6sus7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5) | MASK(H5) },
+	{ { "$a6sus7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(A5) | MASK(H5) },
+	{ { "11sus7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(H5B) | MASK(H5) },
+	{ { "$a11sus7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(H5B) | MASK(H5) },
+ 
 	/* thirteenth */
 	{  { "13", "dom13" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5B) | MASK(D5) | MASK(F5) | MASK(A5) },
 	{  { "$M13" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5) | MASK(D5) | MASK(F5) | MASK(A5) },
 	{  { "$m$M13" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5) | MASK(D5) | MASK(F5) | MASK(A5) },
 	{  { "$m13" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5B) | MASK(D5) | MASK(F5) | MASK(A5) },
 	{  { "$a$M13" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5) | MASK(D5) | MASK(F5) | MASK(A5) },
-	{  { "$a13", "13$s5" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5B) | MASK(D5) | MASK(F5) | MASK(A5) },
+	{  { "$a13", "13$S5" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5B) | MASK(D5) | MASK(F5) | MASK(A5) },
 	{  { "$h13" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(H5B) | MASK(D5) | MASK(F5) | MASK(A5) },
+
+	/* agumented and major thirteenths susXXX */
+	{ { "13sus$S1", "13sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5) | MASK(H5B) },
+	{ { "$a13sus$S1", "$a13sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(A5) | MASK(H5B) },
+	{ { "13sus$S2", "13sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(F5) | MASK(G5) | MASK(A5) | MASK(H5B) },
+	{ { "$a13sus$S2", "$a13sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(F5) | MASK(A5B) | MASK(A5) | MASK(H5B) },
+	{ { "13sus$S4", "13sus$f5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5B) | MASK(G5) | MASK(A5) | MASK(H5B) },
+	{ { "$a13sus$S4", "$a13sus$f5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5B) | MASK(A5B) | MASK(A5) | MASK(H5B) },
+	{ { "$a13sus5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5B) | MASK(A5) | MASK(H5B) },
+	{ { "13sus$S5", "13sus$f6" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5B) | MASK(A5) | MASK(H5B) },
+	{ { "13sus7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5) | MASK(H5B) | MASK(H5) },
+	{ { "$a13sus7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(A5) | MASK(H5B) | MASK(H5) },
 };
 
-#define	MAX_SCORES (3*1024)
+#define	MAX_SCORES 2048
 
 static class score_variant *mpp_score_variant;
 
-static uint32_t mpp_max_variant;
+static unsigned mpp_max_variant;
 
 static uint32_t
 MppRor(uint32_t val, uint8_t n)
@@ -202,152 +357,132 @@ MppBitsToString(uint32_t bits)
 }
 
 static void
-MppScoreStoreSus(const class score_variant &orig, unsigned &y, const int sus)
+MppScoreStoreAdd(const class score_variant &orig, unsigned &y, const int which)
 {
-	enum {
-		MASK_SUS2 = MASK(E5) | MASK(D5),
-		MASK_SUS4 = MASK(E5) | MASK(F5),
-	};
-	class score_variant temp = orig;
+	uint32_t mask = MASK(which) | MASK(H5);
 
-	switch (sus) {
-	case 2:
-	  	if ((temp.footprint & MASK_SUS2) != MASK(E5))
-			return;
-		temp.keyword.append(QString("sus2"));
-		temp.footprint ^= MASK(E5) ^ MASK(D5);
-		break;
-	case 4:
-		if ((temp.footprint & MASK_SUS4) != MASK(E5))
-			return;
-		temp.keyword.append(QString("sus4"));
-		temp.footprint ^= MASK(E5) ^ MASK(F5);
-		break;
-	default:
-		if ((temp.footprint & MASK_SUS4) != MASK(E5))
-			return;
-		temp.keyword.append(QString("sus"));
-		temp.footprint ^= MASK(E5) ^ MASK(F5);
-		break;
-	}
-	if (y < MAX_SCORES)
-		mpp_score_variant[y++] = temp;
-}
-
-static void
-MppScoreStoreAdd(const class score_variant &orig, unsigned &y, const int add)
-{
-	enum {
-		MASK_ADD2 = MASK(D5) | MASK(H5),
-		MASK_ADD4 = MASK(F5) | MASK(H5),
-		MASK_ADD6 = MASK(A5) | MASK(H5),
-		MASK_ADD9 = MASK(D5) | MASK(H5),
-		MASK_ADD11 = MASK(F5) | MASK(H5),
-		MASK_ADD13 = MASK(A5) | MASK(H5),
-	};
-	class score_variant temp = orig;
-
-	switch (add) {
-	case 2:
-	  	if ((temp.footprint & MASK_ADD2) != 0)
-			return;
-		temp.keyword.append(QString("add2"));
-		temp.footprint |= MASK(D5);
-		break;
-	case 4:
-		if ((temp.footprint & MASK_ADD4) != 0)
-			return;
-		temp.keyword.append(QString("add4"));
-		temp.footprint |= MASK(F5);
-		break;
-	case 6:
-		if ((temp.footprint & MASK_ADD6) != 0)
-			return;
-		temp.keyword.append(QString("add6"));
-		temp.footprint |= MASK(A5);
-		break;
-	case 9:
-		if ((temp.footprint & MASK_ADD9) != 0)
-			return;
-		temp.keyword.append(QString("add9"));
-		temp.footprint |= MASK(D5);
-		break;
-	case 11:
-		if ((temp.footprint & MASK_ADD11) != 0)
-			return;
-		temp.keyword.append(QString("add11"));
-		temp.footprint |= MASK(F5);
-		break;
-	case 13:
-		if ((temp.footprint & MASK_ADD13) != 0)
-			return;
-		temp.keyword.append(QString("add13"));
-		temp.footprint |= MASK(A5);
-		break;
-	default:
+	/* avoid sus and add together */
+	if (orig.pattern.indexOf(QString("sus")) != -1)
 		return;
-	}
+	/* adds don't have 7th */
+	if ((orig.footprint & mask) != 0)
+		return;
+
+	class score_variant temp = orig;
+	temp.footprint |= MASK(which);
+	temp.pattern.append(QString("add") + QString(score_name_sharp[which]));
+
 	if (y < MAX_SCORES)
 		mpp_score_variant[y++] = temp;
+
+	if (strcmp(score_name_sharp[which], score_name_flat[which])) {
+		class score_variant temp = orig;
+		temp.footprint |= MASK(which);
+		temp.pattern.append(QString("add") + QString(score_name_flat[which]));
+
+		if (y < MAX_SCORES)
+			mpp_score_variant[y++] = temp;
+	}
 }
 
-static void
-MppScoreExpand(const class score_variant &orig, unsigned &y)
+static const QString
+MppScoreExpandPattern(QString temp)
 {
-	class score_variant temp;
-	unsigned x;
-	unsigned z;
+	while (1) {
+	  	unsigned x;
 
-	for (x = 0; score_macros[x]; x++) {
-		if (orig.keyword.indexOf(QString(score_macros[x][0])) != -1)
-			break;
-	}
-	if (score_macros[x] == 0) {
-	  	if (y < MAX_SCORES)
-			mpp_score_variant[y++] = orig;
-		MppScoreStoreSus(orig, y, 0);
-		MppScoreStoreSus(orig, y, 2);
-		MppScoreStoreSus(orig, y, 4);
-		MppScoreStoreAdd(orig, y, 2);
-		MppScoreStoreAdd(orig, y, 4);
-		MppScoreStoreAdd(orig, y, 6);
-		MppScoreStoreAdd(orig, y, 9);
-		MppScoreStoreAdd(orig, y, 11);
-		MppScoreStoreAdd(orig, y, 13);
-	} else for (z = 1; score_macros[x][z]; z++) {
-		temp = orig;
-		temp.keyword.replace(QString(score_macros[x][0]),
-		    QString::fromUtf8(score_macros[x][z]));
-		MppScoreExpand(temp, y);
+		for (x = 0; score_macros[x]; x++) {
+			if (temp.indexOf(score_macros[x][0]) != -1)
+				break;
+		}
+		if (score_macros[x] == 0)
+			return (temp);
+
+		temp.replace(QString(score_macros[x][0]),
+		    QString::fromUtf8(score_macros[x][1]));
 	}
 }
 
-static const QString MppScorePattern = QString::fromUtf8("[Δ\\-o]");
+static const QString
+MppScoreFullPattern(QString temp)
+{
+	while (1) {
+	  	unsigned x;
+	  	unsigned y;
+
+		for (x = 0; score_macros[x]; x++) {
+			if (temp.indexOf(score_macros[x][0]) != -1)
+				break;
+		}
+		if (score_macros[x] == 0)
+			return (temp);
+
+		QString combos;
+
+		combos += "{";
+		for (y = 1; score_macros[x][y]; y++) {
+			combos += QString::fromUtf8(score_macros[x][y]);
+			if (score_macros[x][y+1])
+				combos += ",";
+		}
+		combos += "}";
+
+		temp.replace(QString(score_macros[x][0]), combos);
+	}
+}
+
+static bool
+MppScoreMatchPattern(const QString &pattern, const QString str)
+{
+	int t = 0;
+	int u = 0;
+
+	while (1) {
+		if (t >= pattern.length()) {
+			return (u == str.length());
+		} else if (u >= str.length()) {
+			return (false);
+		} else if (pattern[t] == '$') {
+		  	int x;
+			int y;
+			for (x = 0; score_macros[x]; x++) {
+				if (score_macros[x][0][1] == pattern[t + 1])
+					break;
+			}
+			if (score_macros[x] == 0)
+				return (false);
+			QString temp;
+			for (y = 1; score_macros[x][y]; y++) {
+				temp = QString::fromUtf8(score_macros[x][y]);
+				if (str.indexOf(temp, u) == u)
+					break;
+			}
+			if (score_macros[x][y] == 0)
+				return (false);
+			t += 2;
+			u += temp.length();
+		} else if (pattern[t] == str[u]) {
+			t++;
+			u++;
+		} else {
+			return (false);
+		}
+	}
+}
 
 static int
 MppScoreVariantCmp(const void *pa, const void *pb)
 {
 	const class score_variant *sa = (const class score_variant *)pa;
 	const class score_variant *sb = (const class score_variant *)pb;
-	bool ca;
-	bool cb;
 
-	if (sa->keyword.length() > sb->keyword.length())
+	if (sa->pattern.length() > sb->pattern.length())
 		return (1);
-	if (sa->keyword.length() < sb->keyword.length())
+	if (sa->pattern.length() < sb->pattern.length())
 		return (-1);
-
-	QRegExp rx(MppScorePattern);
-	ca = sa->keyword.contains(rx);
-	cb = sb->keyword.contains(rx);
-	if (ca > cb)
+	if (sa->pattern > sb->pattern)
 		return (1);
-	if (ca < cb)
-		return (-1);
-
-	if (sa->keyword > sb->keyword)
-		return (1);
-	if (sa->keyword < sb->keyword)
+	if (sa->pattern < sb->pattern)
 		return (-1);
 	return (0);
 }
@@ -367,14 +502,24 @@ MppScoreVariantInit(void)
 	for (x = y = 0; x != (sizeof(score_initial) / sizeof(score_initial[0])); x++) {
 		const struct score_variant_initial *ps = score_initial + x;
 		for (z = 0; z != MPP_SCORE_KEYMAX; z++) {
-			if (ps->keyword[z] == 0)
+			if (ps->pattern[z] == 0)
 				continue;
 
-			temp.keyword = QString::fromUtf8(ps->keyword[z]);
+			temp.pattern = QString(ps->pattern[z]);
 			temp.footprint = ps->footprint;
 
-			MppScoreExpand(temp, y);
+			if (y < MAX_SCORES)
+				mpp_score_variant[y++] = temp;
 		}
+	}
+
+	mpp_max_variant = y;
+
+	/* compute all adds */
+	
+	for (x = 0; x != mpp_max_variant; x++) {
+		for (z = 1; z != 12; z++)
+			MppScoreStoreAdd(mpp_score_variant[x], y, z);
 	}
 
 	qsort(mpp_score_variant, y, sizeof(mpp_score_variant[0]), &MppScoreVariantCmp);
@@ -396,8 +541,12 @@ MppScoreVariantInit(void)
 	for (x = z = 0; x != y; x++) {
 		if (mpp_score_variant[x].duplicate != 0)
 			continue;
-		Mpp.VariantList += QString("/* C") + mpp_score_variant[x].keyword +
-		    QString(" = ") + MppBitsToString(mpp_score_variant[x].footprint) + QString(" */\n");
+		Mpp.VariantList += QString("/* C") +
+		    MppScoreFullPattern(mpp_score_variant[x].pattern) +
+		    QString(" = C") +
+		    MppScoreExpandPattern(mpp_score_variant[x].pattern) +
+		    QString(" = ") +
+		    MppBitsToString(mpp_score_variant[x].footprint) + QString(" */\n");
 		z++;
 	}
 	Mpp.VariantList += QString("\n/* Number of supported uniqe chords is %1 */\n\n").arg(z);
@@ -412,68 +561,64 @@ MppScoreVariantInit(void)
 				break;
 		}
 		
-		Mpp.VariantList += QString("/* C") + mpp_score_variant[x].keyword +
-		    QString(" = ") + QString(score_bits[t]) + temp.keyword +
+		Mpp.VariantList += QString("/* C") +
+		    MppScoreFullPattern(mpp_score_variant[x].pattern) +
+		    QString(" = C") +
+		    MppScoreExpandPattern(mpp_score_variant[x].pattern) +
+		    QString(" = ") + QString(score_bits[t]) +
+		    MppScoreFullPattern(temp.pattern) +
 		    QString(" */\n");
 		z++;
 	}
 	Mpp.VariantList += QString("\n/* Number of supported chord variants is %1 */\n\n").arg(z);
 
+	for (x = 0; x != y; x++) {
+		if (mpp_score_variant[x].duplicate)
+			continue;
+	}
 	/* store maximum number of variants */
 	mpp_max_variant = y;
 }
 
 static uint8_t
-mpp_get_key(char *ptr, char **pp)
+mpp_get_key(const QString &ptr, int &index)
 {
 	uint8_t key;
-
-	switch (ptr[0]) {
-	case 'C':
+	if (index >= ptr.length())
+		return (0);
+	if (ptr[index] == 'C') {
 		key = C5;
-		break;
-	case 'D':
+		index++;
+	} else if (ptr[index] == 'D') {
 		key = D5;
-		break;
-	case 'E':
+		index++;
+	} else if (ptr[index] == 'E') {
 		key = E5;
-		break;
-	case 'F':
+		index++;
+	} else if (ptr[index] == 'F') {
 		key = F5;
-		break;
-	case 'G':
+		index++;
+	} else if (ptr[index] == 'G') {
 		key = G5;
-		break;
-	case 'A':
+		index++;
+	} else if (ptr[index] == 'A') {
 		key = A5;
-		break;
-	case 'B':
-	case 'H':
+		index++;
+	} else if (ptr[index] == 'H' || ptr[index] == 'B') {
 		key = H5;
-		break;
-	default:
-		key = 0;
-		break;
+		index++;
+	} else {
+		return (0);
 	}
-	if (key)
-		ptr++;
-
-	switch (ptr[0]) {
-	case '#':
-		key ++;
-		ptr++;
-		break;
-	case 'b':
-		key --;
-		ptr++;
-		break;
-	default:
-		break;
+	if (index < ptr.length()) {
+		if (ptr[index] == '#') {
+			key++;
+			index++;
+		} else if (ptr[index] == 'b') {
+			key--;
+			index++;
+		}
 	}
-
-	if (pp != NULL)
-		*pp = ptr;
-
 	return (key);
 }
 
@@ -559,7 +704,7 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 	rol_value = rol;
 
 	out += MppBaseKeyToString(y, is_sharp);
-	out += mpp_score_variant[x].keyword;
+	out += MppScoreExpandPattern(mpp_score_variant[x].pattern);
 
 	if (y != pinfo->key_base) {
 		out += "/";
@@ -572,12 +717,11 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 }
 
 Q_DECL_EXPORT uint8_t
-mpp_find_chord(const char *input, uint8_t *pbase,
+mpp_find_chord(QString input, uint8_t *pbase,
     uint8_t *pkey, uint32_t *pvar)
 {
-	char *ptr;
-	char *pb2;
-	char buffer[16];
+	int index = 0;
+	int temp;
 	uint32_t x;
 	uint8_t key;
 	uint8_t base;
@@ -589,25 +733,22 @@ mpp_find_chord(const char *input, uint8_t *pbase,
 	if (pvar != NULL)
 		*pvar = 0;
 
-	STRLCPY(buffer, input, sizeof(buffer));
-
-	key = base = mpp_get_key(buffer, &ptr);
-
+	key = base = mpp_get_key(input, index);
 	if (key == 0)
 		return (1);
 
-	pb2 = strstr(ptr, "/");
-	if (pb2 != NULL) {
-		*pb2 = 0;
-		base = mpp_get_key(pb2 + 1, NULL);
+	temp = input.indexOf("/", index);
+	if (temp > -1) {
+		int basepos = temp + 1;
+		base = mpp_get_key(input, basepos);
 		if (base == 0)
 			base = key;
+		input.truncate(temp);
 	}
-
-	QString chord = QString::fromUtf8(ptr);
+	input.remove(0, index);
 
 	for (x = 0; x != mpp_max_variant; x++) {
-		if (chord == mpp_score_variant[x].keyword)
+		if (MppScoreMatchPattern(mpp_score_variant[x].pattern, input))
 			break;
 	}
 
@@ -625,7 +766,7 @@ mpp_find_chord(const char *input, uint8_t *pbase,
 }
 
 Q_DECL_EXPORT uint8_t
-mpp_parse_chord(const char *input, int8_t rol,
+mpp_parse_chord(const QString &input, int8_t rol,
     uint8_t *pout, uint8_t *pn, uint32_t *pvar,
     int change_var)
 {
@@ -891,8 +1032,6 @@ MppDecodeTab :: handle_parse(int change_var)
 {
 	QString out;
 
-	char *ptr;
-
 	int error;
 	int b_auto;
 	int x;
@@ -900,43 +1039,42 @@ MppDecodeTab :: handle_parse(int change_var)
 	uint32_t var;
 	uint8_t n;
 
-	ptr = MppQStringToAscii(lin_edit->text().trimmed());
-	if (ptr == NULL)
+	QString chord = lin_edit->text().trimmed();
+	if (chord.isEmpty())
 		return;
 
-	out += QString("U1 ");
+	out += "U1 ";
 
 	memset(current_score, 0, sizeof(current_score));
 	memset(auto_base, 0, sizeof(auto_base));
 
 	n = sizeof(current_score) / sizeof(current_score[0]);
-	error = mpp_parse_chord(ptr, rol_value, current_score,
+	error = mpp_parse_chord(chord, rol_value, current_score,
 	    &n, &var, change_var);
 
 	if (error == 0) {
-		if (change_var && ptr[0] != 0) {
-			const char *pslash = strstr(ptr, "/");
+		if (change_var && chord.length() > 0) {
+			QChar ch = chord[0];
+			int endpos = chord.indexOf("/");
+			int startpos = 1;
 
-			if (pslash == NULL)
-				pslash = "";
+			if (endpos < 0)
+				endpos = chord.length();
 
-			switch (ptr[1]) {
-			case 'b':
-			case 'B':
-				lin_edit->setText(QString(ptr[0]) + QString("b") + 
-				    mpp_score_variant[var].keyword + QString(pslash));
-				break;
-			case '#':
-				lin_edit->setText(QString(ptr[0]) + QString("#") + 
-				    mpp_score_variant[var].keyword + QString(pslash));
-				break;
-			default:
-				lin_edit->setText(QString(ptr[0]) +
-				    mpp_score_variant[var].keyword + QString(pslash));
-				break;
-			}
+			if ((endpos > startpos) &&
+			    (chord[startpos] == 'b' ||
+			     chord[startpos] == 'B' ||
+			     chord[startpos] == '#'))
+				startpos++;	/* keep modifier too */
+
+			QString temp = MppScoreExpandPattern(mpp_score_variant[var].pattern);
+
+			/* replace chord type */
+			chord.replace(startpos, endpos - startpos, temp);
+
+			/* store chord */
+			lin_edit->setText(chord);
 		}
-
 		lbl_status->setText(tr("OK"));
 	} else {
 		lbl_status->setText(tr("ERROR"));
@@ -972,8 +1110,6 @@ done:
 	  + QString(" */");
 
 	lin_out->setText(out);
-
-	free(ptr);
 }
 
 QString

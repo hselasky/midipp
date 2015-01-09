@@ -32,14 +32,14 @@
 #define	MPP_SCORE_KEYMAX 4
 
 struct score_variant_initial {
-	const char *keyword[MPP_SCORE_KEYMAX];
+	const char *pattern[MPP_SCORE_KEYMAX];
 	uint32_t footprint;
 };
 
 class score_variant {
 public:
-	score_variant() { footprint = 0; duplicate = 0; keyword = QString(); }
-	QString keyword;
+	score_variant() { footprint = 0; duplicate = 0; pattern = QString(); }
+	QString pattern;
 	uint32_t footprint;
 	uint32_t duplicate;
 };
@@ -97,7 +97,7 @@ public slots:
 	void handle_parse(int = 0);
 };
 
-extern uint8_t mpp_find_chord(const char *input, uint8_t *pbase, uint8_t *pkey, uint32_t *pvar);
-extern uint8_t mpp_parse_chord(const char *input, int8_t rol, uint8_t *pout, uint8_t *pn, uint32_t *pvar, int);
+extern uint8_t mpp_find_chord(QString input, uint8_t *pbase, uint8_t *pkey, uint32_t *pvar);
+extern uint8_t mpp_parse_chord(const QString &input, int8_t rol, uint8_t *pout, uint8_t *pn, uint32_t *pvar, int);
 
 #endif		/* _MIDIPP_DECODE_H_ */

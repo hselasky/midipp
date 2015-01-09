@@ -30,6 +30,12 @@
 #include "midipp_import.h"
 #include "midipp_button.h"
 
+static int
+midipp_import_find_chord(const QString &str)
+{
+	return (mpp_find_chord(str, NULL, NULL, NULL));
+}
+
 static uint8_t
 midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 {
@@ -54,25 +60,21 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 			any = 1;
 
 			if (ps->d_word[i_score][ai].off == x) {
-				char *ptr =
-				    MppQStringToAscii(ps->d_word[i_score][ai].name);
+				QString *ptr = &ps->d_word[i_score][ai].name;
 
-				if (ptr != NULL &&
-				    mpp_find_chord(ptr, NULL, NULL, NULL) == 0) {
+				if (midipp_import_find_chord(*ptr) == 0) {
 					MppDecodeTab *ptab = ps->sm->mainWindow->tab_chord_gl;
 
 					out += ".(";
 					out += ps->d_word[i_score][ai].name;
 					out += ")";
 
-					ptab->setText(ptr);
+					ptab->setText(*ptr);
 
 					scs += ps->sm->mainWindow->led_config_insert->text() +
 					    ptab->getText() +
 					    "\n";
 				}
-
-				free(ptr);
 				ai++;
 			}
 		}
@@ -118,35 +120,20 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 static uint8_t
 midipp_import_is_chord(QChar ch)
 {
+	static const QString chordchars("ABCDEFGHM+-/#øØ&|^Δ°");
+	int x;
+	for (x = 0; x != chordchars.length(); x++) {
+		if (ch == chordchars[x])
+			return (1);
+	}
 	char c = ch.toLatin1();
-	if (c >= 'A' && c <= 'H')
-		return (1);
 	if (c >= '0' && c <= '9')
 		return (1);
 	if (c >= 'a' && c <= 'z')
 		return (1);
-	if (c == '+')
-		return (1);
-	if (c == '/')
-		return (1);
-	if (c == '#')
-		return (1);
-	if (c == ' ')
+	if (c == ' ' || c == '\t')
 		return (2);
 	return (0);
-}
-
-static int
-midipp_import_find_chord(const QString &str)
-{
-	char *ptr;
-	int ret;
-
-	ptr = MppQStringToAscii(str);
-	ret = (ptr != NULL && mpp_find_chord(ptr, NULL, NULL, NULL) == 0);
-	free(ptr);
-
-	return (ret);
 }
 
 static uint8_t
@@ -183,7 +170,7 @@ midipp_import_parse(class midipp_import *ps)
 
 			if (state == 1 &&
 			    midipp_import_find_chord(
-			    ps->d_word[ps->index][n_word].name) != 0) {
+			    ps->d_word[ps->index][n_word].name) == 0) {
 				fchord++;
 			}
 			n_word ++;
@@ -203,7 +190,7 @@ midipp_import_parse(class midipp_import *ps)
 
 		if (state == 1 &&
 		    midipp_import_find_chord(
-		    ps->d_word[ps->index][n_word].name) != 0) {
+		    ps->d_word[ps->index][n_word].name) == 0) {
 			fchord++;
 		}
 		n_word ++;
