@@ -1,5 +1,5 @@
 Name:           midipp
-Version:        1.2.15
+Version:        1.2.16
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
@@ -48,7 +48,10 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Sun Dec 14 2014 HPS hps@selasky.org 1.2.15-1
+* Mon Jan 12 2015 HPS hps@selasky.org 1.2.16-1
+* Mon Jan 12 2015 HPS hps@selasky.org 1.2.15-1
+- Corrected and added support for many new chords.
+  See help tab for a complete list.
 * Sun Dec 14 2014 HPS hps@selasky.org 1.2.14-1
 - Improved lyrics import and export functionality
 - Added support for two more chords

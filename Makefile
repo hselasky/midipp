@@ -26,7 +26,7 @@
 # Makefile for MIDI Player Pro
 #
 
-VERSION=1.2.15
+VERSION=1.2.16
 
 DESTDIR?=
 PREFIX?=/usr/local
