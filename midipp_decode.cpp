@@ -566,7 +566,7 @@ MppScoreVariantInit(void)
 		    QString(" = C") +
 		    MppScoreExpandPattern(mpp_score_variant[x].pattern) +
 		    QString(" = ") + QString(score_bits[t]) +
-		    MppScoreFullPattern(temp.pattern) +
+		    MppScoreExpandPattern(temp.pattern) +
 		    QString(" */\n");
 		z++;
 	}
