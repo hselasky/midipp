@@ -79,7 +79,7 @@ MppChanSelDiag :: ~MppChanSelDiag()
 void
 MppChanSelDiagValue :: handle_released(int id)
 {
-	switch (value) {
+	switch (id) {
 	case 17:
 		parent->reject();
 		break;
