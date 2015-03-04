@@ -77,6 +77,7 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 		gb_import->addWidget(new QLabel(tr(line_buf)),t,0+u,1,1,Qt::AlignLeft|Qt::AlignVCenter);
 
 		cbx_import[x] = new MppCheckBox();
+		connect(cbx_import[x], SIGNAL(stateChanged(int,int)), this, SLOT(handle_checkboxes()));
 		gb_import->addWidget(cbx_import[x],t,1+u,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
 	}
 
@@ -181,6 +182,19 @@ MppMidi :: handle_set_all_track()
 			cbx_import[x]->setChecked(1);
 		}
 	}
+}
+
+void
+MppMidi :: handle_checkboxes()
+{
+	uint32_t x;
+	uint32_t y;
+
+	for (x = y = 0; x != MIDI_MAX_TRACKS; x++) {
+		if (cbx_import[x]->isChecked())
+			y++;
+	}
+	cbx_single_track->setChecked(y < 2);
 }
 
 void

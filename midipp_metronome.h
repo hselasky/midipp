@@ -44,12 +44,14 @@ public:
 	MppButtonMap *but_onoff;
 	MppChanSel *spn_chan;
 	MppSpinBox *spn_key;
+	MppButtonMap *but_mode;
 
 	int volume;
 	int bpm;
 	int enabled;
 	int chan;
 	int key;
+	int mode;
 	
 public slots:
 	void handleVolumeChanged(int);
@@ -57,6 +59,7 @@ public slots:
 	void handleEnableChanged(int);
 	void handleChanChanged(int);
 	void handleKeyChanged(int);
+	void handleModeChanged(int);
 };
 
 #endif			/* _MIDIPP_METRONOME_H_ */

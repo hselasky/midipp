@@ -74,7 +74,7 @@ private:
 	QPushButton *but_clear_all;
 
 public slots:
-
+	void handle_checkboxes();
 	void handle_done();
 	void handle_set_all_track();
 	void handle_clear_all_track();

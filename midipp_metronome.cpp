@@ -41,8 +41,19 @@ MppMetronomeCallback(void *arg)
         pthread_mutex_lock(&mw->mtx);
         if (mm->enabled != 0 && mw->midiTriggered != 0) {
 		if (mw->check_play(mm->chan, 0)) {
-			mid_key_press(d, mm->key, mm->volume,
-			    60000 / (2 * mm->bpm));
+			switch (mm->mode) {
+			case 1:
+				mid_key_press(d, mm->key, mm->volume,
+				    60000 / (2 * mm->bpm));
+				break;
+			default:
+				mid_key_press(d, mm->key, mm->volume,
+				    60000 / (8 * mm->bpm));
+				mid_delay(d, 60000 / (4 * mm->bpm));
+				mid_key_press(d, mm->key, mm->volume,
+				    60000 / (8 * mm->bpm));
+				break;
+			}
 		}
 	}
         pthread_mutex_unlock(&mw->mtx);
@@ -59,6 +70,7 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 	enabled = 0;
 	chan = 9;
 	key = C4;
+	mode = 1;
 
 	spn_volume = new MppVolume();
 	spn_volume->setRange(0, 127, 64);
@@ -74,6 +86,10 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 	but_onoff = new MppButtonMap("Enable\0" "OFF\0" "ON\0", 2, 2);
 	but_onoff->setSelection(enabled);
 	connect(but_onoff, SIGNAL(selectionChanged(int)), this, SLOT(handleEnableChanged(int)));
+
+	but_mode = new MppButtonMap("Time signature\0" "3 / 4\0" "4 / 4\0", 2, 2);
+	but_mode->setSelection(mode);
+	connect(but_mode, SIGNAL(selectionChanged(int)), this, SLOT(handleModeChanged(int)));
 
 	spn_chan = new MppChanSel(chan, 0);
 	connect(spn_chan, SIGNAL(valueChanged(int)), this, SLOT(handleChanChanged(int)));
@@ -93,9 +109,10 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 
 	gb->addWidget(new QLabel(tr("Channel")),3,0,1,1,Qt::AlignVCenter|Qt::AlignLeft);
 	gb->addWidget(spn_chan, 3,1,1,1,Qt::AlignCenter);
-	gb->addWidget(but_onoff, 4,0,1,2,Qt::AlignCenter);
+	gb->addWidget(but_mode, 4,0,1,2,Qt::AlignCenter);
+	gb->addWidget(but_onoff, 5,0,1,2,Qt::AlignCenter);
 
-	gb->setRowStretch(5,1);
+	gb->setRowStretch(6,1);
 	gb->setColumnStretch(2,1);
 
 	handleBPMChanged(bpm);
@@ -149,5 +166,13 @@ MppMetronome :: handleKeyChanged(int val)
 {
   	pthread_mutex_lock(&mainWindow->mtx);
 	key = val;
+	pthread_mutex_unlock(&mainWindow->mtx);
+}
+
+void
+MppMetronome :: handleModeChanged(int val)
+{
+  	pthread_mutex_lock(&mainWindow->mtx);
+	mode = val;
 	pthread_mutex_unlock(&mainWindow->mtx);
 }

@@ -52,10 +52,10 @@ MppReplayTab :: MppReplayTab(MppMainWindow *parent)
 	butUseExistingMidiFile = new QPushButton(tr("Use existing\nMIDI file"));
 	connect(butUseExistingMidiFile, SIGNAL(released()), this, SLOT(handleUseExistingMidiFile()));
 
-	butStartRecordSomething = new QPushButton(tr("Start\nrecording MIDI"));
+	butStartRecordSomething = new QPushButton(tr("Start MIDI\nrecording"));
 	connect(butStartRecordSomething, SIGNAL(released()), this, SLOT(handleStartRecordSomething()));
 
-	butStopRecordSomething = new QPushButton(tr("Stop\nrecording MIDI"));
+	butStopRecordSomething = new QPushButton(tr("Stop MIDI\nrecording"));
 	connect(butStopRecordSomething, SIGNAL(released()), this, SLOT(handleStopRecordSomething()));
 
 	butViewMode = new QPushButton(tr("View A mode"));
@@ -106,24 +106,29 @@ MppReplayTab :: MppReplayTab(MppMainWindow *parent)
 void
 MppReplayTab :: handleEmptyFile()
 {
-	handleStopRecordSomething();
-
-	mainWindow->scores_main[0]->handleScoreFileNew(1);
+  	mainWindow->handle_rewind();
+	handleRestoreMode();
+	mainWindow->scores_main[0]->handleScoreFileNew(0);
 	mainWindow->mbm_midi_record->setSelection(0);
 	mainWindow->mbm_midi_play->setSelection(0);
-
 	mainWindow->handle_midi_file_new();
+
+	mainWindow->scores_main[0]->editWidget->setPlainText(
+		QString("L0:\n"
+			"\n"
+			"/* write your scores here */\n"
+			"\n"
+			"J0\n"));
 }
 
 void
 MppReplayTab :: handleUseExistingMidiFile()
 {
-	handleStopRecordSomething();
-
+  	mainWindow->handle_rewind();
+	handleRestoreMode();
 	mainWindow->scores_main[0]->handleScoreFileNew(1);
 	mainWindow->mbm_midi_record->setSelection(0);
 	mainWindow->mbm_midi_play->setSelection(0);
-
 	mainWindow->handle_midi_file_open(2);
 }
 
@@ -195,6 +200,7 @@ MppReplayTab :: handleRecordNew()
 	handleCheckMode();
 
 	mainWindow->handle_rewind();
+	mainWindow->handle_compile();
 	mainWindow->handle_jump(0);
 	mainWindow->mbm_midi_record->setSelection(1);
 	mainWindow->mbm_midi_play->setSelection(0);
