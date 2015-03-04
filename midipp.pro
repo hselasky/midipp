@@ -59,11 +59,13 @@ HEADERS		+= midipp_gridlayout.h
 HEADERS		+= midipp_import.h
 HEADERS		+= midipp_looptab.h
 HEADERS		+= midipp_mainwindow.h
+HEADERS		+= midipp_metronome.h
 HEADERS		+= midipp_midi.h
 HEADERS		+= midipp_mode.h
 HEADERS		+= midipp_mutemap.h
 HEADERS		+= midipp_pianotab.h
 HEADERS		+= midipp_replace.h
+HEADERS		+= midipp_replay.h
 HEADERS		+= midipp_scores.h
 HEADERS		+= midipp_settings.h
 isEmpty(HAVE_NO_SHOW) {
@@ -90,11 +92,13 @@ SOURCES		+= midipp_gridlayout.cpp
 SOURCES		+= midipp_import.cpp
 SOURCES		+= midipp_looptab.cpp
 SOURCES		+= midipp_mainwindow.cpp
+SOURCES		+= midipp_metronome.cpp
 SOURCES		+= midipp_midi.cpp
 SOURCES		+= midipp_mode.cpp
 SOURCES		+= midipp_mutemap.cpp
 SOURCES		+= midipp_pianotab.cpp
 SOURCES		+= midipp_replace.cpp
+SOURCES		+= midipp_replay.cpp
 SOURCES		+= midipp_scores.cpp
 SOURCES		+= midipp_settings.cpp
 isEmpty(HAVE_NO_SHOW) {

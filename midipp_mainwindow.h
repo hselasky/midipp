@@ -58,7 +58,7 @@ public:
 
 	void closeEvent(QCloseEvent *event);
 	void handle_stop(int flag = 0);
-	void handle_midi_file_open(int merge);
+	void handle_midi_file_open(int);
 	void handle_midi_file_clear_name(void);
 	void handle_midi_file_instr_prepend(void);
 	void handle_midi_file_instr_delete(void);
@@ -81,6 +81,7 @@ public:
 
 	uint8_t noise8(uint8_t factor);
 	uint8_t do_instr_check(struct umidi20_event *event, uint8_t *pchan);
+	uint8_t check_play(uint8_t chan, uint32_t off);
 	uint8_t check_record(uint8_t chan, uint32_t off);
 	uint8_t check_synth(uint8_t device_no, uint8_t chan, uint32_t off);
 
@@ -320,6 +321,10 @@ public:
 
 	MppLoopTab *tab_loop;
 
+	/* tab <RePlay> */
+
+	MppReplayTab *tab_replay;
+	
 	/* tab <DataBase> */
 
 	MppDataBase *tab_database;
@@ -400,7 +405,7 @@ public slots:
 	void handle_redo();
 	void handle_undo();
 	void handle_edit();
-    void handle_up_down();
+	void handle_up_down();
 };
 
 #endif		/* _MIDIPP_MAINWINDOW_H_ */

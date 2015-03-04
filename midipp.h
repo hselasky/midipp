@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2013 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2015 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -145,9 +145,11 @@ class MppImportTab;
 class MppLoopTab;
 class MppMainWindow;
 class MppMidi;
+class MppMetronome;
 class MppMode;
 class MppPianoTab;
 class MppReplace;
+class MppReplayTab;
 class MppScoreHighLighter;
 class MppScoreMain;
 class MppScoreView;

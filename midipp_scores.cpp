@@ -875,7 +875,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 }
 
 void
-MppScoreMain :: handleScoreFileNew()
+MppScoreMain :: handleScoreFileNew(int invisible)
 {
 	editWidget->setPlainText(QString());
 
@@ -886,8 +886,10 @@ MppScoreMain :: handleScoreFileNew()
 		currScoreFileName = NULL;
 	}
 
-	mainWindow->handle_tab_changed(1);
-	mainWindow->handle_make_scores_visible(this);
+	if (invisible == 0) {
+		mainWindow->handle_tab_changed(1);
+		mainWindow->handle_make_scores_visible(this);
+	}
 }
 
 void

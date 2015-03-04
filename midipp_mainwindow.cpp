@@ -52,6 +52,7 @@
 #include "midipp_pianotab.h"
 #include "midipp_decode.h"
 #include "midipp_replace.h"
+#include "midipp_replay.h"
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -209,6 +210,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_loop = new MppLoopTab(this, this);
 
+	tab_replay = new MppReplayTab(this);
+
 	tab_database = new MppDataBase(this);
 
 	tab_custom = new MppCustomTab(this, this);
@@ -297,6 +300,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_tb->addTab(tab_show_control->gl_main, tr("Show"));
 #endif
 	main_tb->addTab(tab_loop, tr("Loop"));
+	main_tb->addTab(tab_replay, tr("RePlay A"));
 	main_tb->addTab(tab_file_gl, tr("File"));
 	main_tb->addTab(tab_play_gl, tr("Play"));
 	main_tb->addTab(tab_chord_gl, tr("Chord"));
@@ -1059,7 +1063,7 @@ MppMainWindow :: handle_midi_file_new_open()
 }
 
 void
-MppMainWindow :: handle_midi_file_open(int merge)
+MppMainWindow :: handle_midi_file_open(int how)
 {
 	QFileDialog *diag = 
 	  new QFileDialog(this, tr("Select MIDI File"), 
@@ -1078,7 +1082,7 @@ MppMainWindow :: handle_midi_file_open(int merge)
 
 		Mpp.HomeDirMid = diag->directory().path();
 
-		if (merge) {
+		if (how == 1) {
 			handle_midi_file_clear_name();
 			handle_rewind();
 		} else {
@@ -1163,9 +1167,11 @@ load_file:
 
 	pthread_mutex_unlock(&mtx);
 
+	if (how == 2)
+		handle_midi_file_import(0);
 done:
 	/* make sure we save into a new file */
-	if (merge)
+	if (how != 0)
 		handle_midi_file_clear_name();
 
 	delete diag;
@@ -1584,6 +1590,28 @@ MppMainWindow :: check_synth(uint8_t device_no, uint8_t chan, uint32_t off)
 		return (1);
 	}
 	return (0);
+}
+
+uint8_t
+MppMainWindow :: check_play(uint8_t chan, uint32_t off)
+{
+	struct mid_data *d = &mid_data;
+	uint32_t pos;
+
+	handle_midi_trigger();
+
+	/* compute relative time distance */
+	pos = umidi20_get_curr_position() - startPosition + off;
+
+	/* compensate for processing delay */
+	if (pos != 0)
+		pos--;
+
+	mid_set_channel(d, chan & 0xF);
+	mid_set_position(d, pos);
+	mid_set_device_no(d, MPP_MAGIC_DEVNO);
+
+	return (1);
 }
 
 uint8_t

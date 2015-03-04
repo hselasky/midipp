@@ -177,7 +177,7 @@ public:
 public slots:
 
 	int handleCompile(int force = 0);
-	void handleScoreFileNew();
+	void handleScoreFileNew(int invisible = 0);
 	void handleScoreFileOpen();
 	void handleScoreFileSave();
 	void handleScoreFileSaveAs();
