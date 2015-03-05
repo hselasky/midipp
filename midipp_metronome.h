@@ -45,6 +45,7 @@ public:
 	MppChanSel *spn_chan;
 	MppSpinBox *spn_key;
 	MppButtonMap *but_mode;
+	QTimer *tim_config;
 
 	int volume;
 	int bpm;
@@ -60,7 +61,8 @@ public slots:
 	void handleChanChanged(int);
 	void handleKeyChanged(int);
 	void handleModeChanged(int);
-	void handle_update();
+	void handleUpdate();
+	void handleTimeout();
 };
 
 #endif			/* _MIDIPP_METRONOME_H_ */

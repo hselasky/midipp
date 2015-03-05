@@ -1347,7 +1347,7 @@ MppMainWindow :: handle_midi_trigger()
 		pausePosition = 0;
 
 		dlg_bpm->handle_update(1);
-		tab_replay->metronome->handle_update();
+		tab_replay->metronome->handleUpdate();
 	}
 	pthread_mutex_unlock(&mtx);
 }

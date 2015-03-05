@@ -72,6 +72,10 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 	key = C4;
 	mode = 1;
 
+	tim_config = new QTimer();
+	tim_config->setSingleShot(1);
+	connect(tim_config, SIGNAL(timeout()), this, SLOT(handleTimeout()));
+
 	spn_volume = new MppVolume();
 	spn_volume->setRange(0, 127, 64);
 	spn_volume->setValue(volume);
@@ -115,7 +119,7 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 	gb->setRowStretch(6,1);
 	gb->setColumnStretch(2,1);
 
-	handleBPMChanged(bpm);
+	umidi20_set_timer(&MppMetronomeCallback, this, 60000 / bpm);
 }
 
 MppMetronome :: ~MppMetronome()
@@ -132,23 +136,25 @@ MppMetronome :: handleVolumeChanged(int val)
 }
 
 void
+MppMetronome :: handleTimeout()
+{
+        umidi20_update_timer(&MppMetronomeCallback, this, 60000 / bpm, 1);
+}
+
+void
 MppMetronome :: handleBPMChanged(int val)
 {
-	uint32_t time_ms;
-
 	pthread_mutex_lock(&mainWindow->mtx);
 	bpm = val;
 	pthread_mutex_unlock(&mainWindow->mtx);
 
-	time_ms = 60000 / bpm;
-	
-        umidi20_update_timer(&MppMetronomeCallback, this, time_ms, 1);
+	tim_config->start(500);
 }
 
 void
-MppMetronome :: handle_update()
+MppMetronome :: handleUpdate()
 {
-	handleBPMChanged(bpm);
+	handleTimeout();
 }
 
 void
