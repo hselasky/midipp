@@ -1,5 +1,5 @@
 Name:           midipp
-Version:        1.2.16
+Version:        1.2.17
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
@@ -48,7 +48,11 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Mon Jan 12 2015 HPS hps@selasky.org 1.2.16-1
+* Thu Mar 5 2015 HPS hps@selasky.org 1.2.17-1
+- Added new RePlay tab.
+- Added support for Metronome.
+* Thu Mar 5 2015 HPS hps@selasky.org 1.2.16-1
+- No changes.
 * Mon Jan 12 2015 HPS hps@selasky.org 1.2.15-1
 - Corrected and added support for many new chords.
   See help tab for a complete list.

@@ -5,7 +5,12 @@
 MIDI Player Pro allows you to play any kind of MIDI music in seconds
 with your fingertips.
 
+Changes for v1.2.17:
+- Added support for RePlay tab.
+- Added support for Metronome.
+
 Changes for v1.2.16:
+- No changes.
 
 Changes for v1.2.15:
 - Corrected and added support for many new chords.
