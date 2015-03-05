@@ -53,6 +53,7 @@
 #include "midipp_decode.h"
 #include "midipp_replace.h"
 #include "midipp_replay.h"
+#include "midipp_metronome.h"
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -1346,6 +1347,7 @@ MppMainWindow :: handle_midi_trigger()
 		pausePosition = 0;
 
 		dlg_bpm->handle_update(1);
+		tab_replay->metronome->handle_update();
 	}
 	pthread_mutex_unlock(&mtx);
 }

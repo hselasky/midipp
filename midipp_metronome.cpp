@@ -146,6 +146,12 @@ MppMetronome :: handleBPMChanged(int val)
 }
 
 void
+MppMetronome :: handle_update()
+{
+	handleBPMChanged(bpm);
+}
+
+void
 MppMetronome :: handleEnableChanged(int val)
 {
   	pthread_mutex_lock(&mainWindow->mtx);

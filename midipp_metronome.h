@@ -60,6 +60,7 @@ public slots:
 	void handleChanChanged(int);
 	void handleKeyChanged(int);
 	void handleModeChanged(int);
+	void handle_update();
 };
 
 #endif			/* _MIDIPP_METRONOME_H_ */

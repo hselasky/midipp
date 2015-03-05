@@ -188,6 +188,7 @@ MppReplayTab :: handleStartRehearse()
 	handleRestoreMode();
 	handleCheckMode();
 	mainWindow->handle_rewind();
+	mainWindow->handle_compile();
 	mainWindow->handle_jump(0);
 	mainWindow->mbm_midi_record->setSelection(0);
 	mainWindow->mbm_midi_play->setSelection(0);
