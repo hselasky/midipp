@@ -83,6 +83,7 @@
 #include <QSplitter>
 #include <QThread>    
 #include <QRegExp>
+#include <QByteArray>
 
 #include <umidi20.h>
 
