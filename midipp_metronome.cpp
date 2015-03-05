@@ -44,14 +44,14 @@ MppMetronomeCallback(void *arg)
 			switch (mm->mode) {
 			case 1:
 				mid_key_press(d, mm->key, mm->volume,
-				    60000 / (2 * mm->bpm));
+				    60000 / (2 * mm->bpm) + 1);
 				break;
 			default:
 				mid_key_press(d, mm->key, mm->volume,
-				    60000 / (8 * mm->bpm));
-				mid_delay(d, 60000 / (4 * mm->bpm));
+				    60000 / (8 * mm->bpm) + 1);
+				mid_delay(d, 60000 / (4 * mm->bpm) + 1);
 				mid_key_press(d, mm->key, mm->volume,
-				    60000 / (8 * mm->bpm));
+				    60000 / (8 * mm->bpm) + 1);
 				break;
 			}
 		}
@@ -77,7 +77,7 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 	connect(tim_config, SIGNAL(timeout()), this, SLOT(handleTimeout()));
 
 	spn_volume = new MppVolume();
-	spn_volume->setRange(0, 127, 64);
+	spn_volume->setRange(1, 127, 64);
 	spn_volume->setValue(volume);
 	connect(spn_volume, SIGNAL(valueChanged(int)), this, SLOT(handleVolumeChanged(int)));
 
