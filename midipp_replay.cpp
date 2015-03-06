@@ -168,6 +168,10 @@ MppReplayTab :: handleRestoreMode()
 void
 MppReplayTab :: handleStopRecordSomething()
 {
+	/* check if recording */
+	if (saved_mode < 0)
+		return;
+  
 	mainWindow->handle_rewind();
 	mainWindow->mbm_midi_record->setSelection(0);
 	handleRestoreMode();
