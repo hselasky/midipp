@@ -100,7 +100,7 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 	spn_bpm->setSuffix(tr(" bpm"));
 	connect(spn_bpm, SIGNAL(valueChanged(int)), this, SLOT(handleBPMChanged(int)));
 
-	but_onoff = new MppButtonMap("Operating mode\0" "OFF\0" "ON\0" "RECORD\0", 3, 3);
+	but_onoff = new MppButtonMap("Mode\0" "OFF\0" "ON\0" "RECORD\0", 3, 3);
 	but_onoff->setSelection(enabled);
 	connect(but_onoff, SIGNAL(selectionChanged(int)), this, SLOT(handleEnableChanged(int)));
 
