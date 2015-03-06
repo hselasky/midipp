@@ -32,29 +32,42 @@
 #include "midipp_groupbox.h"
 
 static void
+MppMetronomeOutput(MppMetronome *mm, struct mid_data *d)
+{
+	switch (mm->mode) {
+	case 1:
+		mid_key_press(d, mm->key, mm->volume,
+		    60000 / (2 * mm->bpm) + 1);
+		break;
+	case 2:
+		mid_key_press(d, mm->key, mm->volume,
+		    60000 / (16 * mm->bpm) + 1);
+		mid_delay(d, 60000 / (6 * mm->bpm) + 1);
+		mid_key_press(d, mm->key, mm->volume,
+		    60000 / (16 * mm->bpm) + 1);
+		break;
+	default:
+		mid_key_press(d, mm->key, mm->volume,
+		    60000 / (8 * mm->bpm) + 1);
+		mid_delay(d, 60000 / (3 * mm->bpm) + 1);
+		mid_key_press(d, mm->key, mm->volume,
+		    60000 / (8 * mm->bpm) + 1);
+		break;
+	}
+}
+
+static void
 MppMetronomeCallback(void *arg)
 {
         MppMetronome *mm = (MppMetronome *)arg;
         MppMainWindow *mw = mm->mainWindow;
-	struct mid_data *d = &mw->mid_data;
 
         pthread_mutex_lock(&mw->mtx);
         if (mm->enabled != 0 && mw->midiTriggered != 0) {
-		if (mw->check_play(mm->chan, 0)) {
-			switch (mm->mode) {
-			case 1:
-				mid_key_press(d, mm->key, mm->volume,
-				    60000 / (2 * mm->bpm) + 1);
-				break;
-			default:
-				mid_key_press(d, mm->key, mm->volume,
-				    60000 / (8 * mm->bpm) + 1);
-				mid_delay(d, 60000 / (4 * mm->bpm) + 1);
-				mid_key_press(d, mm->key, mm->volume,
-				    60000 / (8 * mm->bpm) + 1);
-				break;
-			}
-		}
+		if (mw->check_play(mm->chan, 0))
+			MppMetronomeOutput(mm, &mw->mid_data);
+		if (mm->enabled == 2 && mw->check_record(mm->chan, 0) != 0)
+			MppMetronomeOutput(mm, &mw->mid_data);
 	}
         pthread_mutex_unlock(&mw->mtx);
 }
@@ -87,11 +100,11 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 	spn_bpm->setSuffix(tr(" bpm"));
 	connect(spn_bpm, SIGNAL(valueChanged(int)), this, SLOT(handleBPMChanged(int)));
 
-	but_onoff = new MppButtonMap("Enable\0" "OFF\0" "ON\0", 2, 2);
+	but_onoff = new MppButtonMap("Operating mode\0" "OFF\0" "ON\0" "RECORD\0", 3, 3);
 	but_onoff->setSelection(enabled);
 	connect(but_onoff, SIGNAL(selectionChanged(int)), this, SLOT(handleEnableChanged(int)));
 
-	but_mode = new MppButtonMap("Time signature\0" "3 / 4\0" "4 / 4\0", 2, 2);
+	but_mode = new MppButtonMap("Time signature\0" "3 / 4\0" "4 / 4\0" "6 / 8\0", 3, 3);
 	but_mode->setSelection(mode);
 	connect(but_mode, SIGNAL(selectionChanged(int)), this, SLOT(handleModeChanged(int)));
 

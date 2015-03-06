@@ -64,7 +64,7 @@ MppReplayTab :: MppReplayTab(MppMainWindow *parent)
 	butStartRehearse = new QPushButton(tr("Start"));
 	connect(butStartRehearse, SIGNAL(released()), this, SLOT(handleStartRehearse()));
 
-	butRecordNew = new QPushButton(tr("New"));
+	butRecordNew = new QPushButton(tr("Start new"));
 	connect(butRecordNew, SIGNAL(released()), this, SLOT(handleRecordNew()));
 
 	butRecordTrigger = new QPushButton(tr("Trigger"));
@@ -98,7 +98,7 @@ MppReplayTab :: MppReplayTab(MppMainWindow *parent)
 	gl->addWidget(gb_configure, 1,0,1,1);
 	gl->addWidget(gb_rehearse, 2,0,1,1);
 	gl->addWidget(gb_record, 3,0,1,1);
-	gl->addWidget(metronome->gb, 0,1,3,1);
+	gl->addWidget(metronome->gb, 0,1,4,1);
 	gl->setRowStretch(4,1);
 	gl->setColumnStretch(2,1);
 }
