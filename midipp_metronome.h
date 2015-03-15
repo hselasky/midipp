@@ -43,7 +43,8 @@ public:
 	QSpinBox *spn_bpm;
 	MppButtonMap *but_onoff;
 	MppChanSel *spn_chan;
-	MppSpinBox *spn_key;
+	MppSpinBox *spn_key_bar;
+	MppSpinBox *spn_key_beat;
 	MppButtonMap *but_mode;
 	QTimer *tim_config;
 
@@ -51,7 +52,8 @@ public:
 	int bpm;
 	int enabled;
 	int chan;
-	int key;
+	int key_bar;
+	int key_beat;
 	int mode;
 	
 public slots:
@@ -59,9 +61,10 @@ public slots:
 	void handleBPMChanged(int);
 	void handleEnableChanged(int);
 	void handleChanChanged(int);
-	void handleKeyChanged(int);
+	void handleKeyBarChanged(int);
+	void handleKeyBeatChanged(int);
 	void handleModeChanged(int);
-	void handleUpdate();
+	void handleUpdateLocked();
 	void handleTimeout();
 };
 

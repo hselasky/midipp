@@ -34,25 +34,13 @@
 static void
 MppMetronomeOutput(MppMetronome *mm, struct mid_data *d)
 {
-	switch (mm->mode) {
-	case 1:
-		mid_key_press(d, mm->key, mm->volume,
-		    60000 / (2 * mm->bpm) + 1);
-		break;
-	case 2:
-		mid_key_press(d, mm->key, mm->volume,
-		    60000 / (16 * mm->bpm) + 1);
-		mid_delay(d, 60000 / (6 * mm->bpm) + 1);
-		mid_key_press(d, mm->key, mm->volume,
-		    60000 / (16 * mm->bpm) + 1);
-		break;
-	default:
-		mid_key_press(d, mm->key, mm->volume,
-		    60000 / (8 * mm->bpm) + 1);
-		mid_delay(d, 60000 / (3 * mm->bpm) + 1);
-		mid_key_press(d, mm->key, mm->volume,
-		    60000 / (8 * mm->bpm) + 1);
-		break;
+	unsigned x;
+	unsigned y = mm->mode + 1;
+
+	for (x = 0; x != y; x++) {
+		mid_key_press(d, (x != 0) ? mm->key_beat : mm->key_bar,
+		    mm->volume, 60000 / (2 * y * mm->bpm) + 1);
+		mid_delay(d, 60000 / (y * mm->bpm) + 1);
 	}
 }
 
@@ -82,8 +70,9 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 	bpm = 120;
 	enabled = 0;
 	chan = 9;
-	key = C4;
-	mode = 1;
+	key_bar = C5;
+	key_beat = C4;
+	mode = 0;
 
 	tim_config = new QTimer();
 	tim_config->setSingleShot(1);
@@ -104,32 +93,42 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 	but_onoff->setSelection(enabled);
 	connect(but_onoff, SIGNAL(selectionChanged(int)), this, SLOT(handleEnableChanged(int)));
 
-	but_mode = new MppButtonMap("Time signature\0" "3 / 4\0" "4 / 4\0" "6 / 8\0", 3, 3);
+	but_mode = new MppButtonMap("Time signature\0"
+				    "1 / N\0" "2 / N\0" "3 / N\0"
+				    "4 / N\0" "5 / N\0" "6 / N\0"
+				    "7 / N\0" "8 / N\0" "9 / N\0", 9, 3);
 	but_mode->setSelection(mode);
 	connect(but_mode, SIGNAL(selectionChanged(int)), this, SLOT(handleModeChanged(int)));
 
 	spn_chan = new MppChanSel(chan, 0);
 	connect(spn_chan, SIGNAL(valueChanged(int)), this, SLOT(handleChanChanged(int)));
 
-	spn_key = new MppSpinBox();
-	spn_key->setValue(key);
-	connect(spn_key, SIGNAL(valueChanged(int)), this, SLOT(handleKeyChanged(int)));
+	spn_key_bar = new MppSpinBox();
+	spn_key_bar->setValue(key_bar);
+	connect(spn_key_bar, SIGNAL(valueChanged(int)), this, SLOT(handleKeyBarChanged(int)));
+
+	spn_key_beat = new MppSpinBox();
+	spn_key_beat->setValue(key_beat);
+	connect(spn_key_beat, SIGNAL(valueChanged(int)), this, SLOT(handleKeyBeatChanged(int)));
 
 	gb->addWidget(new QLabel(tr("Volume")),0,0,1,1,Qt::AlignVCenter|Qt::AlignLeft);
 	gb->addWidget(spn_volume, 0,1,1,1,Qt::AlignCenter);
 	
-	gb->addWidget(new QLabel(tr("Key")),1,0,1,1,Qt::AlignVCenter|Qt::AlignLeft);
-	gb->addWidget(spn_key,  1,1,1,1,Qt::AlignCenter);
+	gb->addWidget(new QLabel(tr("Bar Key")),1,0,1,1,Qt::AlignVCenter|Qt::AlignLeft);
+	gb->addWidget(spn_key_bar,  1,1,1,1,Qt::AlignCenter);
 
-	gb->addWidget(new QLabel(tr("Rate")),2,0,1,1,Qt::AlignVCenter|Qt::AlignLeft);
-	gb->addWidget(spn_bpm,  2,1,1,1,Qt::AlignCenter);
+	gb->addWidget(new QLabel(tr("Beat Key")),2,0,1,1,Qt::AlignVCenter|Qt::AlignLeft);
+	gb->addWidget(spn_key_beat,  2,1,1,1,Qt::AlignCenter);
 
-	gb->addWidget(new QLabel(tr("Channel")),3,0,1,1,Qt::AlignVCenter|Qt::AlignLeft);
-	gb->addWidget(spn_chan, 3,1,1,1,Qt::AlignCenter);
-	gb->addWidget(but_mode, 4,0,1,2,Qt::AlignCenter);
-	gb->addWidget(but_onoff, 5,0,1,2,Qt::AlignCenter);
+	gb->addWidget(new QLabel(tr("Rate")),3,0,1,1,Qt::AlignVCenter|Qt::AlignLeft);
+	gb->addWidget(spn_bpm,  3,1,1,1,Qt::AlignCenter);
 
-	gb->setRowStretch(6,1);
+	gb->addWidget(new QLabel(tr("Channel")),4,0,1,1,Qt::AlignVCenter|Qt::AlignLeft);
+	gb->addWidget(spn_chan, 4,1,1,1,Qt::AlignCenter);
+	gb->addWidget(but_mode, 5,0,1,2,Qt::AlignCenter);
+	gb->addWidget(but_onoff, 6,0,1,2,Qt::AlignCenter);
+
+	gb->setRowStretch(7,1);
 	gb->setColumnStretch(2,1);
 
 	umidi20_set_timer(&MppMetronomeCallback, this, 60000 / bpm);
@@ -151,7 +150,9 @@ MppMetronome :: handleVolumeChanged(int val)
 void
 MppMetronome :: handleTimeout()
 {
-        umidi20_update_timer(&MppMetronomeCallback, this, 60000 / bpm, 1);
+	pthread_mutex_lock(&mainWindow->mtx);
+	handleUpdateLocked();
+	pthread_mutex_unlock(&mainWindow->mtx);
 }
 
 void
@@ -165,9 +166,9 @@ MppMetronome :: handleBPMChanged(int val)
 }
 
 void
-MppMetronome :: handleUpdate()
+MppMetronome :: handleUpdateLocked()
 {
-	handleTimeout();
+	umidi20_update_timer(&MppMetronomeCallback, this, 60000 / bpm, 1);
 }
 
 void
@@ -187,17 +188,25 @@ MppMetronome :: handleChanChanged(int val)
 }
 
 void
-MppMetronome :: handleKeyChanged(int val)
+MppMetronome :: handleKeyBarChanged(int val)
 {
   	pthread_mutex_lock(&mainWindow->mtx);
-	key = val;
+	key_bar = val;
+	pthread_mutex_unlock(&mainWindow->mtx);
+}
+
+void
+MppMetronome :: handleKeyBeatChanged(int val)
+{
+	pthread_mutex_lock(&mainWindow->mtx);
+	key_beat = val;
 	pthread_mutex_unlock(&mainWindow->mtx);
 }
 
 void
 MppMetronome :: handleModeChanged(int val)
 {
-  	pthread_mutex_lock(&mainWindow->mtx);
+	pthread_mutex_lock(&mainWindow->mtx);
 	mode = val;
 	pthread_mutex_unlock(&mainWindow->mtx);
 }
