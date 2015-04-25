@@ -48,6 +48,7 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 	int bi;
 
 	uint8_t any;
+	uint8_t output = 0;
 	
 	out += "S\"";
 
@@ -65,6 +66,7 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 				if (midipp_import_find_chord(*ptr) == 0) {
 					MppDecodeTab *ptab = ps->sm->mainWindow->tab_chord_gl;
 
+					output = 1;
 					out += ".(";
 					out += ps->d_word[i_score][ai].name;
 					out += ")";
@@ -90,18 +92,21 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 					bi++;
 					goto next_word;
 				} else {
+					output = 1;
 					out += ps->d_word[i_txt][bi].name[y];
 				}
 			} else {
 				if (!any)
 					break;
 
+				output = 1;
 				out += " ";
 			}
 		} else {
 			if (!any)
 				break;
 
+			output = 1;
 			out += " ";
 		}
 	}
@@ -109,31 +114,38 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 	out += scs;
 	out += "\n";
 
-	QTextCursor cursor(ps->sm->editWidget->textCursor());
-	cursor.beginEditBlock();
-	cursor.insertText(out);
-	cursor.endEditBlock();
-
+	if (output) {
+		QTextCursor cursor(ps->sm->editWidget->textCursor());
+		cursor.beginEditBlock();
+		cursor.insertText(out);
+		cursor.endEditBlock();
+	}
 	return (0);
 }
 
 static uint8_t
-midipp_import_is_chord(QChar ch)
+midipp_import_is_chord_sub(const QChar ch)
 {
-	static const QString chordchars("ABCDEFGHM+-/#øØ&|^Δ°");
+	static const QString chordchars = QString::fromUtf8("ABCDEFGHM+-/#øØ&|^Δ°");
 	int x;
 	for (x = 0; x != chordchars.length(); x++) {
 		if (ch == chordchars[x])
 			return (1);
 	}
-	char c = ch.toLatin1();
-	if (c >= '0' && c <= '9')
+	if (ch.isDigit() || ch.isLower())
 		return (1);
-	if (c >= 'a' && c <= 'z')
-		return (1);
-	if (c == ' ' || c == '\t')
-		return (2);
 	return (0);
+}
+
+static uint8_t
+midipp_import_is_chord(const QString &str)
+{
+	int x;
+	for (x = 0; x != str.size(); x++) {
+		if (midipp_import_is_chord_sub(str[x]) == 0)
+			return (0);
+	}
+	return (x != 0);
 }
 
 static uint8_t
@@ -141,67 +153,52 @@ midipp_import_parse(class midipp_import *ps)
 {
 	int n_off;
 	int n_word;
-	int nchord;
-	int fchord;
+	int n_chord;
 	int temp;
 	uint8_t state;
 	uint8_t next;
 	QChar c;
 
+	state = 0;
 	n_word = 0;
-	state = midipp_import_is_chord(ps->line_buffer[0]);
-	nchord = (state == 1) ? 1 : 0;
-	fchord = 0;
+	n_chord = 0;
 
 	/* reset all the "name" strings */
-	for (n_off = 0; n_off != MIDIPP_IMPORT_MW; n_off++) {
+	for (n_off = 0; n_off != MIDIPP_IMPORT_MW; n_off++)
 		ps->d_word[ps->index][n_off].name = QString();
-	}
 
-	/* parse line */
-	for (n_off = 0; n_off != ps->line_buffer.size(); n_off++) {
-
-		c = ps->line_buffer[n_off];
-
-		next = midipp_import_is_chord(c);
-		if (next != state) {
+	/* parse line word by word */
+	for (n_off = 0; ; n_off++) {
+		uint8_t is_done = (n_off == ps->line_buffer.size());
+		if (is_done == 0) {
+			c = ps->line_buffer[n_off];
+			next = c.isSpace();
+		} else {
+			c = ' ';
+			next = 0;
+		}
+		if (is_done != 0 || (n_off != 0 && next != state)) {
 			ps->d_word[ps->index][n_word].off = n_off -
 			    ps->d_word[ps->index][n_word].name.size();
 
-			if (state == 1 &&
+			if (midipp_import_is_chord(
+			    ps->d_word[ps->index][n_word].name) != 0 &&
 			    midipp_import_find_chord(
 			    ps->d_word[ps->index][n_word].name) == 0) {
-				fchord++;
+				n_chord++;
 			}
 			n_word ++;
-
-			if (n_word == (MIDIPP_IMPORT_MW - 1))
+			if (is_done != 0 || n_word == MIDIPP_IMPORT_MW)
 				break;
-
-			state = next;
-			if (state == 1)
-				nchord++;
 		}
+		state = next;
 		ps->d_word[ps->index][n_word].name += c;
-	}
-	if (n_off == ps->line_buffer.size()) {
-		ps->d_word[ps->index][n_word].off = n_off -
-		    ps->d_word[ps->index][n_word].name.size();
-
-		if (state == 1 &&
-		    midipp_import_find_chord(
-		    ps->d_word[ps->index][n_word].name) == 0) {
-			fchord++;
-		}
-		n_word ++;
-	} else {
-		n_off++;
 	}
 	if (n_off > ps->max_off)
 		ps->max_off = n_off;
 
 	ps->n_word[ps->index] = n_word;
-	ps->d_chords[ps->index] = ((nchord != 0) && (nchord == fchord));
+	ps->d_chords[ps->index] = n_chord;
 
 	if (ps->load_more != 0) {
 		/* load another line */
