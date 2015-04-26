@@ -84,6 +84,8 @@
 #include <QThread>    
 #include <QRegExp>
 #include <QByteArray>
+#include <QChar>
+#include <QString>
 
 #include <umidi20.h>
 
@@ -188,6 +190,7 @@ struct MppVisualDot {
 
 struct MppVisualScore {
 	QPicture *pic;
+	QString *str;
 	struct MppVisualDot *pdot;
 	MppElement *start;
 	MppElement *stop;

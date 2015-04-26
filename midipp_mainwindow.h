@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2013 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2015 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -100,6 +100,8 @@ public:
 
 	QFont defaultFont;
 	QFont editFont;
+	QFont showFont;
+
 	QString version;
 
 	uint8_t auto_zero_start[0];
@@ -267,6 +269,7 @@ public:
 	QTimer *tim_config_apply;
 	QPushButton *but_config_view_fontsel;
 	QPushButton *but_config_edit_fontsel;
+	QPushButton *but_config_show_fontsel;
 
 	MppGroupBox *gb_config_insert;
 	QLineEdit *led_config_insert;
@@ -369,6 +372,7 @@ public slots:
 	void handle_config_reload();
 	void handle_config_view_fontsel();
 	void handle_config_edit_fontsel();
+	void handle_config_show_fontsel();
 
 	void handle_non_channel_muted_changed(int);
 	void handle_instr_changed(int);

@@ -62,18 +62,17 @@ public:
 	MppMainWindow *mw;
 	MppGridLayout *gl_main;
 
-	void handle_label_change(int);
+	QString currText;
+	QString lastText;
 
-	QString labelTxt[MPP_MAX_VIEWS][MPP_MAX_LABELS];
+	void handle_visual_change(MppScoreMain &sm);
 
 	QPixmap background;
 
 	QColor fontFgColor;
 	QColor fontBgColor;
 
-	int last_label;
 	int last_st;
-	int curr_label;
 	int curr_st;
 	int transition;
 	int trackview;

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2013 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2015 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -93,6 +93,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	noiseRem = 1;
 
 	defaultFont.fromString(QString("Sans Serif,-1,20,5,75,0,0,0,0,0"));
+
+	showFont.fromString(QString("Sans Serif,-1,24,5,75,0,0,0,0,0"));
 
 	editFont.fromString(QString(
 #ifdef __APPLE__
@@ -456,6 +458,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	but_config_view_fontsel = new QPushButton(tr("Change View Font"));
 	but_config_edit_fontsel = new QPushButton(tr("Change Editor Font"));
+	but_config_show_fontsel = new QPushButton(tr("Change Show Font"));
 
 	gb_config_device = new MppGroupBox(tr("Device configuration"));
 
@@ -523,6 +526,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x++;
 
+	tab_config_gl->addWidget(but_config_show_fontsel, x, 1, 1, 1);
 	tab_config_gl->addWidget(mpp_settings->but_config_load, x, 0, 1, 1);
 	tab_config_gl->addWidget(mpp_settings->but_config_clean, x, 3, 1, 1);
 	tab_config_gl->setColumnStretch(8, 1);
@@ -654,6 +658,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_midi_rewind, SIGNAL(pressed()), this, SLOT(handle_rewind()));
 	connect(but_config_view_fontsel, SIGNAL(released()), this, SLOT(handle_config_view_fontsel()));
 	connect(but_config_edit_fontsel, SIGNAL(released()), this, SLOT(handle_config_edit_fontsel()));
+	connect(but_config_show_fontsel, SIGNAL(released()), this, SLOT(handle_config_show_fontsel()));
 
 	connect(but_instr_rem, SIGNAL(released()), this, SLOT(handle_instr_rem()));
 	connect(but_instr_program, SIGNAL(released()), this, SLOT(handle_instr_program()));
@@ -1562,6 +1567,24 @@ MppMainWindow :: handle_config_edit_fontsel()
 
 		tab_help->setFont(font);
 		tab_import->editWidget->setFont(font);
+	}
+}
+
+void
+MppMainWindow :: handle_config_show_fontsel()
+{
+	bool success;
+	int x;
+
+	QFont font = QFontDialog::getFont(&success, showFont, this);
+
+	if (success) {
+		font.setPixelSize(QFontInfo(font).pixelSize());
+
+		showFont = font;
+
+		for (x = 0; x != MPP_MAX_VIEWS; x++)
+			scores_main[x]->handleCompile(1);
 	}
 }
 

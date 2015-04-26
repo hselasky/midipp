@@ -35,6 +35,7 @@ MppShowWidget :: MppShowWidget(MppShowControl *_parent)
 {
 	parent = _parent;
 
+	setWindowTitle(QString("MidiPlayerPro"));
 	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
 }
 
@@ -45,59 +46,30 @@ MppShowWidget :: ~MppShowWidget()
 void
 MppShowWidget :: paintText(QPainter &paint, QString &str, int w, int h)
 {
-	QRectF txtBound;
-	QFont fnt;
-	qreal ps;
-	qreal pt;
 	qreal factor;
-	int wm = w / 16;
-	int hm = h / 16;
+	qreal pt;
+	qreal wm = w / 16.0;
+	qreal hm = h / 16.0;
 
-	if (str.size() == 0)
+	if (str.isEmpty())
 		return;
 
-	w -= 2*wm;
-	h -= 2*hm;
+	paint.setFont(parent->mw->showFont);
+	QRectF txtBound = paint.boundingRect(QRectF(0,0,w - 2*wm,h - 2*hm),
+	    Qt::AlignCenter | Qt::TextWordWrap , str);
 
-	fnt = parent->mw->defaultFont;
-
-	for (ps = 1.0; ps < 128.0; ps *= 2.0) {
-		fnt.setPixelSize(ps);
-		paint.setFont(fnt);
-		txtBound = paint.boundingRect(QRectF(0,0,w,h), Qt::AlignCenter, str);
-
-		if (txtBound.width() >= w || 
-		    txtBound.height() >= h)
-			break;
-	}
-	pt = ps;
-	ps /= 2.0;
-
-	for ( ; ps >= 1.0; ps /= 2.0) {
-		pt -= ps;
-
-		fnt.setPixelSize(pt);
-		paint.setFont(fnt);
-		txtBound = paint.boundingRect(QRectF(0,0,w,h), Qt::AlignCenter, str);
-
-		if (txtBound.width() < w &&
-		    txtBound.height() < h)
-			pt += ps;
-	}
-
-	fnt.setPixelSize(pt);
-	paint.setFont(fnt);
-	txtBound = paint.boundingRect(QRectF(wm,hm,w,h), Qt::AlignCenter, str);
-	txtBound = QRectF(txtBound.x() - pt, txtBound.y() - pt,
-	    txtBound.width() + (2.0 * pt), txtBound.height() + (2.0 * pt));
+	hm = (h - txtBound.height()) / 2.0;
+	pt = parent->mw->showFont.pointSizeF();
 	paint.setPen(QPen(parent->fontBgColor, 16));
 	paint.setBrush(parent->fontBgColor);
 	factor = paint.opacity();
 	paint.setOpacity(0.75 * factor);
+	txtBound = QRectF(wm/2.0,hm/2.0, w - wm,h - hm);
 	paint.drawRoundedRect(txtBound, 16, 16);
 	paint.setOpacity(factor);
 	paint.setPen(parent->fontFgColor);
-	paint.drawText(QRectF(0,0,w+(2*wm),h+(2*hm)), Qt::AlignCenter, str);
+	txtBound = QRectF(wm,hm, w - (2*wm),h - (2*hm));
+	paint.drawText(txtBound, Qt::AlignCenter | Qt::TextWordWrap, str);
 }
 
 void
@@ -136,7 +108,7 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 	QRect bg_rect((w - bg_w * ratio) / 2.0, (h - bg_h * ratio) / 2.0, bg_w * ratio, bg_h * ratio);
 
 	if (p < MPP_TRAN_MAX) {
-		paint.setOpacity((qreal)(MPP_TRAN_MAX - p - 1) / (qreal)MPP_TRAN_MAX);
+		paint.setOpacity((qreal)(MPP_TRAN_MAX - p) / (qreal)MPP_TRAN_MAX);
 
 		switch(parent->last_st) {
 		case MPP_SHOW_ST_BLANK:
@@ -146,7 +118,7 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 			break;
 		case MPP_SHOW_ST_LYRICS:
 			paint.drawPixmap(bg_rect,parent->background);
- 			paintText(paint, parent->labelTxt[parent->trackview][parent->last_label], w, h);
+ 			paintText(paint, parent->lastText, w, h);
 			break;
 		default:
 			break;
@@ -162,7 +134,7 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 		break;
 	case MPP_SHOW_ST_LYRICS:
 		paint.drawPixmap(bg_rect,parent->background);
-		paintText(paint, parent->labelTxt[parent->trackview][parent->curr_label], w, h);
+		paintText(paint, parent->currText, w, h);
 		break;
 	default:
 		break;
@@ -190,10 +162,7 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 {
 	mw = _mw;
 
-	last_label = 0;
 	last_st = MPP_SHOW_ST_BLANK;
-
-	curr_label = 0;
 	curr_st = MPP_SHOW_ST_BLANK;
 
 	transition = 0;
@@ -214,7 +183,7 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 	butMode = new MppButtonMap("Current mode\0" "BLANK\0" "BACKGROUND\0" "LYRICS\0", 3, 3);
 	connect(butMode, SIGNAL(selectionChanged(int)), this, SLOT(handle_mode_change(int)));
 
-	butShow = new QPushButton(tr("Show"));
+	butShow = new QPushButton(tr("ShowWindow"));
 	connect(butShow, SIGNAL(released()), this, SLOT(handle_show()));
 
 	butFullScreen = new QPushButton(tr("FullScreen"));
@@ -263,16 +232,45 @@ MppShowControl :: handle_mode_change(int mode)
 }
 
 void
-MppShowControl :: handle_label_change(int lbl)
+MppShowControl :: handle_visual_change(MppScoreMain &sm)
 {
-	if (curr_label == lbl)
-		return;
+	MppElement *last;
+	MppElement *curr;
+	MppVisualDot *pcdot_curr = 0;
+	MppVisualDot *pcdot_last = 0;
+	int visual_curr_index = 0;
+	int visual_last_index = 0;
 
-	last_label = curr_label;
-	curr_label = lbl;
+	pthread_mutex_lock(&mw->mtx);
+	last = sm.head.state.last_start;
+	curr = sm.head.state.curr_start;
+	pthread_mutex_unlock(&mw->mtx);
 
-	if (curr_st == MPP_SHOW_ST_LYRICS)
+	/* locate last and current play position */
+	sm.locateVisual(last, &visual_last_index, &pcdot_last);
+	sm.locateVisual(curr, &visual_curr_index, &pcdot_curr);
+
+	QString temp;
+
+	if (visual_last_index < 0 || visual_last_index >= sm.visual_max ||
+	    visual_curr_index < 0 || visual_curr_index >= sm.visual_max)
+		goto done;
+
+	if (sm.pVisual[visual_last_index].str != 0)
+		temp += sm.pVisual[visual_last_index].str[0];
+
+	temp += QChar('\n');
+
+	if (visual_last_index != visual_curr_index) {
+		if (sm.pVisual[visual_curr_index].str != 0)
+			temp += sm.pVisual[visual_curr_index].str[0];
+	}
+done:
+	/* repaint screen */
+	if (curr_st == MPP_SHOW_ST_LYRICS && currText != temp) {
+		currText = temp;
 		transition = 0;
+	}
 }
 
 void
@@ -291,38 +289,15 @@ MppShowControl :: handle_fullscreen()
 void
 MppShowControl :: handle_watchdog()
 {
-	switch (trackview) {
-	int label;
-#if MPP_MAX_VIEWS > 0
-	case 0:
-		label = mw->scores_main[0]->getCurrLabel();
-		if (label > -1 && label < MPP_MAX_LABELS)
-			handle_label_change(label);
-		break;
-#endif
-#if MPP_MAX_VIEWS > 1
-	case 1:
-		label = mw->scores_main[1]->getCurrLabel();
-		if (label > -1 && label < MPP_MAX_LABELS)
-			handle_label_change(label);
-		break;
-#endif
-#if MPP_MAX_VIEWS > 2
-	case 2:
-		label = mw->scores_main[2]->getCurrLabel();
-		if (label > -1 && label < MPP_MAX_LABELS)
-			handle_label_change(label);
-		break;
-#endif
-	default:
-		break;
-	}
+	if (trackview >= 0 && trackview < MPP_MAX_VIEWS)
+		handle_visual_change(*mw->scores_main[trackview]);
+
 	if (transition < MPP_TRAN_MAX) {
 		transition++;
 		wg_show->update();
 	} else if (transition == MPP_TRAN_MAX) {
 		transition++;
-		last_label = curr_label;
+		lastText = currText;
 		last_st = curr_st;
 	}
 }

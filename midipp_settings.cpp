@@ -199,6 +199,7 @@ MppSettings :: doSave(void)
 		beginGroup("font");
 		setValue("default", mw->defaultFont.toString());
 		setValue("editor", mw->editFont.toString());
+		setValue("show", mw->showFont.toString());
 		endGroup();
 	}
 	if (save_database_url) {
@@ -360,13 +361,23 @@ MppSettings :: doLoad(void)
 		}
 	}
 	if (save_font > 0) {
+		/* default font */
 		mw->defaultFont.fromString(
 		    stringDefault("font/default",
 		    "Sans Serif,-1,20,5,75,0,0,0,0,0"));
 		if (mw->defaultFont.pixelSize() < 1)
 			mw->defaultFont.setPixelSize(20);
+
+		/* show font */
+		mw->showFont.fromString(
+		    stringDefault("font/show",
+		    "Sans Serif,-1,24,5,75,0,0,0,0,0"));
+		if (mw->showFont.pixelSize() < 1)
+			mw->showFont.setPixelSize(20);
+
 		mw->handle_compile(1);
 
+		/* editor font */
 		mw->editFont.fromString(
 		    stringDefault("font/editor",
 #ifdef __APPLE__

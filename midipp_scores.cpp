@@ -364,6 +364,35 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 #endif
 	}
 
+	if (pd == NULL) {
+		/* extract all text */
+		for (x = 0; x != visual_max; x++) {
+			QString *pstr = pVisual[x].str;
+
+			/* delete old and allocate a new string */
+			delete pstr;
+			pstr = new QString();
+
+			/* parse through the text */
+			for (ptr = pVisual[x].start; ptr != pVisual[x].stop;
+			    ptr = TAILQ_NEXT(ptr, entry)) {
+				switch (ptr->type) {
+				case MPP_T_STRING_DESC:
+					*pstr += ptr->txt;
+					break;
+				default:
+					break;
+				}
+			}
+			/* Hide text lines starting with "L%d" */
+			if (pstr->size() > 1 && (*pstr)[0] == 'L' &&
+			    (*pstr)[1].isDigit() != 0) {
+				*pstr = QString();
+			}
+			/* store new string */
+			pVisual[x].str = pstr;
+		}
+	}
 	for (x = y = 0; x != visual_max; x++) {
 		if (pd == NULL) {
 			delete (pVisual[x].pic);
@@ -735,6 +764,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 
 	/* cleanup visual entries */
 	for (x = 0; x != visual_max; x++) {
+		delete (pVisual[x].str);
 		delete (pVisual[x].pic);
 		free (pVisual[x].pdot);
 	}
@@ -865,9 +895,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 
 #ifndef HAVE_NO_SHOW
 	MppShowControl *pshow = mainWindow->tab_show_control;
-
-	/* create show lyrics, if any */
-	head.toLyrics(pshow->labelTxt[unit]);
 
 	/* force new transition */
 	pshow->transition = 0;

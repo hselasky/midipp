@@ -34,7 +34,7 @@ HAVE_SCREENSHOT?=
 HAVE_STATIC?=
 
 all: Makefile.unix
-	make -f Makefile.unix -j2 all
+	make -f Makefile.unix -j5 all
 
 Makefile.unix: midipp.pro
 	qmake-qt4 HAVE_SCREENSHOT=${HAVE_SCREENSHOT} PREFIX=${PREFIX} \
