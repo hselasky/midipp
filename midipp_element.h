@@ -143,7 +143,7 @@ public:
 	void flush();
 	QString toPlain(int = -1);
 	QString toLyrics(int no_chords = 0);
-	void toLyrics(QString *pstr);
+	void toLyrics(QString *);
 	int foreachLine(MppElement **, MppElement **);
 	int getMaxLines();
 	int isFirst();
