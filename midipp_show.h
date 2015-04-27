@@ -45,10 +45,41 @@ public:
 
 	MppShowControl *parent;
 
-	void paintText(QPainter &, QString &, int, int);
+	void paintText(QPainter &, int, int);
 	void paintEvent(QPaintEvent *);
 	void keyPressEvent(QKeyEvent *);
 	void mouseDoubleClickEvent(QMouseEvent *e);
+};
+
+class MppShowAnimObject {
+public:
+	MppShowAnimObject()
+	{
+		memset(zero_start, 0, zero_end - zero_start);
+		currStep = MPP_TRAN_MAX;
+	}
+	int step(void)
+	{
+		if (currStep >= MPP_TRAN_MAX)
+			return (0);
+		opacity_curr += opacity_step;
+		xpos_curr += xpos_step;
+		ypos_curr += ypos_step;
+		currStep++;
+		return (1);
+	};
+	QString text;
+	uint8_t zero_start[0];
+	qreal opacity_curr;
+	qreal opacity_step;
+	qreal xpos_curr;
+	qreal xpos_step;
+	qreal ypos_curr;
+	qreal ypos_step;
+	qreal width;
+	qreal height;
+	uint8_t currStep;
+	uint8_t zero_end[0];
 };
 
 class MppShowControl : public QObject
@@ -62,23 +93,25 @@ public:
 	MppMainWindow *mw;
 	MppGridLayout *gl_main;
 
-	QString currText;
-	QString lastText;
-
-	void handle_visual_change(MppScoreMain &sm);
-
+#define	MPP_SHOW_AOBJ_MAX 2
+	MppShowAnimObject aobj[MPP_SHOW_AOBJ_MAX];
+	
 	QPixmap background;
 
 	QColor fontFgColor;
 	QColor fontBgColor;
 
-	int last_st;
-	int curr_st;
-	int transition;
-	int trackview;
+	/* for the whole window */
+	int8_t last_st;
+	int8_t curr_st;
+	int8_t anim_state;
+	int8_t trackview;
+	int8_t transition;
+
+	int cached_last_index;
+	int cached_curr_index;
 
 	MppShowWidget *wg_show;
-
 	MppButtonMap *butMode;
 	MppButtonMap *butTrack;
 	QPushButton *butShow;

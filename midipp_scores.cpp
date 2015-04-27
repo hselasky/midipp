@@ -388,7 +388,11 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 			if (pstr->size() > 1 && (*pstr)[0] == 'L' &&
 			    (*pstr)[1].isDigit() != 0) {
 				*pstr = QString();
+			} else {
+				/* Trim string */
+				*pstr = pstr->trimmed();
 			}
+
 			/* store new string */
 			pVisual[x].str = pstr;
 		}

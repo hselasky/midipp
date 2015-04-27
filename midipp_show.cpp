@@ -44,32 +44,47 @@ MppShowWidget :: ~MppShowWidget()
 }
 
 void
-MppShowWidget :: paintText(QPainter &paint, QString &str, int w, int h)
+MppShowWidget :: paintText(QPainter &paint, int w, int h)
 {
-	qreal factor;
-	qreal pt;
 	qreal wm = w / 16.0;
 	qreal hm = h / 16.0;
-
-	if (str.isEmpty())
-		return;
+	qreal factor;
+	int x;
 
 	paint.setFont(parent->mw->showFont);
-	QRectF txtBound = paint.boundingRect(QRectF(0,0,w - 2*wm,h - 2*hm),
-	    Qt::AlignCenter | Qt::TextWordWrap , str);
-
-	hm = (h - txtBound.height()) / 2.0;
-	pt = parent->mw->showFont.pointSizeF();
-	paint.setPen(QPen(parent->fontBgColor, 16));
-	paint.setBrush(parent->fontBgColor);
 	factor = paint.opacity();
-	paint.setOpacity(0.75 * factor);
-	txtBound = QRectF(wm/2.0,hm/2.0, w - wm,h - hm);
-	paint.drawRoundedRect(txtBound, 16, 16);
+
+	for (x = 0; x != MPP_SHOW_AOBJ_MAX; x++) {
+		MppShowAnimObject &aobj = parent->aobj[x];
+
+		if (aobj.text.isEmpty() || parent->anim_state == 0)
+			continue;
+
+		QRectF txtBound = paint.boundingRect(
+		    QRectF(wm, hm, w - 2.0*wm, h - 2.0*hm),
+		    Qt::AlignHCenter | Qt::AlignTop | Qt::TextWordWrap,
+		    aobj.text);
+
+		paint.setOpacity(factor * aobj.opacity_curr);
+		paint.setPen(QPen(parent->fontBgColor));
+		paint.setBrush(parent->fontBgColor);
+		paint.drawRoundedRect(
+		    txtBound.adjusted(
+			-wm/2.0 + aobj.xpos_curr,
+			-hm/2.0 + aobj.ypos_curr,
+			wm/2.0 + aobj.xpos_curr,
+			hm/2.0 + aobj.ypos_curr), 16, 16);
+		paint.setPen(parent->fontFgColor);
+		paint.drawText(txtBound.adjusted(
+			aobj.xpos_curr, aobj.ypos_curr,
+			aobj.xpos_curr, aobj.ypos_curr),
+		    Qt::AlignCenter | Qt::TextWordWrap,
+		    aobj.text);
+
+		aobj.height = txtBound.height() + hm;
+		aobj.width = txtBound.width();
+	}
 	paint.setOpacity(factor);
-	paint.setPen(parent->fontFgColor);
-	txtBound = QRectF(wm,hm, w - (2*wm),h - (2*hm));
-	paint.drawText(txtBound, Qt::AlignCenter | Qt::TextWordWrap, str);
 }
 
 void
@@ -105,7 +120,8 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 		ratio = 1.0;
 	}
 
-	QRect bg_rect((w - bg_w * ratio) / 2.0, (h - bg_h * ratio) / 2.0, bg_w * ratio, bg_h * ratio);
+	QRect bg_rect((w - bg_w * ratio) / 2.0,
+	    (h - bg_h * ratio) / 2.0, bg_w * ratio, bg_h * ratio);
 
 	if (p < MPP_TRAN_MAX) {
 		paint.setOpacity((qreal)(MPP_TRAN_MAX - p) / (qreal)MPP_TRAN_MAX);
@@ -118,7 +134,7 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 			break;
 		case MPP_SHOW_ST_LYRICS:
 			paint.drawPixmap(bg_rect,parent->background);
- 			paintText(paint, parent->lastText, w, h);
+ 			paintText(paint, w, h);
 			break;
 		default:
 			break;
@@ -134,7 +150,7 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 		break;
 	case MPP_SHOW_ST_LYRICS:
 		paint.drawPixmap(bg_rect,parent->background);
-		paintText(paint, parent->currText, w, h);
+		paintText(paint, w, h);
 		break;
 	default:
 		break;
@@ -161,6 +177,10 @@ MppShowWidget :: mouseDoubleClickEvent(QMouseEvent *e)
 MppShowControl :: MppShowControl(MppMainWindow *_mw)
 {
 	mw = _mw;
+
+	anim_state = 0;
+	cached_last_index = -1;
+	cached_curr_index = -1;
 
 	last_st = MPP_SHOW_ST_BLANK;
 	curr_st = MPP_SHOW_ST_BLANK;
@@ -232,48 +252,6 @@ MppShowControl :: handle_mode_change(int mode)
 }
 
 void
-MppShowControl :: handle_visual_change(MppScoreMain &sm)
-{
-	MppElement *last;
-	MppElement *curr;
-	MppVisualDot *pcdot_curr = 0;
-	MppVisualDot *pcdot_last = 0;
-	int visual_curr_index = 0;
-	int visual_last_index = 0;
-
-	pthread_mutex_lock(&mw->mtx);
-	last = sm.head.state.last_start;
-	curr = sm.head.state.curr_start;
-	pthread_mutex_unlock(&mw->mtx);
-
-	/* locate last and current play position */
-	sm.locateVisual(last, &visual_last_index, &pcdot_last);
-	sm.locateVisual(curr, &visual_curr_index, &pcdot_curr);
-
-	QString temp;
-
-	if (visual_last_index < 0 || visual_last_index >= sm.visual_max ||
-	    visual_curr_index < 0 || visual_curr_index >= sm.visual_max)
-		goto done;
-
-	if (sm.pVisual[visual_last_index].str != 0)
-		temp += sm.pVisual[visual_last_index].str[0];
-
-	temp += QChar('\n');
-
-	if (visual_last_index != visual_curr_index) {
-		if (sm.pVisual[visual_curr_index].str != 0)
-			temp += sm.pVisual[visual_curr_index].str[0];
-	}
-done:
-	/* repaint screen */
-	if (curr_st == MPP_SHOW_ST_LYRICS && currText != temp) {
-		currText = temp;
-		transition = 0;
-	}
-}
-
-void
 MppShowControl :: handle_show()
 {
 	wg_show->setWindowState(wg_show->windowState() & ~Qt::WindowFullScreen);
@@ -289,16 +267,153 @@ MppShowControl :: handle_fullscreen()
 void
 MppShowControl :: handle_watchdog()
 {
-	if (trackview >= 0 && trackview < MPP_MAX_VIEWS)
-		handle_visual_change(*mw->scores_main[trackview]);
+	int x;
 
+	if (trackview >= 0 && trackview < MPP_MAX_VIEWS) {
+		MppScoreMain &sm = *mw->scores_main[trackview];
+		MppElement *last;
+		MppElement *curr;
+		MppVisualDot *pcdot_curr = 0;
+		MppVisualDot *pcdot_last = 0;
+		int visual_curr_index = 0;
+		int visual_last_index = 0;
+
+		pthread_mutex_lock(&mw->mtx);
+		last = sm.head.state.last_start;
+		curr = sm.head.state.curr_start;
+		pthread_mutex_unlock(&mw->mtx);
+
+		/* locate last and current play position */
+		sm.locateVisual(last, &visual_last_index, &pcdot_last);
+		sm.locateVisual(curr, &visual_curr_index, &pcdot_curr);
+
+		/* check validity of indexes */
+		if (visual_last_index < 0 ||
+		    visual_last_index >= sm.visual_max ||
+		    visual_curr_index < 0 ||
+		    visual_curr_index >= sm.visual_max)
+			goto done;
+
+		/* check need for new transition */
+		if (anim_state != 0) {
+			if (visual_last_index == cached_last_index &&
+			    visual_curr_index == cached_curr_index)
+				goto done;
+			/* wait for transitions complete */
+			if (aobj[0].currStep < MPP_TRAN_MAX ||
+			    aobj[1].currStep < MPP_TRAN_MAX)
+				goto done;
+		}
+		cached_last_index = visual_last_index;
+		cached_curr_index = visual_curr_index;
+
+		/* get next state based on current state */
+		switch (anim_state) {
+		case 3:
+		case 0:
+			/* dim in first */
+			anim_state = 1;
+
+			/* reset state */
+			memset(aobj[0].zero_start, 0,
+			    aobj[0].zero_end - aobj[0].zero_start);
+
+			/* copy string */
+			if (sm.pVisual[visual_last_index].str != 0)
+				aobj[0].text = *sm.pVisual[visual_last_index].str;
+			else
+				aobj[0].text = QString();
+
+			aobj[0].opacity_step = 1.0 / MPP_TRAN_MAX;
+
+			/* reset state */
+			memset(aobj[1].zero_start, 0,
+			    aobj[1].zero_end - aobj[1].zero_start);
+			aobj[1].text = QString();
+			break;
+		case 1:
+			if (visual_curr_index != visual_last_index) {
+				/* dim in second */
+				anim_state = 2;
+
+				/* reset state */
+				memset(aobj[1].zero_start, 0,
+				    aobj[1].zero_end - aobj[1].zero_start);
+
+				/* copy string */
+				if (sm.pVisual[visual_curr_index].str != 0)
+					aobj[1].text = *sm.pVisual[visual_curr_index].str;
+				else
+					aobj[1].text = QString();
+
+				aobj[1].opacity_step = 1.0 / MPP_TRAN_MAX;
+				aobj[1].ypos_curr = aobj[0].height;
+			} else {
+				/* dim in second and dim out first */
+				anim_state = 1;
+
+				/* move text around */
+				aobj[1] = aobj[0];
+
+				/* reset state */
+				memset(aobj[0].zero_start, 0,
+				    aobj[0].zero_end - aobj[0].zero_start);
+
+				/* copy string */
+				if (sm.pVisual[visual_curr_index].str != 0)
+					aobj[0].text = *sm.pVisual[visual_curr_index].str;
+				else
+					aobj[0].text = QString();
+
+				aobj[1].currStep = 0;
+				aobj[1].ypos_step = 0;
+				aobj[1].opacity_step = -(aobj[1].opacity_curr / MPP_TRAN_MAX);
+				aobj[0].opacity_step = (1.0 / MPP_TRAN_MAX);
+			}
+			break;
+		default:
+			if (visual_curr_index != visual_last_index) {
+				/* dim out both */
+				anim_state = 3;
+				aobj[0].currStep = 0;
+				aobj[0].opacity_step = -(aobj[0].opacity_curr / MPP_TRAN_MAX);
+				aobj[0].ypos_step = 0;
+				aobj[1].currStep = 0;
+				aobj[1].opacity_step = -(aobj[1].opacity_curr / MPP_TRAN_MAX);
+				aobj[1].ypos_step = 0;
+			} else {
+				MppShowAnimObject tmp;
+
+				/* dim out first and move both up */
+				anim_state = 1;
+
+				tmp = aobj[1];
+				aobj[1] = aobj[0];
+				aobj[0] = tmp;
+
+				aobj[0].currStep = 0;
+				aobj[0].ypos_step = -(aobj[0].ypos_curr / MPP_TRAN_MAX);
+				aobj[0].opacity_step = 0;
+				aobj[1].currStep = 0;
+				aobj[1].opacity_step = -(aobj[1].opacity_curr / MPP_TRAN_MAX);
+			}
+			break;
+		}
+	}
+done:
 	if (transition < MPP_TRAN_MAX) {
-		transition++;
+		if (!transition++)
+			anim_state = 0;
 		wg_show->update();
 	} else if (transition == MPP_TRAN_MAX) {
 		transition++;
-		lastText = currText;
 		last_st = curr_st;
+		wg_show->update();
+	} else if (anim_state != 0) {
+		for (x = 0; x != MPP_SHOW_AOBJ_MAX; x++) {
+			if (aobj[x].step())
+				wg_show->update();
+		}
 	}
 }
 
