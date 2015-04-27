@@ -459,6 +459,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_config_view_fontsel = new QPushButton(tr("Change View Font"));
 	but_config_edit_fontsel = new QPushButton(tr("Change Editor Font"));
 	but_config_show_fontsel = new QPushButton(tr("Change Show Font"));
+#ifdef HAVE_NO_SHOW
+	but_config_show_fontsel->setHidden(1);
+#endif
 
 	gb_config_device = new MppGroupBox(tr("Device configuration"));
 
