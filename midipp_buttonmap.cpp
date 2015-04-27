@@ -86,6 +86,9 @@ MppButtonMap :: handle_released(int id)
 {
 	int x;
 
+	if (id == currSelection)
+		return;
+
 	currSelection = id;
 
 	for (x = 0; x != nButtons; x++)
