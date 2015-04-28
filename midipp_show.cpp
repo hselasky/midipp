@@ -63,21 +63,20 @@ MppShowWidget :: paintText(QPainter &paint, int w, int h)
 		QRectF txtBound = paint.boundingRect(
 		    QRectF(wm, hm, w - 2.0*wm, h - 2.0*hm),
 		    Qt::AlignHCenter | Qt::AlignTop | Qt::TextWordWrap,
-		    aobj.text);
+		    aobj.text + QChar('\n'));
 
 		paint.setOpacity(factor * aobj.opacity_curr);
 		paint.setPen(QPen(parent->fontBgColor));
 		paint.setBrush(parent->fontBgColor);
-		paint.drawRoundedRect(
-		    txtBound.adjusted(
-			-wm/2.0 + aobj.xpos_curr,
-			-hm/2.0 + aobj.ypos_curr,
-			wm/2.0 + aobj.xpos_curr,
-			hm/2.0 + aobj.ypos_curr), 16, 16);
+		paint.drawRoundedRect(txtBound.adjusted(
+		    -wm/2.0 + aobj.xpos_curr,
+		    -hm/2.0 + aobj.ypos_curr,
+		    wm/2.0 + aobj.xpos_curr,
+		    hm/2.0 + aobj.ypos_curr), 16, 16);
 		paint.setPen(parent->fontFgColor);
 		paint.drawText(txtBound.adjusted(
-			aobj.xpos_curr, aobj.ypos_curr,
-			aobj.xpos_curr, aobj.ypos_curr),
+		    aobj.xpos_curr, aobj.ypos_curr,
+		    aobj.xpos_curr, aobj.ypos_curr),
 		    Qt::AlignCenter | Qt::TextWordWrap,
 		    aobj.text);
 
@@ -311,9 +310,6 @@ MppShowControl :: handle_watchdog()
 			    aobj[1].currStep < MPP_TRAN_MAX)
 				goto done;
 		}
-		cached_last_index = visual_last_index;
-		cached_curr_index = visual_curr_index;
-
 		/* get next state based on current state */
 		switch (anim_state) {
 		case 0:
@@ -379,7 +375,8 @@ MppShowControl :: handle_watchdog()
 			}
 			break;
 		default:
-			if (visual_curr_index != visual_last_index)
+			if (visual_curr_index != visual_last_index ||
+			    visual_last_index != cached_curr_index)
 				anim_state = 3;
 			else
 				anim_state = 1;
@@ -397,6 +394,8 @@ MppShowControl :: handle_watchdog()
 			aobj[1].opacity_step = -(aobj[1].opacity_curr / MPP_TRAN_MAX);
 			break;
 		}
+		cached_last_index = visual_last_index;
+		cached_curr_index = visual_curr_index;
 	}
 done:
 	if (transition < MPP_TRAN_MAX) {
