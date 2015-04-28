@@ -8,6 +8,8 @@ with your fingertips.
 Changes for v1.2.17:
 - Added support for RePlay tab.
 - Added support for Metronome.
+- Fixed bug parsing all uppercased lyrics 
+- Reworked show tab and its animations
 
 Changes for v1.2.16:
 - No changes.
