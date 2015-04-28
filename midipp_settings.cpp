@@ -34,6 +34,7 @@
 #include "midipp_buttonmap.h"
 #include "midipp_custom.h"
 #include "midipp_shortcut.h"
+#include "midipp_show.h"
 
 MppSettings :: MppSettings(MppMainWindow *_parent, const QString & fname)
   : QSettings(fname)
@@ -199,7 +200,9 @@ MppSettings :: doSave(void)
 		beginGroup("font");
 		setValue("default", mw->defaultFont.toString());
 		setValue("editor", mw->editFont.toString());
-		setValue("show", mw->showFont.toString());
+#ifndef HAVE_NO_SHOW
+		setValue("show", mw->tab_show_control->showFont.toString());
+#endif
 		endGroup();
 	}
 	if (save_database_url) {
@@ -367,13 +370,14 @@ MppSettings :: doLoad(void)
 		    "Sans Serif,-1,20,5,75,0,0,0,0,0"));
 		if (mw->defaultFont.pixelSize() < 1)
 			mw->defaultFont.setPixelSize(20);
-
+#ifndef HAVE_NO_SHOW
 		/* show font */
-		mw->showFont.fromString(
+		mw->tab_show_control->showFont.fromString(
 		    stringDefault("font/show",
 		    "Sans Serif,-1,24,5,75,0,0,0,0,0"));
-		if (mw->showFont.pixelSize() < 1)
-			mw->showFont.setPixelSize(20);
+		if (mw->tab_show_control->showFont.pixelSize() < 1)
+			mw->tab_show_control->showFont.setPixelSize(20);
+#endif
 
 		mw->handle_compile(1);
 

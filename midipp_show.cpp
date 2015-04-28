@@ -51,7 +51,7 @@ MppShowWidget :: paintText(QPainter &paint, int w, int h)
 	qreal factor;
 	int x;
 
-	paint.setFont(parent->mw->showFont);
+	paint.setFont(parent->showFont);
 	factor = paint.opacity();
 
 	for (x = 0; x != MPP_SHOW_AOBJ_MAX; x++) {
@@ -191,6 +191,11 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 	fontFgColor = QColor(0,0,0);
 	fontBgColor = QColor(255,255,255);
 
+	showFont.fromString(QString("Sans Serif,-1,24,5,75,0,0,0,0,0"));
+
+	butShowFont = new QPushButton(tr("Select Font"));
+	connect(butShowFont, SIGNAL(released()), this, SLOT(handle_show_fontsel()));
+
 	butTrack = new MppButtonMap("Track\0" "View-A\0" "View-B\0" "View-C\0",
 #if MPP_MAX_VIEWS <= 3
 				    MPP_MAX_VIEWS, MPP_MAX_VIEWS
@@ -203,13 +208,13 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 	butMode = new MppButtonMap("Current mode\0" "BLANK\0" "BACKGROUND\0" "LYRICS\0", 3, 3);
 	connect(butMode, SIGNAL(selectionChanged(int)), this, SLOT(handle_mode_change(int)));
 
-	butShow = new QPushButton(tr("ShowWindow"));
-	connect(butShow, SIGNAL(released()), this, SLOT(handle_show()));
+	butShowWindow = new QPushButton(tr("Show\nWindow"));
+	connect(butShowWindow, SIGNAL(released()), this, SLOT(handle_show_window()));
 
-	butFullScreen = new QPushButton(tr("FullScreen"));
+	butFullScreen = new QPushButton(tr("Toggle\nFullscreen"));
 	connect(butFullScreen, SIGNAL(released()), this, SLOT(handle_fullscreen()));
 
-	butBackground = new QPushButton(tr("Background"));
+	butBackground = new QPushButton(tr("Set Background"));
 	connect(butBackground, SIGNAL(released()), this, SLOT(handle_background()));
 
 	butFontFgColor = new QPushButton(tr("Set Font Fg Color"));
@@ -222,13 +227,14 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 
 	gl_main->addWidget(butTrack, 0, 0, 1, 2);
 	gl_main->addWidget(butMode, 0, 2, 1, 2);
-	gl_main->addWidget(butBackground, 3, 0, 1, 1);
+	gl_main->addWidget(butShowFont, 3, 0, 1, 1);
+	gl_main->addWidget(butBackground, 4, 0, 1, 1);
 	gl_main->addWidget(butFontFgColor, 3, 1, 1, 1);
-	gl_main->addWidget(butFontBgColor, 3, 2, 1, 1);
-	gl_main->addWidget(butShow, 3, 3, 1, 1);
-	gl_main->addWidget(butFullScreen, 3, 4, 1, 1);
+	gl_main->addWidget(butFontBgColor, 4, 1, 1, 1);
+	gl_main->addWidget(butShowWindow, 3, 2, 2, 1);
+	gl_main->addWidget(butFullScreen, 3, 3, 2, 1);
 	gl_main->setRowStretch(2, 1);
-	gl_main->setColumnStretch(5, 1);
+	gl_main->setColumnStretch(4, 1);
 
 	watchdog = new QTimer(this);
 	connect(watchdog, SIGNAL(timeout()), this, SLOT(handle_watchdog()));
@@ -252,7 +258,7 @@ MppShowControl :: handle_mode_change(int mode)
 }
 
 void
-MppShowControl :: handle_show()
+MppShowControl :: handle_show_window()
 {
 	wg_show->setWindowState(wg_show->windowState() & ~Qt::WindowFullScreen);
 	wg_show->show();
@@ -462,3 +468,18 @@ MppShowControl :: handle_change_font_bg_color()
 		transition = 0;
 	}
 }
+
+void
+MppShowControl :: handle_show_fontsel()
+{
+	bool success;
+
+	QFont font = QFontDialog::getFont(&success, showFont, mw);
+
+	if (success) {
+		font.setPixelSize(QFontInfo(font).pixelSize());
+		showFont = font;
+		transition = 0;
+	}
+}
+

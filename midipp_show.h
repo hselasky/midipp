@@ -101,6 +101,8 @@ public:
 	QColor fontFgColor;
 	QColor fontBgColor;
 
+	QFont showFont;
+
 	/* for the whole window */
 	int8_t last_st;
 	int8_t curr_st;
@@ -114,7 +116,8 @@ public:
 	MppShowWidget *wg_show;
 	MppButtonMap *butMode;
 	MppButtonMap *butTrack;
-	QPushButton *butShow;
+	QPushButton *butShowWindow;
+	QPushButton *butShowFont;
 	QPushButton *butFullScreen;
 	QPushButton *butBackground;
 	QPushButton *butFontFgColor;
@@ -124,8 +127,9 @@ public:
 public slots:
 	void handle_mode_change(int);
 	void handle_track_change(int);
-	void handle_show();
+	void handle_show_window();
 	void handle_fullscreen();
+	void handle_show_fontsel();
 	void handle_watchdog();
 	void handle_background();
 	void handle_change_font_fg_color();

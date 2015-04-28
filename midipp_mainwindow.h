@@ -269,7 +269,6 @@ public:
 	QTimer *tim_config_apply;
 	QPushButton *but_config_view_fontsel;
 	QPushButton *but_config_edit_fontsel;
-	QPushButton *but_config_show_fontsel;
 
 	MppGroupBox *gb_config_insert;
 	QLineEdit *led_config_insert;
@@ -372,7 +371,6 @@ public slots:
 	void handle_config_reload();
 	void handle_config_view_fontsel();
 	void handle_config_edit_fontsel();
-	void handle_config_show_fontsel();
 
 	void handle_non_channel_muted_changed(int);
 	void handle_instr_changed(int);
