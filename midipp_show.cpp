@@ -303,7 +303,8 @@ MppShowControl :: handle_watchdog()
 		/* check need for new transition */
 		if (anim_state != 0) {
 			if (visual_last_index == cached_last_index &&
-			    visual_curr_index == cached_curr_index)
+			    visual_curr_index == cached_curr_index &&
+			    anim_state != 3)
 				goto done;
 			/* wait for transitions complete */
 			if (aobj[0].currStep < MPP_TRAN_MAX ||
@@ -315,7 +316,7 @@ MppShowControl :: handle_watchdog()
 
 		/* get next state based on current state */
 		switch (anim_state) {
-		case 3:
+		MppShowAnimObject tmp;
 		case 0:
 			/* dim in first */
 			anim_state = 1;
@@ -337,6 +338,7 @@ MppShowControl :: handle_watchdog()
 			    aobj[1].zero_end - aobj[1].zero_start);
 			aobj[1].text = QString();
 			break;
+		case 3:
 		case 1:
 			if (visual_curr_index != visual_last_index) {
 				/* dim in second */
@@ -378,31 +380,21 @@ MppShowControl :: handle_watchdog()
 			}
 			break;
 		default:
-			if (visual_curr_index != visual_last_index) {
-				/* dim out both */
+			if (visual_curr_index != visual_last_index)
 				anim_state = 3;
-				aobj[0].currStep = 0;
-				aobj[0].opacity_step = -(aobj[0].opacity_curr / MPP_TRAN_MAX);
-				aobj[0].ypos_step = 0;
-				aobj[1].currStep = 0;
-				aobj[1].opacity_step = -(aobj[1].opacity_curr / MPP_TRAN_MAX);
-				aobj[1].ypos_step = 0;
-			} else {
-				MppShowAnimObject tmp;
-
-				/* dim out first and move both up */
+			else
 				anim_state = 1;
 
-				tmp = aobj[1];
-				aobj[1] = aobj[0];
-				aobj[0] = tmp;
+			/* dim out first and move both up */
+			tmp = aobj[1];
+			aobj[1] = aobj[0];
+			aobj[0] = tmp;
 
-				aobj[0].currStep = 0;
-				aobj[0].ypos_step = -(aobj[0].ypos_curr / MPP_TRAN_MAX);
-				aobj[0].opacity_step = 0;
-				aobj[1].currStep = 0;
-				aobj[1].opacity_step = -(aobj[1].opacity_curr / MPP_TRAN_MAX);
-			}
+			aobj[0].currStep = 0;
+			aobj[0].ypos_step = -(aobj[0].ypos_curr / MPP_TRAN_MAX);
+			aobj[0].opacity_step = 0;
+			aobj[1].currStep = 0;
+			aobj[1].opacity_step = -(aobj[1].opacity_curr / MPP_TRAN_MAX);
 			break;
 		}
 	}
