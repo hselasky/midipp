@@ -316,7 +316,6 @@ MppShowControl :: handle_watchdog()
 
 		/* get next state based on current state */
 		switch (anim_state) {
-		MppShowAnimObject tmp;
 		case 0:
 			/* dim in first */
 			anim_state = 1;
@@ -385,11 +384,12 @@ MppShowControl :: handle_watchdog()
 			else
 				anim_state = 1;
 
-			/* dim out first and move both up */
-			tmp = aobj[1];
+			/* swap animation objects */
+			MppShowAnimObject tmp = aobj[1];
 			aobj[1] = aobj[0];
 			aobj[0] = tmp;
 
+			/* dim out first and move both up */
 			aobj[0].currStep = 0;
 			aobj[0].ypos_step = -(aobj[0].ypos_curr / MPP_TRAN_MAX);
 			aobj[0].opacity_step = 0;
