@@ -347,13 +347,19 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 		/* get biggest number of score lines in a page */
 		x = visual_p_max;
 		if (x != 0) {
-			qreal scale_min = ((qreal)(pd->height() - (2 * orig.y()))) / 
-			    (((qreal)x) * visual_y_max);
+			qreal scale_y_min = ((qreal)(pd->height() - (2 * orig.y()))) / 
+			  (((qreal)x) * (qreal)visual_y_max);
+			qreal scale_x_min = ((qreal)(pd->width() - (2 * orig.x()))) / 
+			  ((qreal)visual_x_max * 0.75);
 
-			if (scale_min < 0)
-				scale_f = 0.5;	/* dummy */
-			else if (scale_min < scale_f)
-				scale_f = scale_min;
+			if (scale_y_min < 0.0001)
+				scale_y_min = 0.0001;	/* dummy */
+			if (scale_x_min < 0.0001)
+				scale_x_min = 0.0001;	/* dummy */
+			if (scale_y_min < scale_f)
+				scale_f = scale_y_min;
+			if (scale_x_min < scale_f)
+				scale_f = scale_x_min;
 		}
 
 		/* translate printing area */
@@ -1718,6 +1724,7 @@ int
 MppScoreMain :: handleCompile(int force)
 {
 	QString temp;
+	int x;
 
 	temp = editWidget->toPlainText();
 
@@ -1726,13 +1733,26 @@ MppScoreMain :: handleCompile(int force)
 
 		visual_y_max = MPP_VISUAL_C_MAX +
 		  (3 * mainWindow->defaultFont.pixelSize());
+		/* range check */
+		if (visual_y_max < 1)
+			visual_y_max = 1;
 
 		pthread_mutex_lock(&mainWindow->mtx);
-
 		handleParse(editText);
-
 		pthread_mutex_unlock(&mainWindow->mtx);
 
+		visual_x_max = 1;
+		for (x = 0; x != visual_max; x++) {
+			if (pVisual[x].str == 0)
+				continue;
+			if (visual_x_max < pVisual[x].str->size())
+				visual_x_max = pVisual[x].str->size();
+		}
+		visual_x_max = MPP_VISUAL_C_MAX +
+		  (visual_x_max * mainWindow->defaultFont.pixelSize());
+		/* range check */
+		if (visual_x_max < 1)
+			visual_x_max = 1;
 		return (1);
 	}
 	return (0);

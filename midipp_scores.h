@@ -146,6 +146,7 @@ public:
 	int visual_max;
 	int visual_p_max;
 	int visual_y_max;
+	int visual_x_max;
 	int unit;
 
 	uint32_t pressedKeys[MPP_PRESSED_MAX];
