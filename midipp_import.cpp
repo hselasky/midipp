@@ -49,7 +49,22 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 
 	uint8_t any;
 	uint8_t output = 0;
-	
+
+	/* detect Label mark, "LXXX", in input text */
+	if (i_txt > -1 && ps->n_word[i_txt] > 0 &&
+	    ps->d_word[i_txt][0].name.size() > 1 &&
+	    ps->d_word[i_txt][0].name[0] == QChar('L') &&
+	    ps->d_word[i_txt][0].name[1].isDigit()) {
+		scs += QChar('L');
+		for (bi = 1; bi != ps->d_word[i_txt][0].name.size(); bi++) {
+			if (ps->d_word[i_txt][0].name[bi].isDigit() == 0)
+				break;
+			scs += ps->d_word[i_txt][0].name[bi];
+		}
+		scs += QChar(':');
+		scs += QChar('\n');
+	}
+
 	out += "S\"";
 
 	for (ai = bi = x = 0; x != ps->max_off; x++) {
@@ -331,7 +346,7 @@ MppImportTab :: MppImportTab(MppMainWindow *parent)
 	editWidget->setFont(mainWindow->editFont);
 	editWidget->setLineWrapMode(QPlainTextEdit::NoWrap);
 	editWidget->setPlainText(tr(
-	    "Example song:" "\n\n"
+	    "L0 - Example verse:" "\n\n"
 	    "C  G  Am" "\n"
 	    "Welcome!" "\n"));
 

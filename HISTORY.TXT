@@ -9,6 +9,7 @@ Changes for v1.2.17:
 - Added support for RePlay tab.
 - Added support for Metronome.
 - Fixed bug parsing all uppercased lyrics 
+- Added detection of label marks in lyrics
 - Reworked show tab and its animations
 
 Changes for v1.2.16:
