@@ -48,9 +48,12 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Thu Mar 5 2015 HPS hps@selasky.org 1.2.17-1
-- Added new RePlay tab.
+* Thu May 6 2015 HPS hps@selasky.org 1.2.17-1
+- Added support for RePlay tab.
 - Added support for Metronome.
+- Fixed bug parsing all uppercased lyrics 
+- Added detection of label marks in lyrics
+- Reworked show tab and its animations
 * Thu Mar 5 2015 HPS hps@selasky.org 1.2.16-1
 - No changes.
 * Mon Jan 12 2015 HPS hps@selasky.org 1.2.15-1
