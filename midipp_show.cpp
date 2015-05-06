@@ -66,7 +66,7 @@ MppShowWidget :: paintText(QPainter &paint, int w, int h)
 		    aobj.text + QChar('\n'));
 
 		paint.setOpacity(factor * aobj.opacity_curr);
-		paint.setPen(QPen());
+		paint.setPen(Qt::NoPen);
 		paint.setBrush(parent->fontBgColor);
 		paint.drawRoundedRect(txtBound.adjusted(
 		    -wm/2.0 + aobj.xpos_curr,
