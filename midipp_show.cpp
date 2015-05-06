@@ -180,6 +180,8 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 	anim_state = 0;
 	cached_last_index = -1;
 	cached_curr_index = -1;
+	last_file_num = -1;
+	next_file_num = -1;
 
 	last_st = MPP_SHOW_ST_BLANK;
 	curr_st = MPP_SHOW_ST_BLANK;
@@ -273,6 +275,13 @@ void
 MppShowControl :: handle_watchdog()
 {
 	int x;
+
+	/* check if background should be updated */
+	if (next_file_num > -1) {
+		x = next_file_num;
+		next_file_num = -1;
+		handle_set_background(x);
+	}
 
 	if (trackview >= 0 && trackview < MPP_MAX_VIEWS) {
 		MppScoreMain &sm = *mw->scores_main[trackview];
@@ -417,18 +426,42 @@ done:
 void
 MppShowControl :: handle_background()
 {
-        QFileDialog *diag = 
-          new QFileDialog(mw, tr("Select Background File"), 
-                Mpp.HomeDirBackground,
-                QString("Image Files (*.BMP *.bmp *.GIF *.gif *.JPG *.jpg *.JPEG "
+	QFileDialog *diag = 
+	  new QFileDialog(mw, tr("Select Background File(s)"), 
+		Mpp.HomeDirBackground,
+		QString("Image Files (*.BMP *.bmp *.GIF *.gif *.JPG *.jpg *.JPEG "
 		    "*.jpeg *.PNG *.png *.PBM *.pbm *.PGM *.pgm *.PPM *.ppm "
 		    "*.XBM *.xbm *.XPM *.xpm)"));
 
-	if (diag->exec()) {
-                Mpp.HomeDirBackground = diag->directory().path();
-                background.load(diag->selectedFiles()[0]);
-		transition = 0;
+	diag->setFileMode(QFileDialog::ExistingFiles);
+
+	if (diag->exec() == QFileDialog::Accepted) {
+		int x;
+		Mpp.HomeDirBackground = diag->directory().path();
+		files = diag->selectedFiles();
+		x = last_file_num;
+		last_file_num = -1;
+		if (x < 0)
+			x = 0;
+		handle_set_background(x);
 	}
+	delete diag;
+}
+
+void
+MppShowControl :: handle_set_background(int num)
+{
+	if (last_file_num == num)
+		return;
+	/* set current file number */
+	last_file_num = num;
+	/* reset pixmap */
+	background = QPixmap();
+	/* check for valid number */
+	if (num >= 0 && num < files.size())
+		background.load(files[num]);
+	/* refresh screen */
+	transition = 0;
 }
 
 void

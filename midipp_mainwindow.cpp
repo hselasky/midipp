@@ -248,6 +248,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " * K6.3 - select TRANS key mode.\n"
 	    " * K6.4 - select CHORD-PIANO key mode.\n"
 	    " * K6.5 - select CHORD-GUITAR key mode.\n"
+	    " * K7.<number> - change show background to image #<number>."
 	    " * M<number> - macro inline the given label.\n"
 	    " * L<number> - defines a label [0..31].\n"
 	    " * J<P><number> - jumps to the given label [0..31] \n"

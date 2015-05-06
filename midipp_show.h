@@ -98,6 +98,8 @@ public:
 	
 	QPixmap background;
 
+	QStringList files;
+
 	QColor fontFgColor;
 	QColor fontBgColor;
 
@@ -113,6 +115,9 @@ public:
 	int cached_last_index;
 	int cached_curr_index;
 
+	int last_file_num;
+	int next_file_num;
+
 	MppShowWidget *wg_show;
 	MppButtonMap *butMode;
 	MppButtonMap *butTrack;
@@ -125,6 +130,7 @@ public:
 	QTimer *watchdog;
 
 public slots:
+	void handle_set_background(int);
 	void handle_mode_change(int);
 	void handle_track_change(int);
 	void handle_show_window();

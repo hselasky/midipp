@@ -266,6 +266,8 @@ MppHead :: operator += (MppElement *elem)
 			}
 			break;
 		case MPP_CMD_AUTO_MELODY:
+		case MPP_CMD_KEY_MODE:
+		case MPP_CMD_IMAGE_NUM:
 			ch = elem->getChar(&off);
 			if (ch == '.')
 				elem->value[1] = elem->getIntValue(&off);
@@ -292,13 +294,6 @@ MppHead :: operator += (MppElement *elem)
 				elem->value[2] = 0;
 			else if (elem->value[2] > 60000)
 				elem->value[2] = 60000;
-			break;
-		case MPP_CMD_KEY_MODE:
-			ch = elem->getChar(&off);
-			if (ch == '.')
-				elem->value[1] = elem->getIntValue(&off);
-			else
-				elem->value[1] = 0;	/* ALL mode */
 			break;
 		default:
 			break;
