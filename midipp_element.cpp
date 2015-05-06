@@ -293,6 +293,13 @@ MppHead :: operator += (MppElement *elem)
 			else if (elem->value[2] > 60000)
 				elem->value[2] = 60000;
 			break;
+		case MPP_CMD_KEY_MODE:
+			ch = elem->getChar(&off);
+			if (ch == '.')
+				elem->value[1] = elem->getIntValue(&off);
+			else
+				elem->value[1] = 0;	/* ALL mode */
+			break;
 		default:
 			break;
 		}

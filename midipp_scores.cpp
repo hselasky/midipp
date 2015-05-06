@@ -742,6 +742,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 	MppElement *start;
 	MppElement *stop;
 	MppElement *ptr;
+	int key_mode;
 	int auto_melody;
 	int has_string;
 	int index;
@@ -762,6 +763,9 @@ MppScoreMain :: handleParse(const QString &pstr)
 
 	/* no automatic melody */
 	auto_melody = 0;
+
+	/* no key mode selection */
+	key_mode = -1;
 
 	/* number of base keys */
 	num_base = 2;
@@ -800,6 +804,9 @@ MppScoreMain :: handleParse(const QString &pstr)
 					break;
 				case MPP_CMD_NUM_BASE:
 					num_base = ptr->value[1];
+					break;
+				case MPP_CMD_KEY_MODE:
+					key_mode = ptr->value[1];
 					break;
 				default:
 					break;
@@ -881,6 +888,36 @@ MppScoreMain :: handleParse(const QString &pstr)
 	/* check if auto-melody should be applied */
 	if (auto_melody > 0)
 		head.autoMelody(auto_melody - 1);
+
+	/* check if key-mode should be applied */
+	switch (key_mode) {
+	case 0:
+		keyMode = MM_PASS_ALL;
+		mainWindow->keyModeUpdated = 1;
+		break;
+	case 1:
+		keyMode = MM_PASS_ONE_MIXED;
+		mainWindow->keyModeUpdated = 1;
+		break;
+	case 2:
+		keyMode = MM_PASS_NONE_FIXED;
+		mainWindow->keyModeUpdated = 1;
+		break;
+	case 3:
+		keyMode = MM_PASS_NONE_TRANS;
+		mainWindow->keyModeUpdated = 1;
+		break;
+	case 4:
+		keyMode = MM_PASS_NONE_CHORD_PIANO;
+		mainWindow->keyModeUpdated = 1;
+		break;
+	case 5:
+		keyMode = MM_PASS_NONE_CHORD_GUITAR;
+		mainWindow->keyModeUpdated = 1;
+		break;
+	default:
+		break;
+	}
 
 	/* number all elements to make searching easier */
 	head.sequence();
