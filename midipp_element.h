@@ -117,6 +117,7 @@ public:
 		int line;
 		int offset;
 		int string;
+		int image_num;
 		MppElement *push_start;
 		MppElement *push_stop;
 		MppElement *curr_start;

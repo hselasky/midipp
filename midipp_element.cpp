@@ -213,8 +213,13 @@ MppHead :: reset()
 	memset(&state, 0, sizeof(state));
 
 	TAILQ_FOREACH(elem, &head, entry) {
-		if (elem->type == MPP_T_LABEL)
+		switch (elem->type) {
+		case MPP_T_LABEL:
 			state.label_start[elem->value[0]] = elem;
+			break;
+		default:
+			break;
+		}
 	}
 }
 
@@ -1409,6 +1414,9 @@ MppHead :: stepLine(MppElement **ppstart, MppElement **ppstop)
 						break;
 					case MPP_CMD_UNLOCK:
 						state.key_lock = 0;
+						break;
+					case MPP_CMD_IMAGE_NUM:
+						state.image_num = ptr->value[1];
 						break;
 					default:
 						break;
