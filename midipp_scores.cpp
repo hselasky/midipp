@@ -742,7 +742,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 	MppElement *start;
 	MppElement *stop;
 	MppElement *ptr;
-	int image_num;
 	int key_mode;
 	int auto_melody;
 	int has_string;
@@ -767,9 +766,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 
 	/* no key mode selection */
 	key_mode = -1;
-
-	/* no image number selection */
-	image_num = -1;
 
 	/* number of base keys */
 	num_base = 2;
@@ -811,9 +807,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 					break;
 				case MPP_CMD_KEY_MODE:
 					key_mode = ptr->value[1];
-					break;
-				case MPP_CMD_IMAGE_NUM:
-					image_num = ptr->value[1];
 					break;
 				default:
 					break;
@@ -940,16 +933,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 
 	/* update scrollbar */
 	viewScroll->setMaximum((visual_max > 0) ? (visual_max - 1) : 0);
-
-#ifndef HAVE_NO_SHOW
-	MppShowControl *pshow = mainWindow->tab_show_control;
-
-	/* update image number, if any */
-	if (image_num > -1)
-		pshow->next_file_num = image_num;
-	/* force new transition */
-	pshow->transition = 0;
-#endif
 }
 
 void

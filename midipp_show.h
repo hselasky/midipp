@@ -28,7 +28,7 @@
 
 #include "midipp.h"
 
-#define	MPP_TRAN_MAX 4
+#define	MPP_TRAN_MAX 5
 
 enum {
 	MPP_SHOW_ST_BLANK,
@@ -53,21 +53,6 @@ public:
 
 class MppShowAnimObject {
 public:
-	MppShowAnimObject()
-	{
-		memset(zero_start, 0, zero_end - zero_start);
-		currStep = MPP_TRAN_MAX;
-	}
-	int step(void)
-	{
-		if (currStep >= MPP_TRAN_MAX)
-			return (0);
-		opacity_curr += opacity_step;
-		xpos_curr += xpos_step;
-		ypos_curr += ypos_step;
-		currStep++;
-		return (1);
-	};
 	QString text;
 	uint8_t zero_start[0];
 	qreal opacity_curr;
@@ -80,6 +65,47 @@ public:
 	qreal height;
 	uint8_t currStep;
 	uint8_t zero_end[0];
+
+	void reset()
+	{
+		memset(zero_start, 0, zero_end - zero_start);
+	}
+	MppShowAnimObject()
+	{
+		reset();
+		currStep = MPP_TRAN_MAX;
+	}
+	int step()
+	{
+		if (currStep >= MPP_TRAN_MAX) {
+			/* animation finished */
+			opacity_step = 0;
+			xpos_step = 0;
+			ypos_step = 0;
+			return (0);
+		}
+		/* animation in progress */
+		opacity_curr += opacity_step;
+		xpos_curr += xpos_step;
+		ypos_curr += ypos_step;
+		currStep++;
+		return (1);
+	};
+	void fadeOut()
+	{
+		opacity_step = -(opacity_curr / MPP_TRAN_MAX);
+		currStep = 0;
+	}
+	void fadeIn()
+	{
+		opacity_step = ((1.0 - opacity_curr) / MPP_TRAN_MAX);
+		currStep = 0;
+	}
+	void moveUp(qreal pix)
+	{
+		ypos_step = -(pix / MPP_TRAN_MAX);
+		currStep = 0;
+	}
 };
 
 class MppShowControl : public QObject
@@ -90,10 +116,21 @@ public:
 	MppShowControl(MppMainWindow *);
 	~MppShowControl();
 
+	void handle_text_watchdog();
+	void handle_pict_watchdog();
+	void handle_text_change();
+	void handle_pict_change();
+
 	MppMainWindow *mw;
 	MppGridLayout *gl_main;
 
-#define	MPP_SHOW_AOBJ_MAX 2
+	enum {
+		MPP_SHOW_AOBJ_TEXT_0,
+		MPP_SHOW_AOBJ_TEXT_1,
+		MPP_SHOW_AOBJ_PICTURE,
+		MPP_SHOW_AOBJ_MAX,
+	};
+
 	MppShowAnimObject aobj[MPP_SHOW_AOBJ_MAX];
 	
 	QPixmap background;
@@ -106,17 +143,14 @@ public:
 	QFont showFont;
 
 	/* for the whole window */
-	int8_t last_st;
-	int8_t curr_st;
-	int8_t anim_state;
+	int8_t current_mode;
+	int8_t anim_text_state;
+	int8_t anim_pict_state;
 	int8_t trackview;
-	int8_t transition;
 
+	int cached_last_num;
 	int cached_last_index;
 	int cached_curr_index;
-
-	int last_file_num;
-	int next_file_num;
 
 	MppShowWidget *wg_show;
 	MppButtonMap *butMode;
@@ -130,14 +164,13 @@ public:
 	QTimer *watchdog;
 
 public slots:
-	void handle_set_background(int);
+	void handle_watchdog();
 	void handle_mode_change(int);
 	void handle_track_change(int);
 	void handle_show_window();
 	void handle_fullscreen();
 	void handle_show_fontsel();
-	void handle_watchdog();
-	void handle_background();
+	void handle_change_background();
 	void handle_change_font_fg_color();
 	void handle_change_font_bg_color();
 };
