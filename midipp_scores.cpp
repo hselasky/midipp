@@ -933,6 +933,11 @@ MppScoreMain :: handleParse(const QString &pstr)
 
 	/* update scrollbar */
 	viewScroll->setMaximum((visual_max > 0) ? (visual_max - 1) : 0);
+
+#ifndef HAVE_NO_SHOW
+	mainWindow->tab_show_control->handle_text_change();
+	mainWindow->tab_show_control->handle_pict_change();
+#endif
 }
 
 void

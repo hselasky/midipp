@@ -45,7 +45,6 @@ public:
 
 	MppShowControl *parent;
 
-	void paintText(QPainter &, int, int);
 	void paintEvent(QPaintEvent *);
 	void keyPressEvent(QKeyEvent *);
 	void mouseDoubleClickEvent(QMouseEvent *e);

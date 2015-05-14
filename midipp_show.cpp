@@ -44,11 +44,6 @@ MppShowWidget :: ~MppShowWidget()
 }
 
 void
-MppShowWidget :: paintText(QPainter &paint, int w, int h)
-{
-}
-
-void
 MppShowWidget :: paintEvent(QPaintEvent *event)
 {
 	QPainter paint(this);
@@ -276,8 +271,14 @@ MppShowControl :: handle_text_watchdog()
 	if (visual_last_index < 0 ||
 	    visual_last_index >= sm.visual_max ||
 	    visual_curr_index < 0 ||
-	    visual_curr_index >= sm.visual_max)
+	    visual_curr_index >= sm.visual_max) {
+		if (anim_text_state != 0) {
+			aobj[0].fadeOut();
+			aobj[1].fadeOut();
+			anim_text_state = 0;
+		}
 		return;
+	}
 
 	/* check need for new transition */
 	if (anim_text_state != 0) {
