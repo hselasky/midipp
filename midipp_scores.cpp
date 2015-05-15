@@ -1236,6 +1236,7 @@ MppScoreMain :: handleChordsLoad(void)
 	}
 
 	if (nb != 0) {
+		mid_sort(base, nb);
 		for (x = 0; x != 12; x++) {
 			score_future_base[x].dur = 1;
 			score_future_base[x].key = base[0];
@@ -1245,6 +1246,7 @@ MppScoreMain :: handleChordsLoad(void)
 	}
 
 	if (nk != 0) {
+		mid_sort(key, nk);
 		for (x = 0; x != 12; x++) {
 			score_future_treble[x].dur = 1;
 			score_future_treble[x].key = key[0];
