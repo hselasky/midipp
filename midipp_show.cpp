@@ -160,7 +160,7 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 		    Qt::TextWordWrap, aobj.str);
 
 		/* store height and width */
-		txtBound.adjust(-wf, 0, wf + wa, wa);
+		txtBound.adjust(-wf, 0, wf + wa, wa - wf);
 		aobj.height = txtBound.height();
 		aobj.width = txtBound.width();
 	}
