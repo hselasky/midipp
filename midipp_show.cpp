@@ -380,7 +380,8 @@ MppShowControl :: handle_text_watchdog()
 	    &visual_curr_index, 0);
 
 	/* check if next text is accross a jump */
-	if (visual_last_index == visual_curr_index)
+	if (last != curr &&
+	    visual_last_index == visual_curr_index)
 		sm.locateVisual(curr, &visual_curr_index, 0, 0);
 
 	/* check validity of indexes */
