@@ -66,7 +66,12 @@ enum MppCommandType {
 	MPP_CMD_AUTO_MELODY,
 	MPP_CMD_NUM_BASE,
 	MPP_CMD_KEY_MODE,
-	MPP_CMD_IMAGE_NUM,
+	MPP_CMD_IMAGE_PROPS,
+	MPP_CMD_IMAGE_BG_COLOR,
+	MPP_CMD_IMAGE_FG_COLOR,
+	MPP_CMD_TEXT_PROPS,
+	MPP_CMD_TEXT_BG_COLOR,
+	MPP_CMD_TEXT_FG_COLOR,
 	MPP_CMD_MAX,
 };
 
@@ -83,9 +88,83 @@ struct MppChordElement {
 	int key_base;
 };
 
+class MppColorProps {
+public:
+	bool operator!= (const MppColorProps &other) const
+	{
+		return (other.fg_red != fg_red ||
+		    other.fg_green != fg_green ||
+		    other.fg_blue != fg_blue ||
+		    other.bg_red != bg_red ||
+		    other.bg_green != bg_green ||
+		    other.bg_blue != bg_blue);
+	};
+	void reset()
+	{
+		/* foreground */
+		fg_red = 255;
+		fg_green = 255;
+		fg_blue = 255;
+
+		/* background */
+		bg_red = 0;
+		bg_green = 0;
+		bg_blue = 0;
+	};
+	QColor fg()
+	{
+		return (QColor(fg_red, fg_green, fg_blue));
+	}
+	void setFg(const QColor color)
+	{
+		fg_red = color.red();
+		fg_green = color.green();
+		fg_blue = color.blue();
+	}
+	QColor bg()
+	{
+		return (QColor(bg_red, bg_green, bg_blue));
+	}
+	void setBg(const QColor color)
+	{
+		bg_red = color.red();
+		bg_green = color.green();
+		bg_blue = color.blue();
+	}
+	uint8_t fg_red;
+	uint8_t fg_green;
+	uint8_t fg_blue;
+	uint8_t bg_red;
+	uint8_t bg_green;
+	uint8_t bg_blue;
+};
+
+class MppObjectProps {
+public:
+	bool operator!= (const MppObjectProps &other) const
+	{
+		return (other.align != align || other.space != space ||
+			other.shadow != shadow || other.color != color ||
+			other.num != num || other.how != how);
+	};
+	void reset()
+	{
+		align = 0;
+		space = 5;
+		shadow = 105;
+		color.reset();
+	};
+	uint16_t align;
+	uint16_t space;
+	uint16_t shadow;
+	uint16_t num;
+	uint16_t how;
+	MppColorProps color;
+};
+
 class MppElement {
 public:
-	MppElement(MppElementType type, int, int = 0, int = 0, int = 0);
+	MppElement(MppElementType type, int, int = 0, int = 0, int = 0, int = 0);
 	~MppElement();
 
 	int compare(const MppElement *) const;
@@ -97,7 +176,7 @@ public:
 
 	MppElementEntryT entry;
 	enum MppElementType type;
-	int value[3];
+	int value[4];
 	int line;
 	int sequence;
 };
@@ -117,7 +196,8 @@ public:
 		int line;
 		int offset;
 		int string;
-		int image_num;
+		MppObjectProps text_curr;
+		MppObjectProps image_curr;
 		MppElement *push_start;
 		MppElement *push_stop;
 		MppElement *curr_start;

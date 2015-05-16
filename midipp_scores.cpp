@@ -562,7 +562,8 @@ MppScoreMain :: viewMousePressEvent(QMouseEvent *e)
 }
 
 void
-MppScoreMain :: locateVisual(MppElement *ptr, int *pindex, MppVisualDot **ppdot)
+MppScoreMain :: locateVisual(MppElement *ptr, int *pindex,
+    int *pnext, MppVisualDot **ppdot)
 {
 	MppElement *start;
 	MppElement *stop;
@@ -596,13 +597,22 @@ MppScoreMain :: locateVisual(MppElement *ptr, int *pindex, MppVisualDot **ppdot)
 		}
 		break;
 	}
-
-	*pindex = x;
-
-	if (x != visual_max && y < pVisual[x].ndot)
-		*ppdot = &pVisual[x].pdot[y];
-	else
-		*ppdot = 0;
+	if (pindex != 0) {
+		*pindex = x;
+	}
+	if (pnext != 0) {
+		if (x != visual_max && (x + 1) != visual_max &&
+		    pVisual[x].stop == pVisual[x + 1].start)
+			*pnext = x + 1;
+		else
+			*pnext = x;
+	}
+	if (ppdot != 0) {
+		if (x != visual_max && y < pVisual[x].ndot)
+			*ppdot = &pVisual[x].pdot[y];
+		else
+			*ppdot = 0;
+	}
 }
 
 void
@@ -640,10 +650,10 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 		y_blocks = 1;
 
 	/* locate current play position */
-	locateVisual(curr, &yc_rem, &pcdot);
+	locateVisual(curr, &yc_rem, 0, &pcdot);
 
 	/* locate last play position */
-	locateVisual(last, &yo_rem, &podot);
+	locateVisual(last, &yo_rem, 0, &podot);
 
 	y_div = 0;
 	yc_div = 0;
@@ -1799,7 +1809,6 @@ void
 MppScoreMain :: watchdog()
 {
 	MppElement *curr;
-	MppVisualDot *pdot;
 	int off;
 	int y_blocks;
 
@@ -1833,7 +1842,7 @@ MppScoreMain :: watchdog()
 		y_blocks = 1;
 
 	/* locate current play position */
-	locateVisual(curr, &off, &pdot);
+	locateVisual(curr, &off, 0, 0);
 
 	if (off < visual_max) {
 		viewScroll->setValue(off - (off % y_blocks));

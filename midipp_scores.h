@@ -90,7 +90,7 @@ public:
 
 	void viewPaintEvent(QPaintEvent *event);
 	void viewMousePressEvent(QMouseEvent *e);
-	void locateVisual(MppElement *, int *, MppVisualDot **);
+	void locateVisual(MppElement *, int *, int *, MppVisualDot **);
 
 	void watchdog();
 

@@ -86,6 +86,7 @@
 #include <QByteArray>
 #include <QChar>
 #include <QString>
+#include <QClipboard>
 
 #include <umidi20.h>
 

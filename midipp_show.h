@@ -27,6 +27,7 @@
 #define	_MIDIPP_SHOW_H_
 
 #include "midipp.h"
+#include "midipp_element.h"
 
 #define	MPP_TRAN_MAX 5
 
@@ -52,7 +53,7 @@ public:
 
 class MppShowAnimObject {
 public:
-	QString text;
+	QString str;
 	uint8_t zero_start[0];
 	qreal opacity_curr;
 	qreal opacity_step;
@@ -62,12 +63,14 @@ public:
 	qreal ypos_step;
 	qreal width;
 	qreal height;
+	MppObjectProps props;
 	uint8_t currStep;
 	uint8_t zero_end[0];
 
 	void reset()
 	{
 		memset(zero_start, 0, zero_end - zero_start);
+		str = QString();
 	}
 	MppShowAnimObject()
 	{
@@ -122,6 +125,8 @@ public:
 
 	MppMainWindow *mw;
 	MppGridLayout *gl_main;
+	MppGroupBox *gb_font;
+	MppGroupBox *gb_image;
 
 	enum {
 		MPP_SHOW_AOBJ_TEXT_0,
@@ -131,13 +136,10 @@ public:
 	};
 
 	MppShowAnimObject aobj[MPP_SHOW_AOBJ_MAX];
-	
+
 	QPixmap background;
 
 	QStringList files;
-
-	QColor fontFgColor;
-	QColor fontBgColor;
 
 	QFont showFont;
 
@@ -147,19 +149,41 @@ public:
 	int8_t anim_pict_state;
 	int8_t trackview;
 
-	int cached_last_num;
+	MppObjectProps last_image;
+	MppObjectProps last_text;
+
 	int cached_last_index;
 	int cached_curr_index;
 
 	MppShowWidget *wg_show;
+
 	MppButtonMap *butMode;
 	MppButtonMap *butTrack;
+
 	QPushButton *butShowWindow;
-	QPushButton *butShowFont;
 	QPushButton *butFullScreen;
-	QPushButton *butBackground;
+
+	QPushButton *butFontSelect;
 	QPushButton *butFontFgColor;
 	QPushButton *butFontBgColor;
+	QPushButton *butFontCenter;
+	QPushButton *butFontRight;
+	QPushButton *butFontLeft;
+	QPushButton *butFontMoreSpace;
+	QPushButton *butFontLessSpace;
+	QPushButton *butImageSelect;
+	QPushButton *butImageFgColor;
+	QPushButton *butImageBgColor;
+	QPushButton *butImageZoom;
+	QPushButton *butImageFit;
+	QPushButton *butImageNext;
+	QPushButton *butImagePrev;
+	QPushButton *butImageCenter;
+	QPushButton *butImageRight;
+	QPushButton *butImageLeft;
+
+	QPushButton *butCopySettings;
+
 	QTimer *watchdog;
 
 public slots:
@@ -168,10 +192,24 @@ public slots:
 	void handle_track_change(int);
 	void handle_show_window();
 	void handle_fullscreen();
-	void handle_show_fontsel();
-	void handle_change_background();
-	void handle_change_font_fg_color();
-	void handle_change_font_bg_color();
+	void handle_fontselect();
+	void handle_fontfgcolor();
+	void handle_fontbgcolor();
+	void handle_fontcenter();
+	void handle_fontright();
+	void handle_fontleft();
+	void handle_fontmorespace();
+	void handle_fontlessspace();
+	void handle_imageselect();
+	void handle_imagebgcolor();
+	void handle_imagezoom();
+	void handle_imagefit();
+	void handle_imagenext();
+	void handle_imageprev();
+	void handle_imagecenter();
+	void handle_imageright();
+	void handle_imageleft();
+	void handle_copysettings();
 };
 
 #endif		/* _MIDIPP_SHOW_H_ */

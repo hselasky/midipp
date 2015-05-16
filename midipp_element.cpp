@@ -111,7 +111,8 @@ MppDeQuoteString(QString &str)
 	return (str);
 }
 
-MppElement :: MppElement(MppElementType _type, int _line, int v0, int v1, int v2)
+MppElement :: MppElement(MppElementType _type, int _line,
+    int v0, int v1, int v2, int v3)
 {
 	memset(&entry, 0, sizeof(entry));
 	type = _type;
@@ -120,6 +121,7 @@ MppElement :: MppElement(MppElementType _type, int _line, int v0, int v1, int v2
 	value[0] = v0;
 	value[1] = v1;
 	value[2] = v2;
+	value[3] = v3;
 }
 
 MppElement :: ~MppElement()
@@ -183,6 +185,7 @@ MppHead :: MppHead()
 	TAILQ_INIT(&head);
 	last = ' ';
 	memset(&state, 0, sizeof(state));
+	state.text_curr.reset();
 }
 
 MppHead :: ~MppHead()
@@ -211,6 +214,7 @@ MppHead :: reset()
 	delete (state.elem);
 	last = ' ';
 	memset(&state, 0, sizeof(state));
+	state.text_curr.reset();
 
 	TAILQ_FOREACH(elem, &head, entry) {
 		switch (elem->type) {
@@ -240,6 +244,7 @@ MppHead :: operator += (MppElement *elem)
 {
 	QChar ch;
 	int off;
+	int x;
 
 	if (elem == 0)
 		return;
@@ -270,9 +275,53 @@ MppHead :: operator += (MppElement *elem)
 				elem->value[1] = 2;
 			}
 			break;
+		case MPP_CMD_IMAGE_PROPS:
+			for (x = 1; x != 4; x++) {
+				ch = elem->getChar(&off);
+				if (ch == '.') {
+					elem->value[x] = elem->getIntValue(&off);
+					if (elem->value[x] > 65535)
+						elem->value[x] = 65535;
+					else if (elem->value[x] < 0)
+						elem->value[x] = 0;
+				} else {
+					break;
+				}
+			}
+			break;
+		case MPP_CMD_TEXT_PROPS:
+			for (x = 1; x != 4; x++) {
+				ch = elem->getChar(&off);
+				if (ch == '.') {
+					elem->value[x] = elem->getIntValue(&off);
+					if (elem->value[x] > 255)
+						elem->value[x] = 255;
+					else if (elem->value[x] < 0)
+						elem->value[x] = 0;
+				} else {
+					break;
+				}
+			}
+			break;
+		case MPP_CMD_IMAGE_BG_COLOR:
+		case MPP_CMD_IMAGE_FG_COLOR:
+		case MPP_CMD_TEXT_BG_COLOR:
+		case MPP_CMD_TEXT_FG_COLOR:
+			for (x = 1; x != 4; x++) {
+				ch = elem->getChar(&off);
+				if (ch == '.') {
+					elem->value[x] = elem->getIntValue(&off);
+					if (elem->value[x] > 255)
+						elem->value[x] = 255;
+					else if (elem->value[x] < 0)
+						elem->value[x] = 0;
+				} else {
+					break;
+				}
+			}
+			break;
 		case MPP_CMD_AUTO_MELODY:
 		case MPP_CMD_KEY_MODE:
-		case MPP_CMD_IMAGE_NUM:
 			ch = elem->getChar(&off);
 			if (ch == '.')
 				elem->value[1] = elem->getIntValue(&off);
@@ -1415,8 +1464,35 @@ MppHead :: stepLine(MppElement **ppstart, MppElement **ppstop)
 					case MPP_CMD_UNLOCK:
 						state.key_lock = 0;
 						break;
-					case MPP_CMD_IMAGE_NUM:
-						state.image_num = ptr->value[1];
+					case MPP_CMD_IMAGE_PROPS:
+						state.image_curr.num = ptr->value[1];
+						state.image_curr.how = ptr->value[2];
+						state.image_curr.align = ptr->value[3];
+						break;
+					case MPP_CMD_IMAGE_BG_COLOR:
+						state.image_curr.color.bg_red = ptr->value[1];
+						state.image_curr.color.bg_green = ptr->value[2];
+						state.image_curr.color.bg_blue = ptr->value[3];
+						break;
+					case MPP_CMD_IMAGE_FG_COLOR:
+						state.image_curr.color.fg_red = ptr->value[1];
+						state.image_curr.color.fg_green = ptr->value[2];
+						state.image_curr.color.fg_blue = ptr->value[3];
+						break;
+					case MPP_CMD_TEXT_PROPS:
+						state.text_curr.align = ptr->value[1];
+						state.text_curr.space = ptr->value[2];
+						state.text_curr.shadow = ptr->value[3];
+						break;
+					case MPP_CMD_TEXT_BG_COLOR:
+						state.text_curr.color.bg_red = ptr->value[1];
+						state.text_curr.color.bg_green = ptr->value[2];
+						state.text_curr.color.bg_blue = ptr->value[3];
+						break;
+					case MPP_CMD_TEXT_FG_COLOR:
+						state.text_curr.color.fg_red = ptr->value[1];
+						state.text_curr.color.fg_green = ptr->value[2];
+						state.text_curr.color.fg_blue = ptr->value[3];
 						break;
 					default:
 						break;
