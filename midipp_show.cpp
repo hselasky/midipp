@@ -841,7 +841,7 @@ MppShowControl :: handle_copysettings()
 	  QString("K7.%1.%2.%3 /* image */\n"
 		  "K8.%4.%5.%6 /* bg color */\n"
 		  "K10.%7.%8.%9 /* font props */\n"
-		  "K11.%10.%11.%12 /* shadow color\n"
+		  "K11.%10.%11.%12 /* shadow color */\n"
 		  "K12.%13.%14.%15 /* text color */\n")
 	  .arg(sm.head.state.image_curr.num)
 	  .arg(sm.head.state.image_curr.how)
