@@ -55,7 +55,7 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 	paint.setRenderHints(QPainter::Antialiasing, 1);
 	paint.fillRect(QRectF(0,0,w,h), parent->aobj[2].props.color.bg());
 
-	if (parent->aobj[2].opacity_curr >= (1.0 / 256.0)) {
+	if (parent->aobj[2].isVisible()) {
 		MppShowAnimObject &aobj = parent->aobj[2];
 		int bg_w = parent->background.width();
 		int bg_h = parent->background.height();
@@ -99,7 +99,7 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 	for (x = 0; x != 2; x++) {
 		MppShowAnimObject &aobj = parent->aobj[x];
 
-		if (parent->aobj[x].opacity_curr < (1.0 / 256.0))
+		if (parent->aobj[x].isVisible() == 0)
 			continue;
 
 		paint.setFont(parent->showFont);
@@ -108,6 +108,7 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 		qreal wa = (wf * (aobj.props.shadow % 100)) / 100.0;
 		qreal ws = (w * (aobj.props.space % 100)) / 100.0;
 		qreal xo;
+		int flags;
 
 		QRectF txtBound = paint.boundingRect(
 		    QRectF(0, 0, w - ws - (2 * wf), h),
@@ -116,13 +117,26 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 
 		switch (aobj.props.align) {
 		case 0:
+			flags = Qt::AlignCenter | Qt::TextWordWrap;
 			xo = (w - txtBound.width()) / 2.0;
 			break;
 		case 1:
-			xo = (w - txtBound.width() - wf);
+			if (ws != 0.0) {
+				flags = Qt::AlignCenter | Qt::TextWordWrap;
+				xo = ws + ((w - ws - txtBound.width()) / 2.0) - wf;
+			} else {
+				flags = Qt::AlignRight | Qt::AlignVCenter | Qt::TextWordWrap;
+				xo = (w - txtBound.width() - wf);
+			}
 			break;
 		default:
-			xo = wf;
+			if (ws != 0.0) {
+				flags = Qt::AlignCenter | Qt::TextWordWrap;
+				xo = ((w - ws - txtBound.width()) / 2.0) + wf;
+			} else {
+				flags = Qt::AlignLeft | Qt::AlignVCenter | Qt::TextWordWrap;
+				xo = wf;
+			}
 			break;
 		}
 
@@ -147,8 +161,7 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 			paint.setBrush(aobj.props.color.bg());
 			paint.setOpacity(aobj.opacity_curr);
 			txtBound.adjust(wa,wa,wa,wa);
-			paint.drawText(txtBound, Qt::AlignCenter |
-			    Qt::TextWordWrap, aobj.str);
+			paint.drawText(txtBound, flags, aobj.str);
 			txtBound.adjust(-wa,-wa,-wa,-wa);
 		}
 
@@ -156,8 +169,7 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 		paint.setPen(aobj.props.color.fg());
 		paint.setBrush(aobj.props.color.fg());
 		paint.setOpacity(aobj.opacity_curr);
-		paint.drawText(txtBound, Qt::AlignCenter |
-		    Qt::TextWordWrap, aobj.str);
+		paint.drawText(txtBound, flags, aobj.str);
 
 		/* store height and width */
 		txtBound.adjust(-wf, 0, wf + wa, wa - wf);
@@ -185,17 +197,9 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 {
 	mw = _mw;
 
-	anim_text_state = 0;
-	anim_pict_state = 0;
-
-	last_image.reset();
-	last_text.reset();
-	
-	cached_last_index = -1;
-	cached_curr_index = -1;
-
 	current_mode = MPP_SHOW_ST_BLANK;
 	trackview = 0;
+	toggle = 0;
 
 	showFont.fromString(QString("Sans Serif,-1,24,5,75,0,0,0,0,0"));
 
@@ -370,6 +374,11 @@ MppShowControl :: handle_text_watchdog()
 	int visual_curr_index;
 	int visual_last_index;
 
+	/* wait for transitions complete */
+	if (aobj[0].isAnimating() ||
+	    aobj[1].isAnimating())
+		return;
+
 	pthread_mutex_lock(&mw->mtx);
 	last = sm.head.state.last_start;
 	curr = sm.head.state.curr_start;
@@ -381,125 +390,72 @@ MppShowControl :: handle_text_watchdog()
 	sm.locateVisual(curr, &visual_curr_index, &visual_next_index, 0);
 
 	/* try to load next text */
-	if (cached_last_index == visual_curr_index)
+	if (visual_last_index == visual_curr_index)
 		visual_curr_index = visual_next_index;
 
 	/* check validity of indexes */
-	if (visual_last_index < 0 ||
+	if (current_mode < MPP_SHOW_ST_LYRICS ||
+	    visual_last_index < 0 ||
 	    visual_last_index >= sm.visual_max ||
 	    visual_curr_index < 0 ||
-	    visual_curr_index >= sm.visual_max) {
-		if (anim_text_state != 0) {
+	    visual_curr_index >= sm.visual_max ||
+	    sm.pVisual[visual_last_index].str == 0 ||
+	    sm.pVisual[visual_curr_index].str == 0) {
+		if (aobj[0].isVisible() || aobj[1].isVisible()) {
 			aobj[0].fadeOut();
 			aobj[1].fadeOut();
-			anim_text_state = 0;
 		}
 		return;
 	}
 
-	/* check need for new transition */
-	if (anim_text_state != 0) {
-		/* check if no change */
-		if (visual_last_index == cached_last_index &&
-		    visual_curr_index == cached_curr_index &&
-		    text == last_text && anim_text_state != 3)
-			return;
-		/* check if we need to refresh both */
-		if (cached_last_index == -1 &&
-		    cached_curr_index == -1) {
-			aobj[0].fadeOut();
-			aobj[1].fadeOut();
-			anim_text_state = 0;
-		}
-		/* wait for transitions complete */
-		if (aobj[0].currStep < MPP_TRAN_MAX ||
-		    aobj[1].currStep < MPP_TRAN_MAX)
-			return;
-	}
+	int state = 0;
+	if (aobj[toggle].isVisible())
+		state |= 1;
+	if (aobj[toggle ^ 1].isVisible())
+		state |= 2;
 
-	/* check if lyrics should not be shown */
-	if (current_mode < MPP_SHOW_ST_LYRICS) {
-		if (anim_text_state != 0) {
-			aobj[0].fadeOut();
-			aobj[1].fadeOut();
-			anim_text_state = 0;
-		}
-		return;
-	}
-
-	/* get next state based on current state */
-	switch (anim_text_state) {
+	switch (state) {
 	case 0:
-		/* dim in first */
-		anim_text_state = 1;
-
-		/* reset state */
 		aobj[0].reset();
-		aobj[1].reset();
-
-		/* copy string, if any */
-		if (sm.pVisual[visual_last_index].str != 0) {
-			aobj[0].props = text;
-			aobj[0].str = *sm.pVisual[visual_last_index].str;
-			aobj[0].fadeIn();
-		}
+		aobj[0].props = text;
+		aobj[0].str = *sm.pVisual[visual_last_index].str;
+		aobj[0].fadeIn();
+		toggle = 0;
 		break;
-	case 3:
+	case 2:
+		toggle ^= 1;
 	case 1:
-		if (visual_curr_index != visual_last_index) {
-			/* dim in second */
-			anim_text_state = 2;
-
-			/* reset state */
-			aobj[1].reset();
-
-			/* copy string */
-			if (sm.pVisual[visual_curr_index].str != 0) {
-				aobj[1].props = text;
-				aobj[1].str = *sm.pVisual[visual_curr_index].str;
-				aobj[1].fadeIn();
-				aobj[1].ypos_curr = aobj[0].height;
-			}
-		} else {
-			/* dim in second and dim out first */
-			anim_text_state = 1;
-
-			/* move text around */
-			aobj[1] = aobj[0];
-			aobj[1].fadeOut();
-
-			/* reset state */
-			aobj[0].reset();
-
-			/* copy string */
-			if (sm.pVisual[visual_curr_index].str != 0) {
-				aobj[0].props = text;
-				aobj[0].str = *sm.pVisual[visual_curr_index].str;
-				aobj[0].fadeIn();
-			}
+		/* update first object */
+		aobj[toggle].moveUp(aobj[toggle].ypos_curr);
+		if (aobj[toggle].str != *sm.pVisual[visual_last_index].str ||
+		    aobj[toggle].props != text)
+			aobj[toggle].fadeOut();
+		else if (visual_last_index != visual_curr_index) {
+			/* update second object */
+			aobj[toggle ^ 1].reset();
+			aobj[toggle ^ 1].props = text;
+			aobj[toggle ^ 1].str = *sm.pVisual[visual_curr_index].str;
+			aobj[toggle ^ 1].ypos_curr = aobj[toggle].height;
+			aobj[toggle ^ 1].fadeIn();
 		}
 		break;
 	default:
-		if (visual_curr_index != visual_last_index ||
-		    visual_last_index != cached_curr_index)
-			anim_text_state = 3;
-		else
-			anim_text_state = 1;
-
-		/* swap animation objects */
-		MppShowAnimObject tmp = aobj[1];
-		aobj[1] = aobj[0];
-		aobj[0] = tmp;
-
-		/* dim out first and move second up */
-		aobj[0].moveUp(aobj[0].ypos_curr);
-		aobj[1].moveUp(aobj[0].ypos_curr);
-		aobj[1].fadeOut();
+		if (visual_last_index != visual_curr_index) {
+			if (aobj[toggle].str == *sm.pVisual[visual_last_index].str &&
+			    aobj[toggle ^ 1].str == *sm.pVisual[visual_curr_index].str &&
+			    aobj[toggle ^ 1].props == text)
+				break;
+		}
+		/* update both objects */
+		aobj[toggle].moveUp(aobj[toggle ^ 1].ypos_curr);
+		aobj[toggle].fadeOut();
+		toggle ^= 1;
+		aobj[toggle].moveUp(aobj[toggle].ypos_curr);
+		if (aobj[toggle].str != *sm.pVisual[visual_last_index].str ||
+		    aobj[toggle].props != text)
+			aobj[toggle].fadeOut();
 		break;
 	}
-	cached_last_index = visual_last_index;
-	cached_curr_index = visual_curr_index;
-	last_text = text;
 }
 
 void
@@ -508,54 +464,33 @@ MppShowControl :: handle_pict_watchdog()
 	MppScoreMain &sm = *mw->scores_main[trackview];
 	MppObjectProps image;
 
+	/* wait for transitions complete */
+	if (aobj[2].isAnimating())
+		return;
+	
 	pthread_mutex_lock(&mw->mtx);
 	image = sm.head.state.image_curr;
 	pthread_mutex_unlock(&mw->mtx);
 
-	/* check need for new transition */
-	if (anim_pict_state != 0) {
-		if (anim_pict_state != 2 &&
-		    image == last_image)
-			return;
-		/* wait for transitions complete */
-		if (aobj[2].currStep < MPP_TRAN_MAX)
-			return;
-	}
-
 	/* check if background should not be shown */
 	if (current_mode < MPP_SHOW_ST_BACKGROUND) {
-		if (anim_pict_state != 0) {
+		if (aobj[2].isVisible())
 			aobj[2].fadeOut();
-			anim_pict_state = 0;
-		}
 		return;
 	}
 
-	/* get next state based on current state */
-	switch (anim_pict_state) {
-	case 1:
-		anim_pict_state = 2;
-		aobj[2].fadeOut();
-		break;
-	default:
-		/* fade in first */
-		anim_pict_state = 1;
-
-		aobj[2].reset();
-
-		/* refresh pixmap */
-		if (image != last_image) {
-			/* reset pixmap */
-			background = QPixmap();
-			/* check for valid number */
-			if ((int)image.num < files.size())
-				background.load(files[image.num]);
-			last_image = image;
-			aobj[2].props = image;
-		}
-		/* reset state */
+	/* check need for new transition */
+	if (aobj[2].isVisible()) {
+		if (aobj[2].props != image)
+			aobj[2].fadeOut();
+	} else {
+		/* reset pixmap */
+		background = QPixmap();
+		/* check for valid number */
+		if ((int)image.num < files.size())
+			background.load(files[image.num]);
+		aobj[2].props = image;
 		aobj[2].fadeIn();
-		break;
 	}
 }
 
@@ -875,13 +810,15 @@ MppShowControl :: handle_copysettings()
 void
 MppShowControl :: handle_text_change()
 {
-	cached_last_index = -1;
-	cached_curr_index = -1;
-	last_text.reset();
+	if (aobj[0].isVisible() || aobj[1].isVisible()) {
+		aobj[0].fadeOut();
+		aobj[1].fadeOut();
+	}
 }
 
 void
 MppShowControl :: handle_pict_change()
 {
-	last_image.reset();
+	if (aobj[2].isVisible())
+		aobj[2].fadeOut();
 }

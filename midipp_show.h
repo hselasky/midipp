@@ -108,6 +108,14 @@ public:
 		ypos_step = -(pix / MPP_TRAN_MAX);
 		currStep = 0;
 	}
+	bool isVisible()
+	{
+		return (opacity_curr >= (1.0 / 1024.0));
+	}
+	bool isAnimating()
+	{
+		return (currStep < MPP_TRAN_MAX);
+	}
 };
 
 class MppShowControl : public QObject
@@ -145,15 +153,8 @@ public:
 
 	/* for the whole window */
 	int8_t current_mode;
-	int8_t anim_text_state;
-	int8_t anim_pict_state;
 	int8_t trackview;
-
-	MppObjectProps last_image;
-	MppObjectProps last_text;
-
-	int cached_last_index;
-	int cached_curr_index;
+	int8_t toggle;
 
 	MppShowWidget *wg_show;
 
