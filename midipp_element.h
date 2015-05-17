@@ -99,6 +99,10 @@ public:
 		    other.bg_green != bg_green ||
 		    other.bg_blue != bg_blue);
 	};
+	bool operator== (const MppColorProps &other) const
+	{
+		return ((*this != other) == 0);
+	};
 	void reset()
 	{
 		/* foreground */
@@ -147,6 +151,10 @@ public:
 			other.shadow != shadow || other.color != color ||
 			other.num != num || other.how != how);
 	};
+	bool operator== (const MppObjectProps &other) const
+	{
+		return ((*this != other) == 0);
+	}
 	void reset()
 	{
 		align = 0;

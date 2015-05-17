@@ -366,6 +366,7 @@ MppShowControl :: handle_text_watchdog()
 	MppElement *last;
 	MppElement *curr;
 	MppObjectProps text;
+	int visual_next_index;
 	int visual_curr_index;
 	int visual_last_index;
 
@@ -376,13 +377,12 @@ MppShowControl :: handle_text_watchdog()
 	pthread_mutex_unlock(&mw->mtx);
 
 	/* locate last and current play position */
-	sm.locateVisual(last, &visual_last_index,
-	    &visual_curr_index, 0);
+	sm.locateVisual(last, &visual_last_index, 0, 0);
+	sm.locateVisual(curr, &visual_curr_index, &visual_next_index, 0);
 
-	/* check if next text is accross a jump */
-	if (last != curr &&
-	    visual_last_index == visual_curr_index)
-		sm.locateVisual(curr, &visual_curr_index, 0, 0);
+	/* try to load next text */
+	if (cached_last_index == visual_curr_index)
+		visual_curr_index = visual_next_index;
 
 	/* check validity of indexes */
 	if (visual_last_index < 0 ||
@@ -399,10 +399,18 @@ MppShowControl :: handle_text_watchdog()
 
 	/* check need for new transition */
 	if (anim_text_state != 0) {
+		/* check if no change */
 		if (visual_last_index == cached_last_index &&
 		    visual_curr_index == cached_curr_index &&
-		    anim_text_state != 3 && (text != last_text) == 0)
+		    text == last_text && anim_text_state != 3)
 			return;
+		/* check if we need to refresh both */
+		if (cached_last_index == -1 &&
+		    cached_curr_index == -1) {
+			aobj[0].fadeOut();
+			aobj[1].fadeOut();
+			anim_text_state = 0;
+		}
 		/* wait for transitions complete */
 		if (aobj[0].currStep < MPP_TRAN_MAX ||
 		    aobj[1].currStep < MPP_TRAN_MAX)
@@ -507,7 +515,7 @@ MppShowControl :: handle_pict_watchdog()
 	/* check need for new transition */
 	if (anim_pict_state != 0) {
 		if (anim_pict_state != 2 &&
-		    (image != last_image) == 0)
+		    image == last_image)
 			return;
 		/* wait for transitions complete */
 		if (aobj[2].currStep < MPP_TRAN_MAX)
