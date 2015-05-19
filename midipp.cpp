@@ -96,6 +96,12 @@ MppQStringToAscii(const QString &s)
 	return (ptr);
 }
 
+Q_DECL_EXPORT uint8_t
+MppIsLabel(const QString &str)
+{
+	return ((str.size() > 1) && (str[0] == 'L') && str[1].isDigit());
+}
+
 Q_DECL_EXPORT const char *
 MppBaseKeyToString(int key, int sharp)
 {

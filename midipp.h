@@ -236,6 +236,7 @@ extern uint8_t MppReadRawFile(const QString &, QByteArray *pdata);
 extern uint8_t MppWriteRawFile(const QString &, QByteArray *pdata);
 extern const char *MppBaseKeyToString(int key, int sharp);
 extern void MppScoreVariantInit(void);
+extern uint8_t MppIsLabel(const QString &);
 
 #ifdef HAVE_SCREENSHOT
 extern void MppScreenShot(QWidget *, QApplication &);

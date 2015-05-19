@@ -113,7 +113,7 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 		QRectF txtBound = paint.boundingRect(
 		    QRectF(0, 0, w - ws - (2 * wf), h),
 		    Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap,
-		    aobj.str + QChar('\n'));
+		    aobj.str + QString("\n "));
 
 		switch (aobj.props.align) {
 		case 0:
@@ -407,6 +407,10 @@ MppShowControl :: handle_text_watchdog()
 		}
 		return;
 	}
+
+	/* avoid labels */
+	if (MppIsLabel(*sm.pVisual[visual_curr_index].str))
+		visual_curr_index = visual_last_index;
 
 	int state = 0;
 	if (aobj[toggle].isVisible())
