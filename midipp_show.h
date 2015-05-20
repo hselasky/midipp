@@ -84,6 +84,7 @@ public:
 			opacity_step = 0;
 			xpos_step = 0;
 			ypos_step = 0;
+			currStep++;
 			return (0);
 		}
 		/* animation in progress */
@@ -114,7 +115,7 @@ public:
 	}
 	bool isAnimating()
 	{
-		return (currStep < MPP_TRAN_MAX);
+		return (currStep <= MPP_TRAN_MAX);
 	}
 };
 

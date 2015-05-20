@@ -107,45 +107,49 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 		qreal wf = parent->showFont.pixelSize();
 		qreal wa = (wf * (aobj.props.shadow % 100)) / 100.0;
 		qreal ws = (w * (aobj.props.space % 100)) / 100.0;
+		qreal wm = w - ws - wf;
 		qreal xo;
 		int flags;
 
-		QRectF txtBound = paint.boundingRect(
-		    QRectF(0, 0, w - ws - (2 * wf), h),
-		    Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap,
-		    aobj.str + QString("\n "));
+		flags = Qt::TextWordWrap | Qt::TextDontClip | Qt::AlignTop;
+
+		QRectF txtBound;
+		QRectF txtMax(0,0,wm,h);
+		paint.drawText(txtMax, Qt::AlignLeft |
+		    Qt::TextDontPrint | flags, aobj.str, &txtBound);
+		txtMax.setHeight(txtBound.height() + wf);
 
 		switch (aobj.props.align) {
 		case 0:
-			flags = Qt::AlignCenter | Qt::TextWordWrap;
-			xo = (w - txtBound.width()) / 2.0;
+			flags |= Qt::AlignHCenter;
+			xo = (w - wm) / 2.0;
 			break;
 		case 1:
 			if (ws != 0.0) {
-				flags = Qt::AlignCenter | Qt::TextWordWrap;
-				xo = ws + ((w - ws - txtBound.width()) / 2.0) - wf;
+				flags |= Qt::AlignHCenter;
+				xo = ws + ((w - ws - wm - wf) / 2.0);
 			} else {
-				flags = Qt::AlignRight | Qt::AlignVCenter | Qt::TextWordWrap;
-				xo = (w - txtBound.width() - wf);
+				flags |= Qt::AlignRight;
+				xo = (w - wm - wf);
 			}
 			break;
 		default:
 			if (ws != 0.0) {
-				flags = Qt::AlignCenter | Qt::TextWordWrap;
-				xo = ((w - ws - txtBound.width()) / 2.0) + wf;
+				flags |= Qt::AlignHCenter;
+				xo = ((w - ws - wm + wf) / 2.0);
 			} else {
-				flags = Qt::AlignLeft | Qt::AlignVCenter | Qt::TextWordWrap;
+				flags |= Qt::AlignLeft;
 				xo = wf;
 			}
 			break;
 		}
 
 		/* offset bounding box */
-		txtBound.adjust(
+		txtMax.adjust(
 		    xo + aobj.xpos_curr,
-		    aobj.ypos_curr,
+		    aobj.ypos_curr + wf / 2.0,
 		    xo + aobj.xpos_curr,
-		    aobj.ypos_curr);
+		    aobj.ypos_curr + wf / 2.0);
 
 		/* draw background, if any */
 		if (aobj.props.shadow < 100) {
@@ -153,28 +157,27 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 			paint.setBrush(aobj.props.color.bg());
 			paint.setOpacity(aobj.opacity_curr *
 			    (aobj.props.shadow % 100) / 100.0);
-			txtBound.adjust(-wf,0,wf,0);
-			paint.drawRoundedRect(txtBound, wf, wf);
-			txtBound.adjust(wf,0,-wf,0);
+			txtMax.adjust(-wf / 2.0, 0, wf / 2.0, -wf / 2.0);
+			paint.drawRoundedRect(txtMax, wf, wf);
+			txtMax.adjust(wf / 2.0, 0, -wf / 2.0, wf / 2.0);
 		} else if (aobj.props.shadow < 200) {
 			paint.setPen(aobj.props.color.bg());
 			paint.setBrush(aobj.props.color.bg());
 			paint.setOpacity(aobj.opacity_curr);
-			txtBound.adjust(wa,wa,wa,wa);
-			paint.drawText(txtBound, flags, aobj.str);
-			txtBound.adjust(-wa,-wa,-wa,-wa);
+			txtMax.adjust(wa,wa,wa,wa);
+			paint.drawText(txtMax, flags, aobj.str);
+			txtMax.adjust(-wa,-wa,-wa,-wa);
 		}
 
 		/* draw text */
 		paint.setPen(aobj.props.color.fg());
 		paint.setBrush(aobj.props.color.fg());
 		paint.setOpacity(aobj.opacity_curr);
-		paint.drawText(txtBound, flags, aobj.str);
+		paint.drawText(txtMax, flags, aobj.str);
 
 		/* store height and width */
-		txtBound.adjust(-wf, 0, wf + wa, wa - wf);
-		aobj.height = txtBound.height();
-		aobj.width = txtBound.width();
+		aobj.height = txtMax.height();
+		aobj.width = txtMax.width();
 	}
 }
 
