@@ -1,5 +1,5 @@
 Name:           midipp
-Version:        1.2.18
+Version:        1.2.19
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
@@ -48,6 +48,7 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
+* Thu Jul 20 2015 HPS hps@selasky.org 1.2.19-1
 * Thu Jul 20 2015 HPS hps@selasky.org 1.2.18-1
 - Added support for setting key-mode when loading songs.
 - Added support for song background selection changes.
