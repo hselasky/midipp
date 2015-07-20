@@ -8,6 +8,7 @@ with your fingertips.
 Changes for v1.2.18:
 - Added support for setting key-mode when loading songs.
 - Added support for song background selection changes.
+- Reworked show mode configuration.
 
 Changes for v1.2.17:
 - Added support for RePlay tab.
