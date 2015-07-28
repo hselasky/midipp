@@ -243,7 +243,7 @@ MppBpm :: handle_reset_all()
 
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
 		cbx_out_view[n]->setCheckState(Qt::Unchecked);
-		cbx_sync_view[n]->setCheckState((n == 0) ? Qt::Checked : Qt::Unchecked);
+		cbx_sync_view[n]->setCheckState(Qt::Unchecked);
 	}
 
 	cbx_midi_beat->setCheckState(Qt::Unchecked);
