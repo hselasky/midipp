@@ -723,6 +723,9 @@ MppShowControl :: handle_imagenext()
 	pthread_mutex_lock(&mw->mtx);
 	if ((int)sm.head.state.image_curr.num < files.size())
 		sm.head.state.image_curr.num++;
+	/* range check */
+	if ((int)sm.head.state.image_curr.num > files.size())
+		sm.head.state.image_curr.num = 0;
 	pthread_mutex_unlock(&mw->mtx);
 }
 
@@ -737,6 +740,9 @@ MppShowControl :: handle_imageprev()
 	pthread_mutex_lock(&mw->mtx);
 	if (sm.head.state.image_curr.num != 0)
 		sm.head.state.image_curr.num--;
+	/* range check */
+	if ((int)sm.head.state.image_curr.num > files.size())
+		sm.head.state.image_curr.num = 0;
 	pthread_mutex_unlock(&mw->mtx);
 }
 
