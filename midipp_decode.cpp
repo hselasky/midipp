@@ -35,6 +35,9 @@
 
 #define MASK(x) (1U << ((x) % 12))
 
+/* chord modifier characters */
+
+const QString MppChordModChars = QString::fromUtf8("()/+-#Δ&|^°");
 
 /* common standard */
 

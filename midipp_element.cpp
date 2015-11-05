@@ -55,35 +55,36 @@ Q_DECL_EXPORT int
 MppIsChord(QString &str)
 {
 	int x;
-	int retval = 0;
+	int y;
 
 	if (str.size() > 1) {
 		QChar ch = str[1];
 
-		if (ch == 'A' ||
-		    ch == 'B' ||
-		    ch == 'C' ||
-		    ch == 'D' ||
-		    ch == 'E' ||
-		    ch == 'F' ||
-		    ch == 'G' ||
-		    ch == 'H')
-			retval = 1;
+		if (ch != 'A' &&
+		    ch != 'B' &&
+		    ch != 'C' &&
+		    ch != 'D' &&
+		    ch != 'E' &&
+		    ch != 'F' &&
+		    ch != 'G' &&
+		    ch != 'H')
+			return (0);
+	} else {
+		return (0);
 	}
-
 	for (x = 0; x != str.size(); x++) {
 		QChar ch = str[x];
 
-		if (ch.isDigit() || ch.isLetter() ||
-		    ch == '+' || ch == '#' ||
-		    ch == '(' || ch == ')' ||
-		    ch == '/')
-			continue;
-
-		retval = 0;
-		break;
+		if (ch.isDigit() || ch.isLetter())
+			goto skip;
+		for (y = 0; y != MppChordModChars.size(); y++) {
+			if (ch == MppChordModChars[y])
+				goto skip;
+		}
+		return (0);
+	skip:;
 	}
-	return (retval);
+	return (1);
 }
 
 Q_DECL_EXPORT QString
