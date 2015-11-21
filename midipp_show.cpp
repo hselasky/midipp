@@ -153,13 +153,15 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 
 		/* draw background, if any */
 		if (aobj.props.shadow < 100) {
-			paint.setPen(Qt::NoPen);
-			paint.setBrush(aobj.props.color.bg());
-			paint.setOpacity(aobj.opacity_curr *
-			    (aobj.props.shadow % 100) / 100.0);
-			txtMax.adjust(-wf / 2.0, 0, wf / 2.0, -wf / 2.0);
-			paint.drawRoundedRect(txtMax, wf, wf);
-			txtMax.adjust(wf / 2.0, 0, -wf / 2.0, wf / 2.0);
+			if (!aobj.str.isEmpty()) {
+				paint.setPen(Qt::NoPen);
+				paint.setBrush(aobj.props.color.bg());
+				paint.setOpacity(aobj.opacity_curr *
+				    (aobj.props.shadow % 100) / 100.0);
+				txtMax.adjust(-wf / 2.0, 0, wf / 2.0, -wf / 2.0);
+				paint.drawRoundedRect(txtMax, wf, wf);
+				txtMax.adjust(wf / 2.0, 0, -wf / 2.0, wf / 2.0);
+			}
 		} else if (aobj.props.shadow < 200) {
 			paint.setPen(aobj.props.color.bg());
 			paint.setBrush(aobj.props.color.bg());
