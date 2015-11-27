@@ -178,6 +178,7 @@ public:
 	QPushButton *butImageBgColor;
 	QPushButton *butImageZoom;
 	QPushButton *butImageFit;
+	QPushButton *butImageFirst;
 	QPushButton *butImageNext;
 	QPushButton *butImagePrev;
 	QPushButton *butImageCenter;
@@ -206,6 +207,7 @@ public slots:
 	void handle_imagebgcolor();
 	void handle_imagezoom();
 	void handle_imagefit();
+	void handle_imagefirst();
 	void handle_imagenext();
 	void handle_imageprev();
 	void handle_imagecenter();

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2015 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -261,6 +261,9 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 	butImageFit = new QPushButton(tr("Select fit"));
 	connect(butImageFit, SIGNAL(released()), this, SLOT(handle_imagefit()));
 
+	butImageFirst = new QPushButton(tr("Select first"));
+	connect(butImageFirst, SIGNAL(released()), this, SLOT(handle_imagefirst()));
+
 	butImageNext = new QPushButton(tr("Select next"));
 	connect(butImageNext, SIGNAL(released()), this, SLOT(handle_imagenext()));
 
@@ -303,11 +306,12 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 	gb_image->addWidget(butImageBgColor, 1, 0, 1, 1);
 	gb_image->addWidget(butImageZoom, 2, 0, 1, 1);
 	gb_image->addWidget(butImageFit, 3, 0, 1, 1);
-	gb_image->addWidget(butImageNext, 4, 0, 1, 1);
-	gb_image->addWidget(butImagePrev, 5, 0, 1, 1);
-	gb_image->addWidget(butImageCenter, 6, 0, 1, 1);
-	gb_image->addWidget(butImageRight, 7, 0, 1, 1);
-	gb_image->addWidget(butImageLeft, 8, 0, 1, 1);
+	gb_image->addWidget(butImageFirst, 4, 0, 1, 1);
+	gb_image->addWidget(butImageNext, 5, 0, 1, 1);
+	gb_image->addWidget(butImagePrev, 6, 0, 1, 1);
+	gb_image->addWidget(butImageCenter, 7, 0, 1, 1);
+	gb_image->addWidget(butImageRight, 8, 0, 1, 1);
+	gb_image->addWidget(butImageLeft, 9, 0, 1, 1);
 
 	gl_main->addWidget(gb_font, 2, 0, 1, 1);
 	gl_main->addWidget(gb_image, 2, 1, 1, 1);
@@ -711,6 +715,19 @@ MppShowControl :: handle_imagefit()
 
 	pthread_mutex_lock(&mw->mtx);
 	sm.head.state.image_curr.how = 1;
+	pthread_mutex_unlock(&mw->mtx);
+}
+
+void
+MppShowControl :: handle_imagefirst()
+{
+  	if (trackview < 0 || trackview >= MPP_MAX_VIEWS)
+		return;
+
+	MppScoreMain &sm = *mw->scores_main[trackview];	
+
+	pthread_mutex_lock(&mw->mtx);
+	sm.head.state.image_curr.num = 0;
 	pthread_mutex_unlock(&mw->mtx);
 }
 
