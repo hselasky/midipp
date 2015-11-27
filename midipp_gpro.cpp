@@ -1498,7 +1498,7 @@ MppGPro :: MppGPro(const uint8_t *ptr, uint32_t len)
 	gl = new QGridLayout(this);
 
 	setWindowTitle(tr("GuitarPro v3 and v4 import"));
-	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+	setWindowIcon(QIcon(MppIconFile));
 
 	lbl_import[0] = new QLabel(tr("Select tracks\nto import"));
 	lbl_import[0]->setAlignment(Qt::AlignCenter);

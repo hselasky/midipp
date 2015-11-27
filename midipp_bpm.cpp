@@ -137,7 +137,7 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 	connect(but_done_all, SIGNAL(released()), this, SLOT(handle_done_all()));
 
 	setWindowTitle(tr("BPM generator settings"));
-	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+	setWindowIcon(QIcon(MppIconFile));
 
 	gb_ctrl = new MppGroupBox(tr("BPM control"));
 

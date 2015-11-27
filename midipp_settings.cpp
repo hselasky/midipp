@@ -440,7 +440,8 @@ MppSettings :: handle_clean(void)
 	mbox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
 	mbox.setDefaultButton(QMessageBox::No);
 	mbox.setIcon(QMessageBox::Critical);
-	mbox.setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+	mbox.setWindowIcon(QIcon(MppIconFile));
+	mbox.setWindowTitle(MppVersion);
 
 	int ret = mbox.exec();
 
@@ -502,7 +503,7 @@ MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
 	connect(but_reset, SIGNAL(released()), this, SLOT(handle_reset()));
 
 	setWindowTitle(tr("Configuration save and load selection"));
-	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+	setWindowIcon(QIcon(MppIconFile));
 
 	gl->addWidget(new QLabel(tr("Save volume settings")), 0, 0, 1, 1);
 	gl->addWidget(new QLabel(tr("Save instrument settings")), 1, 0, 1, 1);

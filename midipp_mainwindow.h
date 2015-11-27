@@ -102,8 +102,6 @@ public:
 	QFont editFont;
 	QFont showFont;
 
-	QString version;
-
 	uint8_t auto_zero_start[0];
 
 	struct MppInstr instr[16];

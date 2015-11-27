@@ -694,10 +694,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	MidiInit();
 
-	version = tr("MIDI Player Pro v1.2.19");
-
-	setWindowTitle(version);
-	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+	setWindowTitle(MppVersion);
+	setWindowIcon(QIcon(MppIconFile));
 
 	handle_tab_changed(1);
 
@@ -1131,7 +1129,8 @@ MppMainWindow :: handle_midi_file_open(int how)
 				box.setText(tr("Invalid MIDI file!"));
 				box.setStandardButtons(QMessageBox::Ok);
 				box.setIcon(QMessageBox::Information);
-				box.setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+				box.setWindowIcon(QIcon(MppIconFile));
+				box.setWindowTitle(MppVersion);
 				box.exec();
 			} else {
 				goto load_file;
@@ -1266,7 +1265,8 @@ MppMainWindow :: handle_midi_file_save()
 				box.setText(tr("Could not write MIDI file!"));
 				box.setStandardButtons(QMessageBox::Ok);
 				box.setIcon(QMessageBox::Information);
-				box.setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+				box.setWindowIcon(QIcon(MppIconFile));
+				box.setWindowTitle(MppVersion);
 				box.exec();
 			}
 		} else {
@@ -1275,7 +1275,8 @@ MppMainWindow :: handle_midi_file_save()
 			box.setText(tr("Could not get MIDI data!"));
 			box.setStandardButtons(QMessageBox::Ok);
 			box.setIcon(QMessageBox::Information);
-			box.setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+			box.setWindowIcon(QIcon(MppIconFile));
+			box.setWindowTitle(MppVersion);
 
 			box.exec();
 		}
@@ -2359,9 +2360,9 @@ found:
 
 	QString *ps = scores_main[x/2]->currScoreFileName;
 	if (ps != NULL)
-		setWindowTitle(version + " - " + MppBaseName(*ps));
+		setWindowTitle(MppVersion + " - " + MppBaseName(*ps));
 	else
-		setWindowTitle(version);
+		setWindowTitle(MppVersion);
 
 	if ((force != 0) || (x & 1))
 		handle_compile();
@@ -2729,7 +2730,8 @@ MppMainWindow :: handle_gpro_file_import(int view)
 			box.setText(tr("Could not read MIDI file!"));
 			box.setStandardButtons(QMessageBox::Ok);
 			box.setIcon(QMessageBox::Information);
-			box.setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+			box.setWindowIcon(QIcon(MppIconFile));
+			box.setWindowTitle(MppVersion);
 
 			box.exec();
 		} else {

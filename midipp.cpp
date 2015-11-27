@@ -173,7 +173,8 @@ error:
 	box.setText(QObject::tr("Could not read from file!"));
 	box.setStandardButtons(QMessageBox::Ok);
 	box.setIcon(QMessageBox::Critical);
-	box.setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+	box.setWindowIcon(QIcon(MppIconFile));
+	box.setWindowTitle(MppVersion);
 	box.exec();
 	return (QString());
 }
@@ -203,7 +204,8 @@ error:
 	box.setText(QObject::tr("Could not write to file!"));
 	box.setStandardButtons(QMessageBox::Ok);
 	box.setIcon(QMessageBox::Critical);
-	box.setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+	box.setWindowIcon(QIcon(MppIconFile));
+	box.setWindowTitle(MppVersion);
 	box.exec();
 }
 
@@ -286,6 +288,9 @@ static const struct option midipp_opts[] = {
 	{ NULL, 0, NULL, 0 }
 };
 
+const QString MppVersion("MIDI Player Pro v1.2.19");
+const QString MppIconFile(":/midipp.png");
+
 Q_DECL_EXPORT int
 main(int argc, char **argv)
 {
@@ -332,7 +337,8 @@ main(int argc, char **argv)
 		    "the JACK subsystem!"));
 		box.setStandardButtons(QMessageBox::Ok);
 		box.setIcon(QMessageBox::Critical);
-		box.setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+		box.setWindowIcon(QIcon(MppIconFile));
+		box.setWindowTitle(MppVersion);
 		box.exec();
 	}
 
@@ -345,7 +351,8 @@ main(int argc, char **argv)
 		    "the COREMIDI subsystem!"));
 		box.setStandardButtons(QMessageBox::Ok);
 		box.setIcon(QMessageBox::Critical);
-		box.setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+		box.setWindowIcon(QIcon(MppIconFile));
+		box.setWindowTitle(MppVersion);
 		box.exec();
 	}
 

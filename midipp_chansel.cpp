@@ -37,7 +37,7 @@ MppChanSelDiag :: MppChanSelDiag(QWidget *parent, int val, int have_any) :
 	value.value = val;
 	value.parent = this;
 
-	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+	setWindowIcon(QIcon(MppIconFile));
 	setWindowTitle(QDialog::tr("Select MIDI Channel"));
 
 	for (x = 0; x != 16; x++) {

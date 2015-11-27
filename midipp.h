@@ -108,7 +108,6 @@
 #define	MPP_PRESSED_MAX	128
 #define	MPP_MAX_DURATION 255	/* inclusive */
 #define	MPP_MAGIC_DEVNO	(UMIDI20_N_DEVICES - 1)
-#define	MPP_ICON_FILE	":/midipp.png"
 #define	MPP_DEFAULT_URL "http://home.selasky.org:8192/midipp/database.tar.gz"
 #define	MPP_DEFAULT_CMD_KEY C3
 #define	MPP_DEFAULT_BASE_KEY C5
@@ -238,6 +237,8 @@ extern const char *MppBaseKeyToString(int key, int sharp);
 extern void MppScoreVariantInit(void);
 extern uint8_t MppIsLabel(const QString &);
 extern const QString MppChordModChars;
+extern const QString MppVersion;
+extern const QString MppIconFile;
 
 #ifdef HAVE_SCREENSHOT
 extern void MppScreenShot(QWidget *, QApplication &);

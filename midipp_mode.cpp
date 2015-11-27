@@ -47,7 +47,7 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	gb_delay = new MppGroupBox(QString());
 
 	setWindowTitle(tr("View %1 mode").arg(QChar('A' + _vi)));
-	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+	setWindowIcon(QIcon(MppIconFile));
 
 	cbx_norm = new MppCheckBox();
 	cbx_norm->setChecked(1);

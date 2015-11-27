@@ -32,7 +32,6 @@
 MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
   : QDialog(parent)
 {
-	char buf[64];
 	int n;
 
 	mw = _mw;
@@ -43,11 +42,8 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 	gb_mute = new MppGroupBox("MIDI Output Channel Mute Map");
 	gb_other = new MppGroupBox("MIDI Output Mute");
 
-	snprintf(buf, sizeof(buf), "- MIDI Output Mute "
-	    "Map For Device %d -", _devno);
-
-	setWindowTitle(tr(buf));
-	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+	setWindowTitle(tr("MIDI Output Mute Map For Device %1").arg(_devno));
+	setWindowIcon(QIcon(MppIconFile));
 
 	gb_mute->addWidget(new QLabel(tr("Mute enable")),
 	    0, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);

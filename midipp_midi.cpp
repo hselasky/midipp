@@ -41,7 +41,7 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 	gl = new QGridLayout(this);
 
 	setWindowTitle(tr("MIDI import"));
-	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+	setWindowIcon(QIcon(MppIconFile));
 
 	gb_import = new MppGroupBox(tr("Select MIDI channel(s) to import"));
 

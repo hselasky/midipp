@@ -36,7 +36,7 @@ MppReplace :: MppReplace(MppMainWindow *_mw, MppScoreMain *_sm,
 	sm = _sm;
 
 	setWindowTitle(tr("Replace text dialog"));
-	setWindowIcon(QIcon(QString(MPP_ICON_FILE)));
+	setWindowIcon(QIcon(MppIconFile));
 
 	lbl_replace = new QLabel(tr("Replace: "));
 	lbl_with = new QLabel(tr("With: "));
