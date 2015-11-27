@@ -208,9 +208,9 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	butScoreFileSetFlat = new QPushButton(tr("Set b"));
 	butScoreFileAutoMel[0] = new MppButton(tr("AutoMel 1"), 0);
 	butScoreFileAutoMel[1] = new MppButton(tr("AutoMel 2"), 1);
-	butScoreFileReplaceAll = new QPushButton(tr("Replace All"));
-	butScoreFileExport = new QPushButton(tr("To Lyrics\n" "with chords"));
-	butScoreFileExportNoChords = new QPushButton(tr("To Lyrics\n" "without chords"));
+	butScoreFileReplaceAll = new QPushButton(tr("Replace all"));
+	butScoreFileExport = new QPushButton(tr("To Lyrics with chords"));
+	butScoreFileExportNoChords = new QPushButton(tr("To Lyrics no chords"));
 
 #ifdef QT_NO_PRINTER
 	butScoreFilePrint->hide();

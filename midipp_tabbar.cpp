@@ -357,10 +357,12 @@ MppTabBar :: paintEvent(QPaintEvent *event)
 
 		x_off += dw;
 	}
+#if 0
 	if (x_off != 0) {
 		x_off = 0;
 		r++;
 	}
+#endif
 	for (n = 0; n != nwidgets; n++) {
 		int dw = (widgets[n].pWidget ? 4 : 3) * basic_size;
 		if (x_off != 0 && x_off + dw >= w) {
@@ -394,10 +396,12 @@ MppTabBar :: computeHeight(int w) const
 		}
 		x_off += dw;
 	}
+#if 0
 	if (x_off != 0) {
 		x_off = 0;
 		r++;
 	}
+#endif
 	for (n = 0; n != nwidgets; n++) {
 		int dw = (widgets[n].pWidget ? 4 : 3) * basic_size;
 		if (x_off != 0 && x_off + dw >= w) {
