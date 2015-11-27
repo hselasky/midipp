@@ -1,5 +1,5 @@
 Name:           midipp
-Version:        1.2.19
+Version:        1.3.0
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
@@ -48,8 +48,10 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Thu Nov 5 2015 HPS hps@selasky.org 1.2.19-1
+* Thu Nov 27 2015 HPS hps@selasky.org 1.3.0-1
 - Improved detection of chords when transposing a song.
+- Shrunk GUI a bit.
+- Added button to select first picture in show mode.
 * Thu Jul 20 2015 HPS hps@selasky.org 1.2.18-1
 - Added support for setting key-mode when loading songs.
 - Added support for song background selection changes.

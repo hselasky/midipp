@@ -5,8 +5,10 @@
 MIDI Player Pro allows you to play any kind of MIDI music in seconds
 with your fingertips.
 
-Changes for v1.2.19:
+Changes for v1.3.0:
 - Improved detection of chords when transposing a song.
+- Shrunk GUI a bit.
+- Added button to select first picture in show mode.
 
 Changes for v1.2.18:
 - Added support for setting key-mode when loading songs.
