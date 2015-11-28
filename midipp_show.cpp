@@ -36,7 +36,7 @@ MppShowWidget :: MppShowWidget(MppShowControl *_parent)
 {
 	parent = _parent;
 
-	setWindowTitle(QString("MidiPlayerPro"));
+	setWindowTitle(MppVersion);
 	setWindowIcon(QIcon(MppIconFile));
 }
 
