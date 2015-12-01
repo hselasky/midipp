@@ -1,5 +1,5 @@
 Name:           midipp
-Version:        1.3.0
+Version:        1.3.1
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
@@ -48,6 +48,7 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
+* Thu Dec 1 2015 HPS hps@selasky.org 1.3.1-1
 * Thu Nov 27 2015 HPS hps@selasky.org 1.3.0-1
 - Improved detection of chords when transposing a song.
 - Shrunk GUI a bit.
