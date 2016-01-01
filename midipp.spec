@@ -49,6 +49,7 @@ unset INSTALL_ROOT
 
 %changelog
 * Thu Dec 1 2015 HPS hps@selasky.org 1.3.1-1
+- Fix send song events button.
 * Thu Nov 27 2015 HPS hps@selasky.org 1.3.0-1
 - Improved detection of chords when transposing a song.
 - Shrunk GUI a bit.
