@@ -41,11 +41,12 @@ public:
 	QString line_buffer;
 
 	midipp_word d_word[2][MIDIPP_IMPORT_MW];
-	uint8_t d_chords[2];
 
 	MppScoreMain *sm;
 
-	int n_word[2];
+	int n_spaces[2];
+	int n_chords[2];
+	int n_words[2];
 	int max_off;
 
 	uint8_t index;

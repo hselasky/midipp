@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010,2012-2013 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010,2012-2015 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -51,7 +51,7 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 	uint8_t output = 0;
 
 	/* detect Label mark, "LXXX", in input text */
-	if (i_txt > -1 && ps->n_word[i_txt] > 0 &&
+	if (i_txt > -1 && ps->n_words[i_txt] > 0 &&
 	    ps->d_word[i_txt][0].name.size() > 1 &&
 	    ps->d_word[i_txt][0].name[0] == QChar('L') &&
 	    ps->d_word[i_txt][0].name[1].isDigit()) {
@@ -71,7 +71,7 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 
 		any = 0;
 
-		if (i_score > -1 && ai < ps->n_word[i_score]) {
+		if (i_score > -1 && ai < ps->n_words[i_score]) {
 
 			any = 1;
 
@@ -96,7 +96,7 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 			}
 		}
 	next_word:
-		if (i_txt > -1 && bi < ps->n_word[i_txt]) {
+		if (i_txt > -1 && bi < ps->n_words[i_txt]) {
 
 			off = ps->d_word[i_txt][bi].off;
 
@@ -169,6 +169,7 @@ midipp_import_parse(class midipp_import *ps)
 	int n_off;
 	int n_word;
 	int n_chord;
+	int n_space;
 	int temp;
 	uint8_t state;
 	uint8_t next;
@@ -177,6 +178,7 @@ midipp_import_parse(class midipp_import *ps)
 	state = 0;
 	n_word = 0;
 	n_chord = 0;
+	n_space = 0;
 
 	/* reset all the "name" strings */
 	for (n_off = 0; n_off != MIDIPP_IMPORT_MW; n_off++)
@@ -211,9 +213,15 @@ midipp_import_parse(class midipp_import *ps)
 	}
 	if (n_off > ps->max_off)
 		ps->max_off = n_off;
-
-	ps->n_word[ps->index] = n_word;
-	ps->d_chords[ps->index] = n_chord;
+	/* count number of words containing spaces only */
+	for (n_off = 0; n_off != n_word; n_off++) {
+		if (ps->d_word[ps->index][n_off].name.size() > 0 &&
+		    ps->d_word[ps->index][n_off].name[0].isSpace())
+			n_space++;
+	}
+	ps->n_spaces[ps->index] = n_space;
+	ps->n_words[ps->index] = n_word;
+	ps->n_chords[ps->index] = n_chord;
 
 	if (ps->load_more != 0) {
 		/* load another line */
@@ -223,9 +231,9 @@ midipp_import_parse(class midipp_import *ps)
 	}
 
 	temp = 0;
-	if (ps->d_chords[0])
+	if (ps->n_chords[0])
 		temp |= 1;
-	if (ps->d_chords[1])
+	if (ps->n_chords[1])
 		temp |= 2;
 
 	switch (temp) {
@@ -259,12 +267,28 @@ midipp_import_parse(class midipp_import *ps)
 		}
 		break;
 	default:
-		if (ps->index == 0) {
-			if (midipp_import_flush(ps, -1, 1))
-				return (1);
+		/*
+		 * If the text line contains only chords, print it as
+		 * chords and not text:
+		 */
+		if ((ps->n_spaces[ps->index] + ps->n_chords[ps->index]) ==
+		    ps->n_words[ps->index]) {
+			if (ps->index == 0) {
+				if (midipp_import_flush(ps, -1, 1))
+					return (1);
+			} else {
+				if (midipp_import_flush(ps, -1, 0))
+					return (1);
+			}
 		} else {
-			if (midipp_import_flush(ps, -1, 0))
-				return (1);
+			if (ps->index == 0) {
+				if (midipp_import_flush(ps, 0, 1))
+					return (1);
+			} else {
+				if (midipp_import_flush(ps, 1, 0))
+					return (1);
+			}
+			ps->load_more = 1;
 		}
 		break;
 	}
@@ -282,11 +306,13 @@ midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm)
 	for (off = 0; off != (2 * MIDIPP_IMPORT_MW); off++)
 		ps->d_word[0][off].off = 0;
 
-	ps->d_chords[0] = 0;
-	ps->d_chords[1] = 0;
 	ps->sm = sm;
-	ps->n_word[0] = 0;
-	ps->n_word[1] = 0;
+	ps->n_spaces[0] = 0;
+	ps->n_spaces[1] = 0;
+	ps->n_chords[0] = 0;
+	ps->n_chords[1] = 0;
+	ps->n_words[0] = 0;
+	ps->n_words[1] = 0;
 	ps->max_off = 0;
 	ps->index = 0;
 	ps->load_more = 1;
