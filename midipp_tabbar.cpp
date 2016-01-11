@@ -295,13 +295,8 @@ MppTabBar :: paintEvent(QPaintEvent *event)
 	paint.setRenderHints(QPainter::Antialiasing, 1);
 	paint.setFont(font());
 
-	QColor grey(192,192,192);
-	QColor light(128,128,128);
-	QColor white(255,255,255);
-	QColor black(0,0,0);
-
-	paint.setPen(QPen(grey, 0));
-	paint.setBrush(grey);
+	paint.setPen(QPen(Mpp.ColorGrey, 0));
+	paint.setBrush(Mpp.ColorGrey);
 	paint.drawRoundedRect(QRect(0,0,w,h), 4, 4);
 
 	for (r = n = 0; n != ntabs; n++) {
@@ -313,11 +308,11 @@ MppTabBar :: paintEvent(QPaintEvent *event)
 		y_off = r * basic_size * 2;
 
 		if (isVisible(tabs[n].w)) {
-			paint.setPen(QPen(black, 0));
-			paint.setBrush(black);
+			paint.setPen(QPen(Mpp.ColorBlack, 0));
+			paint.setBrush(Mpp.ColorBlack);
 		} else {
-			paint.setPen(QPen(light, 0));
-			paint.setBrush(light);
+			paint.setPen(QPen(Mpp.ColorLight, 0));
+			paint.setBrush(Mpp.ColorLight);
 		}
 		if (tabs[n].flags & FLAG_LEFT) {
 			QPoint temp[3] = {
@@ -343,13 +338,13 @@ MppTabBar :: paintEvent(QPaintEvent *event)
 			QRect area(x_off + basic_size, y_off + (basic_size / 4),
 			    dw - (2*basic_size), (basic_size * 2) - (basic_size / 2));
 
-			paint.setPen(QPen(white, 0));
-			paint.setBrush(white);
+			paint.setPen(QPen(Mpp.ColorWhite, 0));
+			paint.setBrush(Mpp.ColorWhite);
 			paint.drawRect(area);
 		}
 
-		paint.setPen(QPen(black, 0));
-		paint.setBrush(black);
+		paint.setPen(QPen(Mpp.ColorBlack, 0));
+		paint.setBrush(Mpp.ColorBlack);
 		paint.drawText(QRect(x_off + basic_size + (basic_size / 4),
 		    y_off + (basic_size / 2),
 		    dw - (2 * basic_size) - (basic_size / 2), basic_size),
