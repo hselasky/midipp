@@ -99,15 +99,13 @@ public:
 
 	int setPressedKey(int chan, int out_key, int dur, int delay);
 
-	QWidget viewWidget;
-
 	MppHead head;
 
 	uint8_t auto_zero_start[0];
 
 	MppVisualScore *pVisual;
-
-	QGridLayout *viewGrid;
+	MppSheet *sheet;
+	MppGridLayout *gl_view;
 	QScrollBar *viewScroll;
 	MppScoreView *viewWidgetSub;
 

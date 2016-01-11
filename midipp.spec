@@ -48,9 +48,10 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Thu Jan 3 2016 HPS hps@selasky.org 1.3.1-1
+* Thu Jan 11 2016 HPS hps@selasky.org 1.3.1-1
 - Fixed send song events button.
-- Improve lyrics parsing
+- Improve lyrics parsing.
+- Added new sheet tab feature.
 * Thu Nov 27 2015 HPS hps@selasky.org 1.3.0-1
 - Improved detection of chords when transposing a song.
 - Shrunk GUI a bit.

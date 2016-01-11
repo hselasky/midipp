@@ -36,6 +36,8 @@
 #include "midipp_button.h"
 #include "midipp_show.h"
 #include "midipp_tabbar.h"
+#include "midipp_gridlayout.h"
+#include "midipp_sheet.h"
 
 static int
 MppCountNewline(const QString &str)
@@ -252,10 +254,6 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	connect(butScoreFileExport, SIGNAL(released()), this, SLOT(handleScoreFileExport()));
 	connect(butScoreFileExportNoChords, SIGNAL(released()), this, SLOT(handleScoreFileExportNoChords()));
 
-	/* Widget */
-
-	viewWidget.setContentsMargins(0,0,0,0);
-
 	/* Editor */
 
 	editWidget = new MppScoreTextEdit(this);
@@ -267,9 +265,8 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 
 	/* GridLayout */
 
-	viewGrid = new QGridLayout(&viewWidget);
-	viewGrid->setSpacing(0);
-	viewGrid->setContentsMargins(1,1,1,1);
+	gl_view = new MppGridLayout();
+	gl_view->setSpacing(0);
 
 	viewScroll = new QScrollBar(Qt::Vertical);
 	viewScroll->setValue(0);
@@ -282,9 +279,11 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 
 	viewWidgetSub = new MppScoreView(this);
 
-	viewGrid->addWidget(viewWidgetSub, 0, 0, 1, 1);
-	viewGrid->addWidget(viewScroll, 0, 1, 1, 1);
+	gl_view->addWidget(viewWidgetSub, 0, 0, 1, 1);
+	gl_view->addWidget(viewScroll, 0, 1, 1, 1);
 
+	sheet = new MppSheet(parent, _unit);
+	
 	/* Initial compile */
 
 	handleCompile(1);
@@ -948,6 +947,8 @@ MppScoreMain :: handleParse(const QString &pstr)
 	mainWindow->tab_show_control->handle_text_change();
 	mainWindow->tab_show_control->handle_pict_change();
 #endif
+
+	sheet->compile(head);
 }
 
 void

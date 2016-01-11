@@ -54,6 +54,7 @@
 #include "midipp_replace.h"
 #include "midipp_replay.h"
 #include "midipp_metronome.h"
+#include "midipp_sheet.h"
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -224,7 +225,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_help->setLineWrapMode(QPlainTextEdit::NoWrap);
 	tab_help->setPlainText(tr(
 	    "/*\n"
-	    " * Copyright (c) 2009-2015 Hans Petter Selasky. All rights reserved.\n"
+	    " * Copyright (c) 2009-2016 Hans Petter Selasky. All rights reserved.\n"
 	    " */\n"
 
 	    "\n"
@@ -310,18 +311,14 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	gl_synth_play = new MppGroupBox(tr("Synth and Play controls"));
 
 	/* Fill up tabbar */
-#if MPP_MAX_VIEWS > 0
-	main_tb->addTab(&scores_main[0]->viewWidget, tr("View A"));
-	main_tb->addTab(scores_main[0]->editWidget, tr("Edit A"));
-#endif
-#if MPP_MAX_VIEWS > 1
-	main_tb->addTab(&scores_main[1]->viewWidget, tr("View B"));
-	main_tb->addTab(scores_main[1]->editWidget, tr("Edit B"));
-#endif
-#if MPP_MAX_VIEWS > 2
-	main_tb->addTab(&scores_main[2]->viewWidget, tr("View C"));
-	main_tb->addTab(scores_main[2]->editWidget, tr("Edit C"));
-#endif
+	for (x = 0; x != MPP_MAX_VIEWS; x++) {
+		main_tb->addTab(scores_main[x]->gl_view,
+		    tr("View %1").arg(QChar('A' + x)));
+		main_tb->addTab(scores_main[x]->sheet->gl_sheet,
+		    tr("Sheet %1").arg(QChar('A' + x)));
+		main_tb->addTab(scores_main[x]->editWidget,
+		    tr("Edit %1").arg(QChar('A' + x)));
+	}
 	main_tb->addTab(tab_import->editWidget, tr("Lyrics"));
 #ifndef HAVE_NO_SHOW
 	main_tb->addTab(tab_show_control->gl_main, tr("Show"));
@@ -370,15 +367,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		gb_gpro_file_import->addWidget(but_gpro_file_import[x], x, 0, 1, 1);
 		connect(but_gpro_file_import[x], SIGNAL(released(int)), this, SLOT(handle_gpro_file_import(int)));
 	}
-#if MPP_MAX_VIEWS > 0
-	tab_file_gl->addWidget(scores_main[0]->gbScoreFile, 0, 0, 2, 1);
-#endif
-#if MPP_MAX_VIEWS > 1
-	tab_file_gl->addWidget(scores_main[1]->gbScoreFile, 0, 1, 2, 1);
-#endif
-#if MPP_MAX_VIEWS > 2
-	tab_file_gl->addWidget(scores_main[2]->gbScoreFile, 0, 2, 2, 1);
-#endif
+
+	for (x = 0; x != MPP_MAX_VIEWS; x++)
+		tab_file_gl->addWidget(scores_main[x]->gbScoreFile, 0, x, 2, 1);
 	tab_file_gl->addWidget(tab_import->gbImport, 0, MPP_MAX_VIEWS, 1, 1);
 	tab_file_gl->addWidget(gb_gpro_file_import, 1, MPP_MAX_VIEWS, 1, 1);
 	tab_file_gl->addWidget(gb_midi_file, 0, MPP_MAX_VIEWS + 1, 2, 1);
@@ -903,6 +894,7 @@ MppMainWindow :: handle_watchdog_sub(MppScoreMain *sm, int update_cursor)
 	}
 
 	sm->viewWidgetSub->update();
+	sm->sheet->update();
 }
 
 void
@@ -1584,8 +1576,10 @@ MppMainWindow :: handle_config_edit_fontsel()
 
 		editFont = font;
 
-		for (x = 0; x != MPP_MAX_VIEWS; x++)
+		for (x = 0; x != MPP_MAX_VIEWS; x++) {
 			scores_main[x]->editWidget->setFont(font);
+			scores_main[x]->sheet->update();
+		}
 
 		tab_help->setFont(font);
 		tab_import->editWidget->setFont(font);
@@ -2320,7 +2314,7 @@ MppMainWindow :: handle_make_scores_visible(MppScoreMain *sm)
 	if (sm->visual_max == 0)
 		handle_make_tab_visible(sm->editWidget);
 	else
-		handle_make_tab_visible(&sm->viewWidget);
+		handle_make_tab_visible(sm->gl_view);
 }
 
 void
@@ -2341,7 +2335,8 @@ MppMainWindow :: handle_tab_changed(int force)
 		}
 	}
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
-		if (main_tb->isVisible(&scores_main[x]->viewWidget)) {
+		if (main_tb->isVisible(scores_main[x]->gl_view) ||
+		    main_tb->isVisible(scores_main[x]->sheet->gl_sheet)) {
 			x = (2 * x) + 1;
 			goto found;
 		}
@@ -2356,7 +2351,7 @@ MppMainWindow :: handle_tab_changed(int force)
 found:
 	if (x == lastViewIndex && force == 0)
 		return;
-	lastViewIndex = 0;
+	lastViewIndex = x;
 
 	QString *ps = scores_main[x/2]->currScoreFileName;
 	if (ps != NULL)

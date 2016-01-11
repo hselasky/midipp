@@ -68,6 +68,7 @@ HEADERS		+= midipp_replace.h
 HEADERS		+= midipp_replay.h
 HEADERS		+= midipp_scores.h
 HEADERS		+= midipp_settings.h
+HEADERS		+= midipp_sheet.h
 isEmpty(HAVE_NO_SHOW) {
 HEADERS		+= midipp_show.h
 }
@@ -101,6 +102,7 @@ SOURCES		+= midipp_replace.cpp
 SOURCES		+= midipp_replay.cpp
 SOURCES		+= midipp_scores.cpp
 SOURCES		+= midipp_settings.cpp
+SOURCES		+= midipp_sheet.cpp
 isEmpty(HAVE_NO_SHOW) {
 SOURCES		+= midipp_show.cpp
 }

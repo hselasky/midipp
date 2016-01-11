@@ -7,7 +7,8 @@ with your fingertips.
 
 Changes for v1.3.1:
 - Fixed send song events button.
-- Improve lyrics parsing
+- Improve lyrics parsing.
+- Added new sheet tab feature.
 
 Changes for v1.3.0:
 - Improved detection of chords when transposing a song.

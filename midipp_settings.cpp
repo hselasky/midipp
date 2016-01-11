@@ -35,6 +35,7 @@
 #include "midipp_custom.h"
 #include "midipp_shortcut.h"
 #include "midipp_show.h"
+#include "midipp_sheet.h"
 
 MppSettings :: MppSettings(MppMainWindow *_parent, const QString & fname)
   : QSettings(fname)
@@ -393,9 +394,10 @@ MppSettings :: doLoad(void)
 		if (mw->editFont.pixelSize() < 1)
 			mw->editFont.setPixelSize(14);
 
-		for (x = 0; x != MPP_MAX_VIEWS; x++)
+		for (x = 0; x != MPP_MAX_VIEWS; x++) {
 			mw->scores_main[x]->editWidget->setFont(mw->editFont);
-
+			mw->scores_main[x]->sheet->update();
+		}
 		mw->tab_help->setFont(mw->editFont);
 		mw->tab_import->editWidget->setFont(mw->editFont);
 	}
