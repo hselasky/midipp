@@ -31,7 +31,10 @@
 class MppGridLayout : public QWidget, public QGridLayout
 {
 public:
-	MppGridLayout() : QWidget(), QGridLayout(this) { };
+	MppGridLayout() : QWidget(), QGridLayout(this) {
+		QWidget::setContentsMargins(0,0,0,0);
+		QGridLayout::setContentsMargins(1,1,1,1);
+	};
 	~MppGridLayout() { };
 };
 
