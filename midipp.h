@@ -158,6 +158,7 @@ class MppScoreMain;
 class MppScoreView;
 class MppSettings;
 class MppSettingsWhat;
+class MppSheet;
 class MppShortcutTab;
 class MppShowControl;
 class MppShowWidget;
@@ -208,6 +209,8 @@ public:
 	QColor ColorGrey;
 	QColor ColorLogo;
 	QColor ColorGreen;
+	QColor ColorLight;
+	QColor ColorYellow;
 
 	QString VariantList;
 	QString HomeDirTxt;
