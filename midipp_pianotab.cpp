@@ -171,13 +171,7 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 	int z;
 	const char *buf;
 
-	QColor black(0,0,0);
-	QColor white(255,255,255);
-	QColor grey(192,192,192);
-	QColor yellow(192,192,0);
-	QColor red(255,0,0);
-
-	paint.fillRect(QRectF(0,0,w,h), white);
+	paint.fillRect(QRectF(0,0,w,h), Mpp.ColorWhite);
 
 	paint.setRenderHints(QPainter::Antialiasing, 1);
 
@@ -195,36 +189,36 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 	paint.setFont(fnt);
 
 	ypos = h - 2 * unit + uh;
-	r_pressed[1] = drawText(paint, black, state.pressed[1] ? grey : white, unit, unit, uq + uh + uq + (unit + uh) * 0.0, ypos, "C#");
-	r_pressed[3] = drawText(paint, black, state.pressed[3] ? grey : white, unit, unit, uq + uh + uq + (unit + uh) * 1.0, ypos, "D#");
-	r_pressed[6] = drawText(paint, black, state.pressed[6] ? grey : white, unit, unit, uq + uh + uq + (unit + uh) * 3.0, ypos, "F#");
-	r_pressed[8] = drawText(paint, black, state.pressed[8] ? grey : white, unit, unit, uq + uh + uq + (unit + uh) * 4.0, ypos, "G#");
-	r_pressed[10] = drawText(paint, black, state.pressed[10] ? grey : white, unit, unit, uq + uh + uq + (unit + uh) * 5.0, ypos, "A#");
+	r_pressed[1] = drawText(paint, Mpp.ColorBlack, state.pressed[1] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 0.0, ypos, "C#");
+	r_pressed[3] = drawText(paint, Mpp.ColorBlack, state.pressed[3] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 1.0, ypos, "D#");
+	r_pressed[6] = drawText(paint, Mpp.ColorBlack, state.pressed[6] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 3.0, ypos, "F#");
+	r_pressed[8] = drawText(paint, Mpp.ColorBlack, state.pressed[8] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 4.0, ypos, "G#");
+	r_pressed[10] = drawText(paint, Mpp.ColorBlack, state.pressed[10] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 5.0, ypos, "A#");
 
 	ypos = h - unit + uh;
-	r_pressed[0] = drawText(paint, black, state.pressed[0] ? grey : white, unit, unit, uq + (unit + uh) * 0.0, ypos, "C5");
-	r_pressed[2] = drawText(paint, black, state.pressed[2] ? grey : white, unit, unit, uq + (unit + uh) * 1.0, ypos, "D5");
-	r_pressed[4] = drawText(paint, black, state.pressed[4] ? grey : white, unit, unit, uq + (unit + uh) * 2.0, ypos, "E5");
-	r_pressed[5] = drawText(paint, black, state.pressed[5] ? grey : white, unit, unit, uq + (unit + uh) * 3.0, ypos, "F5");
-	r_pressed[7] = drawText(paint, black, state.pressed[7] ? grey : white, unit, unit, uq + (unit + uh) * 4.0, ypos, "G5");
-	r_pressed[9] = drawText(paint, black, state.pressed[9] ? grey : white, unit, unit, uq + (unit + uh) * 5.0, ypos, "A5");
-	r_pressed[11] = drawText(paint, black, state.pressed[11] ? grey : white, unit, unit, uq + (unit + uh) * 6.0, ypos, "H5");
+	r_pressed[0] = drawText(paint, Mpp.ColorBlack, state.pressed[0] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 0.0, ypos, "C5");
+	r_pressed[2] = drawText(paint, Mpp.ColorBlack, state.pressed[2] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 1.0, ypos, "D5");
+	r_pressed[4] = drawText(paint, Mpp.ColorBlack, state.pressed[4] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 2.0, ypos, "E5");
+	r_pressed[5] = drawText(paint, Mpp.ColorBlack, state.pressed[5] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 3.0, ypos, "F5");
+	r_pressed[7] = drawText(paint, Mpp.ColorBlack, state.pressed[7] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 4.0, ypos, "G5");
+	r_pressed[9] = drawText(paint, Mpp.ColorBlack, state.pressed[9] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 5.0, ypos, "A5");
+	r_pressed[11] = drawText(paint, Mpp.ColorBlack, state.pressed[11] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 6.0, ypos, "H5");
 
 	ypos = h + unit;
-	r_pressed[12+1] = drawText(paint, black, state.pressed[12+1] ? grey : white, unit, unit, uq + uh + uq + (unit + uh) * 0.0, ypos, "C#");
-	r_pressed[12+3] = drawText(paint, black, state.pressed[12+3] ? grey : white, unit, unit, uq + uh + uq + (unit + uh) * 1.0, ypos, "D#");
-	r_pressed[12+6] = drawText(paint, black, state.pressed[12+6] ? grey : white, unit, unit, uq + uh + uq + (unit + uh) * 3.0, ypos, "F#");
-	r_pressed[12+8] = drawText(paint, black, state.pressed[12+8] ? grey : white, unit, unit, uq + uh + uq + (unit + uh) * 4.0, ypos, "G#");
-	r_pressed[12+10] = drawText(paint, black, state.pressed[12+10] ? grey : white, unit, unit, uq + uh + uq + (unit + uh) * 5.0, ypos, "A#");
+	r_pressed[12+1] = drawText(paint, Mpp.ColorBlack, state.pressed[12+1] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 0.0, ypos, "C#");
+	r_pressed[12+3] = drawText(paint, Mpp.ColorBlack, state.pressed[12+3] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 1.0, ypos, "D#");
+	r_pressed[12+6] = drawText(paint, Mpp.ColorBlack, state.pressed[12+6] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 3.0, ypos, "F#");
+	r_pressed[12+8] = drawText(paint, Mpp.ColorBlack, state.pressed[12+8] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 4.0, ypos, "G#");
+	r_pressed[12+10] = drawText(paint, Mpp.ColorBlack, state.pressed[12+10] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 5.0, ypos, "A#");
 
 	ypos = h + 2*unit;
-	r_pressed[12+0] = drawText(paint, black, state.pressed[12+0] ? grey : white, unit, unit, uq + (unit + uh) * 0.0, ypos, "C6");
-	r_pressed[12+2] = drawText(paint, black, state.pressed[12+2] ? grey : white, unit, unit, uq + (unit + uh) * 1.0, ypos, "D6");
-	r_pressed[12+4] = drawText(paint, black, state.pressed[12+4] ? grey : white, unit, unit, uq + (unit + uh) * 2.0, ypos, "E6");
-	r_pressed[12+5] = drawText(paint, black, state.pressed[12+5] ? grey : white, unit, unit, uq + (unit + uh) * 3.0, ypos, "F6");
-	r_pressed[12+7] = drawText(paint, black, state.pressed[12+7] ? grey : white, unit, unit, uq + (unit + uh) * 4.0, ypos, "G6");
-	r_pressed[12+9] = drawText(paint, black, state.pressed[12+9] ? grey : white, unit, unit, uq + (unit + uh) * 5.0, ypos, "A6");
-	r_pressed[12+11] = drawText(paint, black, state.pressed[12+11] ? grey : white, unit, unit, uq + (unit + uh) * 6.0, ypos, "H6");
+	r_pressed[12+0] = drawText(paint, Mpp.ColorBlack, state.pressed[12+0] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 0.0, ypos, "C6");
+	r_pressed[12+2] = drawText(paint, Mpp.ColorBlack, state.pressed[12+2] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 1.0, ypos, "D6");
+	r_pressed[12+4] = drawText(paint, Mpp.ColorBlack, state.pressed[12+4] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 2.0, ypos, "E6");
+	r_pressed[12+5] = drawText(paint, Mpp.ColorBlack, state.pressed[12+5] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 3.0, ypos, "F6");
+	r_pressed[12+7] = drawText(paint, Mpp.ColorBlack, state.pressed[12+7] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 4.0, ypos, "G6");
+	r_pressed[12+9] = drawText(paint, Mpp.ColorBlack, state.pressed[12+9] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 5.0, ypos, "A6");
+	r_pressed[12+11] = drawText(paint, Mpp.ColorBlack, state.pressed[12+11] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 6.0, ypos, "H6");
 
 	uf /= 3.0;
 	fnt.setPixelSize(uf);
@@ -232,25 +226,25 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 
 	xpos = 0;
 	ypos = h - (3*unit);
-	r_label[0] = drawText(paint, black, (state.last_jump == 0) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L0");
+	r_label[0] = drawText(paint, Mpp.ColorBlack, (state.last_jump == 0) ? Mpp.ColorYellow : Mpp.ColorWhite, 2.0 * uf, unit, uq + xpos * uf, ypos, "L0");
 	xpos += 2;
-	r_label[1] = drawText(paint, black, (state.last_jump == 1) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L1");
+	r_label[1] = drawText(paint, Mpp.ColorBlack, (state.last_jump == 1) ? Mpp.ColorYellow : Mpp.ColorWhite, 2.0 * uf, unit, uq + xpos * uf, ypos, "L1");
 	xpos += 2;
-	r_label[2] = drawText(paint, black, (state.last_jump == 2) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L2");
+	r_label[2] = drawText(paint, Mpp.ColorBlack, (state.last_jump == 2) ? Mpp.ColorYellow : Mpp.ColorWhite, 2.0 * uf, unit, uq + xpos * uf, ypos, "L2");
 	xpos += 2;
-	r_label[3] = drawText(paint, black, (state.last_jump == 3) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L3");
+	r_label[3] = drawText(paint, Mpp.ColorBlack, (state.last_jump == 3) ? Mpp.ColorYellow : Mpp.ColorWhite, 2.0 * uf, unit, uq + xpos * uf, ypos, "L3");
 	xpos += 2;
-	r_label[4] = drawText(paint, black, (state.last_jump == 4) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L4");
+	r_label[4] = drawText(paint, Mpp.ColorBlack, (state.last_jump == 4) ? Mpp.ColorYellow : Mpp.ColorWhite, 2.0 * uf, unit, uq + xpos * uf, ypos, "L4");
 	xpos += 2;
-	r_label[5] = drawText(paint, black, (state.last_jump == 5) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L5");
+	r_label[5] = drawText(paint, Mpp.ColorBlack, (state.last_jump == 5) ? Mpp.ColorYellow : Mpp.ColorWhite, 2.0 * uf, unit, uq + xpos * uf, ypos, "L5");
 	xpos += 2;
-	r_label[6] = drawText(paint, black, (state.last_jump == 6) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L6");
+	r_label[6] = drawText(paint, Mpp.ColorBlack, (state.last_jump == 6) ? Mpp.ColorYellow : Mpp.ColorWhite, 2.0 * uf, unit, uq + xpos * uf, ypos, "L6");
 	xpos += 2;
-	r_label[7] = drawText(paint, black, (state.last_jump == 7) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L7");
+	r_label[7] = drawText(paint, Mpp.ColorBlack, (state.last_jump == 7) ? Mpp.ColorYellow : Mpp.ColorWhite, 2.0 * uf, unit, uq + xpos * uf, ypos, "L7");
 	xpos += 2;
-	r_label[8] = drawText(paint, black, (state.last_jump == 8) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L8");
+	r_label[8] = drawText(paint, Mpp.ColorBlack, (state.last_jump == 8) ? Mpp.ColorYellow : Mpp.ColorWhite, 2.0 * uf, unit, uq + xpos * uf, ypos, "L8");
 	xpos += 2;
-	r_label[9] = drawText(paint, black, (state.last_jump == 9) ? yellow : white, 2.0 * uf, unit, uq + xpos * uf, ypos, "L9");
+	r_label[9] = drawText(paint, Mpp.ColorBlack, (state.last_jump == 9) ? Mpp.ColorYellow : Mpp.ColorWhite, 2.0 * uf, unit, uq + xpos * uf, ypos, "L9");
 	xpos += 2;
 
 #if MPP_PIANO_TAB_LABELS != 10
@@ -258,21 +252,21 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 #endif
 	buf = "A-View";
 	len = strlen(buf) + 2;
-	r_view_a = drawText(paint, black, (state.view_index == 0) ? grey : white, uf * len, unit, uq + xpos * uf, ypos, buf);
+	r_view_a = drawText(paint, Mpp.ColorBlack, (state.view_index == 0) ? Mpp.ColorGrey : Mpp.ColorWhite, uf * len, unit, uq + xpos * uf, ypos, buf);
 	xpos += len;
 
 	buf = "B-View";
 	len = strlen(buf) + 2;
-	r_view_b = drawText(paint, black, (state.view_index == 1) ? grey : white, uf * len, unit, uq + xpos * uf, ypos, buf);
+	r_view_b = drawText(paint, Mpp.ColorBlack, (state.view_index == 1) ? Mpp.ColorGrey : Mpp.ColorWhite, uf * len, unit, uq + xpos * uf, ypos, buf);
 	xpos += len;
 
 	buf = "Sustain-OFF";
 	len = strlen(buf) + 2;
-	r_sustain_off = drawText(paint, black, state.sustain ? white : grey, uf * len, unit, uq + xpos * uf, ypos, buf);
+	r_sustain_off = drawText(paint, Mpp.ColorBlack, state.sustain ? Mpp.ColorWhite : Mpp.ColorGrey, uf * len, unit, uq + xpos * uf, ypos, buf);
 	xpos += len;
 
 	buf = "Sustain-ON";
 	len = strlen(buf) + 2;
-	r_sustain_on = drawText(paint, black, state.sustain ? grey : white , uf * len, unit, uq + xpos * uf, ypos, buf);
+	r_sustain_on = drawText(paint, Mpp.ColorBlack, state.sustain ? Mpp.ColorGrey : Mpp.ColorWhite , uf * len, unit, uq + xpos * uf, ypos, buf);
 	xpos += len;
 }
