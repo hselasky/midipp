@@ -135,6 +135,9 @@ MppSheetRowCompareType(const void *_pa, const void *_pb)
 		ret = pa->u.macro.trans - pb->u.macro.trans;
 		if (ret != 0)
 			return (ret);
+		ret = pa->u.macro.num - pb->u.macro.num;
+		if (ret != 0)
+			return (ret);
 		break;
 	case MPP_T_SCORE:
 		ret = pa->u.score.chan - pb->u.score.chan;
@@ -524,8 +527,10 @@ MppSheet::mousePressEvent(QMouseEvent * event)
 	ssize_t x = ((p.x() - xoff + boxs - 1) / boxs) - 1;
 	ssize_t y = ((p.y() - yoff + boxs - 1) / boxs) - 1;
 
-	x += vs_horiz->value();
-	y += vs_vert->value();
+	if (x >= 0)
+		x += vs_horiz->value();
+	if (y >= 0)
+		y += vs_vert->value();
 
 	if (x >= 0 && x < num_cols &&
 	    y >= 0 && y < num_rows) {
