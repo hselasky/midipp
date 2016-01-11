@@ -1551,3 +1551,9 @@ MppElement :: compare(const MppElement *other) const
 		return (-1);
 	return (0);
 }
+
+MppElement *
+MppElement :: next() const
+{
+	return (TAILQ_NEXT(this, entry));
+}

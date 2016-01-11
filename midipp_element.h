@@ -177,6 +177,8 @@ public:
 
 	int compare(const MppElement *) const;
 
+	MppElement * next() const;
+
 	QChar getChar(int *) const;
 	int getIntValue(int *) const;
 
