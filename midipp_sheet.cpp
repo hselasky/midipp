@@ -75,6 +75,10 @@ MppSheet::~MppSheet()
 {
 	free(entries_ptr);
 	entries_ptr = 0;
+	free(entries_rows);
+	entries_rows = 0;
+	free(entries_cols);
+	entries_cols = 0;
 	num_rows = 0;
 	num_cols = 0;
 }
