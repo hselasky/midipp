@@ -49,17 +49,13 @@ MppCheckBox :: paintEvent(QPaintEvent *event)
 
 	paint.setRenderHints(QPainter::Antialiasing, 1);
 
-	QColor black(0,0,0);
-	QColor grey(192,192,192);
-	QColor white(255,255,255);
-
-	paint.setPen(QPen(black, 4));
-	paint.setBrush(grey);
+	paint.setPen(QPen(Mpp.ColorBlack, 4));
+	paint.setBrush(Mpp.ColorGrey);
 	paint.drawRect(QRectF(0,0,w,h));
 
 	if (state != Qt::Unchecked) {
-		paint.setPen(QPen(grey, 0));
-		paint.setBrush(black);
+		paint.setPen(QPen(Mpp.ColorGrey, 0));
+		paint.setBrush(Mpp.ColorBlack);
 		paint.drawEllipse(QRectF(3,3,w-6,h-6));
 	}
 }
