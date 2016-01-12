@@ -30,8 +30,9 @@
 
 struct MppSheetRow {
 	int	type;
-	int	label;
 	int	col;
+	short	label;
+	short	playing;
 	union {
 		struct {
 			short	chan;
@@ -75,7 +76,6 @@ public:
 	int	yoff;
 	int	boxs;
 	int	mode;
-	int	play;
 	ssize_t	num_rows;
 	ssize_t	num_cols;
 	MppSheetRow *entries_rows;

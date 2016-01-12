@@ -36,7 +36,6 @@ MppSheet::MppSheet(MppMainWindow * parent, int _unit)
 	unit = _unit;
 	num_rows = 0;
 	num_cols = 0;
-	play = 0;
 	entries_ptr = 0;
 	entries_rows = 0;
 	entries_cols = 0;
@@ -63,7 +62,7 @@ MppSheet::MppSheet(MppMainWindow * parent, int _unit)
 	    "Increase duration\0" "Decrease duration\0", 3, 3);
         connect(mode_map, SIGNAL(selectionChanged(int)), this, SLOT(handleModeChanged(int)));
 
-	gl_sheet->addWidget(mode_map,0,0,1,2);
+	gl_sheet->addWidget(mode_map, 0, 0, 1, 2);
 	gl_sheet->addWidget(this, 1, 0, 1, 1);
 	gl_sheet->addWidget(vs_vert, 1, 1, 2, 1);
 	gl_sheet->addWidget(vs_horiz, 2, 0, 1, 2);
@@ -582,7 +581,7 @@ MppSheet::mousePressEvent(QMouseEvent * event)
 				chan = (sm->synthChannel +
 				    entries_rows[y].u.score.chan) & 0xF;
 				mw->output_key(chan, num, 75, 0, 0);
-				play = 1;
+				entries_rows[y].playing = 1;
 				break;
 			default:
 				break;
@@ -600,7 +599,7 @@ MppSheet::mousePressEvent(QMouseEvent * event)
 			chan = (sm->synthChannel +
 			    entries_rows[y].u.score.chan) & 0xF;
 			mw->output_key(chan, num, 75, 0, 0);
-			play = 1;
+			entries_rows[y].playing = 1;
 			break;
 		default:
 			break;
@@ -615,13 +614,13 @@ MppSheet::mouseReleaseEvent(QMouseEvent * event)
 	MppScoreMain *sm = mw->scores_main[unit];
 	ssize_t y;
 
-	if (play == 0)
-		return;
-	play = 0;
-
 	for (y = 0; y != num_rows; y++) {
 		int num;
 		int chan;
+		if (entries_rows[y].playing == 0)
+			continue;
+		entries_rows[y].playing = 0;
+
 		switch (entries_rows[y].type) {
 		case MPP_T_SCORE:
 			num = entries_rows[y].u.score.num +
