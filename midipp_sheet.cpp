@@ -663,7 +663,6 @@ MppSheet :: wheelEvent(QWheelEvent *event)
 			delta = vs_horiz->maximum();
 
 		vs_horiz->setValue(delta);
-		update();
 	} else if (event->orientation() == Qt::Vertical && delta != 0) {
 		delta += vs_vert->value();
 		if (delta < 0)
@@ -672,7 +671,6 @@ MppSheet :: wheelEvent(QWheelEvent *event)
 			delta = vs_vert->maximum();
 
 		vs_vert->setValue(delta);
-		update();
 	}
 	event->accept();
 }
