@@ -894,6 +894,9 @@ MppScoreMain :: handleParse(const QString &pstr)
 		pVisual[visual_max - 1].stop = 0;
 	}
 
+	/* compile before auto-melody */
+	sheet->compile(head);
+	
 	/* check if auto-melody should be applied */
 	if (auto_melody > 0)
 		head.autoMelody(auto_melody - 1);
@@ -947,8 +950,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 	mainWindow->tab_show_control->handle_text_change();
 	mainWindow->tab_show_control->handle_pict_change();
 #endif
-
-	sheet->compile(head);
 }
 
 void
@@ -1850,6 +1851,9 @@ MppScoreMain :: watchdog()
 	} else {
 		viewScroll->setValue(0);
 	}
+
+	/* check sheet view too */
+	sheet->watchdog();
 }
 
 void

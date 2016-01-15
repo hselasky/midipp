@@ -80,13 +80,14 @@ public:
 	ssize_t	num_cols;
 	MppSheetRow *entries_rows;
 	MppSheetCol *entries_cols;
-	int *entries_ptr;
+	int	*entries_ptr;
 	void	sizeInit();
 	void	paintEvent(QPaintEvent *);	
 	void	mousePressEvent(QMouseEvent *);
 	void	mouseReleaseEvent(QMouseEvent *);
 	const QString outputColumn(ssize_t);
-	void wheelEvent(QWheelEvent *);
+	void	wheelEvent(QWheelEvent *);
+	void	watchdog();
 
 public slots:
 	void	handleScrollChanged(int);

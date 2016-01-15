@@ -471,15 +471,15 @@ MppSheet::paintEvent(QPaintEvent * event)
 	/* print column labels */
 	label = -1;
 	for (x = xstart; x < xstop; x++) {
-		if (label != entries_cols[x].label) {
-			label = entries_cols[x].label;
-			xpos = boxs * (x - xstart);
-			paint.setPen(QPen(Mpp.ColorBlack, 0));
-			paint.setBrush(Mpp.ColorBlack);
-			paint.drawText(QRectF(xoff + xpos, yoff - boxs, boxs * 8.0, boxs),
-			    Qt::AlignLeft | Qt::TextSingleLine,
-			    QString("L%1").arg(label));
-		}
+		if (label == entries_cols[x].label)
+			continue;
+		label = entries_cols[x].label;
+		xpos = boxs * (x - xstart);
+		paint.setPen(QPen(Mpp.ColorBlack, 0));
+		paint.setBrush(Mpp.ColorBlack);
+		paint.drawText(QRectF(xoff + xpos, yoff - boxs, boxs * 8.0, boxs),
+		    Qt::AlignLeft | Qt::TextSingleLine,
+		    QString("L%1").arg(label));
 	}
 
 	/* draw empty boxes */
@@ -653,8 +653,9 @@ MppSheet::handleModeChanged(int value)
 void
 MppSheet :: wheelEvent(QWheelEvent *event)
 {
-	int delta = event->delta() / (8 * 15);
-	if (event->orientation() == Qt::Vertical && delta != 0) {
+	int delta = -(event->delta() / (8 * 15));
+
+	if (event->orientation() == Qt::Horizontal && delta != 0) {
 		delta += vs_horiz->value();
 		if (delta < 0)
 			delta = 0;
@@ -663,8 +664,54 @@ MppSheet :: wheelEvent(QWheelEvent *event)
 
 		vs_horiz->setValue(delta);
 		update();
-		event->accept();
-	} else {
-		event->ignore();
+	} else if (event->orientation() == Qt::Vertical && delta != 0) {
+		delta += vs_vert->value();
+		if (delta < 0)
+			delta = 0;
+		else if (delta > vs_vert->maximum())
+			delta = vs_vert->maximum();
+
+		vs_vert->setValue(delta);
+		update();
+	}
+	event->accept();
+}
+
+void
+MppSheet :: watchdog()
+{
+	MppScoreMain *sm = mw->scores_main[unit];
+	int delta = (width() - xoff) / boxs;
+	MppElement *curr;
+	ssize_t x;
+	int y;
+
+	pthread_mutex_lock(&mw->mtx);
+	curr = sm->head.state.curr_start;
+	pthread_mutex_unlock(&mw->mtx);
+
+	/* range check */
+	if (delta < 1)
+		delta = 1;
+
+	if (curr != 0) {
+		int line = curr->line;
+		for (x = 0; x != num_cols; x++) {
+			if (entries_cols[x].line == line)
+				break;
+		}
+		if (x != num_cols) {
+			y = vs_horiz->value();
+			if (x > y)
+				y += ((x - y) / delta) * delta;
+			else
+				y -= ((y - x + delta - 1) / delta) * delta;
+			if (y < 0)
+				y = 0;
+			else if (y > vs_horiz->maximum())
+				y = vs_horiz->maximum();
+
+			vs_horiz->setValue(y);
+		}
 	}
 }
