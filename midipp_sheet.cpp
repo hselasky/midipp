@@ -40,6 +40,8 @@ MppSheet::MppSheet(MppMainWindow * parent, int _unit)
 	entries_rows = 0;
 	entries_cols = 0;
 	mode = 0;
+	delta_h = 0;
+	delta_v = 0;
 
 	sizeInit();
 
@@ -653,24 +655,30 @@ MppSheet::handleModeChanged(int value)
 void
 MppSheet :: wheelEvent(QWheelEvent *event)
 {
-	int delta = -(event->delta() / (8 * 15));
-
-	if (event->orientation() == Qt::Horizontal && delta != 0) {
-		delta += vs_horiz->value();
-		if (delta < 0)
-			delta = 0;
-		else if (delta > vs_horiz->maximum())
-			delta = vs_horiz->maximum();
-
-		vs_horiz->setValue(delta);
-	} else if (event->orientation() == Qt::Vertical && delta != 0) {
-		delta += vs_vert->value();
-		if (delta < 0)
-			delta = 0;
-		else if (delta > vs_vert->maximum())
-			delta = vs_vert->maximum();
-
-		vs_vert->setValue(delta);
+	if (event->orientation() == Qt::Horizontal) {
+		delta_h -= event->delta();
+		int delta = delta_h / MPP_WHEEL_STEP;
+		delta_h %= MPP_WHEEL_STEP;
+		if (delta != 0) {
+			delta += vs_horiz->value();
+			if (delta < 0)
+				delta = 0;
+			else if (delta > vs_horiz->maximum())
+				delta = vs_horiz->maximum();
+			vs_horiz->setValue(delta);
+		}
+	} else if (event->orientation() == Qt::Vertical) {
+		delta_v -= event->delta();
+		int delta = delta_v / MPP_WHEEL_STEP;
+		delta_v %= MPP_WHEEL_STEP;
+		if (delta != 0) {
+			delta += vs_vert->value();
+			if (delta < 0)
+				delta = 0;
+			else if (delta > vs_vert->maximum())
+				delta = vs_vert->maximum();
+			vs_vert->setValue(delta);
+		}
 	}
 	event->accept();
 }

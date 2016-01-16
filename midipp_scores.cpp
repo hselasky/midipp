@@ -62,6 +62,7 @@ MppCountNewline(const QString &str)
 MppScoreView :: MppScoreView(MppScoreMain *parent)
 {
 	pScores = parent;
+	delta_v = 0;
 	setFocusPolicy(Qt::ClickFocus);
 }
 
@@ -75,20 +76,20 @@ void
 MppScoreView :: wheelEvent(QWheelEvent *event)
 {
 	QScrollBar *ps = pScores->viewScroll;
-	int value;
 
-	value = ps->value();
-
-	if (event->delta() < 0)
-		value ++;
-	else if (event->delta() > 0)
-		value --;
-	else
-		goto done;
-
-	if (value >= ps->minimum() && value <= ps->maximum())
-		ps->setValue(value);
-done:
+	if (event->orientation() == Qt::Vertical) {
+		delta_v -= event->delta();
+		int delta = delta_v / MPP_WHEEL_STEP;
+		delta_v %= MPP_WHEEL_STEP;
+		if (delta != 0) {
+			delta += ps->value();
+			if (delta < 0)
+				delta = 0;
+			else if (delta > ps->maximum())
+				delta = ps->maximum();
+			ps->setValue(delta);
+		}
+	}
 	event->accept();
 }
 

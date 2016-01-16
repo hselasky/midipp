@@ -105,6 +105,7 @@
 #define	MPP_MAX_BPM	32
 #define	MPP_MAX_LBUTTON	16
 #define	MPP_MIN_POS	4	/* ticks */
+#define	MPP_WHEEL_STEP	(8 * 15)
 #define	MPP_PRESSED_MAX	128
 #define	MPP_MAX_DURATION 255	/* inclusive */
 #define	MPP_MAGIC_DEVNO	(UMIDI20_N_DEVICES - 1)

@@ -40,6 +40,7 @@ protected:
 	void mousePressEvent(QMouseEvent *);
 	void wheelEvent(QWheelEvent *);
 	void keyPressEvent(QKeyEvent *);
+	int delta_v;
 
 	MppScoreMain *pScores;
 };

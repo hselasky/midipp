@@ -81,6 +81,7 @@ public:
 	QPushButton *but_insert;
 
 	int rol_value;
+	int delta_v;
 
 	uint8_t current_score[MPP_MAX_VAR_OFF];
 	uint8_t auto_base[MPP_MAX_VAR_OFF];

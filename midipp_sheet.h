@@ -76,6 +76,8 @@ public:
 	int	yoff;
 	int	boxs;
 	int	mode;
+	int	delta_h;
+	int	delta_v;
 	ssize_t	num_rows;
 	ssize_t	num_cols;
 	MppSheetRow *entries_rows;

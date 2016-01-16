@@ -826,6 +826,7 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	int n;
 
 	rol_value = 0;
+	delta_v = 0;
 
 	mw = _mw;
 
@@ -1147,12 +1148,12 @@ MppDecodeTab :: keyPressEvent(QKeyEvent *event)
 void
 MppDecodeTab :: wheelEvent(QWheelEvent *event)
 {
-	int num = event->delta();
-
-	if (event->orientation() == Qt::Vertical && num != 0) {
-		handle_parse(num / (8 * 15));
-		event->accept();
-	} else {
-		event->ignore();
+	if (event->orientation() == Qt::Vertical) {
+		delta_v -= event->delta();
+		int delta = delta_v / MPP_WHEEL_STEP;
+		delta_v %= MPP_WHEEL_STEP;
+		if (delta != 0)
+			handle_parse(delta);
 	}
+	event->accept();
 }
