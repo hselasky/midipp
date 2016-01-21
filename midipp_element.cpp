@@ -1400,7 +1400,9 @@ MppHead :: stepLine(MppElement **ppstart, MppElement **ppstop)
 						goto done;
 					break;
 				} else if (ptr->type == MPP_T_SCORE ||
-				    ptr->type == MPP_T_MACRO) {
+				    ptr->type == MPP_T_MACRO ||
+				    ptr->type == MPP_T_TIMER) {
+					/* valid event */
 					goto done;
 				} else if (ptr->type == MPP_T_COMMAND) {
 					switch (ptr->value[0]) {
