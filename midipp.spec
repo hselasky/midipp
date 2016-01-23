@@ -52,6 +52,8 @@ unset INSTALL_ROOT
 - Fixed send song events button.
 - Improve lyrics parsing.
 - Added new sheet tab feature.
+- Fixed saving of song events setting.
+- Updated play tab GUI a bit.
 * Thu Nov 27 2015 HPS hps@selasky.org 1.3.0-1
 - Improved detection of chords when transposing a song.
 - Shrunk GUI a bit.
