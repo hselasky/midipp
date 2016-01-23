@@ -147,7 +147,7 @@ MppMode :: update_all(void)
 	int chord_norm;
 	int song_events;
 
-	pthread_mutex_lock(&sm->mainWindow->mtx);
+	sm->mainWindow->atomic_lock();
 	base_key = sm->baseKey;
 	key_delay = sm->delayNoise;
 	channelInput = sm->inputChannel;
@@ -158,7 +158,7 @@ MppMode :: update_all(void)
 	chord_contrast = sm->chordContrast;
 	chord_norm = sm->chordNormalize;
 	song_events = sm->songEventsOn;
-	pthread_mutex_unlock(&sm->mainWindow->mtx);
+	sm->mainWindow->atomic_unlock();
 
 	spn_base->setValue(base_key);
 	sli_delay->setValue(key_delay);
@@ -239,7 +239,7 @@ MppMode :: handle_changed()
 	if (key_mode < 0 || key_mode >= MM_PASS_MAX)
 		key_mode = 0;
 
-	pthread_mutex_lock(&sm->mainWindow->mtx);
+	sm->mainWindow->atomic_lock();
 	sm->baseKey = base_key;
 	sm->delayNoise = key_delay;
 	sm->inputChannel = channelInput;
@@ -250,5 +250,5 @@ MppMode :: handle_changed()
 	sm->chordContrast = chord_contrast;
 	sm->chordNormalize = chord_norm;
 	sm->songEventsOn = song_events;
-	pthread_mutex_unlock(&sm->mainWindow->mtx);
+	sm->mainWindow->atomic_unlock();
 }

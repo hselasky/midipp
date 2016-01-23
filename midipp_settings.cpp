@@ -279,7 +279,7 @@ MppSettings :: doLoad(void)
 			if (chordNormalize < 0 || chordNormalize > 1)
 				chordNormalize = 1;
 
-			pthread_mutex_lock(&mw->mtx);
+			mw->atomic_lock();
 			mw->scores_main[x]->baseKey = baseKey;
 			mw->scores_main[x]->delayNoise = delayNoise;
 			mw->scores_main[x]->keyMode = keyMode;
@@ -289,17 +289,17 @@ MppSettings :: doLoad(void)
 			mw->scores_main[x]->synthChannelTreb = synthChannelTreb;
 			mw->scores_main[x]->chordContrast = chordContrast;
 			mw->scores_main[x]->chordNormalize = chordNormalize;
-			pthread_mutex_unlock(&mw->mtx);
+			mw->atomic_unlock();
 
 			mw->dlg_mode[x]->update_all();
 		}
 
 		int value[2];
 
-		pthread_mutex_lock(&mw->mtx);
+		mw->atomic_lock();
 		value[0] = mw->scores_main[0]->keyMode;
 		value[1] = mw->scores_main[1]->keyMode;
-		pthread_mutex_unlock(&mw->mtx);
+		mw->atomic_unlock();
 
 		mw->mbm_key_mode_a->setSelection(value[0]);
 		mw->mbm_key_mode_b->setSelection(value[1]);
@@ -351,7 +351,7 @@ MppSettings :: doLoad(void)
 			for (x = 0; x != 16; x++)
 				mute[x] = valueDefault(concat("device%d/mute%d", y, x), 0) ? 1 : 0;
 
-			pthread_mutex_lock(&mw->mtx);
+			mw->atomic_lock();
 			mw->muteProgram[y] = muteProgram; 
 			mw->mutePedal[y] = mutePedal; 
 			mw->enableLocalKeys[y] = enableLocalKeys; 
@@ -361,7 +361,7 @@ MppSettings :: doLoad(void)
 
 			for (x = 0; x != 16; x++)
 				mw->muteMap[y][x] = mute[x];
-			pthread_mutex_unlock(&mw->mtx);
+			mw->atomic_unlock();
 		}
 	}
 	if (save_font > 0) {

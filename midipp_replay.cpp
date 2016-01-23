@@ -138,10 +138,10 @@ MppReplayTab :: handleStartRecordSomething()
 	handleEraseMidiTracks();
 
 	if (saved_mode < 0) {
-		pthread_mutex_lock(&mainWindow->mtx);
+		mainWindow->atomic_lock();
 		saved_mode = mainWindow->scores_main[0]->keyMode;
 		mainWindow->scores_main[0]->keyMode = MM_PASS_ALL;
-		pthread_mutex_unlock(&mainWindow->mtx);
+		mainWindow->atomic_unlock();
 
 		mainWindow->handle_mode(0, 0);
 	}
@@ -156,9 +156,9 @@ MppReplayTab :: handleRestoreMode()
 	if (saved_mode < 0)
 		return;
 
-	pthread_mutex_lock(&mainWindow->mtx);
+	mainWindow->atomic_lock();
 	mainWindow->scores_main[0]->keyMode = saved_mode;
-	pthread_mutex_unlock(&mainWindow->mtx);
+	mainWindow->atomic_unlock();
 
 	mainWindow->handle_mode(0, 0);
 
@@ -258,11 +258,11 @@ MppReplayTab :: handleCheckMode()
 {
 	bool change;
 
-	pthread_mutex_lock(&mainWindow->mtx);
+	mainWindow->atomic_lock();
 	change = (mainWindow->scores_main[0]->keyMode == MM_PASS_ALL);
 	if (change)
 		mainWindow->scores_main[0]->keyMode = MM_PASS_NONE_FIXED;
-	pthread_mutex_unlock(&mainWindow->mtx);
+	mainWindow->atomic_unlock();
 
 	if (change)
 		mainWindow->handle_mode(0, 0);

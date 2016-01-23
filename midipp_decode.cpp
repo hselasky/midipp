@@ -916,7 +916,7 @@ MppDecodeTab :: handle_play_press(int value)
 	uint8_t vel = value & 127;
 	uint8_t x;
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	for (x = 0; x != MPP_MAX_VAR_OFF; x++) {
 		if (auto_base[x] != 0)
 			mw->output_key(sm->synthChannel, auto_base[x], vel, 0, 0);
@@ -924,7 +924,7 @@ MppDecodeTab :: handle_play_press(int value)
 	for (x = 0; current_score[x]; x++) {
 		mw->output_key(sm->synthChannel, current_score[x], vel, 0, 0);
 	}
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void
@@ -933,7 +933,7 @@ MppDecodeTab :: handle_play_release(int value)
 	MppScoreMain *sm = mw->scores_main[value / 128];
 	uint8_t x;
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	for (x = 0; x != MPP_MAX_VAR_OFF; x++) {
 		if (auto_base[x] != 0)
 			mw->output_key(sm->synthChannel, auto_base[x], 0, 0, 0);
@@ -941,7 +941,7 @@ MppDecodeTab :: handle_play_release(int value)
 	for (x = 0; current_score[x]; x++) {
 		mw->output_key(sm->synthChannel, current_score[x], 0, 0, 0);
 	}
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void

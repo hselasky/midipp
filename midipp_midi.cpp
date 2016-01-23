@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2016 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -74,6 +74,7 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 		    t,0+u,1,1,Qt::AlignLeft|Qt::AlignVCenter);
 
 		cbx_import[x] = new MppCheckBox();
+		cbx_import[x]->setChecked((_mask >> x) & 1);
 		connect(cbx_import[x], SIGNAL(stateChanged(int,int)), this, SLOT(handle_checkboxes()));
 		gb_import->addWidget(cbx_import[x],t,1+u,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
 	}

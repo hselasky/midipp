@@ -388,11 +388,11 @@ MppShowControl :: handle_text_watchdog()
 	    aobj[1].isAnimating())
 		return;
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	last = sm.head.state.last_start;
 	curr = sm.head.state.curr_start;
 	text = sm.head.state.text_curr;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 
 	/* locate last and current play position */
 	sm.locateVisual(last, &visual_last_index, 0, 0);
@@ -481,9 +481,9 @@ MppShowControl :: handle_pict_watchdog()
 	if (aobj[2].isAnimating())
 		return;
 	
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	image = sm.head.state.image_curr;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 
 	/* check if background should not be shown */
 	if (current_mode < MPP_SHOW_ST_BACKGROUND) {
@@ -546,16 +546,16 @@ MppShowControl :: handle_fontfgcolor()
 
 	MppScoreMain &sm = *mw->scores_main[trackview];	
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	QColor color = sm.head.state.text_curr.color.fg();
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 
 	QColorDialog dlg(color);
 
 	if (dlg.exec() == QDialog::Accepted) {
-		pthread_mutex_lock(&mw->mtx);
+		mw->atomic_lock();
 		sm.head.state.text_curr.color.setFg(dlg.currentColor());
-		pthread_mutex_unlock(&mw->mtx);
+		mw->atomic_unlock();
 	}
 }
 
@@ -567,16 +567,16 @@ MppShowControl :: handle_fontbgcolor()
 
 	MppScoreMain &sm = *mw->scores_main[trackview];	
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	QColor color = sm.head.state.text_curr.color.bg();
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 
 	QColorDialog dlg(color);
 
 	if (dlg.exec() == QDialog::Accepted) {
-		pthread_mutex_lock(&mw->mtx);
+		mw->atomic_lock();
 		sm.head.state.text_curr.color.setBg(dlg.currentColor());
-		pthread_mutex_unlock(&mw->mtx);
+		mw->atomic_unlock();
 	}
 }
 
@@ -588,9 +588,9 @@ MppShowControl :: handle_fontcenter()
 
 	MppScoreMain &sm = *mw->scores_main[trackview];	
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	sm.head.state.text_curr.align = 0;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void
@@ -601,9 +601,9 @@ MppShowControl :: handle_fontright()
 
 	MppScoreMain &sm = *mw->scores_main[trackview];	
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	sm.head.state.text_curr.align = 1;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void
@@ -614,9 +614,9 @@ MppShowControl :: handle_fontleft()
 
 	MppScoreMain &sm = *mw->scores_main[trackview];	
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	sm.head.state.text_curr.align = 2;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void
@@ -627,12 +627,12 @@ MppShowControl :: handle_fontmorespace()
 
 	MppScoreMain &sm = *mw->scores_main[trackview];	
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	if (sm.head.state.text_curr.space + 9 > 99)
 		sm.head.state.text_curr.space = 99;
 	else
 		sm.head.state.text_curr.space += 9;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void
@@ -643,12 +643,12 @@ MppShowControl :: handle_fontlessspace()
 
 	MppScoreMain &sm = *mw->scores_main[trackview];	
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	if (sm.head.state.text_curr.space > 9)
 		sm.head.state.text_curr.space -= 9;
 	else
 		sm.head.state.text_curr.space = 0;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void
@@ -679,16 +679,16 @@ MppShowControl :: handle_imagebgcolor()
 
 	MppScoreMain &sm = *mw->scores_main[trackview];	
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	QColor color = sm.head.state.image_curr.color.bg();
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 
 	QColorDialog dlg(color);
 
 	if (dlg.exec() == QDialog::Accepted) {
-		pthread_mutex_lock(&mw->mtx);
+		mw->atomic_lock();
 		sm.head.state.image_curr.color.setBg(dlg.currentColor());
-		pthread_mutex_unlock(&mw->mtx);
+		mw->atomic_unlock();
 	}
 }
 
@@ -700,9 +700,9 @@ MppShowControl :: handle_imagezoom()
 
 	MppScoreMain &sm = *mw->scores_main[trackview];	
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	sm.head.state.image_curr.how = 0;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void
@@ -713,9 +713,9 @@ MppShowControl :: handle_imagefit()
 
 	MppScoreMain &sm = *mw->scores_main[trackview];	
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	sm.head.state.image_curr.how = 1;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void
@@ -726,9 +726,9 @@ MppShowControl :: handle_imagefirst()
 
 	MppScoreMain &sm = *mw->scores_main[trackview];	
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	sm.head.state.image_curr.num = 0;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void
@@ -739,13 +739,13 @@ MppShowControl :: handle_imagenext()
 
 	MppScoreMain &sm = *mw->scores_main[trackview];	
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	if ((int)sm.head.state.image_curr.num < files.size())
 		sm.head.state.image_curr.num++;
 	/* range check */
 	if ((int)sm.head.state.image_curr.num > files.size())
 		sm.head.state.image_curr.num = 0;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void
@@ -756,13 +756,13 @@ MppShowControl :: handle_imageprev()
 
 	MppScoreMain &sm = *mw->scores_main[trackview];	
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	if (sm.head.state.image_curr.num != 0)
 		sm.head.state.image_curr.num--;
 	/* range check */
 	if ((int)sm.head.state.image_curr.num > files.size())
 		sm.head.state.image_curr.num = 0;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void
@@ -773,9 +773,9 @@ MppShowControl :: handle_imagecenter()
 
 	MppScoreMain &sm = *mw->scores_main[trackview];	
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	sm.head.state.image_curr.align = 0;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void
@@ -786,9 +786,9 @@ MppShowControl :: handle_imageright()
 
 	MppScoreMain &sm = *mw->scores_main[trackview];	
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	sm.head.state.image_curr.align = 1;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void
@@ -799,9 +799,9 @@ MppShowControl :: handle_imageleft()
 
 	MppScoreMain &sm = *mw->scores_main[trackview];	
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	sm.head.state.image_curr.align = 2;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void
@@ -812,7 +812,7 @@ MppShowControl :: handle_copysettings()
 
 	MppScoreMain &sm = *mw->scores_main[trackview];
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	QString str =
 	  QString("K7.%1.%2.%3 /* image */\n"
 		  "K8.%4.%5.%6 /* bg color */\n"
@@ -834,7 +834,7 @@ MppShowControl :: handle_copysettings()
 	  .arg(sm.head.state.text_curr.color.fg_red)
 	  .arg(sm.head.state.text_curr.color.fg_green)
 	  .arg(sm.head.state.text_curr.color.fg_blue);
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 
 	QApplication::clipboard()->setText(str);
 }

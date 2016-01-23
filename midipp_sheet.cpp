@@ -421,7 +421,7 @@ MppSheet::paintEvent(QPaintEvent * event)
 	sizeInit();
 	paint.setFont(mw->editFont);
 	
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	curr = sm->head.state.curr_start;
 	if (curr != 0)
 		curr_line = curr->line;
@@ -432,7 +432,7 @@ MppSheet::paintEvent(QPaintEvent * event)
 		last_line = last->line;
 	else
 		last_line = -1;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 
 	if (curr_line > -1) {
 		for (x = 0; x != num_cols; x++) {
@@ -692,9 +692,9 @@ MppSheet :: watchdog()
 	ssize_t x;
 	int y;
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	curr = sm->head.state.curr_start;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 
 	/* range check */
 	if (delta < 1)

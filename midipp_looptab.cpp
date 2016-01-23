@@ -119,14 +119,14 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 	connect(mbm_pedal_rec, SIGNAL(selectionChanged(int)), this, SLOT(handle_pedal_rec(int)));
 	gl->addWidget(mbm_pedal_rec, 0, 4, 1, 2);
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 
 	needs_update = 1;
 
 	for (n = 0; n != MPP_LOOP_MAX; n++)
 		track[n] = umidi20_track_alloc();
 
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 
 	handle_value_changed(0);
 }
@@ -135,12 +135,12 @@ MppLoopTab :: ~MppLoopTab()
 {
 	uint8_t n;
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 
 	for (n = 0; n != MPP_LOOP_MAX; n++)
 		umidi20_track_free(track[n]);
 
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 /* This function must be called locked */
@@ -216,7 +216,7 @@ MppLoopTab :: add_pedal(uint8_t val)
 void
 MppLoopTab :: handle_trig(int n)
 {
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	switch (state[n]) {
 	case ST_IDLE:
 		state[n] = ST_REC;
@@ -229,7 +229,7 @@ MppLoopTab :: handle_trig(int n)
 	}
 	last_loop = n;
 	needs_update = 1;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void
@@ -359,9 +359,9 @@ MppLoopTab :: handle_trigN(int key, int vel)
 void
 MppLoopTab :: handle_clear(int n)
 {
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	handle_clearN(n);
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 /* Must be called locked */
@@ -381,11 +381,11 @@ MppLoopTab :: handle_reset()
 {
 	uint8_t n;
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	for (n = 0; n != MPP_LOOP_MAX; n++)
 		handle_clearN(n);
 	last_loop = 0;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 
 	mbm_loop->setSelection(0);
 	mbm_pedal_rec->setSelection(0);
@@ -406,42 +406,42 @@ MppLoopTab :: handle_value_changed(int dummy)
 	for (x = 0; x != MPP_LOOP_MAX; x++)
 		temp[x] = spn_chan[x]->value();
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	for (x = 0; x != MPP_LOOP_MAX; x++)
 		chan_val[x] = temp[x];
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 
 	for (x = 0; x != MPP_LOOP_MAX; x++)
 		temp[x] = spn_key[x]->value();
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	for (x = 0; x != MPP_LOOP_MAX; x++)
 		key_val[x] = temp[x];
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void
 MppLoopTab :: handle_pedal_rec(int value)
 {
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	pedal_rec = value;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void
 MppLoopTab :: handle_loop(int value)
 {
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	loop_on = value;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void
 MppLoopTab :: handle_multi(int value)
 {
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	is_multi = value;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void
@@ -454,10 +454,10 @@ MppLoopTab :: watchdog()
 	const char *pbuf;
 	uint8_t new_chan;
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	n = needs_update;
 	needs_update = 0;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 
 	if (n == 0)
 		return;
@@ -466,7 +466,7 @@ MppLoopTab :: watchdog()
 
 	for (n = 0; n != MPP_LOOP_MAX; n++) {
 
-		pthread_mutex_lock(&mw->mtx);
+		mw->atomic_lock();
 
 		dur = (last_pos[n] - first_pos[n]) / 10;
 
@@ -491,7 +491,7 @@ MppLoopTab :: watchdog()
 		else
 			snprintf(buf_state, sizeof(buf_state), "<%s>", pbuf);
 
-		pthread_mutex_unlock(&mw->mtx);
+		mw->atomic_unlock();
 
 		lbl_dur[n]->setText(tr(buf_dur));
 		lbl_state[n]->setText(tr(buf_state));

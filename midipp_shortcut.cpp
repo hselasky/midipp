@@ -298,11 +298,11 @@ MppShortcutTab :: handle_watchdog()
 			}
 		}
 
-		pthread_mutex_lock(&mw->mtx);
+		mw->atomic_lock();
 		filter[n][0] = buf[0];
 		filter[n][1] = buf[1];
 		filter[n][2] = buf[2];
-		pthread_mutex_unlock(&mw->mtx);
+		mw->atomic_unlock();
 	}
 }
 
@@ -338,9 +338,9 @@ MppShortcutTab :: handle_update()
 		if (but_rec[x]->isFlat())
 			break;
 	}
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	mw->controlRecordOn = (x != MPP_SHORTCUT_MAX);
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 void

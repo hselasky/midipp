@@ -554,11 +554,11 @@ MppScoreMain :: viewMousePressEvent(QMouseEvent *e)
 
 	mainWindow->handle_tab_changed(1);
 
-	pthread_mutex_lock(&mainWindow->mtx);
+	mainWindow->atomic_lock();
 	head.jumpPointer(pVisual[yi].start);
 	head.syncLast();
 	mainWindow->handle_stop();
-	pthread_mutex_unlock(&mainWindow->mtx);
+	mainWindow->atomic_unlock();
 }
 
 void
@@ -639,11 +639,11 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 
 	paint.fillRect(event->rect(), Mpp.ColorWhite);
 
-	pthread_mutex_lock(&mainWindow->mtx);
+	mainWindow->atomic_lock();
 	curr = head.state.curr_start;
 	last = head.state.last_start;
 	scroll = picScroll;
-	pthread_mutex_unlock(&mainWindow->mtx);
+	mainWindow->atomic_unlock();
 
 	y_blocks = (viewWidgetSub->height() / visual_y_max);
 	if (y_blocks == 0)
@@ -725,9 +725,9 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 		int width = viewWidgetSub->width();
 		int mask;
 
-		pthread_mutex_lock(&mainWindow->mtx);
+		mainWindow->atomic_lock();
 		mask = ((mainWindow->get_time_offset() % 1000) >= 500);
-		pthread_mutex_unlock(&mainWindow->mtx);
+		mainWindow->atomic_unlock();
 
 		if (width >= (2 * MPP_VISUAL_C_MAX)) {
 		  if (pressed_future != 1 || mask) {
@@ -803,11 +803,11 @@ MppScoreMain :: handleParse(const QString &pstr)
 				switch (ptr->value[0]) {
 				case MPP_CMD_BPM_REF:
 					/* update BPM timer */
-					pthread_mutex_lock(&mainWindow->mtx);
+					mainWindow->atomic_lock();
 					mainWindow->dlg_bpm->period_ref = ptr->value[1];
 					mainWindow->dlg_bpm->period_cur = ptr->value[2];
 					mainWindow->dlg_bpm->handle_update();
-					pthread_mutex_unlock(&mainWindow->mtx);
+					mainWindow->atomic_unlock();
 					break;
 				case MPP_CMD_AUTO_MELODY:
 					auto_melody = ptr->value[1];
@@ -1787,9 +1787,9 @@ MppScoreMain :: handleCompile(int force)
 		if (visual_y_max < 1)
 			visual_y_max = 1;
 
-		pthread_mutex_lock(&mainWindow->mtx);
+		mainWindow->atomic_lock();
 		handleParse(editText);
-		pthread_mutex_unlock(&mainWindow->mtx);
+		mainWindow->atomic_unlock();
 
 		visual_x_max = 1;
 		for (x = 0; x != visual_max; x++) {
@@ -1834,9 +1834,9 @@ MppScoreMain :: watchdog()
 
 	/* Compute scrollbar */
 
-	pthread_mutex_lock(&mainWindow->mtx);
+	mainWindow->atomic_lock();
 	curr = head.state.curr_start;
-	pthread_mutex_unlock(&mainWindow->mtx);
+	mainWindow->atomic_unlock();
 
 	/* Compute alignment factor */
 
@@ -1860,9 +1860,9 @@ MppScoreMain :: watchdog()
 void
 MppScoreMain :: handleScrollChanged(int value)
 {
-	pthread_mutex_lock(&mainWindow->mtx);
+	mainWindow->atomic_lock();
 	picScroll = value;
-	pthread_mutex_unlock(&mainWindow->mtx);
+	mainWindow->atomic_unlock();
 
 	viewWidgetSub->update();
 }
@@ -2240,12 +2240,12 @@ MppScoreMain :: getCurrLabel(void)
 	int seq;
 	int x;
 
-	pthread_mutex_lock(&mainWindow->mtx);
+	mainWindow->atomic_lock();
 	if (head.state.curr_start != 0)
 		seq = head.state.curr_start->sequence;
 	else
 		seq = 0;
-	pthread_mutex_unlock(&mainWindow->mtx);
+	mainWindow->atomic_unlock();
 
 	for (x = 0; x != MPP_MAX_LABELS; x++) {
 		if (head.state.label_start[x] == 0)

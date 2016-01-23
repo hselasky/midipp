@@ -50,14 +50,14 @@ MppMetronomeCallback(void *arg)
         MppMetronome *mm = (MppMetronome *)arg;
         MppMainWindow *mw = mm->mainWindow;
 
-        pthread_mutex_lock(&mw->mtx);
+        mw->atomic_lock();
         if (mm->enabled != 0 && mw->midiTriggered != 0) {
 		if (mw->check_play(mm->chan, 0))
 			MppMetronomeOutput(mm, &mw->mid_data);
 		if (mm->enabled == 2 && mw->check_record(mm->chan, 0) != 0)
 			MppMetronomeOutput(mm, &mw->mid_data);
 	}
-        pthread_mutex_unlock(&mw->mtx);
+        mw->atomic_unlock();
 }
 
 MppMetronome ::  MppMetronome(MppMainWindow *parent)
@@ -142,25 +142,25 @@ MppMetronome :: ~MppMetronome()
 void
 MppMetronome :: handleVolumeChanged(int val)
 {
-	pthread_mutex_lock(&mainWindow->mtx);
+	mainWindow->atomic_lock();
 	volume = val;
-	pthread_mutex_unlock(&mainWindow->mtx);
+	mainWindow->atomic_unlock();
 }
 
 void
 MppMetronome :: handleTimeout()
 {
-	pthread_mutex_lock(&mainWindow->mtx);
+	mainWindow->atomic_lock();
 	handleUpdateLocked();
-	pthread_mutex_unlock(&mainWindow->mtx);
+	mainWindow->atomic_unlock();
 }
 
 void
 MppMetronome :: handleBPMChanged(int val)
 {
-	pthread_mutex_lock(&mainWindow->mtx);
+	mainWindow->atomic_lock();
 	bpm = val;
-	pthread_mutex_unlock(&mainWindow->mtx);
+	mainWindow->atomic_unlock();
 
 	tim_config->start(500);
 }
@@ -174,39 +174,39 @@ MppMetronome :: handleUpdateLocked()
 void
 MppMetronome :: handleEnableChanged(int val)
 {
-  	pthread_mutex_lock(&mainWindow->mtx);
+  	mainWindow->atomic_lock();
 	enabled = val;
-	pthread_mutex_unlock(&mainWindow->mtx);
+	mainWindow->atomic_unlock();
 }
 
 void
 MppMetronome :: handleChanChanged(int val)
 {
-	pthread_mutex_lock(&mainWindow->mtx);
+	mainWindow->atomic_lock();
 	chan = val;
-	pthread_mutex_unlock(&mainWindow->mtx);
+	mainWindow->atomic_unlock();
 }
 
 void
 MppMetronome :: handleKeyBarChanged(int val)
 {
-  	pthread_mutex_lock(&mainWindow->mtx);
+  	mainWindow->atomic_lock();
 	key_bar = val;
-	pthread_mutex_unlock(&mainWindow->mtx);
+	mainWindow->atomic_unlock();
 }
 
 void
 MppMetronome :: handleKeyBeatChanged(int val)
 {
-	pthread_mutex_lock(&mainWindow->mtx);
+	mainWindow->atomic_lock();
 	key_beat = val;
-	pthread_mutex_unlock(&mainWindow->mtx);
+	mainWindow->atomic_unlock();
 }
 
 void
 MppMetronome :: handleModeChanged(int val)
 {
-	pthread_mutex_lock(&mainWindow->mtx);
+	mainWindow->atomic_lock();
 	mode = val;
-	pthread_mutex_unlock(&mainWindow->mtx);
+	mainWindow->atomic_unlock();
 }

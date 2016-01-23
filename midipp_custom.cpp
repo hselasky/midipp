@@ -106,7 +106,7 @@ MppCustomTab :: handle_send_custom(int which)
 
 	/* send MIDI data */
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 
 	trig = mw->midiTriggered;
 	mw->midiTriggered = 1;
@@ -118,6 +118,6 @@ MppCustomTab :: handle_send_custom(int which)
 	}
 	mw->midiTriggered = trig;
 
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 

@@ -138,7 +138,7 @@ MppMuteMap :: handle_revert_all()
 	uint8_t mute_control_copy;
 	int n;
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	for (n = 0; n != 16; n++)
 		mute_copy[n] = mw->muteMap[devno][n] ? 1 : 0;
 
@@ -152,7 +152,7 @@ MppMuteMap :: handle_revert_all()
 		mute_local_keys_copy = 0;
 	mute_midi_non_channel_copy = mw->muteAllNonChannel[devno];
 	mute_control_copy = mw->muteAllControl[devno];
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 
 	for (n = 0; n != 16; n++)
 		cbx_mute[n]->setChecked(mute_copy[n]);
@@ -186,7 +186,7 @@ MppMuteMap :: handle_apply_all()
 	mute_midi_non_channel_copy = (cbx_mute_non_channel->currSelection != 0);
 	mute_control_copy = (cbx_mute_control->currSelection != 0);
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	for (n = 0; n != 16; n++)
 		mw->muteMap[devno][n] = mute_copy[n];
 
@@ -196,7 +196,7 @@ MppMuteMap :: handle_apply_all()
 	mw->disableLocalKeys[devno] = mute_local_disable_copy;
 	mw->muteAllNonChannel[devno] = mute_midi_non_channel_copy;
 	mw->muteAllControl[devno] = mute_control_copy;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 
 	this->accept();
 }
