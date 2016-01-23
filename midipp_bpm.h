@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2014 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2016 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,7 +41,6 @@ public:
 	void handle_jump_event_locked(int);
 
 	void handle_update(int = 0);
-	void sync();
 
 	MppMainWindow *mw;
 
@@ -64,7 +63,6 @@ public:
 
 	QTimer *tim_config;
 
-	QPushButton *but_bpm_enable;
 	QPushButton *but_reset_all;
 	QPushButton *but_done_all;
 
@@ -91,7 +89,7 @@ public:
 public slots:
 	void handle_config_apply();
 	void handle_config_change(int = 0);
-	void handle_bpm_enable();
+	void handle_bpm_enable(int);
 	void handle_reload_all();
 	void handle_reset_all();
 	void handle_done_all();

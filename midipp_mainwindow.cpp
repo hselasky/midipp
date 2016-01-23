@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2015 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2016 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -381,7 +381,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* <Play> Tab */
 
-	but_bpm = new QPushButton(tr("BP&M generator"));
+	but_bpm = new QPushButton(tr("BP&M generator\nsettings"));
 	connect(but_bpm, SIGNAL(released()), this, SLOT(handle_bpm()));
 
 	dlg_bpm = new MppBpm(this);
@@ -428,6 +428,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mbm_key_mode_b = new MppButtonMap("Key Mode for view B\0" "ALL\0" "MIXED\0" "FIXED\0" "TRANSP\0" "CHORD-PIANO\0" "CHORD-GUITAR\0", 6, 3);
 	connect(mbm_key_mode_b, SIGNAL(selectionChanged(int)), this, SLOT(handle_key_mode_b(int)));
 
+	mbm_bpm_generator = new MppButtonMap("BPM generator\0" "OFF\0" "ON\0", 2, 2);
+	connect(mbm_bpm_generator, SIGNAL(selectionChanged(int)), dlg_bpm, SLOT(handle_bpm_enable(int)));
+
 	/* First column */
 
 	tab_play_gl->addWidget(gl_time,0,0,1,1);
@@ -438,8 +441,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* Second column */
 
-	tab_play_gl->addWidget(gl_synth_play,0,1,2,2);
-	tab_play_gl->addWidget(mbm_score_record, 2,1,1,2);
+	tab_play_gl->addWidget(gl_synth_play, 0,1,2,2);
+	tab_play_gl->addWidget(mbm_score_record, 2,2,1,1);
+	tab_play_gl->addWidget(mbm_bpm_generator, 2,1,1,1);
 	tab_play_gl->addWidget(gl_bpm, 3,1,1,2);
 	tab_play_gl->addWidget(mbm_key_mode_b, 4,1,1,2);
 
@@ -455,7 +459,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	gl_ctrl->addWidget(but_midi_rewind, 2, 0, 1, 1);
 	gl_ctrl->addWidget(but_compile, 3, 0, 1, 1);
 
-	gl_synth_play->addWidget(but_bpm, 0, 0, 1, 2);
+	gl_synth_play->addWidget(but_bpm, 0, 0, 2, 2);
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++)
 		gl_synth_play->addWidget(but_mode[x], x, 2, 1, 2);
@@ -724,17 +728,17 @@ MppMainWindow :: handle_jump_locked(int index)
 void
 MppMainWindow :: handle_jump(int index)
 {
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	handle_jump_locked(index);
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 }
 
 void
 MppMainWindow :: handle_non_channel_muted_changed(int value)
 {
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	nonChannelMuted = value;
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 }
 
 void
@@ -747,18 +751,18 @@ MppMainWindow :: handle_compile(int force)
 		y += scores_main[x]->handleCompile(force);
 
 	if (y != 0) {
-		pthread_mutex_lock(&mtx);
+		atomic_lock();
 		handle_stop();
-		pthread_mutex_unlock(&mtx);
+		atomic_unlock();
 	}
 }
 
 void
 MppMainWindow :: handle_score_record(int value)
 {
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	scoreRecordOff = value ? 0 : 1;
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 }
 
 void
@@ -768,23 +772,23 @@ MppMainWindow :: handle_midi_pause()
 	uint8_t triggered;
 	uint8_t paused;
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	pos = (umidi20_get_curr_position() - startPosition) & 0x3FFFFFFFU;
 	triggered = midiTriggered;
 	paused = midiPaused;
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 
 	if (paused)
 		return;		/* nothing to do */
 
 	handle_rewind();
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	if (triggered != 0) {
 		midiPaused = 1;
 		pausePosition = pos;
 	}
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 }
 
 void
@@ -792,11 +796,11 @@ MppMainWindow :: handle_midi_play(int value)
 {
 	uint8_t triggered;
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	midiPlayOff = value ? 0 : 1;
 	triggered = midiTriggered;
 	update_play_device_no();
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 
 	handle_midi_pause();
 
@@ -809,11 +813,11 @@ MppMainWindow :: handle_midi_record(int value)
 {
 	uint8_t triggered;
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	midiRecordOff = value ? 0 : 1;
 	triggered = midiTriggered;
 	update_play_device_no();
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 
 	handle_midi_pause();
 
@@ -827,14 +831,14 @@ MppMainWindow :: handle_play_press(int key, int which)
 	if (which < 0 || which >= MPP_MAX_VIEWS)
 		which = 0;
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	if (tab_loop->handle_trigN(key, 90) != 0) {
 		/* ignore */
 	} else {
 		MppScoreMain *sm = scores_main[which];
 		sm->handleMidiKeyPressLocked(0, key, 90);
 	}
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 }
 
 void
@@ -843,10 +847,10 @@ MppMainWindow :: handle_play_release(int key, int which)
 	if (which < 0 || which >= MPP_MAX_VIEWS)
 		which = 0;
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	MppScoreMain *sm = scores_main[which];
 	sm->handleMidiKeyReleaseLocked(0, key);
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 }
 
 void
@@ -857,9 +861,9 @@ MppMainWindow :: handle_sustain_press(int which)
 
 	MppScoreMain *sm = scores_main[which];
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	sm->outputControl(0x40, 127);
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 }
 
 void
@@ -870,9 +874,9 @@ MppMainWindow :: handle_sustain_release(int which)
 
 	MppScoreMain *sm = scores_main[which];
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	sm->outputControl(0x40, 0);
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 }
 
 void
@@ -881,9 +885,9 @@ MppMainWindow :: handle_watchdog_sub(MppScoreMain *sm, int update_cursor)
 	QTextCursor cursor(sm->editWidget->textCursor());
 	int play_line;
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	play_line = sm->head.getCurrLine();
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 
 	if (update_cursor) {
 		cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor, 1);
@@ -917,7 +921,7 @@ MppMainWindow :: handle_watchdog()
 	/* update focus if any */
 	handle_tab_changed();
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	cursor_update = cursorUpdate;
 	cursorUpdate = 0;
 	instr_update = instrUpdated;
@@ -941,7 +945,7 @@ MppMainWindow :: handle_watchdog()
 	}
 	if (num_events != 0) {
 
-		pthread_mutex_unlock(&mtx);
+		atomic_unlock();
 
 		QPlainTextEdit *ped = currEditor();
 		QTextCursor cursor;
@@ -987,14 +991,14 @@ MppMainWindow :: handle_watchdog()
 			ped->setTextCursor(cursor);
 		}
 
-		pthread_mutex_lock(&mtx);
+		atomic_lock();
 	}
 	num_events = numControlEvents;
 	if (num_events != 0) {
 		numControlEvents = 0;
 		memcpy(events_copy, controlEvents, num_events * sizeof(controlEvents[0]));
 	}
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 
 	for (x = 0; x != num_events; x++) {
 		tab_shortcut->handle_record_event(events_copy[x]);
@@ -1024,8 +1028,17 @@ MppMainWindow :: handle_watchdog()
 		handle_midi_pause();
 	if (ops & MPP_OPERATION_REWIND)
 		handle_rewind();
-	if (ops & MPP_OPERATION_BPM)
-		dlg_bpm->sync();
+	if (ops & MPP_OPERATION_BPM) {
+		int value;
+
+	  	atomic_lock();
+		value = dlg_bpm->enabled;
+		atomic_unlock();
+
+		mbm_bpm_generator->blockSignals(1);
+		mbm_bpm_generator->setSelection(value);
+		mbm_bpm_generator->blockSignals(0);
+	}
 }
 
 void
@@ -1045,10 +1058,10 @@ MppMainWindow :: handle_midi_file_new()
 	handle_rewind();
 
 	if (track != NULL) {
-		pthread_mutex_lock(&mtx);
+		atomic_lock();
 		umidi20_event_queue_drain(&(track->queue));
 		chanUsageMask = 0;
-		pthread_mutex_unlock(&mtx);
+		atomic_unlock();
 
 		handle_instr_reset();
 		handle_instr_channel_changed(0);
@@ -1110,10 +1123,10 @@ MppMainWindow :: handle_midi_file_open(int how)
 
 		if (MppReadRawFile(*CurrMidiFileName, &data) == 0) {
 		
-			pthread_mutex_lock(&mtx);
+			atomic_lock();
 			song_copy = umidi20_load_file(&mtx,
 			    (const uint8_t *)data.data(), data.size());
-			pthread_mutex_unlock(&mtx);
+			atomic_unlock();
 
 			if (song_copy == NULL) {
 				QMessageBox box;
@@ -1140,7 +1153,7 @@ load_file:
 	printf("resolution %d\n", song_copy->midi_resolution);
 	printf("division_type %d\n", song_copy->midi_division_type);
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 
 	UMIDI20_QUEUE_FOREACH(track_copy, &(song_copy->queue)) {
 
@@ -1183,7 +1196,7 @@ load_file:
 
 	update_play_device_no();
 
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 
 	if (how == 2)
 		handle_midi_file_import(0);
@@ -1237,11 +1250,11 @@ MppMainWindow :: handle_midi_file_save()
 
 	if (CurrMidiFileName != NULL) {
 
-		pthread_mutex_lock(&mtx);
+		atomic_lock();
 		handle_midi_file_instr_prepend();
 		status = umidi20_save_file(song, &data, &len);
 		handle_midi_file_instr_delete();
-		pthread_mutex_unlock(&mtx);
+		atomic_unlock();
 
 		if (status == 0) {
 			QByteArray qdata = QByteArray::
@@ -1309,18 +1322,18 @@ void
 MppMainWindow :: handle_rewind()
 {
 	if (midiTriggered != 0) {
-		pthread_mutex_lock(&mtx);
+		atomic_lock();
 		/* kill all leftover notes */
 		handle_stop();
 		/* send song stop event */
 		send_song_stop_locked();
-		pthread_mutex_unlock(&mtx);
+		atomic_unlock();
 
 		/* wait for MIDI events to propagate */
 		MppSleep::msleep(100 /* ms */);
 	}
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 
 	midiTriggered = 0;
 	midiPaused = 0;
@@ -1335,13 +1348,13 @@ MppMainWindow :: handle_rewind()
 		    UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
 		startPosition = umidi20_get_curr_position() - 0x40000000;
 	}
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 }
 
 void
 MppMainWindow :: handle_midi_trigger()
 {
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 
 	if (midiTriggered == 0) {
 		if (midiPlayOff == 0) {
@@ -1368,7 +1381,7 @@ MppMainWindow :: handle_midi_trigger()
 		dlg_bpm->handle_update(1);
 		tab_replay->metronome->handleUpdateLocked();
 	}
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 }
 
 void
@@ -1506,7 +1519,7 @@ MppMainWindow :: handle_config_apply(int devno)
 	/* wait for MIDI devices to be opened */
 	MppSleep::msleep(100 /* ms */);
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	memcpy(devInputMask, devInputMaskCopy, sizeof(devInputMask));
 	ScMidiTriggered = midiTriggered;
 	midiTriggered = 1;
@@ -1542,7 +1555,7 @@ MppMainWindow :: handle_config_apply(int devno)
 	}
 
 	midiTriggered = ScMidiTriggered;
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 }
 
 void
@@ -1787,9 +1800,9 @@ MppMainWindow :: do_clock_stats(void)
 	uint32_t time_offset;
 	char buf[32];
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	time_offset = get_time_offset();
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 
 	snprintf(buf, sizeof(buf), "%u.%03u", time_offset / 1000, time_offset % 1000);
 
@@ -1811,7 +1824,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 	*drop = 1;
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 
 	what = umidi20_event_get_what(event);
 
@@ -1927,7 +1940,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 		}
 	}
 done:
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 /* NOTE: Is called unlocked */
@@ -1940,7 +1953,7 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 	int vel;
 	int do_drop = (device_no == MPP_MAGIC_DEVNO);
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 
 	what = umidi20_event_get_what(event);
 
@@ -2028,7 +2041,7 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 		}
 	}
 	*drop = do_drop;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 /* must be called locked */
@@ -2116,9 +2129,9 @@ MppMainWindow :: handle_instr_program()
 	spn_instr_prog[chan]->blockSignals(0);
 	cbx_instr_mute[chan]->blockSignals(0);
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	instr[chan].updated |= 1;
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 
 	handle_instr_changed(0);
 }
@@ -2128,10 +2141,10 @@ MppMainWindow :: handle_instr_program_all()
 {
 	uint8_t x;
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	for (x = 0; x != 16; x++)
 		instr[x].updated |= 1;
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 
 	handle_instr_changed(0);
 }
@@ -2155,7 +2168,7 @@ MppMainWindow :: handle_instr_changed(int dummy)
 		temp[1] = spn_instr_prog[x]->value();
 		temp[2] = cbx_instr_mute[x]->isChecked();
 
-		pthread_mutex_lock(&mtx);
+		atomic_lock();
 
 		update_curr = 0;
 
@@ -2186,7 +2199,7 @@ MppMainWindow :: handle_instr_changed(int dummy)
 			}
 			update_curr = 1;
 		}
-		pthread_mutex_unlock(&mtx);
+		atomic_unlock();
 
 		if (update_curr) {
 			spn_instr_bank[x]->blockSignals(1);
@@ -2201,9 +2214,9 @@ MppMainWindow :: handle_instr_changed(int dummy)
 			spn_instr_prog[x]->blockSignals(0);
 			cbx_instr_mute[x]->blockSignals(0);
 
-			pthread_mutex_lock(&mtx);
+			atomic_lock();
 			update_curr = (curr_chan == x);
-			pthread_mutex_unlock(&mtx);
+			atomic_unlock();
 		}
 
 		if (update_curr) {
@@ -2223,7 +2236,7 @@ MppMainWindow :: handle_instr_changed(int dummy)
 
 	/* Do the real programming */
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	trig = midiTriggered;
 	midiTriggered = 1;
 
@@ -2245,7 +2258,7 @@ MppMainWindow :: handle_instr_changed(int dummy)
 	}
 
 	midiTriggered = trig;
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 }
 
 void 
@@ -2268,9 +2281,9 @@ MppMainWindow :: handle_instr_reset()
 		spn_instr_prog[x]->blockSignals(0);
 		cbx_instr_mute[x]->blockSignals(0);
 
-		pthread_mutex_lock(&mtx);
+		atomic_lock();
 		instr[x].updated = 1;
-		pthread_mutex_unlock(&mtx);
+		atomic_unlock();
 	}
 
 	spn_instr_curr_chan->blockSignals(1);
@@ -2300,12 +2313,12 @@ MppMainWindow :: handle_volume_changed(int dummy)
 		synth_temp[x] = spn_volume_synth[x]->value();
 	}
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	for (x = 0; x != 16; x++) {
 		playVolume[x] = play_temp[x];
 		synthVolume[x] = synth_temp[x];
 	}
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 }
 
 void
@@ -2507,7 +2520,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 	convIndex = 0;
 	first_score = 0;
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 
 	UMIDI20_QUEUE_FOREACH(event, &(im_track->queue)) {
 
@@ -2520,7 +2533,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 		}
 	}
 
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 
 	if (flags & MIDI_FLAG_DIALOG) {
 
@@ -2545,7 +2558,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 	if (chan_mask == 0)
 		return;
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 
 	umidi20_track_compute_max_min(im_track);
 
@@ -2664,7 +2677,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 		}
 	}
 
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 
 	if (flags & MIDI_FLAG_STRING) {
 		snprintf(buf, sizeof(buf), "%5u", (convIndex + 15) / 16);
@@ -2779,7 +2792,7 @@ MppMainWindow :: MidiInit(void)
 		umidi20_set_play_event_callback(n, &MidiEventTxCallback, this);
 	}
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 
 	song = umidi20_song_alloc(&mtx, UMIDI20_FILE_FORMAT_TYPE_0, 500,
 	    UMIDI20_FILE_DIVISION_TYPE_PPQ);
@@ -2787,7 +2800,7 @@ MppMainWindow :: MidiInit(void)
 	track = umidi20_track_alloc();
 
 	if (song == NULL || track == NULL) {
-		pthread_mutex_unlock(&mtx);
+		atomic_unlock();
 		err(1, "Could not allocate new song or track\n");
 	}
 	umidi20_song_track_add(song, NULL, track, 0);
@@ -2803,7 +2816,7 @@ MppMainWindow :: MidiInit(void)
 
 	startPosition = umidi20_get_curr_position() - 0x40000000;
 
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 
 	/* reload the configuration */
 
@@ -2817,7 +2830,7 @@ MppMainWindow :: MidiUnInit(void)
 
 	handle_rewind();
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 
 	umidi20_song_free(song);
 
@@ -2825,7 +2838,7 @@ MppMainWindow :: MidiUnInit(void)
 
 	umidi20_song_stop(song, UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
 
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 
 	for (n = 0; n != MPP_MAX_DEVS; n++) {
 		if (deviceName[n] != NULL) {
@@ -2929,7 +2942,7 @@ MppMainWindow :: handle_instr_rem()
 
 	handle_instr_changed(0);
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 
 	UMIDI20_QUEUE_FOREACH_SAFE(event, &(track->queue), event_next) {
 		if (umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL) {
@@ -2943,7 +2956,7 @@ MppMainWindow :: handle_instr_rem()
 			umidi20_event_free(event);
 		}
 	}
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 }
 
 void
@@ -3023,14 +3036,14 @@ MppMainWindow :: handle_mode(int index, int dialog)
 		dlg_mode[index]->exec();
 
 	if (index == 0) {
-		pthread_mutex_lock(&mtx);
+		atomic_lock();
 		value = scores_main[0]->keyMode;
-		pthread_mutex_unlock(&mtx);
+		atomic_unlock();
 		mbm_key_mode_a->setSelection(value);
 	} else 	if (index == 1) {
-		pthread_mutex_lock(&mtx);
+		atomic_lock();
 		value = scores_main[1]->keyMode;
-		pthread_mutex_unlock(&mtx);
+		atomic_unlock();
 		mbm_key_mode_b->setSelection(value);
 	}
 }
@@ -3041,9 +3054,9 @@ MppMainWindow :: handle_key_mode_a(int value)
 	if (value < 0 || value >= MM_PASS_MAX)
 		value = 0;
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	scores_main[0]->keyMode = value;
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 }
 
 void
@@ -3052,9 +3065,9 @@ MppMainWindow :: handle_key_mode_b(int value)
 	if (value < 0 || value >= MM_PASS_MAX)
 		value = 0;
 
-	pthread_mutex_lock(&mtx);
+	atomic_lock();
 	scores_main[1]->keyMode = value;
-	pthread_mutex_unlock(&mtx);
+	atomic_unlock();
 }
 
 void
@@ -3261,6 +3274,18 @@ MppMainWindow :: handle_up_down()
     else
         main_gl->addWidget(main_tb,0,0,1,2);
 
+}
+
+void
+MppMainWindow :: atomic_lock(void)
+{
+	pthread_mutex_lock(&mtx);
+}
+
+void
+MppMainWindow :: atomic_unlock(void)
+{
+	pthread_mutex_unlock(&mtx);
 }
 
 #ifdef HAVE_SCREENSHOT

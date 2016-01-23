@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2015 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2016 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -55,6 +55,9 @@ public:
 #endif
 	void MidiInit(void);
 	void MidiUnInit(void);
+
+	void atomic_lock(void);
+	void atomic_unlock(void);
 
 	void closeEvent(QCloseEvent *event);
 	void handle_stop(int flag = 0);
@@ -228,6 +231,7 @@ public:
 	MppButtonMap *mbm_score_record;
 	MppButtonMap *mbm_key_mode_a;
 	MppButtonMap *mbm_key_mode_b;
+	MppButtonMap *mbm_bpm_generator;
 
 	QPushButton *but_jump[MPP_MAX_LBUTTON];
 	QPushButton *but_compile;

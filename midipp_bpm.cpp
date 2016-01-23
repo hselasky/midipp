@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2014 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2016 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,7 +39,7 @@ MppTimerCallback(void *arg)
 	uint8_t temp;
 	int n;
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 
 	mb->last_timeout = umidi20_get_curr_position();
 
@@ -67,7 +67,7 @@ MppTimerCallback(void *arg)
 		if (mb->beat != 0)
 			mw->send_byte_event_locked(0xF8);
 	}
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 }
 
 MppBpm :: MppBpm(MppMainWindow *parent)
@@ -128,11 +128,9 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 	cbx_midi_beat = new MppCheckBox();
 	connect(cbx_midi_beat, SIGNAL(stateChanged(int,int)), this, SLOT(handle_config_change()));
 
-	but_bpm_enable = new QPushButton(tr("Enable"));
 	but_reset_all = new QPushButton(tr("Reset all"));
 	but_done_all = new QPushButton(tr("Close"));
 
-	connect(but_bpm_enable, SIGNAL(released()), this, SLOT(handle_bpm_enable()));
 	connect(but_reset_all, SIGNAL(released()), this, SLOT(handle_reset_all()));
 	connect(but_done_all, SIGNAL(released()), this, SLOT(handle_done_all()));
 
@@ -193,8 +191,7 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 	gl->addWidget(gb_scale, 0, 1, 1, 3);
 	gl->addWidget(gb_io, 1, 1, 1, 3);
 
-	gl->addWidget(but_bpm_enable, 2, 1, 1, 1);
-	gl->addWidget(but_reset_all, 2, 2, 1, 1);
+	gl->addWidget(but_reset_all, 2, 1, 1, 1);
 	gl->addWidget(but_done_all, 2, 3, 1, 1);
 
 	gl->setRowStretch(3, 1);
@@ -215,7 +212,7 @@ MppBpm :: handle_reload_all()
 {
 	int value[8];
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	value[0] = bpm_cur;
 	value[1] = duty;
 	value[2] = amp;
@@ -223,7 +220,7 @@ MppBpm :: handle_reload_all()
 	value[4] = period_ref;
 	value[5] = period_cur;
 	value[6] = sync_max;
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 
 	spn_bpm_value->setValue(value[0]);
 	spn_bpm_duty->setValue(value[1]);
@@ -239,8 +236,6 @@ MppBpm :: handle_reset_all()
 {
 	int n;
 
-	but_bpm_enable->setText(tr("Enable"));
-
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
 		cbx_out_view[n]->setCheckState(Qt::Unchecked);
 		cbx_sync_view[n]->setCheckState(Qt::Unchecked);
@@ -248,7 +243,7 @@ MppBpm :: handle_reset_all()
 
 	cbx_midi_beat->setCheckState(Qt::Unchecked);
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
 		view_out[n] = 0;
@@ -273,7 +268,7 @@ MppBpm :: handle_reset_all()
 
 	handle_update();
 
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 
 	handle_reload_all();
 }
@@ -285,28 +280,12 @@ MppBpm :: handle_done_all()
 }
 
 void
-MppBpm :: handle_bpm_enable()
+MppBpm :: handle_bpm_enable(int value)
 {
-	pthread_mutex_lock(&mw->mtx);
-	enabled = !enabled;
+	mw->atomic_lock();
+	enabled = value;
 	handle_update(enabled);
-	pthread_mutex_unlock(&mw->mtx);
-	sync();
-}
-
-void
-MppBpm :: sync()
-{
-	int value;
-
-	pthread_mutex_lock(&mw->mtx);
-	value = enabled;
-	pthread_mutex_unlock(&mw->mtx);
-
-	if (value == 0)
-		but_bpm_enable->setText(tr("Enable"));
-	else
-		but_bpm_enable->setText(tr("Disable"));
+	mw->atomic_unlock();
 }
 
 /* must be called locked */
@@ -412,7 +391,7 @@ MppBpm :: handle_config_apply()
 	val[6] = spn_sync_max->value();
 	val[7] = (cbx_midi_beat->checkState() != Qt::Unchecked);
 
-	pthread_mutex_lock(&mw->mtx);
+	mw->atomic_lock();
 	bpm_other = bpm_cur = val[0];
 	duty = val[1];
 	amp = val[2];
@@ -426,7 +405,7 @@ MppBpm :: handle_config_apply()
 		view_sync[n] = sync[n];
 	}
 	handle_update();
-	pthread_mutex_unlock(&mw->mtx);
+	mw->atomic_unlock();
 
 }
 
