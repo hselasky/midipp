@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2012-2016 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -153,6 +153,7 @@ MppSettings :: doSave(void)
 			setValue("synthchanneltreb", mw->scores_main[x]->synthChannelTreb);
 			setValue("chordcontrast", mw->scores_main[x]->chordContrast);
 			setValue("chordnormalize", mw->scores_main[x]->chordNormalize);
+			setValue("songevents", mw->scores_main[x]->songEventsOn);
 			endGroup();
 		}
 	}
@@ -259,6 +260,7 @@ MppSettings :: doLoad(void)
 			int synthChannelTreb = valueDefault(concat("view%d/synthchanneltreb", x), -1);
 			int chordContrast = valueDefault(concat("view%d/chordcontrast", x), 128);
 			int chordNormalize = valueDefault(concat("view%d/chordnormalize", x), 128);
+			int songEvents = valueDefault(concat("view%d/songevents", x), 0);
 
 			if (baseKey < 0 || baseKey > 127)
 				baseKey = 0;
@@ -278,6 +280,8 @@ MppSettings :: doLoad(void)
 				chordContrast = 128;
 			if (chordNormalize < 0 || chordNormalize > 1)
 				chordNormalize = 1;
+			if (songEvents < 0 || songEvents > 1)
+				songEvents = 0;
 
 			mw->atomic_lock();
 			mw->scores_main[x]->baseKey = baseKey;
@@ -289,6 +293,7 @@ MppSettings :: doLoad(void)
 			mw->scores_main[x]->synthChannelTreb = synthChannelTreb;
 			mw->scores_main[x]->chordContrast = chordContrast;
 			mw->scores_main[x]->chordNormalize = chordNormalize;
+			mw->scores_main[x]->songEventsOn = songEvents;
 			mw->atomic_unlock();
 
 			mw->dlg_mode[x]->update_all();
