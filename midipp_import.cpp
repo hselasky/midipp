@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010,2012-2015 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010-2016 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -303,8 +303,10 @@ midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm)
 	int off;
 
 	/* reset parse state */
-	for (off = 0; off != (2 * MIDIPP_IMPORT_MW); off++)
+	for (off = 0; off != MIDIPP_IMPORT_MW; off++) {
 		ps->d_word[0][off].off = 0;
+		ps->d_word[1][off].off = 0;
+	}
 
 	ps->sm = sm;
 	ps->n_spaces[0] = 0;
