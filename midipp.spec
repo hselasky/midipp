@@ -50,7 +50,7 @@ unset INSTALL_ROOT
 %changelog
 * Thu Jan 11 2016 HPS hps@selasky.org 1.3.1-1
 - Fixed send song events button.
-- Improve lyrics parsing.
+- Improved lyrics parsing.
 - Added new sheet tab feature.
 - Fixed saving of song events setting.
 - Updated play tab GUI a bit.
