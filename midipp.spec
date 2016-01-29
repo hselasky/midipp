@@ -1,5 +1,5 @@
 Name:           midipp
-Version:        1.3.1
+Version:        1.3.2
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
@@ -48,6 +48,7 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
+* Thu Jan 29 2016 HPS hps@selasky.org 1.3.2-1
 * Thu Jan 11 2016 HPS hps@selasky.org 1.3.1-1
 - Fixed send song events button.
 - Improved lyrics parsing.
