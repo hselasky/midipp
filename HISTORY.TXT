@@ -5,6 +5,9 @@
 MIDI Player Pro allows you to play any kind of MIDI music in seconds
 with your fingertips.
 
+Changes for v1.3.2:
+- Allow PianoTab to accept keyboard input
+
 Changes for v1.3.1:
 - Fixed send song events button.
 - Improved lyrics parsing.
