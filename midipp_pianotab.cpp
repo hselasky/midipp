@@ -194,6 +194,7 @@ MppPianoTab :: processKey(uint8_t release, char which)
 	case MM_PASS_NONE_TRANS:
 		key = 0;
 		break;
+
 	default:
 		return;
 	}
