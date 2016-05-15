@@ -298,7 +298,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " */\n") + Mpp.VariantList + tr("\n"));
 
 	tab_file_gl = new MppGridLayout();
-	tab_play_gl = new MppPlayGridLayout(this);
+	tab_play_gl = new MppGridLayout();
 	tab_chord_gl = new MppDecodeTab(this);
 	tab_pianotab = new MppPianoTab(this);
 	tab_config_gl = new MppGridLayout();
@@ -405,7 +405,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	}
 
 	for (n = 0; n != MPP_MAX_LBUTTON; n++)
-		but_jump[n] = new MppButton(tr("J%1").arg(n), n);
+		but_jump[n] = new MppButton(tr("J&%1").arg(n), n);
 
 	but_compile = new QPushButton(tr("Com&pile"));
 
@@ -2846,43 +2846,6 @@ MppMainWindow :: MidiUnInit(void)
 			deviceName[n] = NULL;
 		}
 	}
-}
-
-MppPlayGridLayout :: MppPlayGridLayout(MppMainWindow *parent)
-  : QWidget(parent), QGridLayout(this)
-{
-	mw = parent;
-}
-
-MppPlayGridLayout :: ~MppPlayGridLayout()
-{
-}
-
-void
-MppPlayGridLayout :: keyPressEvent(QKeyEvent *event)
-{
-	/* fake pedal down event */
-	switch (event->key()) {
-	case Qt::Key_0:
-	case Qt::Key_1:
-	case Qt::Key_2:
-	case Qt::Key_3:
-	case Qt::Key_4:
-	case Qt::Key_5:
-	case Qt::Key_6:
-	case Qt::Key_7:
-	case Qt::Key_8:
-	case Qt::Key_9:
-		mw->handle_jump(event->key() - Qt::Key_0);
-		break;
-	default:
-		break;
-	}
-}
-
-void
-MppPlayGridLayout :: keyReleaseEvent(QKeyEvent *event)
-{
 }
 
 int

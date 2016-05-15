@@ -28,20 +28,6 @@
 
 #include "midipp.h"
 
-class MppPlayGridLayout : public QWidget, public QGridLayout
-{
-	MppMainWindow *mw;
-
-public:
-	MppPlayGridLayout(MppMainWindow *parent = 0);
-	~MppPlayGridLayout();
-
-
-protected:
-	void keyPressEvent(QKeyEvent *event);
-	void keyReleaseEvent(QKeyEvent *event);
-};
-
 class MppMainWindow : public QWidget
 {
 	Q_OBJECT;
@@ -224,7 +210,7 @@ public:
 	QLCDNumber *lbl_curr_time_val;
 	QLCDNumber *lbl_bpm_avg_val;
 
-	MppPlayGridLayout *tab_play_gl;
+	MppGridLayout *tab_play_gl;
 
 	MppButtonMap *mbm_midi_play;
 	MppButtonMap *mbm_midi_record;
