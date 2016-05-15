@@ -37,6 +37,9 @@ public:
 	~MppPianoTab();
 
 	QRect drawText(QPainter &, const QColor &, const QColor &, qreal, qreal, qreal, qreal, const char *);
+	void processKey(uint8_t, char);
+	void releaseAll();
+	uint8_t getBaseKey();
 
 	MppMainWindow *mw;
 
@@ -46,6 +49,7 @@ public:
 		uint8_t view_index;
 		uint8_t last_jump;
 		uint8_t last_octave;
+		uint8_t last_key;
 	} state;
 
 	QRect r_pressed[24];
@@ -57,6 +61,9 @@ public:
 
 	void mousePressEvent(QMouseEvent *event);
 	void mouseReleaseEvent(QMouseEvent *event);
+
+	void keyPressEvent(QKeyEvent *event);
+	void keyReleaseEvent(QKeyEvent *event);
 
 	void paintEvent(QPaintEvent *);
 };

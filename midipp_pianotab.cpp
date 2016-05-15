@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2014 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2014-2016 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,6 +24,8 @@
  */
 
 #include "midipp_pianotab.h"
+#include "midipp_scores.h"
+#include "midipp_mode.h"
 #include "midipp_mainwindow.h"
 
 MppPianoTab :: MppPianoTab(MppMainWindow *parent)
@@ -34,6 +36,8 @@ MppPianoTab :: MppPianoTab(MppMainWindow *parent)
 	mw = parent;
 
 	setMinimumSize(QSize(50,50));
+
+	setFocusPolicy(Qt::StrongFocus);
 }
 
 MppPianoTab :: ~MppPianoTab()
@@ -52,31 +56,18 @@ MppPianoTab :: mousePressEvent(QMouseEvent *event)
 			continue;
 		if (state.pressed[x] != 0) {
 			state.pressed[x] = 0;
-			int key = MPP_DEFAULT_BASE_KEY + x;
+			unsigned key = getBaseKey() + x;
 			mw->handle_play_release(key, state.view_index);
 			update();
 			continue;
 		}
 		uint8_t curr_octave = (x >= 12);
 		if (state.last_octave != curr_octave) {
-			unsigned y;
 			state.last_octave = curr_octave;
-
-			/* release keys, when shifting octave */
-			for (y = 0; y != 24; y++) {
-				if (state.pressed[y] == 0)
-					continue;
-				state.pressed[y] = 0;
-				int key = MPP_DEFAULT_BASE_KEY + y;
-				mw->handle_play_release(key, state.view_index);
-			}
-			if (state.sustain != 0) {
-				mw->handle_sustain_release(state.view_index);
-				mw->handle_sustain_press(state.view_index);
-			}
+			releaseAll();
 		}
 		state.pressed[x] = 1;
-		int key = MPP_DEFAULT_BASE_KEY + x;
+		unsigned key = getBaseKey() + x;
 		mw->handle_play_press(key, state.view_index);
 		update();
 	}
@@ -123,8 +114,147 @@ MppPianoTab :: mouseReleaseEvent(QMouseEvent *event)
 		if (state.pressed[x] == 0)
 			continue;
 		state.pressed[x] = 0;
-		int key = MPP_DEFAULT_BASE_KEY + x;
+		unsigned key = getBaseKey() + x;
 		mw->handle_play_release(key, state.view_index);
+		update();
+	}
+}
+
+uint8_t
+MppPianoTab :: getBaseKey()
+{
+	uint8_t baseKey;
+
+	mw->atomic_lock();
+  	baseKey = mw->scores_main[state.view_index]->baseKey;
+	baseKey -= baseKey % 12;
+	mw->atomic_unlock();
+
+	return (baseKey);
+}
+
+void
+MppPianoTab :: releaseAll()
+{
+	unsigned y;
+
+	/* release keys, when shifting octave */
+	for (y = 0; y != 24; y++) {
+		if (state.pressed[y] == 0)
+			continue;
+		state.pressed[y] = 0;
+		unsigned key = getBaseKey() + y;
+		mw->handle_play_release(key, state.view_index);
+	}
+	if (state.sustain != 0) {
+		mw->handle_sustain_release(state.view_index);
+		mw->handle_sustain_press(state.view_index);
+	}
+}
+
+void
+MppPianoTab :: processKey(uint8_t release, char which)
+{
+	unsigned keyMode;
+	unsigned key;
+
+	mw->atomic_lock();
+	keyMode = mw->scores_main[state.view_index]->keyMode;
+	mw->atomic_unlock();
+
+	switch (keyMode) {
+	case MM_PASS_NONE_CHORD_PIANO:
+		switch (which) {
+		case ' ':
+			key = 2;
+			break;
+		case 'g':
+			key = 5;
+			break;
+		case 'h':
+			key = 7;
+			break;
+		case 'j':
+			key = 9;
+			break;
+		case 'k':
+			key = 11;
+			break;
+		case 'l':
+			key = 6;
+			break;
+		default:
+			return;
+		}
+		if (state.last_key)
+			key += 12;
+		break;
+
+	case MM_PASS_NONE_FIXED:
+	case MM_PASS_NONE_TRANS:
+		key = 0;
+		break;
+	default:
+		return;
+	}
+
+	if (release) {
+		if (state.pressed[key] == 0)
+			return;
+		state.pressed[key] = 0;
+		mw->handle_play_release(getBaseKey() + key, state.view_index);
+	} else {
+		uint8_t curr_octave = (key >= 12);
+		if (state.last_octave != curr_octave) {
+			state.last_octave = curr_octave;
+			releaseAll();
+		}
+		if (state.pressed[key] != 0)
+			return;
+		state.pressed[key] = 1;
+		mw->handle_play_press(getBaseKey() + key, state.view_index);
+	}
+	update();
+}
+
+void
+MppPianoTab :: keyPressEvent(QKeyEvent *event)
+{
+	if (event->isAutoRepeat())
+		return;
+	if (event->key() >= Qt::Key_0 && event->key() <= Qt::Key_9) {
+		unsigned x = event->key() - Qt::Key_0;
+		state.last_jump = x;
+		mw->handle_jump(x);
+		if (state.sustain != 0) {
+			mw->handle_sustain_release(state.view_index);
+			mw->handle_sustain_press(state.view_index);
+		}
+		update();
+	} else if (event->key() == Qt::Key_Space) {
+		processKey(0, ' ');
+	} else if (event->key() >= Qt::Key_A && event->key() <= Qt::Key_Z) {
+		processKey(0, event->key() - Qt::Key_A + 'a');
+	} else if (event->key() == Qt::Key_Shift) {
+		state.sustain = 1;
+		mw->handle_sustain_press(state.view_index);
+		update();
+	}
+}
+
+void
+MppPianoTab :: keyReleaseEvent(QKeyEvent *event)
+{
+	if (event->isAutoRepeat())
+		return;
+	if (event->key() == Qt::Key_Space) {
+		processKey(1, ' ');
+	} else if (event->key() >= Qt::Key_A && event->key() <= Qt::Key_Z) {
+		processKey(1, event->key() - Qt::Key_A + 'a');
+	} else if (event->key() == Qt::Key_Shift) {
+		state.sustain = 0;
+		state.last_key ^= 1;
+		mw->handle_sustain_release(state.view_index);
 		update();
 	}
 }
@@ -166,9 +296,11 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 	int len;
 	qreal xpos;
 	qreal ypos;
+	int base = getBaseKey() / 12;
 	int w = width();
 	int h = height();
 	int z;
+	char buffer[16];
 	const char *buf;
 
 	paint.fillRect(QRectF(0,0,w,h), Mpp.ColorWhite);
@@ -196,13 +328,20 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 	r_pressed[10] = drawText(paint, Mpp.ColorBlack, state.pressed[10] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 5.0, ypos, "A#");
 
 	ypos = h - unit + uh;
-	r_pressed[0] = drawText(paint, Mpp.ColorBlack, state.pressed[0] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 0.0, ypos, "C5");
-	r_pressed[2] = drawText(paint, Mpp.ColorBlack, state.pressed[2] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 1.0, ypos, "D5");
-	r_pressed[4] = drawText(paint, Mpp.ColorBlack, state.pressed[4] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 2.0, ypos, "E5");
-	r_pressed[5] = drawText(paint, Mpp.ColorBlack, state.pressed[5] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 3.0, ypos, "F5");
-	r_pressed[7] = drawText(paint, Mpp.ColorBlack, state.pressed[7] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 4.0, ypos, "G5");
-	r_pressed[9] = drawText(paint, Mpp.ColorBlack, state.pressed[9] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 5.0, ypos, "A5");
-	r_pressed[11] = drawText(paint, Mpp.ColorBlack, state.pressed[11] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 6.0, ypos, "H5");
+	snprintf(buffer, sizeof(buffer), "C%d", base);
+	r_pressed[0] = drawText(paint, Mpp.ColorBlack, state.pressed[0] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 0.0, ypos, buffer);
+	snprintf(buffer, sizeof(buffer), "D%d", base);
+	r_pressed[2] = drawText(paint, Mpp.ColorBlack, state.pressed[2] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 1.0, ypos, buffer);
+	snprintf(buffer, sizeof(buffer), "E%d", base);
+	r_pressed[4] = drawText(paint, Mpp.ColorBlack, state.pressed[4] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 2.0, ypos, buffer);
+	snprintf(buffer, sizeof(buffer), "F%d", base);
+	r_pressed[5] = drawText(paint, Mpp.ColorBlack, state.pressed[5] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 3.0, ypos, buffer);
+	snprintf(buffer, sizeof(buffer), "G%d", base);
+	r_pressed[7] = drawText(paint, Mpp.ColorBlack, state.pressed[7] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 4.0, ypos, buffer);
+	snprintf(buffer, sizeof(buffer), "A%d", base);
+	r_pressed[9] = drawText(paint, Mpp.ColorBlack, state.pressed[9] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 5.0, ypos, buffer);
+	snprintf(buffer, sizeof(buffer), "H%d", base);
+	r_pressed[11] = drawText(paint, Mpp.ColorBlack, state.pressed[11] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 6.0, ypos, buffer);
 
 	ypos = h + unit;
 	r_pressed[12+1] = drawText(paint, Mpp.ColorBlack, state.pressed[12+1] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 0.0, ypos, "C#");
@@ -212,13 +351,20 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 	r_pressed[12+10] = drawText(paint, Mpp.ColorBlack, state.pressed[12+10] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 5.0, ypos, "A#");
 
 	ypos = h + 2*unit;
-	r_pressed[12+0] = drawText(paint, Mpp.ColorBlack, state.pressed[12+0] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 0.0, ypos, "C6");
-	r_pressed[12+2] = drawText(paint, Mpp.ColorBlack, state.pressed[12+2] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 1.0, ypos, "D6");
-	r_pressed[12+4] = drawText(paint, Mpp.ColorBlack, state.pressed[12+4] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 2.0, ypos, "E6");
-	r_pressed[12+5] = drawText(paint, Mpp.ColorBlack, state.pressed[12+5] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 3.0, ypos, "F6");
-	r_pressed[12+7] = drawText(paint, Mpp.ColorBlack, state.pressed[12+7] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 4.0, ypos, "G6");
-	r_pressed[12+9] = drawText(paint, Mpp.ColorBlack, state.pressed[12+9] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 5.0, ypos, "A6");
-	r_pressed[12+11] = drawText(paint, Mpp.ColorBlack, state.pressed[12+11] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 6.0, ypos, "H6");
+	snprintf(buffer, sizeof(buffer), "C%d", base + 1);
+	r_pressed[12+0] = drawText(paint, Mpp.ColorBlack, state.pressed[12+0] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 0.0, ypos, buffer);
+	snprintf(buffer, sizeof(buffer), "D%d", base + 1);
+	r_pressed[12+2] = drawText(paint, Mpp.ColorBlack, state.pressed[12+2] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 1.0, ypos, buffer);
+	snprintf(buffer, sizeof(buffer), "E%d", base + 1);
+	r_pressed[12+4] = drawText(paint, Mpp.ColorBlack, state.pressed[12+4] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 2.0, ypos, buffer);
+	snprintf(buffer, sizeof(buffer), "F%d", base + 1);
+	r_pressed[12+5] = drawText(paint, Mpp.ColorBlack, state.pressed[12+5] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 3.0, ypos, buffer);
+	snprintf(buffer, sizeof(buffer), "G%d", base + 1);
+	r_pressed[12+7] = drawText(paint, Mpp.ColorBlack, state.pressed[12+7] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 4.0, ypos, buffer);
+	snprintf(buffer, sizeof(buffer), "A%d", base + 1);
+	r_pressed[12+9] = drawText(paint, Mpp.ColorBlack, state.pressed[12+9] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 5.0, ypos, buffer);
+	snprintf(buffer, sizeof(buffer), "H%d", base + 1);
+	r_pressed[12+11] = drawText(paint, Mpp.ColorBlack, state.pressed[12+11] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 6.0, ypos, buffer);
 
 	uf /= 3.0;
 	fnt.setPixelSize(uf);

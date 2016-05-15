@@ -55,8 +55,6 @@ MppTabBar :: MppTabBar(QWidget *parent)
 #endif
 	split->addWidget(left_sw);
 	split->addWidget(right_sw);
-
-	setFocusPolicy(Qt::NoFocus);
 }
 
 MppTabBar :: ~MppTabBar()
