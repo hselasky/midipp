@@ -48,8 +48,9 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Thu May 15 2016 HPS hps@selasky.org 1.3.2-1
+* Thu May 22 2016 HPS hps@selasky.org 1.3.2-1
 - Allow PianoTab to accept keyboard input
+- Separated pedal mute from control events mute
 * Thu Jan 11 2016 HPS hps@selasky.org 1.3.1-1
 - Fixed send song events button.
 - Improved lyrics parsing.
