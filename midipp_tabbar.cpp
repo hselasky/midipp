@@ -408,9 +408,9 @@ MppTabBar :: computeHeight(int w) const
 	return ((r + 1) * basic_size * 2);
 }
 
-MppTabBarRepaint :: MppTabBarRepaint(MppTabBar *_parent)
+MppTabBarRepaint :: MppTabBarRepaint(MppTabBar *_tabbar)
 {
-	parent = _parent;
+	tabbar = _tabbar;
 	connect(this, SIGNAL(doRepaintEnqueue()), this, SLOT(doRepaintCb()));
 }
 
@@ -422,8 +422,8 @@ MppTabBarRepaint :: ~MppTabBarRepaint()
 void
 MppTabBarRepaint :: doRepaintCb()
 {
-	int ht = parent->computeHeight(parent->width());
+	int ht = tabbar->computeHeight(tabbar->width());
 
-	parent->setFixedHeight(ht);
-	parent->update();
+	tabbar->setFixedHeight(ht);
+	tabbar->update();
 }

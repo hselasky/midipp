@@ -61,7 +61,7 @@ public:
 	MppTabBarRepaint(MppTabBar *);
 	~MppTabBarRepaint();
 
-	MppTabBar *parent;
+	MppTabBar *tabbar;
 
 public slots:
 	void doRepaintCb();
