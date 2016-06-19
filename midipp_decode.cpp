@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2015 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010-2016 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -484,10 +484,6 @@ MppScoreVariantCmp(const void *pa, const void *pb)
 	const class score_variant *sa = (const class score_variant *)pa;
 	const class score_variant *sb = (const class score_variant *)pb;
 
-	if (sa->duplicate > sb->duplicate)
-		return (1);
-	if (sa->duplicate < sb->duplicate)
-		return (-1);
 	if (sa->pattern.length() > sb->pattern.length())
 		return (1);
 	if (sa->pattern.length() < sb->pattern.length())
@@ -550,8 +546,6 @@ MppScoreVariantInit(void)
 		}
 	}
 
-	qsort(mpp_score_variant, y, sizeof(mpp_score_variant[0]), &MppScoreVariantCmp);
-	
 	for (x = z = 0; x != y; x++) {
 		if (mpp_score_variant[x].duplicate != 0)
 			continue;
@@ -652,6 +646,7 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 	unsigned best_x;
 	int best_y;
 	int best_z;
+	int best_l;
 
 	if (pinfo->chord != 0)
 		is_sharp = (pinfo->chord->txt.indexOf('#') > -1);
@@ -666,28 +661,27 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 	if (footprint == 0)
 		return (1);	/* not found */
 
+	best_l = 0;
 	best_x = mpp_max_variant;
 	best_y = 12;
 	best_z = 12;
 
 	for (x = 0; x != mpp_max_variant; x++) {
+		if (mpp_score_variant[x].duplicate)
+			continue;
+		int plen = mpp_score_variant[x].pattern.length();
 		for (y = 0; y != 12; y++) {
 			z = MppSumbits(mpp_score_variant[x].footprint ^ MppRor(footprint, y));
-			if (z < best_z && mpp_score_variant[x].duplicate == 0) {
+			/* if possible, get rid of the slash */
+			if (z < best_z || (z == best_z && mpp_max_variant != best_x &&
+			    best_l == plen && best_y != y && pinfo->key_base == y)) {
 				best_z = z;
 				best_x = x;
 				best_y = y;
-			}
-			if (z == 0 && y == pinfo->key_base) {
-				/* try to avoid slash base */
-				best_z = 0;
-				best_x = x;
-				best_y = y;
-				goto found;
+				best_l = plen;
 			}
 		}
 	}
-found:
 	x = best_x;
 	y = best_y;
 
