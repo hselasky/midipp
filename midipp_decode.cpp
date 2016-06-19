@@ -50,7 +50,7 @@ static const char *score_minor[] = {
 };
 
 static const char *score_aug[] = {
-	"$a", "+", "aug", 0
+	"$a", "+5", "+", "aug", 0
 };
 
 static const char *score_dim[] = {
@@ -78,11 +78,15 @@ static const char *score_sharp[] = {
 };
 
 static const char *score_flat[] = {
-	"$f", "b", "°", "o", "dim", 0
+	"$f", "b", "-", "°", "o", "dim", 0
 };
 
 static const char *score_half_dim[] = {
 	"$h", "ø", "Ø", 0
+};
+
+static const char *score_seventh[] = {
+	"$7", "7", "dom7", "dominant7", 0
 };
 
 static const char **score_macros[] = {
@@ -96,6 +100,7 @@ static const char **score_macros[] = {
 	score_sharp,
 	score_flat,
 	score_half_dim,
+	score_seventh,
 	0
 };
 
@@ -111,6 +116,11 @@ static const char *score_name_flat[13] = {
 	"1", "$f2", "2", "$f3", "3", "4", "$f5", "5", "$f6", "6", "$f7", "7", "?"
 };
 
+/*
+ * C D E F G A B C D E  F  G  A
+ * 1 2 3 4 5 6 7 8 9 10 11 12 13
+ * =   =   =
+ */
 static const struct score_variant_initial score_initial[] = {
 	/* one */
 	{ { "1" }, MASK(C5) },
@@ -148,16 +158,14 @@ static const struct score_variant_initial score_initial[] = {
 	{ { "$asus7" }, MASK(C5) | MASK(A5B) | MASK(H5) },
 
 	/* seventh */
-	{ { "7", "dom7" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5B) },
-	{ { "$a7", "7$S" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5B) },
+	{ { "$7" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5B) },
+	{ { "$a7", "$7$S5", "$7$S" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5B) },
 	{ { "$h", "$h7", "$m7$f5" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(H5B) },
-	{ { "7$f5", "dom7$f5" }, MASK(C5) | MASK(E5) | MASK(G5B) | MASK(H5B) },
-	{ { "7$f9" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(D5B) | MASK(H5B) },
-	{ { "7$S9" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(E5B) | MASK(H5B) },
-	{ { "7$f2" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(D5B) | MASK(H5B) },
-	{ { "7$S2" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(E5B) | MASK(H5B) },
+	{ { "$7$f5", "$7$f" }, MASK(C5) | MASK(E5) | MASK(G5B) | MASK(H5B) },
+	{ { "$7$f9", "$7$f2" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(D5B) | MASK(H5B) },
+	{ { "$7$S9", "$7$S2" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(E5B) | MASK(H5B) },
 	{ { "$M7" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5) },
-	{ { "$a$M7", "$M7$S5" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5) },
+	{ { "$a$M7", "$M7$S5", "$M7$S" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5) },
 	{ { "$m$M7" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5) },
 	{ { "$m7" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5B) },
 	{ { "$d7" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(A5) },
