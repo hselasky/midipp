@@ -50,7 +50,7 @@ static const char *score_minor[] = {
 };
 
 static const char *score_aug[] = {
-	"$a", "+5", "+", "aug", 0
+	"$a", "+", "+5", "aug", 0
 };
 
 static const char *score_dim[] = {
@@ -78,7 +78,7 @@ static const char *score_sharp[] = {
 };
 
 static const char *score_flat[] = {
-	"$f", "b", "-", "°", "o", "dim", 0
+	"$f", "-", "b", "°", "o", "dim", 0
 };
 
 static const char *score_half_dim[] = {
@@ -161,7 +161,7 @@ static const struct score_variant_initial score_initial[] = {
 	{ { "$7" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5B) },
 	{ { "$a7", "$7$S5", "$7$S" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5B) },
 	{ { "$h", "$h7", "$m7$f5" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(H5B) },
-	{ { "$7$f5", "$7$f" }, MASK(C5) | MASK(E5) | MASK(G5B) | MASK(H5B) },
+	{ { "$7$f5" }, MASK(C5) | MASK(E5) | MASK(G5B) | MASK(H5B) },
 	{ { "$7$f9", "$7$f2" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(D5B) | MASK(H5B) },
 	{ { "$7$S9", "$7$S2" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(E5B) | MASK(H5B) },
 	{ { "$M7" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5) },
@@ -443,11 +443,8 @@ MppScoreFullPattern(QString temp)
 }
 
 static bool
-MppScoreMatchPattern(const QString &pattern, const QString str)
+MppScoreMatchPattern(const QString &pattern, const QString &str, int t = 0, int u = 0)
 {
-	int t = 0;
-	int u = 0;
-
 	while (1) {
 		if (t >= pattern.length()) {
 			return (u == str.length());
@@ -462,16 +459,16 @@ MppScoreMatchPattern(const QString &pattern, const QString str)
 			}
 			if (score_macros[x] == 0)
 				return (false);
-			QString temp;
 			for (y = 1; score_macros[x][y]; y++) {
-				temp = QString::fromUtf8(score_macros[x][y]);
-				if (str.indexOf(temp, u) == u)
-					break;
+				QString temp = QString::fromUtf8(score_macros[x][y]);
+				if (str.indexOf(temp, u) == u) {
+					/* there might be more matches, need to recurse */
+					bool found = MppScoreMatchPattern(pattern, str, t + 2, u + temp.length());
+					if (found)
+						return (found);
+				}
 			}
-			if (score_macros[x][y] == 0)
-				return (false);
-			t += 2;
-			u += temp.length();
+			return (false);
 		} else if (pattern[t] == str[u]) {
 			t++;
 			u++;
@@ -487,6 +484,10 @@ MppScoreVariantCmp(const void *pa, const void *pb)
 	const class score_variant *sa = (const class score_variant *)pa;
 	const class score_variant *sb = (const class score_variant *)pb;
 
+	if (sa->duplicate > sb->duplicate)
+		return (1);
+	if (sa->duplicate < sb->duplicate)
+		return (-1);
 	if (sa->pattern.length() > sb->pattern.length())
 		return (1);
 	if (sa->pattern.length() < sb->pattern.length())
@@ -549,6 +550,8 @@ MppScoreVariantInit(void)
 		}
 	}
 
+	qsort(mpp_score_variant, y, sizeof(mpp_score_variant[0]), &MppScoreVariantCmp);
+	
 	for (x = z = 0; x != y; x++) {
 		if (mpp_score_variant[x].duplicate != 0)
 			continue;
@@ -663,22 +666,28 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 	if (footprint == 0)
 		return (1);	/* not found */
 
-	best_x = 0;
+	best_x = mpp_max_variant;
 	best_y = 12;
 	best_z = 12;
 
 	for (x = 0; x != mpp_max_variant; x++) {
-		if (mpp_score_variant[x].duplicate)
-			continue;
 		for (y = 0; y != 12; y++) {
 			z = MppSumbits(mpp_score_variant[x].footprint ^ MppRor(footprint, y));
-			if (z < best_z) {
+			if (z < best_z && mpp_score_variant[x].duplicate == 0) {
 				best_z = z;
 				best_x = x;
 				best_y = y;
 			}
+			if (z == 0 && y == pinfo->key_base) {
+				/* try to avoid slash base */
+				best_z = 0;
+				best_x = x;
+				best_y = y;
+				goto found;
+			}
 		}
 	}
+found:
 	x = best_x;
 	y = best_y;
 
