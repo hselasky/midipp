@@ -8,6 +8,7 @@ with your fingertips.
 Changes for v1.3.2:
 - Allow PianoTab to accept keyboard input
 - Separated pedal mute from control events mute
+- Improved chord decoding
 
 Changes for v1.3.1:
 - Fixed send song events button.
