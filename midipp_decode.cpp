@@ -108,12 +108,14 @@ static const char *score_bits[13] = {
 	"C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Hb", "H", "?"
 };
 
-static const char *score_name_sharp[13] = {
-	"1", "$S1", "2", "$S2", "3", "4", "$S4", "5", "$S5", "6", "$S6", "7", "?"
+static const char *score_name_sharp[24] = {
+	"1", "$S1", "2", "$S2", "3",  "4",  "$S4",  "5",  "$S5",  "6",  "$S6",  "7",
+	"8", "$S8", "9", "$S9", "10", "11", "$S11", "12", "$S12", "13", "$S13", "14"
 };
 
-static const char *score_name_flat[13] = {
-	"1", "$f2", "2", "$f3", "3", "4", "$f5", "5", "$f6", "6", "$f7", "7", "?"
+static const char *score_name_flat[24] = {
+	"1", "$f2", "2", "$f3",  "3",  "4",  "$f5",  "5",  "$f6",  "6",  "$f7",  "7",
+	"8", "$f9", "9", "$f10", "10", "11", "$f12", "12", "$f13", "13", "$f14", "14"
 };
 
 /*
@@ -368,7 +370,7 @@ MppBitsToString(uint32_t bits)
 }
 
 static void
-MppScoreStoreAdd(const class score_variant &orig, unsigned &y, const int which)
+MppScoreStoreAdd(const class score_variant &orig, unsigned &y, const unsigned which)
 {
 	uint32_t mask = MASK(which) | MASK(H5);
 
@@ -526,7 +528,7 @@ MppScoreVariantInit(void)
 	/* compute all adds */
 	
 	for (x = 0; x != mpp_max_variant; x++) {
-		for (z = 1; z != 12; z++)
+		for (z = 0; z != 24; z++)
 			MppScoreStoreAdd(mpp_score_variant[x], y, z);
 	}
 
