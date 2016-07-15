@@ -1071,7 +1071,6 @@ MppDecodeTab :: handle_parse(int change_var)
 
 	if (error == 0) {
 		if (change_var && chord.length() > 0) {
-			QChar ch = chord[0];
 			int endpos = chord.indexOf("/");
 			int startpos = 1;
 
