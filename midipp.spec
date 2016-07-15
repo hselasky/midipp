@@ -1,5 +1,5 @@
 Name:           midipp
-Version:        1.3.2
+Version:        1.3.3
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
@@ -48,6 +48,7 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
+* Thu Jul 15 2016 HPS hps@selasky.org 1.3.3-1
 * Thu May 22 2016 HPS hps@selasky.org 1.3.2-1
 - Allow PianoTab to accept keyboard input
 - Separated pedal mute from control events mute
