@@ -2266,8 +2266,10 @@ MppScoreMain :: getCurrLabel(void)
 }
 
 void
-MppScoreMain :: handleMidiKeyPressLocked(int chan, int key, int vel)
+MppScoreMain :: handleMidiKeyPressLocked(int key, int vel)
 {
+	uint8_t chan = synthChannel;
+
 	switch (keyMode) {
 	case MM_PASS_NONE_FIXED:
 		handleKeyPress(baseKey, vel);
@@ -2297,8 +2299,10 @@ MppScoreMain :: handleMidiKeyPressLocked(int chan, int key, int vel)
 }
 
 void
-MppScoreMain :: handleMidiKeyReleaseLocked(int chan, int key)
+MppScoreMain :: handleMidiKeyReleaseLocked(int key)
 {
+	uint8_t chan = synthChannel;
+
 	switch (keyMode) {
 	case MM_PASS_NONE_FIXED:
 		handleKeyRelease(baseKey);

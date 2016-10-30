@@ -7,6 +7,7 @@ with your fingertips.
 
 Changes for v1.3.3:
 - Fixed support for more than 12 jump labels
+- Fixed output MIDI channel when using the piano tab
 
 Changes for v1.3.2:
 - Allow PianoTab to accept keyboard input

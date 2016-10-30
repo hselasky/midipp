@@ -836,7 +836,7 @@ MppMainWindow :: handle_play_press(int key, int which)
 		/* ignore */
 	} else {
 		MppScoreMain *sm = scores_main[which];
-		sm->handleMidiKeyPressLocked(0, key, 90);
+		sm->handleMidiKeyPressLocked(key, 90);
 	}
 	atomic_unlock();
 }
@@ -847,9 +847,10 @@ MppMainWindow :: handle_play_release(int key, int which)
 	if (which < 0 || which >= MPP_MAX_VIEWS)
 		which = 0;
 
-	atomic_lock();
 	MppScoreMain *sm = scores_main[which];
-	sm->handleMidiKeyReleaseLocked(0, key);
+
+	atomic_lock();
+	sm->handleMidiKeyReleaseLocked(key);
 	atomic_unlock();
 }
 
@@ -1919,13 +1920,13 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			key = umidi20_event_get_key(event) & 0x7F;
 			vel = umidi20_event_get_velocity(event);
 
-			sm->handleMidiKeyPressLocked(chan, key, vel);
+			sm->handleMidiKeyPressLocked(key, vel);
 
 		} else if (umidi20_event_is_key_end(event)) {
 
 			key = umidi20_event_get_key(event) & 0x7F;
 
-			sm->handleMidiKeyReleaseLocked(chan, key);
+			sm->handleMidiKeyReleaseLocked(key);
 
 		} else if (mw->do_instr_check(event, &chan)) {
 

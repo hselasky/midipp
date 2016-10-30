@@ -67,8 +67,8 @@ public:
 	void decrementDuration(uint32_t timeout = 0);
 	void handleLabelJump(int label);
 	void handleChordsLoad(void);
-	void handleMidiKeyPressLocked(int chan, int key, int vel);
-	void handleMidiKeyReleaseLocked(int chan, int key);
+	void handleMidiKeyPressLocked(int key, int vel);
+	void handleMidiKeyReleaseLocked(int key);
 	void handleKeyPressChord(int key, int vel, uint32_t key_delay = 0);
 	void handleKeyPressureChord(int key, int vel, uint32_t key_delay = 0);
 	void handleKeyReleaseChord(int key, uint32_t key_delay = 0);
