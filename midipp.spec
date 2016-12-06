@@ -48,7 +48,9 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Thu Jul 15 2016 HPS hps@selasky.org 1.3.3-1
+* Tue Dec 6 2016 HPS hps@selasky.org 1.3.3-1
+- Fixed support for more than 12 jump labels
+- Fixed output MIDI channel when using the piano tab
 * Thu May 22 2016 HPS hps@selasky.org 1.3.2-1
 - Allow PianoTab to accept keyboard input
 - Separated pedal mute from control events mute
