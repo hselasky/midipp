@@ -290,7 +290,7 @@ static const struct option midipp_opts[] = {
 	{ NULL, 0, NULL, 0 }
 };
 
-const QString MppVersion("MIDI Player Pro v1.3.3");
+const QString MppVersion("MIDI Player Pro v1.3.4");
 const QString MppIconFile(":/midipp.png");
 
 Q_DECL_EXPORT int

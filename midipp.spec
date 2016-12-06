@@ -1,5 +1,5 @@
 Name:           midipp
-Version:        1.3.3
+Version:        1.3.4
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
@@ -48,6 +48,7 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
+* Tue Dec 6 2016 HPS hps@selasky.org 1.3.4-1
 * Tue Dec 6 2016 HPS hps@selasky.org 1.3.3-1
 - Fixed support for more than 12 jump labels
 - Fixed output MIDI channel when using the piano tab
