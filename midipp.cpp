@@ -258,6 +258,91 @@ failure:
 	return (1);
 }
 
+static size_t
+MppSortIndex(size_t t)
+{
+	t ^= t >> 1;
+	t ^= t >> 2;
+	t ^= t >> 4;
+	t ^= t >> 8;
+	t ^= t >> 16;
+	if (sizeof(t) >= 8)
+		t ^= t >> 32;
+	return (t);
+}
+
+static int
+MppSortXform(void **ptr, size_t n, size_t lim, MppCmp_t *fn, void *arg)
+{
+#define	MPP_XSORT_TABLE_MAX (1 << 4)
+	size_t x, y, z;
+	unsigned t, u, v;
+	size_t p[MPP_XSORT_TABLE_MAX];
+	int retval = 0;
+
+	x = n;
+	while (1) {
+		/* optimise */
+		if (x >= MPP_XSORT_TABLE_MAX)
+			v = MPP_XSORT_TABLE_MAX;
+		else if (x >= 2)
+			v = x;
+		else
+			break;
+
+		/* divide down */
+		x /= v;
+
+		/* generate ramp table */
+		for (t = 0; t != v; t++)
+			p[t] = MppSortIndex(x * (t ^ (t / 2)));
+
+		/* bitonic sort */
+		for (y = 0; y != n; y += (v * x)) {
+			for (z = 0; z != x; z++) {
+				size_t w = y + z;
+
+				/* insertion sort */
+				for (t = 1; t != v; t++) {
+					/* check for arrays which are not power of two */
+					if ((w ^ p[t]) >= lim)
+						break;
+					for (u = t; u != 0; u--) {
+						void **pa = ptr + (w ^ p[u - 1]);
+						void **pb = ptr + (w ^ p[u]);
+
+						if (fn(arg, pa, pb) > 0) {
+							void *temp;
+							temp = *pa;
+							*pa = *pb;
+							*pb = temp;
+							retval = 1;
+						} else {
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+	return (retval);
+}
+
+Q_DECL_EXPORT void
+MppSort(void **ptr, size_t n, MppCmp_t *fn, void *arg)
+{
+	size_t max;
+
+	if (n <= 1)
+		return;
+
+	for (max = 1; max < n; max <<= 1)
+		;
+
+	while (MppSortXform(ptr, max, n, fn, arg))
+		;
+}
+
 #ifdef HAVE_SCREENSHOT
 Q_DECL_EXPORT void
 MppScreenShot(QWidget *widget, QApplication &app)

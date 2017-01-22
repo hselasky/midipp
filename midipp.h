@@ -244,6 +244,9 @@ extern const QString MppChordModChars;
 extern const QString MppVersion;
 extern const QString MppIconFile;
 
+typedef int (MppCmp_t)(void *, const void *, const void *);
+extern void MppSort(void **, size_t, MppCmp_t *, void *);
+
 #ifdef HAVE_SCREENSHOT
 extern void MppScreenShot(QWidget *, QApplication &);
 #endif
