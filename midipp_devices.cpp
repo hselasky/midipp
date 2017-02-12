@@ -119,6 +119,12 @@ MppDevices :: MppDevices(QWidget *parent)
 
 	lw_rec->setCurrentRow(0);
 	lw_play->setCurrentRow(0);
+
+	lw_rec->setWrapping(0);
+	lw_play->setWrapping(0);
+
+	lw_rec->setWordWrap(1);
+	lw_play->setWordWrap(1);
 }
 
 int
