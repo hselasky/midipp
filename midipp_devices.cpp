@@ -120,9 +120,9 @@ MppDevices :: MppDevices(QWidget *parent)
 	lw_rec->setCurrentRow(0);
 	lw_play->setCurrentRow(0);
 
-	/* compute nice list witdth */
-	int w_rec = lw_rec->sizeHintForColumn(0) + lw_rec->autoScrollMargin();
-	int w_play = lw_play->sizeHintForColumn(0) + lw_play->autoScrollMargin();
+	/* compute nice list width */
+	int w_rec = lw_rec->sizeHintForColumn(0) + 32;
+	int w_play = lw_play->sizeHintForColumn(0) + 32;
 	int w_both = (w_rec > w_play ? w_rec : w_play);
 
 	lw_rec->setMinimumWidth(w_both);
