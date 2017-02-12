@@ -15,7 +15,9 @@ HAVE_NO_SHOW=YES
 HAVE_JACK=YES
 LIBS+= -L$${PWD}/android/jack
 INCLUDEPATH+= $${PWD}/android
-DISTFILES+= android/AndroidManifest.xml
+DISTFILES+= \
+	android/AndroidManifest.xml \
+	android/res/values/libs.xml 
 ANDROID_PACKAGE_SOURCE_DIR= $${PWD}/android
 }
 
