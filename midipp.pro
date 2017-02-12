@@ -12,6 +12,11 @@ QT += widgets
 HAVE_STATIC=YES
 HAVE_BUNDLE_ICONS=YES
 HAVE_NO_SHOW=YES
+HAVE_JACK=YES
+LIBS+= -L$${PWD}/android/jack
+INCLUDEPATH+= $${PWD}/android
+DISTFILES+= android/AndroidManifest.xml
+ANDROID_PACKAGE_SOURCE_DIR= $${PWD}/android
 }
 
 !isEmpty(HAVE_IOS) {
