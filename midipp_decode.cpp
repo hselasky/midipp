@@ -332,7 +332,7 @@ static const struct score_variant_initial score_initial[] = {
 
 #define	MAX_SCORES 2048
 
-static class score_variant *mpp_score_variant;
+Q_DECL_EXPORT class score_variant *mpp_score_variant;
 
 static unsigned mpp_max_variant;
 

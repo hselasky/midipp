@@ -98,6 +98,8 @@ public slots:
 	void handle_parse(int = 0);
 };
 
+extern class score_variant *mpp_score_variant;
+
 extern uint8_t mpp_find_chord(QString input, uint8_t *pbase, uint8_t *pkey, uint32_t *pvar);
 extern uint8_t mpp_parse_chord(const QString &input, int8_t rol, uint8_t *pout, uint8_t *pn, uint32_t *pvar, int);
 
