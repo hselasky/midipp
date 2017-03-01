@@ -394,6 +394,7 @@ main(int argc, char **argv)
 	Mpp.HomeDirMid = QDir::homePath();
 	Mpp.HomeDirTxt = QDir::homePath();
 	Mpp.HomeDirGp3 = QDir::homePath();
+	Mpp.HomeDirMXML = QDir::homePath();
 	Mpp.HomeDirBackground = QDir::homePath();
 
 	while ((c = getopt_long_only(argc, argv, "f:ph", midipp_opts, NULL)) != -1) {

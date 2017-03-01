@@ -55,6 +55,7 @@
 #include "midipp_replay.h"
 #include "midipp_metronome.h"
 #include "midipp_sheet.h"
+#include "midipp_musicxml.h"
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -368,16 +369,25 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		connect(but_gpro_file_import[x], SIGNAL(released(int)), this, SLOT(handle_gpro_file_import(int)));
 	}
 
-	for (x = 0; x != MPP_MAX_VIEWS; x++)
-		tab_file_gl->addWidget(scores_main[x]->gbScoreFile, 0, x, 2, 1);
-	tab_file_gl->addWidget(tab_import->gbImport, 0, MPP_MAX_VIEWS, 1, 1);
-	tab_file_gl->addWidget(gb_gpro_file_import, 1, MPP_MAX_VIEWS, 1, 1);
-	tab_file_gl->addWidget(gb_midi_file, 0, MPP_MAX_VIEWS + 1, 2, 1);
+	gb_mxml_file_import = new MppGroupBox(tr("MusicXML"));
 
-	tab_file_gl->setRowStretch(2, 1);
+	for (x = 0; x != MPP_MAX_VIEWS; x++) {
+		but_mxml_file_import[x] = new MppButton(QString("Import and\n" "open in %1-Scores").arg(QChar('A' + x)), x);
+		gb_mxml_file_import->addWidget(but_mxml_file_import[x], x, 0, 1, 1);
+		connect(but_mxml_file_import[x], SIGNAL(released(int)), this, SLOT(handle_mxml_file_import(int)));
+	}
+
+	for (x = 0; x != MPP_MAX_VIEWS; x++)
+		tab_file_gl->addWidget(scores_main[x]->gbScoreFile, 0, x, 3, 1);
+	tab_file_gl->addWidget(tab_import->gbImport, 0, MPP_MAX_VIEWS, 1, 1);
+	tab_file_gl->addWidget(gb_mxml_file_import, 1, MPP_MAX_VIEWS, 1, 1);
+	tab_file_gl->addWidget(gb_gpro_file_import, 2, MPP_MAX_VIEWS, 1, 1);
+	tab_file_gl->addWidget(gb_midi_file, 0, MPP_MAX_VIEWS + 1, 3, 1);
+
+	tab_file_gl->setRowStretch(3, 1);
 	tab_file_gl->setColumnStretch(4, 1);
 
-	tab_file_gl->addWidget(but_quit, 3, 0, 1, 4);
+	tab_file_gl->addWidget(but_quit, 4, 0, 1, 4);
 
 	/* <Play> Tab */
 
@@ -2699,12 +2709,17 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 		output += buf;
 	}
 
-	if (flags & MIDI_FLAG_ERASE_DEST)
+	if (flags & MIDI_FLAG_ERASE_DEST) {
 		scores_main[view]->handleScoreFileNew();
 
-	QTextCursor cursor(scores_main[view]->editWidget->textCursor());
-	cursor.insertText(output);
-	
+		QTextCursor cursor(scores_main[view]->editWidget->textCursor());
+		cursor.insertText(output);
+	} else {
+		QTextCursor cursor(scores_main[view]->editWidget->textCursor());
+		cursor.beginEditBlock();
+		cursor.insertText(output);
+		cursor.endEditBlock();
+	}
 	handle_compile();
 	handle_make_tab_visible(scores_main[view]->editWidget);
 }
@@ -2764,6 +2779,77 @@ load_file:
 
 	delete gpro;
 	delete cursor;
+
+	handle_compile();
+	handle_make_scores_visible(scores_main[view]);
+
+done:
+	delete diag;
+}
+
+void
+MppMainWindow :: handle_mxml_file_import(int view)
+{
+	QFileDialog *diag = 
+	  new QFileDialog(this, tr("Select MusicXML file"), 
+		Mpp.HomeDirMXML,
+		QString("MusicXML file (*.xml *.XML)"));
+	QByteArray data;
+	MppMusicXmlImport *mxml;
+
+	diag->setAcceptMode(QFileDialog::AcceptOpen);
+	diag->setFileMode(QFileDialog::ExistingFile);
+
+	if (diag->exec()) {
+
+		Mpp.HomeDirMXML = diag->directory().path();
+
+		QString fname(diag->selectedFiles()[0]);
+
+		if (MppReadRawFile(fname, &data) != 0) {
+			QMessageBox box;
+
+			box.setText(tr("Could not read MusicXML file!"));
+			box.setStandardButtons(QMessageBox::Ok);
+			box.setIcon(QMessageBox::Information);
+			box.setWindowIcon(QIcon(MppIconFile));
+			box.setWindowTitle(MppVersion);
+			box.exec();
+		} else {
+			goto load_file;
+		}
+	}
+
+	goto done;
+
+load_file:
+
+	mxml = new MppMusicXmlImport(data);
+
+	if (mxml->output.isEmpty()) {
+		QMessageBox box;
+		box.setText(tr("No parts found in Music XML file!"));
+		box.setStandardButtons(QMessageBox::Ok);
+		box.setIcon(QMessageBox::Information);
+		box.setWindowIcon(QIcon(MppIconFile));
+		box.setWindowTitle(MppVersion);
+		box.exec();
+		goto done;
+	}
+
+	if (mxml->cbx_erase->isChecked()) {
+		scores_main[view]->handleScoreFileNew();
+
+		QTextCursor cursor(scores_main[view]->editWidget->textCursor());
+		cursor.insertText(mxml->output);
+	} else {
+		QTextCursor cursor(scores_main[view]->editWidget->textCursor());
+		cursor.beginEditBlock();
+		cursor.insertText(mxml->output);
+		cursor.endEditBlock();
+	}
+
+	delete mxml;
 
 	handle_compile();
 	handle_make_scores_visible(scores_main[view]);

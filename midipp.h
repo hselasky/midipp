@@ -87,6 +87,7 @@
 #include <QChar>
 #include <QString>
 #include <QClipboard>
+#include <QXmlStreamReader>
 
 #include <umidi20.h>
 
@@ -217,6 +218,7 @@ public:
 	QString HomeDirTxt;
 	QString HomeDirMid;
 	QString HomeDirGp3;
+	QString HomeDirMXML;
 	QString HomeDirBackground;
 };
 

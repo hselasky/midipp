@@ -200,6 +200,9 @@ public:
 	MppGroupBox *gb_gpro_file_import;
 	MppButton *but_gpro_file_import[MPP_MAX_VIEWS];
 
+	MppGroupBox *gb_mxml_file_import;
+	MppButton *but_mxml_file_import[MPP_MAX_VIEWS];
+	
 	/* tab <Play> */
 
 	MppGroupBox *gl_ctrl;
@@ -375,6 +378,7 @@ public slots:
 
 	void handle_midi_file_import(int);
 	void handle_gpro_file_import(int);
+	void handle_mxml_file_import(int);
 
 	int handle_mute_map(int);
 	int handle_config_dev(int, int = 0);
