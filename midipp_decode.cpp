@@ -787,7 +787,7 @@ mpp_parse_chord(const QString &input, int8_t rol,
     int change_var)
 {
 	uint32_t x;
-	uint8_t error = 0;
+	uint8_t error;
 	uint8_t base;
 	uint8_t key;
 	uint8_t y;
