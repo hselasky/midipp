@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2016 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2017 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -76,7 +76,7 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 		cbx_import[x] = new MppCheckBox();
 		cbx_import[x]->setChecked((_mask >> x) & 1);
 		connect(cbx_import[x], SIGNAL(stateChanged(int,int)), this, SLOT(handle_checkboxes()));
-		gb_import->addWidget(cbx_import[x],t,1+u,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
+		gb_import->addWidget(cbx_import[x],t,1+u,1,1,Qt::AlignCenter);
 	}
 
 	gb_import->setColumnStretch(1, 1);
@@ -84,42 +84,47 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 
 	cbx_single_track = new MppCheckBox();
 
-	gl->addWidget(cbx_single_track,1,3,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(cbx_single_track,1,3,1,1,Qt::AlignCenter);
 	gl->addWidget(new QLabel(tr("Add channel number to score lines")),1,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
 
 	cbx_have_duration = new MppCheckBox();
-
 	if (flags & MIDI_FLAG_DURATION)
 		cbx_have_duration->setChecked(1);
 
-	gl->addWidget(cbx_have_duration,2,3,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(cbx_have_duration,2,3,1,1,Qt::AlignCenter);
 	gl->addWidget(new QLabel(tr("Add autoplay timeout to score lines")),2,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
 
 	cbx_have_strings = new MppCheckBox();
-
 	if (flags & MIDI_FLAG_STRING)
 		cbx_have_strings->setChecked(1);
 
-	gl->addWidget(cbx_have_strings,3,3,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(cbx_have_strings,3,3,1,1,Qt::AlignCenter);
 	gl->addWidget(new QLabel(tr("Add separate tempo strings")),3,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
 
+	cbx_erase_dest = new MppCheckBox();
+	if (flags & MIDI_FLAG_ERASE_DEST)
+		cbx_erase_dest->setChecked(1);
+
+	gl->addWidget(cbx_erase_dest,4,3,1,1,Qt::AlignCenter);
+	gl->addWidget(new QLabel(tr("Erase destination view")),4,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
+	
 	spn_parse_thres = new QSpinBox();
 	spn_parse_thres->setRange(0, 10000);
 	spn_parse_thres->setValue(thres);
 	spn_parse_thres->setSuffix(tr(" ms"));
 
-	gl->addWidget(new QLabel(tr("New scores line threshold")),4,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
-	gl->addWidget(spn_parse_thres,4,3,1,1);
+	gl->addWidget(new QLabel(tr("New scores line threshold")),5,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
+	gl->addWidget(spn_parse_thres,5,3,1,1);
 
 	led_prefix = new QLineEdit();
 	led_prefix->setMaxLength(256);
 
-	gl->addWidget(new QLabel(tr("Line prefix")),5,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
-	gl->addWidget(led_prefix,5,3,1,1);
+	gl->addWidget(new QLabel(tr("Line prefix")),6,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
+	gl->addWidget(led_prefix,6,3,1,1);
 
-	gl->addWidget(but_set_all,6,0,1,1);
-	gl->addWidget(but_clear_all,6,1,1,1);
-	gl->addWidget(but_done,6,3,1,1);
+	gl->addWidget(but_set_all,7,0,1,1);
+	gl->addWidget(but_clear_all,7,1,1,1);
+	gl->addWidget(but_done,7,3,1,1);
 
 	gl->setColumnStretch(2, 1);
 
@@ -137,20 +142,19 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 		}
 	}
 
+	flags &= ~(MIDI_FLAG_MULTI_CHAN |
+		   MIDI_FLAG_STRING |
+		   MIDI_FLAG_DURATION |
+		   MIDI_FLAG_ERASE_DEST);
+
 	if (cbx_single_track->isChecked())
 		flags |= MIDI_FLAG_MULTI_CHAN;
-	else
-		flags &= ~MIDI_FLAG_MULTI_CHAN;
-
 	if (cbx_have_strings->isChecked())
 		flags |= MIDI_FLAG_STRING;
-	else
-		flags &= ~MIDI_FLAG_STRING;
-
 	if (cbx_have_duration->isChecked())
 		flags |= MIDI_FLAG_DURATION;
-	else
-		flags &= ~MIDI_FLAG_DURATION;
+	if (cbx_erase_dest->isChecked())
+		flags |= MIDI_FLAG_ERASE_DEST;
 
 	thres = spn_parse_thres->value();
 

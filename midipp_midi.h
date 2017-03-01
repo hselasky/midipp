@@ -34,6 +34,7 @@
 #define	MIDI_FLAG_DURATION 0x02
 #define	MIDI_FLAG_DIALOG 0x04
 #define	MIDI_FLAG_MULTI_CHAN 0x08
+#define	MIDI_FLAG_ERASE_DEST 0x10
 
 class MppMidi : public QDialog
 {
@@ -64,6 +65,7 @@ private:
 	MppCheckBox *cbx_single_track;
 	MppCheckBox *cbx_have_strings;
 	MppCheckBox *cbx_have_duration;
+	MppCheckBox *cbx_erase_dest;
 
 	QLineEdit *led_prefix;
 

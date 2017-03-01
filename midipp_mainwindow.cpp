@@ -2496,8 +2496,6 @@ MppMainWindow :: log_midi_score_duration(void)
 void
 MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flags, int label, int view)
 {
-	QTextCursor cursor(scores_main[view]->editWidget->textCursor());
-
 	QString output;
 	QString out_block;
 	QString out_desc;
@@ -2701,6 +2699,10 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 		output += buf;
 	}
 
+	if (flags & MIDI_FLAG_ERASE_DEST)
+		scores_main[view]->handleScoreFileNew();
+
+	QTextCursor cursor(scores_main[view]->editWidget->textCursor());
 	cursor.insertText(output);
 	
 	handle_compile();
@@ -2710,7 +2712,8 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 void
 MppMainWindow :: handle_midi_file_import(int n)
 {
-	import_midi_track(track, MIDI_FLAG_DIALOG | MIDI_FLAG_MULTI_CHAN, 0, n);
+	import_midi_track(track, MIDI_FLAG_DIALOG |
+	    MIDI_FLAG_MULTI_CHAN | MIDI_FLAG_ERASE_DEST, 0, n);
 }
 
 void
