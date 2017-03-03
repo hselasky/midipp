@@ -43,18 +43,18 @@ MppReadStrFilter(const QString &str)
 }
 
 static const char *MppGetNoteString[12] = {
-	[0] = "C",
-	[1] = "Db",
-	[2] = "D",
-	[3] = "Eb",
-	[4] = "E",
-	[5] = "F",
-	[6] = "Gb",
-	[7] = "G",
-	[8] = "Ab",
-	[9] = "A",
-	[10] = "Bb",
-	[11] = "B",
+	"C",
+	"Db",
+	"D",
+	"Eb",
+	"E",
+	"F",
+	"Gb",
+	"G",
+	"Ab",
+	"A",
+	"Bb",
+	"B",
 };
 
 static int
