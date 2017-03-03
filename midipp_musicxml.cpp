@@ -214,6 +214,68 @@ MppReadMusicXML(const QByteArray &data, uint32_t flags, uint32_t ipart, uint32_t
 								root_alter = xml.text().toString().trimmed();
 							} else if (si == 5 && tags[4] == "kind") {
 								kind = xml.attributes().value("text").toString();
+								if (kind.isEmpty()) {
+									token = xml.readNext();
+									if (token != QXmlStreamReader::Characters)
+										continue;
+									/*
+									 * Try to translate kind into something which
+									 * MidiPlayerPro understands:
+									 */
+									kind = xml.text().toString().trimmed();
+									if (kind == "major")
+										kind = "";
+									else if (kind == "minor")
+										kind = "m";
+									else if (kind == "augmented")
+										kind = "+";
+									else if (kind == "diminished")
+										kind = "dim";
+									else if (kind == "dominant")
+										kind = "7";
+									else if (kind == "major-seventh")
+										kind = "M7";
+									else if (kind == "minor-seventh")
+										kind = "m7";
+									else if (kind == "diminished-seventh")
+										kind = "o7";
+									else if (kind == "augmented-seventh")
+										kind = "+7";
+									else if (kind == "half-diminished")
+										kind = QString::fromUtf8("ø");
+									else if (kind == "major-minor")
+										kind = "mM7";
+									else if (kind == "major-sixth")
+										kind = "M6";
+									else if (kind == "minor-sixth")
+										kind = "m6";
+									else if (kind == "dominant-ninth")
+										kind = "dom9";
+									else if (kind == "major-ninth")
+										kind = "M9";
+									else if (kind == "minor-ninth")
+										kind = "m9";
+									else if (kind == "dominant-11th")
+										kind = "dom11";
+									else if (kind == "major-11th")
+										kind = "M11";
+									else if (kind == "minor-11th")
+										kind = "m11";
+									else if (kind == "dominant-13th")
+										kind = "dom13";
+									else if (kind == "major-13th")
+										kind = "M13";
+									else if (kind == "minor-13th")
+										kind = "m13";
+									else if (kind == "suspended-second")
+										kind = "sus2";
+									else if (kind == "suspended-fourth")
+										kind = "sus4";
+									else if (kind == "power")
+										kind = "5";
+									else
+										kind = "";	/* major */
+								}
 							} else if (si == 6 && tags[4] == "bass" && tags[5] == "bass-step") {
 								token = xml.readNext();
 								if (token != QXmlStreamReader::Characters)
