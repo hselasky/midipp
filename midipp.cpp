@@ -266,8 +266,8 @@ MppSortIndex(size_t t)
 	t ^= t >> 4;
 	t ^= t >> 8;
 	t ^= t >> 16;
-	if (sizeof(t) >= 8)
-		t ^= t >> 32;
+	if (sizeof(t) > 4)
+		t ^= t >> ((sizeof(t) > 4) ? 32 : 0);
 	return (t);
 }
 
