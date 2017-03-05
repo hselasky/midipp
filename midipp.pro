@@ -13,6 +13,7 @@ HAVE_STATIC=YES
 HAVE_BUNDLE_ICONS=YES
 HAVE_NO_SHOW=YES
 HAVE_JACK=YES
+HAVE_ANDROID=YES
 LIBS+= -L$${PWD}/android/jack
 INCLUDEPATH+= $${PWD}/android
 DISTFILES+= \
@@ -161,6 +162,11 @@ INCLUDEPATH	+= $${LIBUMIDIPATH}
  } else {
  LIBS		+= -framework CoreMIDI
  SOURCES	+= $${LIBUMIDIPATH}/umidi20_coremidi.c
+ }
+ isEmpty(HAVE_ANDROID) {
+ SOURCES	+= $${LIBUMIDIPATH}/umidi20_android_dummy.c
+ } else {
+ SOURCES	+= $${LIBUMIDIPATH}/umidi20_android.c
  }
 }
 
