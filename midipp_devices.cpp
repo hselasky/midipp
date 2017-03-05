@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2017 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -117,6 +117,22 @@ MppDevices :: MppDevices(QWidget *parent)
 		}
 	}
 
+	rec_android_str = umidi20_android_alloc_outputs();
+	if (rec_android_str != NULL) {
+		for (n = 0; rec_android_str[n] != NULL; n++) {
+			if (rec_android_str[n][0] != 0)
+				new QListWidgetItem(QString("R:") + QString(rec_android_str[n]), lw_rec);
+		}
+	}
+
+	play_android_str = umidi20_android_alloc_inputs();
+	if (play_android_str != NULL) {
+		for (n = 0; play_android_str[n] != NULL; n++) {
+			if (play_android_str[n][0] != 0)
+				new QListWidgetItem(QString("R:") + QString(play_android_str[n]), lw_play);
+		}
+	}
+	
 	lw_rec->setCurrentRow(0);
 	lw_play->setCurrentRow(0);
 
@@ -152,6 +168,9 @@ MppDevices :: ~MppDevices()
 
 	umidi20_coremidi_free_outputs(rec_coremidi_str);
 	umidi20_coremidi_free_inputs(play_coremidi_str);
+
+	umidi20_android_free_outputs(rec_android_str);
+	umidi20_android_free_inputs(play_android_str);
 }
 
 void

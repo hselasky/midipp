@@ -54,6 +54,9 @@ public:
 	const char **rec_coremidi_str;
 	const char **play_coremidi_str;
 
+	const char **rec_android_str;
+	const char **play_android_str;
+
 	QString rec_dev;
 	QString play_dev;
 	QString result_dev;

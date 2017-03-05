@@ -444,6 +444,20 @@ main(int argc, char **argv)
 		box.exec();
 	}
 
+	c = umidi20_android_init("midipp");
+
+	if (c != 0 && c != -2 && mpp_pdf_print == 0) {
+		QMessageBox box;
+
+		box.setText(QObject::tr("Could not connect to "
+		    "the Android MIDI subsystem!"));
+		box.setStandardButtons(QMessageBox::Ok);
+		box.setIcon(QMessageBox::Critical);
+		box.setWindowIcon(QIcon(MppIconFile));
+		box.setWindowTitle(MppVersion);
+		box.exec();
+	}
+
 	MppScoreVariantInit();
 
 	MppMainWindow *pmain = new MppMainWindow();

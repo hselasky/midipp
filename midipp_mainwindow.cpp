@@ -1445,6 +1445,11 @@ MppMainWindow :: handle_config_reload()
 				    sizeof(cfg.cfg_dev[n].rec_fname));
 				cfg.cfg_dev[n].rec_enabled_cfg = UMIDI20_ENABLED_CFG_DEV;
 				break;
+			case 'R':
+				STRLCPY(cfg.cfg_dev[n].rec_fname, p_rec + 2,
+				    sizeof(cfg.cfg_dev[n].rec_fname));
+				cfg.cfg_dev[n].rec_enabled_cfg = UMIDI20_ENABLED_CFG_ANDROID;
+				break;
 			default:
 				cfg.cfg_dev[n].rec_enabled_cfg = UMIDI20_DISABLE_CFG;
 				break;
@@ -1471,6 +1476,11 @@ MppMainWindow :: handle_config_reload()
 				STRLCPY(cfg.cfg_dev[n].play_fname, p_play + 2,
 				    sizeof(cfg.cfg_dev[n].play_fname));
 				cfg.cfg_dev[n].play_enabled_cfg = UMIDI20_ENABLED_CFG_DEV;
+				break;
+			case 'R':
+				STRLCPY(cfg.cfg_dev[n].play_fname, p_play + 2,
+				    sizeof(cfg.cfg_dev[n].play_fname));
+				cfg.cfg_dev[n].play_enabled_cfg = UMIDI20_ENABLED_CFG_ANDROID;
 				break;
 			default:
 				cfg.cfg_dev[n].play_enabled_cfg = UMIDI20_DISABLE_CFG;
