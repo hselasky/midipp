@@ -166,7 +166,6 @@ INCLUDEPATH	+= $${LIBUMIDIPATH}
  isEmpty(HAVE_ANDROID) {
  SOURCES	+= $${LIBUMIDIPATH}/umidi20_android_dummy.c
  } else {
- LIBS		+= -ljvm
  SOURCES	+= $${LIBUMIDIPATH}/umidi20_android.c
  }
 }

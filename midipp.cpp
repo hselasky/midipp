@@ -36,6 +36,10 @@
 #include "midipp_mainwindow.h"
 #include "midipp_scores.h"
 
+#ifdef __ANDROID__
+#include <QAndroidJniEnvironment>
+#endif
+
 Mpp :: Mpp() :
   ColorBlack(0x00,0x00,0x00,0xff),
   ColorWhite(0xff,0xff,0xff,0xff),
@@ -444,7 +448,10 @@ main(int argc, char **argv)
 		box.exec();
 	}
 
-	c = umidi20_android_init("midipp");
+#ifdef __ANDROID__
+	QAndroidJniEnvironment qjni;
+
+	c = umidi20_android_init("midipp", qjni.javaVM(), qjni.JNIEnv());
 
 	if (c != 0 && c != -2 && mpp_pdf_print == 0) {
 		QMessageBox box;
@@ -457,6 +464,7 @@ main(int argc, char **argv)
 		box.setWindowTitle(MppVersion);
 		box.exec();
 	}
+#endif
 
 	MppScoreVariantInit();
 
