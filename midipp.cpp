@@ -451,7 +451,7 @@ main(int argc, char **argv)
 #ifdef __ANDROID__
 	QAndroidJniEnvironment qjni;
 
-	c = umidi20_android_init("midipp", qjni.javaVM(), qjni.JNIEnv());
+	c = umidi20_android_init("midipp", qjni.javaVM(), qjni->functions);
 
 	if (c != 0 && c != -2 && mpp_pdf_print == 0) {
 		QMessageBox box;
