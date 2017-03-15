@@ -1,23 +1,38 @@
+#
+# QMAKE project file for MIDI Player PRO
+#
 TEMPLATE	= app
 CONFIG		+= qt warn_on release
 QT		+= core gui network
+
+# Automatic platform detection
+macx {
+HAVE_MACOSX=YES
+}
+ios {
+HAVE_IOS=YES
+}
+android {
+HAVE_ANDROID=YES
+}
+
 greaterThan(QT_MAJOR_VERSION, 4) {
 QT += widgets
-  isEmpty(HAVE_IOS) {
-    QT += printsupport
-  }
+    isEmpty(HAVE_IOS) {
+        isEmpty(HAVE_ANDROID) {
+                QT += printsupport
+        }
+    }
 }
 
 !isEmpty(HAVE_ANDROID) {
 HAVE_STATIC=YES
 HAVE_BUNDLE_ICONS=YES
 HAVE_NO_SHOW=YES
-HAVE_JACK=YES
 HAVE_ANDROID=YES
 QT += androidextras
 QT += gui-private
-LIBS+= -L$${PWD}/android/jack
-INCLUDEPATH+= $${PWD}/android
+
 DISTFILES+= \
         android/AndroidManifest.xml \
         android/gradle/wrapper/gradle-wrapper.jar \
@@ -25,7 +40,9 @@ DISTFILES+= \
         android/res/values/libs.xml \
         android/build.gradle \
         android/gradle/wrapper/gradle-wrapper.properties \
-        android/gradlew.bat
+        android/gradlew.bat \
+        android/libs/umidi20_android.jar
+
 ANDROID_PACKAGE_SOURCE_DIR= $${PWD}/android
 }
 
@@ -169,6 +186,7 @@ INCLUDEPATH	+= $${LIBUMIDIPATH}
  SOURCES	+= $${LIBUMIDIPATH}/umidi20_android_dummy.c
  } else {
  SOURCES	+= $${LIBUMIDIPATH}/umidi20_android.c
+ OTHER_FILES	+= $${LIBUMIDIPATH}/umidi20_android.java
  }
 }
 
