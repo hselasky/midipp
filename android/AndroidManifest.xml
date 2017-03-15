@@ -27,20 +27,13 @@
             <meta-data android:name="android.app.background_running" android:value="false"/>
             <meta-data android:name="android.app.auto_screen_scale_factor" android:value="false"/>
             <meta-data android:name="android.app.extract_android_style" android:value="none"/>
-
-            <meta-data android:name="com.samsung.android.sdk.professionalaudio.appinfo.category" android:value="instrument"/>
-            <meta-data android:name="ProfessionalAudio" android:value="true"/>
         </activity>
     </application>
 
-    <uses-sdk android:minSdkVersion="16" android:targetSdkVersion="16"/>
+    <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="23"/>
     <uses-feature android:name="android.software.midi" android:required="true"/>
     <supports-screens android:largeScreens="true" android:normalScreens="true" android:anyDensity="true" android:smallScreens="false"/>
 
-    <uses-permission android:name="com.samsung.android.providers.context.permission.WRITE_USE_APP_FEATURE_SURVEY"/>
-    <uses-permission android:name="com.samsung.android.sdk.professionalaudio.permission.START_MONITOR_SERVICE"/>
-    <uses-permission android:name="com.samsung.android.sdk.professionalaudio.permission.USE_CONNECTION_SERVICE"/>
-    <uses-permission android:name="com.samsung.android.sdk.professionalaudio.app.audioconnectionservice.ConnectionPermission"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
