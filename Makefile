@@ -37,7 +37,7 @@ all: Makefile.unix
 	make -f Makefile.unix -j5 all
 
 Makefile.unix: midipp.pro
-	qmake-qt4 HAVE_SCREENSHOT=${HAVE_SCREENSHOT} PREFIX=${PREFIX} \
+	qmake HAVE_SCREENSHOT=${HAVE_SCREENSHOT} PREFIX=${PREFIX} \
 		DESTDIR=${DESTDIR} HAVE_STATIC=${HAVE_STATIC} \
 		-o Makefile.unix midipp.pro
 help:
