@@ -56,7 +56,7 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QFont>
-#ifndef QT_NO_PRINTER
+#ifdef HAVE_PRINTER
 #include <QPrintDialog>
 #include <QPrinter>
 #endif

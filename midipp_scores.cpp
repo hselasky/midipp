@@ -215,7 +215,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	butScoreFileExport = new QPushButton(tr("To Lyrics with chords"));
 	butScoreFileExportNoChords = new QPushButton(tr("To Lyrics no chords"));
 
-#ifdef QT_NO_PRINTER
+#ifndef HAVE_PRINTER
 	butScoreFilePrint->hide();
 #endif
 	gbScoreFile = new MppGroupBox(tr(buf));
@@ -343,7 +343,7 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 	QFontMetricsF fm_b(fnt_b);
 
 	if (pd != NULL) {
-#ifndef QT_NO_PRINTER
+#ifdef HAVE_PRINTER
 		/* get biggest number of score lines in a page */
 		x = visual_p_max;
 		if (x != 0) {
@@ -523,7 +523,7 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 		    visual_y_max - (visual_y_max / 3)), linebuf);
 
 		if (pd != NULL) {
-#ifndef QT_NO_PRINTER
+#ifdef HAVE_PRINTER
 			if (pVisual[x].newpage != 0) {
 				pd->newPage();
 				paint.translate(QPoint(0, -visual_y_max * y));
@@ -1671,7 +1671,7 @@ MppScoreMain :: handleKeyRelease(int in_key, uint32_t key_delay)
 void
 MppScoreMain :: handleScorePrint(void)
 {
-#ifndef QT_NO_PRINTER
+#ifdef HAVE_PRINTER
 	QPrinter printer(QPrinter::HighResolution);
 	QPrintDialog *dlg;
 	QPoint orig;

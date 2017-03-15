@@ -21,6 +21,7 @@ QT += widgets
     isEmpty(HAVE_IOS) {
         isEmpty(HAVE_ANDROID) {
                 QT += printsupport
+                DEFINES += HAVE_PRINTER
         }
     }
 }
