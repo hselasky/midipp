@@ -3210,8 +3210,12 @@ void
 MppMainWindow :: handle_copy()
 {
 	QPlainTextEdit *qedit = currEditor();
-	if (qedit != 0)
+	if (qedit != 0) {
+		/* if there is no selection, select all */
+		if (!qedit->textCursor().hasSelection())
+			qedit->selectAll();
 		qedit->copy();
+	}
 }
 
 void
