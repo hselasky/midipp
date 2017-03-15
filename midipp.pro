@@ -15,6 +15,7 @@ HAVE_NO_SHOW=YES
 HAVE_JACK=YES
 HAVE_ANDROID=YES
 QT += androidextras
+QT += gui-private
 LIBS+= -L$${PWD}/android/jack
 INCLUDEPATH+= $${PWD}/android
 DISTFILES+= \

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2010 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2017 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,6 +38,7 @@
 
 #ifdef __ANDROID__
 #include <QAndroidJniEnvironment>
+#include <qpa/qplatformnativeinterface.h>
 #endif
 
 Mpp :: Mpp() :
@@ -450,8 +451,10 @@ main(int argc, char **argv)
 
 #ifdef __ANDROID__
 	QAndroidJniEnvironment qjni;
+	QPlatformNativeInterface *interface = app.platformNativeInterface();
 
-	c = umidi20_android_init("midipp", qjni.javaVM(), qjni->functions);
+	c = umidi20_android_init("midipp", qjni.javaVM(), qjni->functions,
+	    interface->nativeResourceForIntegration("QtActivity"));
 
 	if (c != 0 && c != -2 && mpp_pdf_print == 0) {
 		QMessageBox box;
