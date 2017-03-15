@@ -37,7 +37,6 @@
 #include "midipp_scores.h"
 
 #ifdef __ANDROID__
-#include <QAndroidJniEnvironment>
 #include <qpa/qplatformnativeinterface.h>
 #endif
 
@@ -450,10 +449,9 @@ main(int argc, char **argv)
 	}
 
 #ifdef __ANDROID__
-	QAndroidJniEnvironment qjni;
 	QPlatformNativeInterface *interface = app.platformNativeInterface();
 
-	c = umidi20_android_init("midipp", qjni.javaVM(), qjni->functions,
+	c = umidi20_android_init("midipp",
 	    interface->nativeResourceForIntegration("QtActivity"));
 
 	if (c != 0 && c != -2 && mpp_pdf_print == 0) {
