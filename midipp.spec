@@ -6,7 +6,7 @@ Group:          Graphical Desktop/Applications/Multimedia
 License:        BSD-2-Clause
 URL:            http://www.selasky.org/hans_petter/midistudio
 Source0:        http://www.selasky.org/hans_petter/distfiles/%{name}-%{version}.tar.bz2
-Source1:        http://www.selasky.org/hans_petter/distfiles/libumidi-2.0.13.tar.bz2
+Source1:        http://www.selasky.org/hans_petter/distfiles/libumidi-2.0.14.tar.bz2
 
 BuildRequires:  make gcc libjack-devel phonon-devel qt-devel qt-settings qtwebkit-devel
 Requires:       qt
@@ -31,7 +31,7 @@ with your fingertips. List of supported features:
 %setup -q -a 1
 
 %build
-qmake-qt4 PREFIX=/usr DESTDIR=$RPM_BUILD_ROOT HAVE_STATIC=YES HAVE_JACK=YES LIBUMIDIPATH=libumidi-2.0.13 midipp.pro
+qmake-qt4 PREFIX=/usr DESTDIR=$RPM_BUILD_ROOT HAVE_STATIC=YES HAVE_JACK=YES LIBUMIDIPATH=libumidi-2.0.14 midipp.pro
 make %{?_smp_mflags}
 
 %install
