@@ -19,6 +19,7 @@ with your fingertips. List of supported features:
 - Jack MIDI.
 - Import from lyrics sites (chorded lyrics)
 - Import from GuitarPro v3 and v4 format.
+- Import from MusicXML format.
 - Loading and saving from and to standard v1.0 MIDI files.
 - Realtime MIDI processing.
 - Simple sequence looping.
@@ -48,7 +49,8 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Tue Dec 6 2016 HPS hps@selasky.org 1.3.4-1
+* Tue Aug 3 2017 HPS hps@selasky.org 1.3.4-1
+- Added support for importing uncompressed MusicXML files 
 * Tue Dec 6 2016 HPS hps@selasky.org 1.3.3-1
 - Fixed support for more than 12 jump labels
 - Fixed output MIDI channel when using the piano tab

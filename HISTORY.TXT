@@ -5,6 +5,9 @@
 MIDI Player Pro allows you to play any kind of MIDI music in seconds
 with your fingertips.
 
+Changes for v1.3.4:
+- Added support for importing uncompressed MusicXML files
+
 Changes for v1.3.3:
 - Fixed support for more than 12 jump labels
 - Fixed output MIDI channel when using the piano tab
