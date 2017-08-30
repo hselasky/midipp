@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2017 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,7 +64,7 @@ enum MppCommandType {
 	MPP_CMD_UNLOCK,
 	MPP_CMD_BPM_REF,
 	MPP_CMD_AUTO_MELODY,
-	MPP_CMD_NUM_BASE,
+	MPP_CMD_RESERVED,
 	MPP_CMD_KEY_MODE,
 	MPP_CMD_IMAGE_PROPS,
 	MPP_CMD_IMAGE_BG_COLOR,

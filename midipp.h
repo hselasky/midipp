@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2016 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2017 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -242,6 +242,7 @@ extern uint8_t MppWriteRawFile(const QString &, QByteArray *pdata);
 extern const char *MppBaseKeyToString(int key, int sharp);
 extern void MppScoreVariantInit(void);
 extern uint8_t MppIsLabel(const QString &);
+extern void MppSplitBaseTreble(const uint8_t *, uint8_t, uint8_t *, uint8_t *, uint8_t *, uint8_t *);
 extern const QString MppChordModChars;
 extern const QString MppVersion;
 extern const QString MppIconFile;

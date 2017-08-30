@@ -108,6 +108,39 @@ MppIsLabel(const QString &str)
 	return ((str.size() > 1) && (str[0] == 'L') && str[1].isDigit());
 }
 
+Q_DECL_EXPORT void
+MppSplitBaseTreble(const uint8_t *score, uint8_t num, uint8_t *base, uint8_t *nbase,
+    uint8_t *treble, uint8_t *ntreble)
+{
+	uint8_t stats[12] = {};
+	uint8_t count[12] = {};
+	uint8_t x;
+	uint8_t key;
+	uint8_t nb = 0;
+	uint8_t nt = 0;
+
+	for (x = 0; x != num; x++)
+		stats[score[x] % 12]++;
+
+	/*
+	 * Treble only: C0
+	 * Bass only: C0 C1 or C0 C0
+	 * Bass and Treble: C0 C1 C2 or C0 C0 C1
+	 */
+	for (x = 0; x != num; x++) {
+		key = score[x];
+		if (stats[key % 12] == 1) {
+			treble[nt++] = key;
+		} else if (count[key % 12]++ < 2) {
+			base[nb++] = key;
+		} else {
+			treble[nt++] = key;
+		}
+	}
+	*nbase = nb;
+	*ntreble = nt;
+}
+
 Q_DECL_EXPORT const char *
 MppBaseKeyToString(int key, int sharp)
 {

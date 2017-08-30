@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2016 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2017 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -777,9 +777,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 	/* no key mode selection */
 	key_mode = -1;
 
-	/* number of base keys */
-	num_base = 2;
-
 	/* cleanup visual entries */
 	for (x = 0; x != visual_max; x++) {
 		delete (pVisual[x].str);
@@ -811,9 +808,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 					break;
 				case MPP_CMD_AUTO_MELODY:
 					auto_melody = ptr->value[1];
-					break;
-				case MPP_CMD_NUM_BASE:
-					num_base = ptr->value[1];
 					break;
 				case MPP_CMD_KEY_MODE:
 					key_mode = ptr->value[1];
@@ -1201,9 +1195,9 @@ MppScoreMain :: handleChordsLoad(void)
 	uint8_t nb;
 	uint8_t nk;
 	uint8_t chan;
-	uint8_t score[12];
-	uint8_t base[12];
-	uint8_t key[12];
+	uint8_t score[24];
+	uint8_t base[24];
+	uint8_t key[24];
 
 	memset(score_future_base, 0, sizeof(score_future_base));
 	memset(score_future_treble, 0, sizeof(score_future_treble));
@@ -1225,7 +1219,7 @@ MppScoreMain :: handleChordsLoad(void)
 		case MPP_T_SCORE:
 			if (duration == 0)
 				break;
-			if (ns < 12)
+			if (ns < 24)
 				score[ns++] = ptr->value[0];
 			break;
 		case MPP_T_CHANNEL:
@@ -1241,13 +1235,8 @@ MppScoreMain :: handleChordsLoad(void)
 
 	mid_sort(score, ns);
 
-	for (x = 0; x != ns; x++) {
-		if (x < num_base)
-			base[nb++] = score[x];
-		else
-			key[nk++] = score[x];
-	}
-
+	MppSplitBaseTreble(score, ns, base, &nb, key, &nk);
+	
 	if (nb != 0) {
 		mid_sort(base, nb);
 		for (x = 0; x != 12; x++) {

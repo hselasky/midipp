@@ -264,18 +264,6 @@ MppHead :: operator += (MppElement *elem)
 	case MPP_T_COMMAND:
 		elem->value[0] = elem->getIntValue(&off);
 		switch (elem->value[0]) {
-		case MPP_CMD_NUM_BASE:
-			ch = elem->getChar(&off);
-			if (ch == '.') {
-				elem->value[1] = elem->getIntValue(&off);
-				if (elem->value[1] > 12)
-					elem->value[1] = 12;
-				else if (elem->value[1] < 0)
-					elem->value[1] = 0;
-			} else {
-				elem->value[1] = 2;
-			}
-			break;
 		case MPP_CMD_IMAGE_PROPS:
 			for (x = 1; x != 4; x++) {
 				ch = elem->getChar(&off);

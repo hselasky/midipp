@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2016 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2017 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -244,7 +244,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " * K3.<bpm>.<period_ms> - set reference BPM and period in ms.\n"
 	    " * K4.<number> - enable automatic melody effect on the N-th note, if non-zero.\n"
 	    " * K5.<number> - set number of base scores for chord mode. Default value is 2.\n"
-	    " * K6.<number> - select key mode.\n"
+	    " * K6 - no operation.\n"
 	    " * K6.0 - select ALL key mode. (default)\n"
 	    " * K6.1 - select MIXED key mode.\n"
 	    " * K6.2 - select FIXED key mode.\n"

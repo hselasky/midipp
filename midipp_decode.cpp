@@ -903,7 +903,7 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	gb->addWidget(lin_out, 4,0,1,4);
 
 	gb->addWidget(lbl_status, 5,0,1,2, Qt::AlignHCenter|Qt::AlignVCenter);
-	gb->addWidget(new QLabel(tr("Add auto base:")), 5,2,1,1, Qt::AlignRight|Qt::AlignVCenter);
+	gb->addWidget(new QLabel(tr("Add bass scores:")), 5,2,1,1, Qt::AlignRight|Qt::AlignVCenter);
 	gb->addWidget(cbx_auto_base, 5,3,1,1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
