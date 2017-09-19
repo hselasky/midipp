@@ -559,12 +559,14 @@ MppSheet :: getTranspose(int trans_mode)
 		temp = mw->getCurrTransposeScore();
 		if (temp >= 0)
 			return (temp);
-		break;
+		else
+			return (MPP_INVALID_TRANSPOSE);
 	case 2:
 		temp = mw->getCurrTransposeScore();
 		if (temp >= 0)
 			return (temp % 12);
-		break;
+		else
+			return (MPP_INVALID_TRANSPOSE);
 	default:
 		break;
 	}

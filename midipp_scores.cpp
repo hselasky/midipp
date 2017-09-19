@@ -1492,8 +1492,7 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 
 		duration = 1;
 
-		for (ptr = start; ptr != stop;
-		    ptr = TAILQ_NEXT(ptr, entry)) {
+		for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
 			switch (ptr->type) {
 			int ch;
 			int out_key;
@@ -1502,17 +1501,24 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 			int temp;
 
 			case MPP_T_TRANSPOSE:
+				if (transpose == MPP_INVALID_TRANSPOSE)
+					break;
+
 				transpose = ptr->value[0] + key_trans;
 				switch (ptr->value[1]) {
 				case 1:
 					temp = mainWindow->getCurrTransposeScore();
 					if (temp >= 0)
 						transpose += temp;
+					else
+						transpose = MPP_INVALID_TRANSPOSE;
 					break;
 				case 2:
 					temp = mainWindow->getCurrTransposeScore();
 					if (temp >= 0)
 						transpose += temp % 12;
+					else
+						transpose = MPP_INVALID_TRANSPOSE;
 					break;
 				default:
 					break;

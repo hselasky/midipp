@@ -126,6 +126,7 @@
 #define	MPP_POPUP_DELAY		2000	/* ms */
 #define	MPP_CHAN_ANY		1
 #define	MPP_CHAN_NONE		2
+#define	MPP_INVALID_TRANSPOSE	4095
 
 #define	STRLCPY(a,b,c) do { \
     strncpy(a,b,c); ((char *)(a))[(c)-1] = 0; \
