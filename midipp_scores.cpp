@@ -1357,7 +1357,7 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 			mse.channelSec = synthChannelTreb + 1;
 	}
 
-	/* store informatino for key release command */
+	/* store information for key release command */
 	score_past[off] = mse;
 
 	/* store information for pressure command */
@@ -1499,9 +1499,24 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 			int out_key;
 			int out_vel;
 			int delay;
+			int temp;
 
 			case MPP_T_TRANSPOSE:
 				transpose = ptr->value[0] + key_trans;
+				switch (ptr->value[1]) {
+				case 1:
+					temp = mainWindow->getCurrTransposeScore();
+					if (temp >= 0)
+						transpose += temp;
+					break;
+				case 2:
+					temp = mainWindow->getCurrTransposeScore();
+					if (temp >= 0)
+						transpose += temp % 12;
+					break;
+				default:
+					break;
+				}
 				break;
 
 			case MPP_T_MACRO:

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2016 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2017 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -81,6 +81,8 @@ public:
 	void send_song_select_locked(uint8_t);
 
 	void send_byte_event_locked(uint8_t);
+
+	int getCurrTransposeScore(void);
 
 	QPlainTextEdit *currEditor();
 	MppScoreMain *currScores();

@@ -226,7 +226,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_help->setLineWrapMode(QPlainTextEdit::NoWrap);
 	tab_help->setPlainText(tr(
 	    "/*\n"
-	    " * Copyright (c) 2009-2016 Hans Petter Selasky. All rights reserved.\n"
+	    " * Copyright (c) 2009-2017 Hans Petter Selasky. All rights reserved.\n"
 	    " */\n"
 
 	    "\n"
@@ -276,7 +276,14 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " *     and optionally starts a new page(P) in printouts.\n"
 	    " * S\"<string .(chord) .(chord)>\" - creates a visual string.\n"
 	    " * CDEFGAH<number><B> - defines a score in the given octave [0..10].\n"
-	    " * X[+/-]<number> - defines the transpose level of the following scores in half-steps.\n"
+	    " * X[+/-]<number> - transpose the subsequent scores by the given\n"
+	    " *  number of steps, -128..+127. There are 12 steps in a so-called octave.\n"
+	    " * X[+/-]<number>.<mode>\n"
+	    " * X[+/-]<number>.0 - fixed transposition. (default)\n"
+	    " * X[+/-]<number>.1 - dynamic transposition using full\n"
+	    " *   bass score. (available in chord mode only)\n"
+	    " * X[+/-]<number>.2 - dynamic transposition using remainder of\n"
+	    " *   full bass score, 0..11. (available in chord mode only)\n"
 	    " */\n"
 	    "\n"
 	    "/*\n"
@@ -3340,7 +3347,6 @@ MppMainWindow :: handle_up_down()
         main_gl->addWidget(main_tb,2,0,1,2);
     else
         main_gl->addWidget(main_tb,0,0,1,2);
-
 }
 
 void
@@ -3353,6 +3359,24 @@ void
 MppMainWindow :: atomic_unlock(void)
 {
 	pthread_mutex_unlock(&mtx);
+}
+
+/* must be called locked */
+int
+MppMainWindow :: getCurrTransposeScore(void)
+{
+	for (int x = 0; x != MPP_MAX_VIEWS; x++) {
+		MppScoreMain *sm = scores_main[x];
+		if (sm->keyMode != MM_PASS_NONE_CHORD_PIANO &&
+		    sm->keyMode != MM_PASS_NONE_CHORD_GUITAR)
+			continue;
+		if (sm->head.isFirst())
+			continue;
+		if (sm->score_future_base[0].dur == 0)
+			continue;
+		return (sm->score_future_base[0].key);
+	}
+	return (-1);
 }
 
 #ifdef HAVE_SCREENSHOT

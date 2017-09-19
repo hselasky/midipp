@@ -33,16 +33,20 @@ struct MppSheetRow {
 	int	col;
 	short	label;
 	short	playing;
+	short	playkey;
+	short	playchan;
 	union {
 		struct {
-			short	chan;
-			short	trans;
+			int	chan;
+			short	trans_number;
+			short	trans_mode;
 			int	dur;
 			int	num;
 		}	score;
 		struct {
 			int	chan;
-			int	trans;
+			short	trans_number;
+			short	trans_mode;
 			int	num;
 		}	macro;
 		struct {
@@ -90,6 +94,7 @@ public:
 	const QString outputColumn(ssize_t);
 	void	wheelEvent(QWheelEvent *);
 	void	watchdog();
+	int	getTranspose(int);
 
 public slots:
 	void	handleScrollChanged(int);

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2017 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -407,6 +407,18 @@ MppHead :: operator += (MppElement *elem)
 
 	case MPP_T_TRANSPOSE:
 		elem->value[0] = elem->getIntValue(&off);
+		/* range check transpose value */
+		if (elem->value[0] < -128)
+			elem->value[0] = -128;
+		else if (elem->value[0] > 127)
+			elem->value[0] = 127;
+		/* check for transpose mode */
+		ch = elem->getChar(&off);
+		if (ch == '.') {
+			elem->value[1] = elem->getIntValue(&off);
+		} else {
+			elem->value[1] = 0;
+		}
 		break;
 
 	case MPP_T_TIMER:
