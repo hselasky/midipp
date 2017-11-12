@@ -672,7 +672,6 @@ MppSheet::mousePressEvent(QMouseEvent * event)
 void
 MppSheet::mouseReleaseEvent(QMouseEvent * event)
 {
-	MppScoreMain *sm = mw->scores_main[unit];
 	ssize_t y;
 
 	for (y = 0; y != num_rows; y++) {
