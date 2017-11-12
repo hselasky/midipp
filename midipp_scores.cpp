@@ -1252,7 +1252,7 @@ MppScoreMain :: handleChordsLoad(void)
 			score_future_base[x].dur = 1;
 			score_future_base[x].key = base[0];
 			score_future_base[x].channel = chan;
-			mid_trans(base, nb, 1);
+			MppTrans(base, nb, 1);
 		}
 	}
 
@@ -1262,7 +1262,7 @@ MppScoreMain :: handleChordsLoad(void)
 			score_future_treble[x].dur = 1;
 			score_future_treble[x].key = key[0];
 			score_future_treble[x].channel = chan;
-			mid_trans(key, nk, 1);
+			MppTrans(key, nk, 1);
 		}
 	}
 
