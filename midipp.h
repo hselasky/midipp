@@ -148,6 +148,7 @@ class MppGridLayout;
 class MppGroupBox;
 class MppHead;
 class MppImportTab;
+class MppInstrumentTab;
 class MppLoopTab;
 class MppMainWindow;
 class MppMidi;

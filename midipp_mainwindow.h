@@ -278,27 +278,7 @@ public:
 
 	/* tab <Instrument> */
 
-	MppGridLayout *tab_instr_gl;
-
-	MppGroupBox *gb_instr_select;
-	MppGroupBox *gb_instr_table;
-
-	MppChanSel *spn_instr_curr_chan;
-	QSpinBox *spn_instr_curr_bank;
-	QSpinBox *spn_instr_curr_prog;
-	QSpinBox *spn_instr_bank[16];
-	QSpinBox *spn_instr_prog[16];
-
-	MppCheckBox *cbx_instr_mute[16];
-
-	MppButtonMap *but_non_channel_mute_all;
-
-	QPushButton *but_instr_rem;
-	QPushButton *but_instr_program;
-	QPushButton *but_instr_program_all;
-	QPushButton *but_instr_reset;
-	QPushButton *but_instr_mute_all;
-	QPushButton *but_instr_unmute_all;
+	MppInstrumentTab *tab_instrument;
 
 	/* tab <Volume> */
 
@@ -364,16 +344,6 @@ public slots:
 	void handle_config_reload();
 	void handle_config_view_fontsel();
 	void handle_config_edit_fontsel();
-
-	void handle_non_channel_muted_changed(int);
-	void handle_instr_changed(int);
-	void handle_instr_reset();
-	void handle_instr_program();
-	void handle_instr_program_all();
-	void handle_instr_channel_changed(int);
-	void handle_instr_rem();
-	void handle_instr_mute_all();
-	void handle_instr_unmute_all();
 
 	void handle_volume_changed(int);
 	void handle_volume_reset();

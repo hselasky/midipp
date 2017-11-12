@@ -33,6 +33,7 @@
 #include "midipp_spinbox.h"
 #include "midipp_button.h"
 #include "midipp_midi.h"
+#include "midipp_instrument.h"
 
 MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
   : QWidget(parent)
@@ -498,5 +499,5 @@ MppLoopTab :: watchdog()
 	}
 
 	if (new_chan < 16)
-		mw->handle_instr_channel_changed(new_chan);
+		mw->tab_instrument->handle_instr_channel_changed(new_chan);
 }

@@ -36,6 +36,7 @@
 #include "midipp_shortcut.h"
 #include "midipp_show.h"
 #include "midipp_sheet.h"
+#include "midipp_instrument.h"
 
 MppSettings :: MppSettings(MppMainWindow *_parent, const QString & fname)
   : QSettings(fname)
@@ -170,11 +171,11 @@ MppSettings :: doSave(void)
 	if (save_instruments) {
 		beginGroup("instruments");
 		for (x = 0; x != 16; x++) {
-			setValue(concat("bank%d", x), mw->spn_instr_bank[x]->value());
-			setValue(concat("prog%d", x), mw->spn_instr_prog[x]->value());
-			setValue(concat("mute%d", x), (int)mw->cbx_instr_mute[x]->isChecked());
+			setValue(concat("bank%d", x), mw->tab_instrument->spn_instr_bank[x]->value());
+			setValue(concat("prog%d", x), mw->tab_instrument->spn_instr_prog[x]->value());
+			setValue(concat("mute%d", x), (int)mw->tab_instrument->cbx_instr_mute[x]->isChecked());
 		}
-		setValue("nonchannelmute", mw->but_non_channel_mute_all->currSelection);
+		setValue("nonchannelmute", mw->tab_instrument->but_non_channel_mute_all->currSelection);
 		endGroup();
 	}
 
@@ -327,11 +328,11 @@ MppSettings :: doLoad(void)
 
 	if (save_instruments > 0) {
 		for (x = 0; x != 16; x++) {
-			mw->spn_instr_bank[x]->setValue(valueDefault(concat("instruments/bank%d", x), 0) & 16383);
-			mw->spn_instr_prog[x]->setValue(valueDefault(concat("instruments/prog%d", x), 0) & 127);
-			mw->cbx_instr_mute[x]->setChecked(valueDefault(concat("instruments/mute%d", x), 0) ? 1 : 0);
+			mw->tab_instrument->spn_instr_bank[x]->setValue(valueDefault(concat("instruments/bank%d", x), 0) & 16383);
+			mw->tab_instrument->spn_instr_prog[x]->setValue(valueDefault(concat("instruments/prog%d", x), 0) & 127);
+			mw->tab_instrument->cbx_instr_mute[x]->setChecked(valueDefault(concat("instruments/mute%d", x), 0) ? 1 : 0);
 		}
-		mw->but_non_channel_mute_all->setSelection(valueDefault("nonchannelmute", 0) ? 1 : 0);
+		mw->tab_instrument->but_non_channel_mute_all->setSelection(valueDefault("nonchannelmute", 0) ? 1 : 0);
 	}
 
 	if (save_devices > 0) {

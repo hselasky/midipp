@@ -30,6 +30,7 @@
 #include "midipp_buttonmap.h"
 #include "midipp_mode.h"
 #include "midipp_metronome.h"
+#include "midipp_instrument.h"
 
 MppReplayTab :: MppReplayTab(MppMainWindow *parent)
 {
@@ -247,9 +248,9 @@ MppReplayTab :: handleRecordExport()
 void
 MppReplayTab :: handleEraseMidiTracks()
 {
-	mainWindow->handle_instr_mute_all();
-	mainWindow->handle_instr_rem();
-	mainWindow->handle_instr_unmute_all();
+	mainWindow->tab_instrument->handle_instr_mute_all();
+	mainWindow->tab_instrument->handle_instr_rem();
+	mainWindow->tab_instrument->handle_instr_unmute_all();
 }
 
 void

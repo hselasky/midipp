@@ -56,6 +56,7 @@
 #include "midipp_metronome.h"
 #include "midipp_sheet.h"
 #include "midipp_musicxml.h"
+#include "midipp_instrument.h"
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -211,6 +212,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_import = new MppImportTab(this);
 
+	tab_instrument = new MppInstrumentTab(this);
+
 	tab_loop = new MppLoopTab(this, this);
 
 	tab_replay = new MppReplayTab(this);
@@ -310,7 +313,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_chord_gl = new MppDecodeTab(this);
 	tab_pianotab = new MppPianoTab(this);
 	tab_config_gl = new MppGridLayout();
-	tab_instr_gl = new MppGridLayout();
 	tab_volume_gl = new MppGridLayout();
 
 	gl_ctrl = new MppGroupBox(tr("Main controls"));
@@ -340,7 +342,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_tb->addTab(tab_config_gl, tr("Config"));
 	main_tb->addTab(tab_custom, tr("Custom"));
 	main_tb->addTab(tab_shortcut->gl, tr("Shortcut"));
-	main_tb->addTab(tab_instr_gl, tr("Instrument"));
+	main_tb->addTab(tab_instrument->gl, tr("Instrument"));
 	main_tb->addTab(tab_volume_gl, tr("Volume"));
 	main_tb->addTab(tab_database, tr("Database"));
 	main_tb->addTab(tab_help, tr("Help"));
@@ -565,82 +567,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_config_gl->addWidget(mpp_settings->but_config_clean, x, 3, 1, 1);
 	tab_config_gl->setColumnStretch(8, 1);
 
-	/* <Instrument> tab */
-
-	but_non_channel_mute_all = new MppButtonMap("Mute non-channel specific MIDI events\0NO\0YES\0", 2, 2);
-	connect(but_non_channel_mute_all, SIGNAL(selectionChanged(int)), this, SLOT(handle_non_channel_muted_changed(int)));
-
-	but_instr_program = new QPushButton(tr("Program One"));
-	but_instr_program_all = new QPushButton(tr("Program All"));
-	but_instr_reset = new QPushButton(tr("Reset"));
-	but_instr_rem = new QPushButton(tr("Delete muted"));
-	but_instr_mute_all = new QPushButton(tr("Mute all"));
-	but_instr_unmute_all = new QPushButton(tr("Unmute all"));
-
-	spn_instr_curr_chan = new MppChanSel(0, 0);
-	connect(spn_instr_curr_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_instr_channel_changed(int)));
-
-	spn_instr_curr_bank = new QSpinBox();
-	spn_instr_curr_bank->setRange(0, 16383);
-	spn_instr_curr_bank->setValue(0);
-
-	spn_instr_curr_prog = new QSpinBox();
-	spn_instr_curr_prog->setRange(0, 127);
-	spn_instr_curr_prog->setValue(0);
-
-	gb_instr_select = new MppGroupBox(tr("Synth and Recording Instrument Selector"));
-	gb_instr_select->addWidget(new QLabel(tr("Channel")), 0, 0, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-	gb_instr_select->addWidget(new QLabel(tr("Bank")), 0, 1, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-	gb_instr_select->addWidget(new QLabel(tr("Program")), 0, 2, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-	gb_instr_select->addWidget(spn_instr_curr_chan, 1, 0, 1, 1);
-	gb_instr_select->addWidget(spn_instr_curr_bank, 1, 1, 1, 1);
-	gb_instr_select->addWidget(spn_instr_curr_prog, 1, 2, 1, 1);
-	gb_instr_select->addWidget(but_instr_program, 1, 3, 1, 3);
-	gb_instr_select->addWidget(but_instr_program_all, 1, 6, 1, 2);
-
-	gb_instr_table = new MppGroupBox(tr("Synth and Recording Instrument Table"));
-
-	gb_instr_table->addWidget(new QLabel(tr("Bank")), 0, 1, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-	gb_instr_table->addWidget(new QLabel(tr("Program")), 0, 2, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-	gb_instr_table->addWidget(new QLabel(tr("Mute")), 0, 3, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-
-	gb_instr_table->addWidget(new QLabel(tr("Bank")), 0, 5, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-	gb_instr_table->addWidget(new QLabel(tr("Program")), 0, 6, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-	gb_instr_table->addWidget(new QLabel(tr("Mute")), 0, 7, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-
-	for (n = 0; n != 16; n++) {
-		int y_off = (n & 8) ? 4 : 0;
-
-		spn_instr_bank[n] = new QSpinBox();
-		spn_instr_bank[n]->setRange(0, 16383);
-		connect(spn_instr_bank[n], SIGNAL(valueChanged(int)), this, SLOT(handle_instr_changed(int)));
-
-		spn_instr_prog[n] = new QSpinBox();
-		spn_instr_prog[n]->setRange(0, 127);
-		connect(spn_instr_prog[n], SIGNAL(valueChanged(int)), this, SLOT(handle_instr_changed(int)));
-
-		cbx_instr_mute[n] = new MppCheckBox(n);
-		connect(cbx_instr_mute[n], SIGNAL(stateChanged(int,int)), this, SLOT(handle_instr_changed(int)));
-
-		gb_instr_table->addWidget(new QLabel(MppChanName(n)), (n & 7) + 1, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
-		gb_instr_table->addWidget(spn_instr_bank[n], (n & 7) + 1, 1 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
-		gb_instr_table->addWidget(spn_instr_prog[n], (n & 7) + 1, 2 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-		gb_instr_table->addWidget(cbx_instr_mute[n], (n & 7) + 1, 3 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-	}
-
-
-	tab_instr_gl->addWidget(gb_instr_select, 0, 0, 1, 8);
-	tab_instr_gl->addWidget(gb_instr_table, 1, 0, 1, 8);
-	tab_instr_gl->addWidget(but_non_channel_mute_all, 2, 0, 1, 8);
-
-	tab_instr_gl->setRowStretch(3, 1);
-	tab_instr_gl->setColumnStretch(8, 1);
-
-	tab_instr_gl->addWidget(but_instr_mute_all, 4, 0, 1, 2);
-	tab_instr_gl->addWidget(but_instr_unmute_all, 4, 2, 1, 2);
- 	tab_instr_gl->addWidget(but_instr_rem, 4, 4, 1, 2);
-	tab_instr_gl->addWidget(but_instr_reset, 4, 6, 1, 2);
-
 	/* <Volume> tab */
 
 	gb_volume_play = new MppGroupBox(tr("Playback"));
@@ -693,13 +619,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_config_view_fontsel, SIGNAL(released()), this, SLOT(handle_config_view_fontsel()));
 	connect(but_config_edit_fontsel, SIGNAL(released()), this, SLOT(handle_config_edit_fontsel()));
 
-	connect(but_instr_rem, SIGNAL(released()), this, SLOT(handle_instr_rem()));
-	connect(but_instr_program, SIGNAL(released()), this, SLOT(handle_instr_program()));
-	connect(but_instr_program_all, SIGNAL(released()), this, SLOT(handle_instr_program_all()));
-	connect(but_instr_reset, SIGNAL(released()), this, SLOT(handle_instr_reset()));
-	connect(but_instr_mute_all, SIGNAL(released()), this, SLOT(handle_instr_mute_all()));
-	connect(but_instr_unmute_all, SIGNAL(released()), this, SLOT(handle_instr_unmute_all()));
-
 	connect(but_volume_reset, SIGNAL(released()), this, SLOT(handle_volume_reset()));
 
 	connect(but_midi_pause, SIGNAL(pressed()), this, SLOT(handle_midi_pause()));
@@ -747,14 +666,6 @@ MppMainWindow :: handle_jump(int index)
 {
 	atomic_lock();
 	handle_jump_locked(index);
-	atomic_unlock();
-}
-
-void
-MppMainWindow :: handle_non_channel_muted_changed(int value)
-{
-	atomic_lock();
-	nonChannelMuted = value;
 	atomic_unlock();
 }
 
@@ -1023,7 +934,7 @@ MppMainWindow :: handle_watchdog()
 	}
 
 	if (instr_update)
-		handle_instr_changed(0);
+		tab_instrument->handle_instr_changed(0);
 
 	if (bpm < 0)
 		bpm = 0;
@@ -1081,8 +992,8 @@ MppMainWindow :: handle_midi_file_new()
 		chanUsageMask = 0;
 		atomic_unlock();
 
-		handle_instr_reset();
-		handle_instr_channel_changed(0);
+		tab_instrument->handle_instr_reset();
+		tab_instrument->handle_instr_channel_changed(0);
 	}
 }
 
@@ -2123,213 +2034,6 @@ MppMainWindow :: do_instr_check(struct umidi20_event *event, uint8_t *pchan)
 }
 
 void
-MppMainWindow :: handle_instr_channel_changed(int chan)
-{
-	int temp[2];
-
-	temp[0] = spn_instr_bank[chan]->value();
-	temp[1] = spn_instr_prog[chan]->value();
-
-	spn_instr_curr_bank->setValue(temp[0]);
-	spn_instr_curr_prog->setValue(temp[1]);
-
-	spn_instr_curr_chan->blockSignals(1);
-	spn_instr_curr_chan->setValue(chan);
-	spn_instr_curr_chan->blockSignals(0);
-}
-
-void
-MppMainWindow :: handle_instr_program()
-{
-	int chan = spn_instr_curr_chan->value();
-	int bank = spn_instr_curr_bank->value();
-	int prog = spn_instr_curr_prog->value();
-
-	spn_instr_bank[chan]->blockSignals(1);
-	spn_instr_prog[chan]->blockSignals(1);
-	cbx_instr_mute[chan]->blockSignals(1);
-
-	spn_instr_bank[chan]->setValue(bank);
-	spn_instr_prog[chan]->setValue(prog);
-	cbx_instr_mute[chan]->setChecked(0);
-
-	spn_instr_bank[chan]->blockSignals(0);
-	spn_instr_prog[chan]->blockSignals(0);
-	cbx_instr_mute[chan]->blockSignals(0);
-
-	atomic_lock();
-	instr[chan].updated |= 1;
-	atomic_unlock();
-
-	handle_instr_changed(0);
-}
-
-void
-MppMainWindow :: handle_instr_program_all()
-{
-	uint8_t x;
-
-	atomic_lock();
-	for (x = 0; x != 16; x++)
-		instr[x].updated |= 1;
-	atomic_unlock();
-
-	handle_instr_changed(0);
-}
-
-void 
-MppMainWindow :: handle_instr_changed(int dummy)
-{
-	struct mid_data *d = &mid_data;
-	int temp[3];
-	uint8_t curr_chan;
-	uint8_t x;
-	uint8_t y;
-	uint8_t update_curr;
-	uint8_t trig;
-
-	curr_chan = spn_instr_curr_chan->value();
-
-	for (x = 0; x != 16; x++) {
-
-		temp[0] = spn_instr_bank[x]->value();
-		temp[1] = spn_instr_prog[x]->value();
-		temp[2] = cbx_instr_mute[x]->isChecked();
-
-		atomic_lock();
-
-		update_curr = 0;
-
-		if (instr[x].bank != temp[0]) {
-			if (instr[x].updated & 2) {
-				temp[0] = instr[x].bank;
-			} else {
-				instr[x].bank = temp[0];
-				instr[x].updated |= 1;
-			}
-			update_curr = 1;
-		}
-		if (instr[x].prog != temp[1]) {
-			if (instr[x].updated & 2) {
-				temp[1] = instr[x].prog;
-			} else {
-				instr[x].prog = temp[1];
-				instr[x].updated |= 1;
-			}
-			update_curr = 1;
-		}
-		if (instr[x].muted != temp[2]) {
-			if (instr[x].updated & 2) {
-				temp[2] = instr[x].muted;
-			} else {
-				instr[x].muted = temp[2];
-				instr[x].updated |= 1;
-			}
-			update_curr = 1;
-		}
-		atomic_unlock();
-
-		if (update_curr) {
-			spn_instr_bank[x]->blockSignals(1);
-			spn_instr_prog[x]->blockSignals(1);
-			cbx_instr_mute[x]->blockSignals(1);
-
-			spn_instr_bank[x]->setValue(temp[0]);
-			spn_instr_prog[x]->setValue(temp[1]);
-			cbx_instr_mute[x]->setChecked(temp[2]);
-
-			spn_instr_bank[x]->blockSignals(0);
-			spn_instr_prog[x]->blockSignals(0);
-			cbx_instr_mute[x]->blockSignals(0);
-
-			atomic_lock();
-			update_curr = (curr_chan == x);
-			atomic_unlock();
-		}
-
-		if (update_curr) {
-			spn_instr_curr_chan->blockSignals(1);
-			spn_instr_curr_bank->blockSignals(1);
-			spn_instr_curr_prog->blockSignals(1);
-
-			spn_instr_curr_chan->setValue(x);
-			spn_instr_curr_bank->setValue(temp[0]);
-			spn_instr_curr_prog->setValue(temp[1]);
-
-			spn_instr_curr_chan->blockSignals(0);
-			spn_instr_curr_bank->blockSignals(0);
-			spn_instr_curr_prog->blockSignals(0);
-		}
-	}
-
-	/* Do the real programming */
-
-	atomic_lock();
-	trig = midiTriggered;
-	midiTriggered = 1;
-
-	for (x = 0; x != 16; x++) {
-		if (instr[x].updated == 0)
-			continue;
-
-		instr[x].updated = 0;
-		for (y = 0; y != MPP_MAX_DEVS; y++) {
-			if (muteProgram[y] != 0)
-				continue;
-			if (check_synth(y, x, 0) == 0)
-				continue;
-			mid_delay(d, (4 * x));
-			mid_set_bank_program(d, x, 
-			    instr[x].bank,
-			    instr[x].prog);
-		}
-	}
-
-	midiTriggered = trig;
-	atomic_unlock();
-}
-
-void 
-MppMainWindow :: handle_instr_reset()
-{
-	uint8_t x;
-
-	but_non_channel_mute_all->setSelection(0);
-
-	for (x = 0; x != 16; x++) {
-		spn_instr_bank[x]->blockSignals(1);
-		spn_instr_prog[x]->blockSignals(1);
-		cbx_instr_mute[x]->blockSignals(1);
-
-		spn_instr_bank[x]->setValue(0);
-		spn_instr_prog[x]->setValue(0);
-		cbx_instr_mute[x]->setChecked(0);
-
-		spn_instr_bank[x]->blockSignals(0);
-		spn_instr_prog[x]->blockSignals(0);
-		cbx_instr_mute[x]->blockSignals(0);
-
-		atomic_lock();
-		instr[x].updated = 1;
-		atomic_unlock();
-	}
-
-	spn_instr_curr_chan->blockSignals(1);
-	spn_instr_curr_bank->blockSignals(1);
-	spn_instr_curr_prog->blockSignals(1);
-
-	spn_instr_curr_chan->setValue(0);
-	spn_instr_curr_bank->setValue(0);
-	spn_instr_curr_prog->setValue(0);
-
-	spn_instr_curr_chan->blockSignals(0);
-	spn_instr_curr_bank->blockSignals(0);
-	spn_instr_curr_prog->blockSignals(0);
-
-	handle_instr_changed(0);
-}
-
-void
 MppMainWindow :: handle_volume_changed(int dummy)
 {
 	int play_temp[16];
@@ -2891,7 +2595,7 @@ MppMainWindow :: MidiInit(void)
 	handle_midi_record(0);
 	handle_midi_play(0);
 	handle_score_record(0);
-	handle_instr_reset();
+	tab_instrument->handle_instr_reset();
 	handle_volume_reset();
 
 	for (n = 0; n != UMIDI20_N_DEVICES; n++) {
@@ -2998,67 +2702,6 @@ MppMainWindow :: handle_config_dev(int n, int automagic)
 		handle_config_apply(n);
 	}
 	return (retval);
-}
-
-void
-MppMainWindow :: handle_instr_rem()
-{
-	struct umidi20_event *event;
-	struct umidi20_event *event_next;
-	uint8_t chan;
-
-	if (track == NULL)
-		return;
-
-	handle_instr_changed(0);
-
-	atomic_lock();
-
-	UMIDI20_QUEUE_FOREACH_SAFE(event, &(track->queue), event_next) {
-		if (umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL) {
-			chan = umidi20_event_get_channel(event) & 0xF;
-			if (instr[chan].muted) {
-				UMIDI20_IF_REMOVE(&(track->queue), event);
-				umidi20_event_free(event);
-			}
-		} else if (nonChannelMuted) {
-			UMIDI20_IF_REMOVE(&(track->queue), event);
-			umidi20_event_free(event);
-		}
-	}
-	atomic_unlock();
-}
-
-void
-MppMainWindow :: handle_instr_mute_all()
-{
-	uint8_t n;
-
-	but_non_channel_mute_all->setSelection(1);
-
-	for (n = 0; n != 16; n++) {
-		cbx_instr_mute[n]->blockSignals(1);
-		cbx_instr_mute[n]->setChecked(1);
-		cbx_instr_mute[n]->blockSignals(0);
-	}
-
-	handle_instr_changed(0);
-}
-
-void
-MppMainWindow :: handle_instr_unmute_all()
-{
-	uint8_t n;
-
-	but_non_channel_mute_all->setSelection(0);
-
-	for (n = 0; n != 16; n++) {
-		cbx_instr_mute[n]->blockSignals(1);
-		cbx_instr_mute[n]->setChecked(0);
-		cbx_instr_mute[n]->blockSignals(0);
-	}
-
-	handle_instr_changed(0);
 }
 
 void
