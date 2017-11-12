@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2017 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,15 +24,16 @@
  */
 
 #include "midipp_spinbox.h"
+#include "midipp_decode.h"
 
-MppSpinBox :: MppSpinBox(QWidget *parent)
+MppSpinBox :: MppSpinBox(QWidget *parent, int step, int allow_neg)
   : QSpinBox(parent)
 {
-}
-
-MppSpinBox :: ~MppSpinBox()
-{
-
+	if (allow_neg)
+		setRange(-256 + step, 256 - step);
+	else
+		setRange(0, 256 - step);
+	setSingleStep(step);
 }
 
 int
@@ -44,6 +45,7 @@ MppSpinBox :: valueFromText(const QString &n) const
 	int c;
 	int neg = 0;
 	int error = minimum() - 1;
+	int step = singleStep();
 
 	c = ch->toLatin1();
 
@@ -60,32 +62,32 @@ MppSpinBox :: valueFromText(const QString &n) const
 
 	switch (c) {
 	case 'C':
-		rem = C0;
+		rem = MPP_C0;
 		ch++;
 		break;
 	case 'D':
-		rem = D0;
+		rem = MPP_D0;
 		ch++;
 		break;
 	case 'E':
-		rem = E0;
+		rem = MPP_E0;
 		ch++;
 		break;
 	case 'F':
-		rem = F0;
+		rem = MPP_F0;
 		ch++;
 		break;
 	case 'G':
-		rem = G0;
+		rem = MPP_G0;
 		ch++;
 		break;
 	case 'A':
-		rem = A0;
+		rem = MPP_A0;
 		ch++;
 		break;
 	case 'H':
 	case 'B':
-		rem = H0;
+		rem = MPP_H0;
 		ch++;
 		break;
 	case 0:
@@ -110,7 +112,7 @@ MppSpinBox :: valueFromText(const QString &n) const
 	case '7':
 	case '8':
 	case '9':
-		temp = (c - '0') * 12;
+		temp = (c - '0') * MPP_MAX_BANDS;
 		ch++;
 		break;
 	default:
@@ -132,16 +134,26 @@ MppSpinBox :: valueFromText(const QString &n) const
 	case '8':
 	case '9':
 		temp *= 10;
-		temp += (c - '0') * 12;
+		temp += (c - '0') * MPP_MAX_BANDS;
 		ch++;
 		break;
 	case 'b':
 	case 'B':
+		rem -= 2;
+		ch++;
+		break;
+	case 'q':
+	case 'Q':
+		rem -= 3;
+		ch++;
+		break;
+	case 'c':
+	case 'C':
 		rem -= 1;
 		ch++;
 		break;
 	case '#':
-		rem += 1;
+		rem += 2;
 		ch++;
 		break;
 	case 0:
@@ -158,6 +170,11 @@ MppSpinBox :: valueFromText(const QString &n) const
 
 	rem += temp;
 
+	/* check alignment  */
+	if (rem % step)
+		return (error);
+
+	/* check if negative */
 	if (neg)
 		rem = -rem;
 
@@ -167,70 +184,15 @@ MppSpinBox :: valueFromText(const QString &n) const
 QString
 MppSpinBox :: textFromValue(int n) const
 {
-	int rem = n;
-	int odd = 0;
 	QString temp;
 
-	if (rem < 0) {
-		rem = -rem;
-		temp += QChar('-');
+	if (n < 0) {
+		n = -n;
+		temp = "-";
 	}
-
-	switch (rem % 12) {
-	case 0:
-		temp += QChar('C');
-		break;
-	case 1:
-		temp += QChar('D');
-		odd = 1;
-		break;
-	case 2:
-		temp += QChar('D');
-		break;
-	case 3:
-		temp += QChar('E');
-		odd = 1;
-		break;
-	case 4:
-		temp += QChar('E');
-		break;
-	case 5:
-		temp += QChar('F');
-		break;
-	case 6:
-		temp += QChar('G');
-		odd = 1;
-		break;
-	case 7:
-		temp += QChar('G');
-		break;
-	case 8:
-		temp += QChar('A');
-		odd = 1;
-		break;
-	case 9:
-		temp += QChar('A');
-		break;
-	case 10:
-		temp += QChar('B');
-		odd = 1;
-		break;
-	case 11:
-		temp += QChar('B');
-		break;
-	default:
-		break;
-	}
-
-	if (rem >= (12 * 10))
-		temp += QChar('0' + ((rem / (12 * 10)) % 10));
-
-	temp += QChar('0' + ((rem / 12) % 10));
-
-	if (odd)
-		temp += QChar('B');
-
-	return (temp);
+	if (n < 256)
+		return (temp + MppKeyStr[n]);
+	return ("");
 }
 
 QValidator::State

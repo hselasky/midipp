@@ -95,6 +95,7 @@
 #include "TargetConditionals.h"
 #endif
 
+#define	MPP_MAX_BANDS	24	/* number of divisions per octave */
 #define	MPP_MAX_CHORD_MAP	30
 #define	MPP_MAX_BUTTON_MAP	16
 #define	MPP_MAX_VIEWS	2
@@ -110,9 +111,9 @@
 #define	MPP_PRESSED_MAX	128
 #define	MPP_MAX_DURATION 255	/* inclusive */
 #define	MPP_MAGIC_DEVNO	(UMIDI20_N_DEVICES - 1)
-#define	MPP_DEFAULT_URL "http://home.selasky.org:8192/midipp/database.tar.gz"
+#define	MPP_DEFAULT_URL "http://home.selasky.org/midipp/database.tar.gz"
 #define	MPP_DEFAULT_CMD_KEY C3
-#define	MPP_DEFAULT_BASE_KEY C5
+#define	MPP_DEFAULT_BASE_KEY (MPP_C0 + MPP_MAX_BANDS * 5)
 #define	MPP_VISUAL_MARGIN	8
 #define	MPP_VISUAL_R_MAX	8
 #define	MPP_VISUAL_C_MAX	20
@@ -127,6 +128,31 @@
 #define	MPP_CHAN_ANY		1
 #define	MPP_CHAN_NONE		2
 #define	MPP_INVALID_TRANSPOSE	4095
+
+#define	MPP_C0 0
+#define	MPP_D0Q 1
+#define	MPP_D0B 2
+#define	MPP_D0C 3
+#define	MPP_D0 4
+#define	MPP_E0Q 5
+#define	MPP_E0B 6
+#define	MPP_E0C 7
+#define	MPP_E0 8
+#define	MPP_F0C 9
+#define	MPP_F0 10
+#define	MPP_G0Q 11
+#define	MPP_G0B 12
+#define	MPP_G0C 13
+#define	MPP_G0 14
+#define	MPP_A0Q 15
+#define	MPP_A0B 16
+#define	MPP_A0C 17
+#define	MPP_A0 18
+#define	MPP_H0Q 19
+#define	MPP_H0B 20
+#define	MPP_H0C 21
+#define	MPP_H0 22
+#define	MPP_C1C 23
 
 #define	STRLCPY(a,b,c) do { \
     strncpy(a,b,c); ((char *)(a))[(c)-1] = 0; \
@@ -241,7 +267,7 @@ extern QString MppReadFile(const QString &);
 extern void MppWriteFile(const QString &, QString text);
 extern uint8_t MppReadRawFile(const QString &, QByteArray *pdata);
 extern uint8_t MppWriteRawFile(const QString &, QByteArray *pdata);
-extern const char *MppBaseKeyToString(int key, int sharp);
+extern const char *MppBaseKeyToString24(int key, int sharp);
 extern void MppScoreVariantInit(void);
 extern uint8_t MppIsLabel(const QString &);
 extern void MppSplitBaseTreble(const uint8_t *, uint8_t, uint8_t *, uint8_t *, uint8_t *, uint8_t *);
@@ -251,6 +277,7 @@ extern const QString MppIconFile;
 
 typedef int (MppCmp_t)(void *, const void *, const void *);
 extern void MppSort(void **, size_t, MppCmp_t *, void *);
+extern void MppTrans(uint8_t *ptr, size_t num, int ntrans);
 
 #ifdef HAVE_SCREENSHOT
 extern void MppScreenShot(QWidget *, QApplication &);

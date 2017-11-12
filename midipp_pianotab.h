@@ -37,6 +37,8 @@ public:
 	~MppPianoTab();
 
 	QRect drawText(QPainter &, const QColor &, const QColor &, qreal, qreal, qreal, qreal, const char *);
+	void drawTextBox(QPainter &paint, int, qreal, qreal, qreal, qreal, const char *);
+
 	void processKey(uint8_t, char);
 	void releaseAll();
 	uint8_t getBaseKey();
@@ -44,7 +46,7 @@ public:
 	MppMainWindow *mw;
 
 	struct {
-		uint8_t pressed[24];
+		uint8_t pressed[2 * MPP_MAX_BANDS];
 		uint8_t sustain;
 		uint8_t view_index;
 		uint8_t last_jump;
@@ -52,7 +54,7 @@ public:
 		uint8_t last_key;
 	} state;
 
-	QRect r_pressed[24];
+	QRect r_pressed[2 * MPP_MAX_BANDS];
 	QRect r_view_a;
 	QRect r_view_b;
 	QRect r_sustain_on;

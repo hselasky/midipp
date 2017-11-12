@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2016 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2016-2017 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,6 +29,7 @@
 #include "midipp_mainwindow.h"
 #include "midipp_gridlayout.h"
 #include "midipp_buttonmap.h"
+#include "midipp_decode.h"
 
 MppSheet::MppSheet(MppMainWindow * parent, int _unit)
 {
@@ -124,7 +125,7 @@ MppSheetRowToString(MppSheetRow * ptr)
 			ret += MppTransToString(ptr->u.score.trans_number,
 			    ptr->u.score.trans_mode);
 		}
-		ret += QString("%1").arg(mid_key_str[ptr->u.score.num]);
+		ret += MppKeyStr[ptr->u.score.num];
 		break;
 	default:
 		break;
@@ -239,8 +240,7 @@ MppSheet::outputColumn(ssize_t col)
 				trans_mode = entries_rows[x].u.score.trans_mode;
 				ret += MppTransToString(trans_number, trans_mode);
 			}
-			ret += QString("%1 ").arg(
-			    mid_key_str[entries_rows[x].u.score.num]);
+			ret += MppKeyStr[entries_rows[x].u.score.num];
 			break;
 		default:
 			break;
@@ -556,15 +556,17 @@ MppSheet :: getTranspose(int trans_mode)
 
 	switch (trans_mode) {
 	case 1:
+	case 4:
 		temp = mw->getCurrTransposeScore();
 		if (temp >= 0)
 			return (temp);
 		else
 			return (MPP_INVALID_TRANSPOSE);
 	case 2:
+	case 5:
 		temp = mw->getCurrTransposeScore();
 		if (temp >= 0)
-			return (temp % 12);
+			return (temp % MPP_MAX_BANDS);
 		else
 			return (MPP_INVALID_TRANSPOSE);
 	default:
@@ -632,7 +634,7 @@ MppSheet::mousePressEvent(QMouseEvent * event)
 				num = entries_rows[y].u.score.num +
 				    entries_rows[y].u.score.trans_number +
 				    getTranspose(entries_rows[y].u.score.trans_mode);
-				if (num < 0 || num > 127)
+				if (num < 0 || num > 255)
 					break;
 				chan = (sm->synthChannel +
 				    entries_rows[y].u.score.chan) & 0xF;
@@ -653,7 +655,7 @@ MppSheet::mousePressEvent(QMouseEvent * event)
 			num = entries_rows[y].u.score.num +
 			    entries_rows[y].u.score.trans_number +
 			    getTranspose(entries_rows[y].u.score.trans_mode);
-			if (num < 0 || num > 127)
+			if (num < 0 || num > 255)
 				break;
 			chan = (sm->synthChannel +
 			    entries_rows[y].u.score.chan) & 0xF;

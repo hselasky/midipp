@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2014-2016 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2014-2017 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -51,7 +51,7 @@ MppPianoTab :: mousePressEvent(QMouseEvent *event)
 	QPoint p = event->pos();
 	unsigned x;
 
-	for (x = 0; x != 24; x++) {
+	for (x = 0; x != 2 * MPP_MAX_BANDS; x++) {
 		if (r_pressed[x].contains(p) == 0)
 			continue;
 		if (state.pressed[x] != 0) {
@@ -61,7 +61,7 @@ MppPianoTab :: mousePressEvent(QMouseEvent *event)
 			update();
 			continue;
 		}
-		uint8_t curr_octave = (x >= 12);
+		uint8_t curr_octave = (x >= MPP_MAX_BANDS);
 		if (state.last_octave != curr_octave) {
 			state.last_octave = curr_octave;
 			releaseAll();
@@ -108,7 +108,7 @@ MppPianoTab :: mouseReleaseEvent(QMouseEvent *event)
 	QPoint p = event->pos();
 	unsigned x;
 
-	for (x = 0; x != 24; x++) {
+	for (x = 0; x != 2 * MPP_MAX_BANDS; x++) {
 		if (r_pressed[x].contains(p) == 0)
 			continue;
 		if (state.pressed[x] == 0)
@@ -127,7 +127,7 @@ MppPianoTab :: getBaseKey()
 
 	mw->atomic_lock();
   	baseKey = mw->scores_main[state.view_index]->baseKey;
-	baseKey -= baseKey % 12;
+	baseKey -= baseKey % MPP_MAX_BANDS;
 	mw->atomic_unlock();
 
 	return (baseKey);
@@ -139,7 +139,7 @@ MppPianoTab :: releaseAll()
 	unsigned y;
 
 	/* release keys, when shifting octave */
-	for (y = 0; y != 24; y++) {
+	for (y = 0; y != 2 * MPP_MAX_BANDS; y++) {
 		if (state.pressed[y] == 0)
 			continue;
 		state.pressed[y] = 0;
@@ -166,28 +166,28 @@ MppPianoTab :: processKey(uint8_t release, char which)
 	case MM_PASS_NONE_CHORD_PIANO:
 		switch (which) {
 		case ' ':
-			key = 2;
+			key = MPP_D0;
 			break;
 		case 'g':
-			key = 5;
+			key = MPP_F0;
 			break;
 		case 'h':
-			key = 7;
+			key = MPP_G0;
 			break;
 		case 'j':
-			key = 9;
+			key = MPP_A0;
 			break;
 		case 'k':
-			key = 11;
+			key = MPP_H0;
 			break;
 		case 'l':
-			key = 6;
+			key = MPP_G0B;
 			break;
 		default:
 			return;
 		}
 		if (state.last_key)
-			key += 12;
+			key += MPP_MAX_BANDS;
 		break;
 
 	case MM_PASS_NONE_FIXED:
@@ -205,7 +205,7 @@ MppPianoTab :: processKey(uint8_t release, char which)
 		state.pressed[key] = 0;
 		mw->handle_play_release(getBaseKey() + key, state.view_index);
 	} else {
-		uint8_t curr_octave = (key >= 12);
+		uint8_t curr_octave = (key >= MPP_MAX_BANDS);
 		if (state.last_octave != curr_octave) {
 			state.last_octave = curr_octave;
 			releaseAll();
@@ -286,18 +286,29 @@ MppPianoTab :: drawText(QPainter &paint, const QColor &fg,
 }
 
 void
+MppPianoTab :: drawTextBox(QPainter &paint, int index, qreal w, qreal h, qreal x, qreal y, const char *txt)
+{
+	r_pressed[index] = drawText(paint, Mpp.ColorBlack, state.pressed[index] ?
+	    Mpp.ColorGrey : Mpp.ColorWhite, w, h, x, y, txt);
+}
+
+void
 MppPianoTab :: paintEvent(QPaintEvent *event)
 {
 	QPainter paint(this);
 	QFont fnt;
 	qreal unit;
+	qreal small;
+	qreal ss;
+	qreal dx;
+	qreal sh;
 	qreal uh;
 	qreal uf;
 	qreal uq;
 	int len;
 	qreal xpos;
 	qreal ypos;
-	int base = getBaseKey() / 12;
+	int base = getBaseKey() / MPP_MAX_BANDS;
 	int w = width();
 	int h = height();
 	int z;
@@ -312,60 +323,90 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 	if (w > z)
 		w = z;
 
-	unit = 2.0 * w / 21.0;
-	uh = 1.0 * w / 21.0;
-	uf = w / 21.0;
-	uq = 1.0 * w / 42.0;
+	dx = 3.0 * w / 25.0;
+	ss = 3.0 * w / 75.0;
+
+	unit = 2.0 * w / 25.0;
+	small = 3.0 * w / 50.0;
+	sh = 3.0 * w / 100.0;
+	uh = w / 25.0;
+	uf = w / 25.0;
+	uq = w / 50.0;
 	h /= 2;
 
 	fnt.setPixelSize(uf);
 	paint.setFont(fnt);
 
 	ypos = h - 2 * unit + uh;
-	r_pressed[1] = drawText(paint, Mpp.ColorBlack, state.pressed[1] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 0.0, ypos, "C#");
-	r_pressed[3] = drawText(paint, Mpp.ColorBlack, state.pressed[3] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 1.0, ypos, "D#");
-	r_pressed[6] = drawText(paint, Mpp.ColorBlack, state.pressed[6] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 3.0, ypos, "F#");
-	r_pressed[8] = drawText(paint, Mpp.ColorBlack, state.pressed[8] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 4.0, ypos, "G#");
-	r_pressed[10] = drawText(paint, Mpp.ColorBlack, state.pressed[10] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 5.0, ypos, "A#");
+	drawTextBox(paint, MPP_D0Q, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 0.5 - small, ypos - small / 4.0, "-");
+	drawTextBox(paint, MPP_D0B, small, small, unit / 2.0 + uq + dx * 0.5 - small / 2.0, ypos + small / 3.0, "#");
+	drawTextBox(paint, MPP_D0C, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 0.5, ypos - small / 4.0, "+");
+	drawTextBox(paint, MPP_E0Q, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 1.5 - small, ypos - small / 4.0, "-");
+	drawTextBox(paint, MPP_E0B, small, small, unit / 2.0 + uq + dx * 1.5 - small / 2.0, ypos + small / 3.0, "#");
+	drawTextBox(paint, MPP_E0C, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 1.5, ypos - small / 4.0, "+");
+	drawTextBox(paint, MPP_F0C, small, small, unit / 2.0 + uq + dx * 2.5 - small / 2.0, ypos + small / 3.0, "%");
+	drawTextBox(paint, MPP_G0Q, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 3.5 - small, ypos - small / 4.0, "-");
+	drawTextBox(paint, MPP_G0B, small, small, unit / 2.0 + uq + dx * 3.5 - small / 2.0, ypos + small / 3.0, "#");
+	drawTextBox(paint, MPP_G0C, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 3.5, ypos - small / 4.0, "+");
+	drawTextBox(paint, MPP_A0Q, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 4.5 - small, ypos - small / 4.0, "-");
+	drawTextBox(paint, MPP_A0B, small, small, unit / 2.0 + uq + dx * 4.5 - small / 2.0, ypos + small / 3.0, "#");
+	drawTextBox(paint, MPP_A0C, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 4.5, ypos - small / 4.0, "+");
+	drawTextBox(paint, MPP_H0Q, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 5.5 - small, ypos - small / 4.0, "-");
+	drawTextBox(paint, MPP_H0B, small, small, unit / 2.0 + uq + dx * 5.5 - small / 2.0, ypos + small / 3.0, "#");
+	drawTextBox(paint, MPP_H0C, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 5.5, ypos - small / 4.0, "+");
+	drawTextBox(paint, MPP_C1C, small, small, unit / 2.0 + uq + dx * 6.5 - small / 2.0, ypos + small / 3.0, "%");
 
 	ypos = h - unit + uh;
 	snprintf(buffer, sizeof(buffer), "C%d", base);
-	r_pressed[0] = drawText(paint, Mpp.ColorBlack, state.pressed[0] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 0.0, ypos, buffer);
+	drawTextBox(paint, MPP_C0, unit, unit, uq + dx * 0.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "D%d", base);
-	r_pressed[2] = drawText(paint, Mpp.ColorBlack, state.pressed[2] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 1.0, ypos, buffer);
+	drawTextBox(paint, MPP_D0, unit, unit, uq + dx * 1.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "E%d", base);
-	r_pressed[4] = drawText(paint, Mpp.ColorBlack, state.pressed[4] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 2.0, ypos, buffer);
+	drawTextBox(paint, MPP_E0, unit, unit, uq + dx * 2.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "F%d", base);
-	r_pressed[5] = drawText(paint, Mpp.ColorBlack, state.pressed[5] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 3.0, ypos, buffer);
+	drawTextBox(paint, MPP_F0, unit, unit, uq + dx * 3.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "G%d", base);
-	r_pressed[7] = drawText(paint, Mpp.ColorBlack, state.pressed[7] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 4.0, ypos, buffer);
+	drawTextBox(paint, MPP_G0, unit, unit, uq + dx * 4.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "A%d", base);
-	r_pressed[9] = drawText(paint, Mpp.ColorBlack, state.pressed[9] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 5.0, ypos, buffer);
+	drawTextBox(paint, MPP_A0, unit, unit, uq + dx * 5.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "H%d", base);
-	r_pressed[11] = drawText(paint, Mpp.ColorBlack, state.pressed[11] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 6.0, ypos, buffer);
+	drawTextBox(paint, MPP_H0, unit, unit, uq + dx * 6.0, ypos, buffer);
 
 	ypos = h + unit;
-	r_pressed[12+1] = drawText(paint, Mpp.ColorBlack, state.pressed[12+1] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 0.0, ypos, "C#");
-	r_pressed[12+3] = drawText(paint, Mpp.ColorBlack, state.pressed[12+3] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 1.0, ypos, "D#");
-	r_pressed[12+6] = drawText(paint, Mpp.ColorBlack, state.pressed[12+6] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 3.0, ypos, "F#");
-	r_pressed[12+8] = drawText(paint, Mpp.ColorBlack, state.pressed[12+8] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 4.0, ypos, "G#");
-	r_pressed[12+10] = drawText(paint, Mpp.ColorBlack, state.pressed[12+10] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + uh + uq + (unit + uh) * 5.0, ypos, "A#");
+
+	drawTextBox(paint, MPP_D0Q + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 0.5 - small, ypos - small / 4.0, "-");
+	drawTextBox(paint, MPP_D0B + MPP_MAX_BANDS, small, small, unit / 2.0 + uq + dx * 0.5 - small / 2.0, ypos + small / 3.0, "#");
+	drawTextBox(paint, MPP_D0C + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 0.5, ypos - small / 4.0, "+");
+	drawTextBox(paint, MPP_E0Q + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 1.5 - small, ypos - small / 4.0, "-");
+	drawTextBox(paint, MPP_E0B + MPP_MAX_BANDS, small, small, unit / 2.0 + uq + dx * 1.5 - small / 2.0, ypos + small / 3.0, "#");
+	drawTextBox(paint, MPP_E0C + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 1.5, ypos - small / 4.0, "+");
+	drawTextBox(paint, MPP_F0C + MPP_MAX_BANDS, small, small, unit / 2.0 + uq + dx * 2.5 - small / 2.0, ypos + small / 3.0, "%");
+	drawTextBox(paint, MPP_G0Q + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 3.5 - small, ypos - small / 4.0, "-");
+	drawTextBox(paint, MPP_G0B + MPP_MAX_BANDS, small, small, unit / 2.0 + uq + dx * 3.5 - small / 2.0, ypos + small / 3.0, "#");
+	drawTextBox(paint, MPP_G0C + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 3.5, ypos - small / 4.0, "+");
+	drawTextBox(paint, MPP_A0Q + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 4.5 - small, ypos - small / 4.0, "-");
+	drawTextBox(paint, MPP_A0B + MPP_MAX_BANDS, small, small, unit / 2.0 + uq + dx * 4.5 - small / 2.0, ypos + small / 3.0, "#");
+	drawTextBox(paint, MPP_A0C + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 4.5, ypos - small / 4.0, "+");
+	drawTextBox(paint, MPP_H0Q + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 5.5 - small, ypos - small / 4.0, "-");
+	drawTextBox(paint, MPP_H0B + MPP_MAX_BANDS, small, small, unit / 2.0 + uq + dx * 5.5 - small / 2.0, ypos + small / 3.0, "#");
+	drawTextBox(paint, MPP_H0C + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 5.5, ypos - small / 4.0, "+");
+	drawTextBox(paint, MPP_C1C + MPP_MAX_BANDS, small, small, unit / 2.0 + uq + dx * 6.5 - small / 2.0, ypos + small / 3.0, "%");
 
 	ypos = h + 2*unit;
 	snprintf(buffer, sizeof(buffer), "C%d", base + 1);
-	r_pressed[12+0] = drawText(paint, Mpp.ColorBlack, state.pressed[12+0] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 0.0, ypos, buffer);
+	drawTextBox(paint, MPP_C0 + MPP_MAX_BANDS, unit, unit, uq + dx * 0.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "D%d", base + 1);
-	r_pressed[12+2] = drawText(paint, Mpp.ColorBlack, state.pressed[12+2] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 1.0, ypos, buffer);
+	drawTextBox(paint, MPP_D0 + MPP_MAX_BANDS, unit, unit, uq + dx * 1.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "E%d", base + 1);
-	r_pressed[12+4] = drawText(paint, Mpp.ColorBlack, state.pressed[12+4] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 2.0, ypos, buffer);
+	drawTextBox(paint, MPP_E0 + MPP_MAX_BANDS, unit, unit, uq + dx * 2.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "F%d", base + 1);
-	r_pressed[12+5] = drawText(paint, Mpp.ColorBlack, state.pressed[12+5] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 3.0, ypos, buffer);
+	drawTextBox(paint, MPP_F0 + MPP_MAX_BANDS, unit, unit, uq + dx * 3.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "G%d", base + 1);
-	r_pressed[12+7] = drawText(paint, Mpp.ColorBlack, state.pressed[12+7] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 4.0, ypos, buffer);
+	drawTextBox(paint, MPP_G0 + MPP_MAX_BANDS, unit, unit, uq + dx * 4.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "A%d", base + 1);
-	r_pressed[12+9] = drawText(paint, Mpp.ColorBlack, state.pressed[12+9] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 5.0, ypos, buffer);
+	drawTextBox(paint, MPP_A0 + MPP_MAX_BANDS, unit, unit, uq + dx * 5.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "H%d", base + 1);
-	r_pressed[12+11] = drawText(paint, Mpp.ColorBlack, state.pressed[12+11] ? Mpp.ColorGrey : Mpp.ColorWhite, unit, unit, uq + (unit + uh) * 6.0, ypos, buffer);
+	drawTextBox(paint, MPP_H0 + MPP_MAX_BANDS, unit, unit, uq + dx * 6.0, ypos, buffer);
 
 	uf /= 3.0;
 	fnt.setPixelSize(uf);

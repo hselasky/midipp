@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2016 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010-2017 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,9 +31,9 @@
 #include "midipp_element.h"
 #include "midipp_groupbox.h"
 
-/* The list is sorted by priority. C5 is base. */
+/* The list is sorted by priority */
 
-#define MASK(x) (1U << ((x) % 12))
+#define MASK(x) (1U << ((x) % MPP_MAX_BANDS))
 
 /* chord modifier characters */
 
@@ -73,6 +73,14 @@ static const char *score_xor[] = {
 
 /* common standard */
 
+static const char *score_quarter_sharp[] = {
+	"$q", "q", 0
+};
+
+static const char *score_quarter_flat[] = {
+	"$c", "c", 0
+};
+
 static const char *score_sharp[] = {
 	"$S", "+", "#", 0
 };
@@ -91,7 +99,7 @@ static const char *score_seventh[] = {
 
 static const char **score_macros[] = {
 	score_major,
-	score_minor,
+	score_minor,	
 	score_aug,
 	score_dim,
 	score_and,
@@ -99,236 +107,247 @@ static const char **score_macros[] = {
 	score_xor,
 	score_sharp,
 	score_flat,
+	score_quarter_sharp,
+	score_quarter_flat,
 	score_half_dim,
 	score_seventh,
 	0
 };
 
-static const char *score_bits[13] = {
-	"C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Hb", "H", "?"
+static const char *score_bits[MPP_MAX_BANDS + 1] = {
+	"C",
+	"Dq", "Db", "Dc", "D",
+	"Eq", "Eb", "Ec", "E",
+	"Fc", "F",
+	"Gq", "Gb", "Gc", "G",
+	"Aq", "Ab", "Ac", "A",
+	"Hq", "Hb", "Hc", "H",
+	"Cc", "?"
 };
 
-static const char *score_name_sharp[24] = {
-	"1", "$S1", "2", "$S2", "3",  "4",  "$S4",  "5",  "$S5",  "6",  "$S6",  "7",
-	"8", "$S8", "9", "$S9", "10", "11", "$S11", "12", "$S12", "13", "$S13", "14"
+static const char *score_name_sharp[2 * MPP_MAX_BANDS] = {
+	"1", "$q2", "$S1", "$c2", "2", "$q3", "$S2", "$c3", "3", "$c4", "4", "$q5", "$S4", "$c5", "5", "$q6", "$S5", "$c6", "6", "$q7", "$S6", "$c7", "7", "$c8",
+	"8", "$q9", "$S8", "$c9", "9", "$q10", "$S9", "$c10", "10", "$c11", "11", "$q12", "$S11", "$c12", "12", "$q13", "$S12", "$c13", "13", "$q14", "$S13", "$c14", "14", "$c15",
 };
 
-static const char *score_name_flat[24] = {
-	"1", "$f2", "2", "$f3",  "3",  "4",  "$f5",  "5",  "$f6",  "6",  "$f7",  "7",
-	"8", "$f9", "9", "$f10", "10", "11", "$f12", "12", "$f13", "13", "$f14", "14"
+static const char *score_name_flat[2 * MPP_MAX_BANDS] = {
+	"1", "$q2", "$f2", "$c2", "2", "$q3", "$f3", "$c3", "3", "$c4", "4", "$q5", "$f5", "$c5", "5", "$q6", "$f6", "$c6", "6", "$q7", "$f7", "$c7", "7", "$c8",
+	"8", "$q9", "$f9", "$c9", "9", "$q10", "$f10", "$c10", "10", "$c11", "11", "$q12", "$f12", "$c12", "12", "$q13", "$f13", "$c13", "13", "$q14", "$f14", "$c14", "14", "$c15",
 };
 
 /*
- * C D E F G A B C D E  F  G  A
- * 1 2 3 4 5 6 7 8 9 10 11 12 13
+ * C D E F G A B C D E  F  G  A  B  C
+ * 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
  * =   =   =
  */
 static const struct score_variant_initial score_initial[] = {
 	/* one */
-	{ { "1" }, MASK(C5) },
+	{ { "1" }, MASK(MPP_C0) },
 
 	/* third */
-	{ { "5" }, MASK(C5) | MASK(G5) },
+	{ { "5" }, MASK(MPP_C0) | MASK(MPP_G0) },
 
 	/* triads */
-	{ { "$A" }, MASK(C5) | MASK(D5B) | MASK(D5) },	/* custom */
-	{ { "$O" }, MASK(C5) | MASK(D5B) | MASK(E5B) },	/* custom */
-	{ { "$X" }, MASK(C5) | MASK(D5) | MASK(E5B) },	/* custom */
-	{ { "$d", "$m$f5" }, MASK(C5) | MASK(E5B) | MASK(G5B) },
-	{ { "$m", "sus$S2", "sus$f3" }, MASK(C5) | MASK(E5B) | MASK(G5) },
-	{ { "$a", "$M$S5" }, MASK(C5) | MASK(E5) | MASK(A5B) },
-	{ { "", "$M" }, MASK(C5) | MASK(E5) | MASK(G5) },
+	{ { "$A" }, MASK(MPP_C0) | MASK(MPP_D0B) | MASK(MPP_D0) },	/* custom */
+	{ { "$O" }, MASK(MPP_C0) | MASK(MPP_D0B) | MASK(MPP_E0B) },	/* custom */
+	{ { "$X" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_E0B) },	/* custom */
+	{ { "$d", "$m$f5" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0B) },
+	{ { "$m", "sus$S2", "sus$f3" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0) },
+	{ { "$a", "$M$S5" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_A0B) },
+	{ { "", "$M" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) },
 
 	/* augumented and major triads with susXXX */
-	{ { "sus$S1", "sus$f2" }, MASK(C5) | MASK(D5B) | MASK(G5) },
-	{ { "$asus$S1", "$asus$f2" }, MASK(C5) | MASK(D5B) | MASK(A5B) },
-	{ { "sus2" }, MASK(C5) | MASK(D5) | MASK(G5) },
-	{ { "$asus2" }, MASK(C5) | MASK(D5) | MASK(A5B) },
-	{ { "sus$S2", "sus$f3" }, MASK(C5) | MASK(E5B) | MASK(G5) },
-	{ { "$asus$S2", "$asus$f3" }, MASK(C5) | MASK(E5B) | MASK(A5B) },
-	{ { "sus4", "sus" }, MASK(C5) | MASK(F5) | MASK(G5) },
-	{ { "$asus4", "$asus" }, MASK(C5) | MASK(F5) | MASK(A5B) },
-	{ { "sus$S4", "sus$f5" }, MASK(C5) | MASK(G5B) | MASK(G5) },
-	{ { "$asus$S4", "$asus$f5" }, MASK(C5) | MASK(G5B) | MASK(A5B) },
-	{ { "$asus5" }, MASK(C5) | MASK(G5) | MASK(A5B) },
-	{ { "sus$S5", "sus$f6" }, MASK(C5) | MASK(G5) | MASK(A5B) },
-	{ { "sus6" }, MASK(C5) | MASK(G5) | MASK(A5) },
-	{ { "$asus6" }, MASK(C5) | MASK(A5B) | MASK(A5) },
-	{ { "sus$S6", "sus$f7" }, MASK(C5) | MASK(G5) | MASK(H5B) },
-	{ { "$asus$S6", "$asus$f7" }, MASK(C5) | MASK(A5B) | MASK(H5B) },
-	{ { "sus7" }, MASK(C5) | MASK(G5) | MASK(H5) },
-	{ { "$asus7" }, MASK(C5) | MASK(A5B) | MASK(H5) },
+	{ { "sus$S1", "sus$f2" }, MASK(MPP_C0) | MASK(MPP_D0B) | MASK(MPP_G0) },
+	{ { "$asus$S1", "$asus$f2" }, MASK(MPP_C0) | MASK(MPP_D0B) | MASK(MPP_A0B) },
+	{ { "sus2" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_G0) },
+	{ { "$asus2" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_A0B) },
+	{ { "sus$S2", "sus$f3" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0) },
+	{ { "$asus$S2", "$asus$f3" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_A0B) },
+	{ { "sus4", "sus" }, MASK(MPP_C0) | MASK(MPP_F0) | MASK(MPP_G0) },
+	{ { "$asus4", "$asus" }, MASK(MPP_C0) | MASK(MPP_F0) | MASK(MPP_A0B) },
+	{ { "sus$S4", "sus$f5" }, MASK(MPP_C0) | MASK(MPP_G0B) | MASK(MPP_G0) },
+	{ { "$asus$S4", "$asus$f5" }, MASK(MPP_C0) | MASK(MPP_G0B) | MASK(MPP_A0B) },
+	{ { "$asus5" }, MASK(MPP_C0) | MASK(MPP_G0) | MASK(MPP_A0B) },
+	{ { "sus$S5", "sus$f6" }, MASK(MPP_C0) | MASK(MPP_G0) | MASK(MPP_A0B) },
+	{ { "sus6" }, MASK(MPP_C0) | MASK(MPP_G0) | MASK(MPP_A0) },
+	{ { "$asus6" }, MASK(MPP_C0) | MASK(MPP_A0B) | MASK(MPP_A0) },
+	{ { "sus$S6", "sus$f7" }, MASK(MPP_C0) | MASK(MPP_G0) | MASK(MPP_H0B) },
+	{ { "$asus$S6", "$asus$f7" }, MASK(MPP_C0) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "sus7" }, MASK(MPP_C0) | MASK(MPP_G0) | MASK(MPP_H0) },
+	{ { "$asus7" }, MASK(MPP_C0) | MASK(MPP_A0B) | MASK(MPP_H0) },
 
 	/* seventh */
-	{ { "$7" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5B) },
-	{ { "$a7", "$7$S5", "$7$S" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5B) },
-	{ { "$h", "$h7", "$m7$f5" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(H5B) },
-	{ { "$7$f5" }, MASK(C5) | MASK(E5) | MASK(G5B) | MASK(H5B) },
-	{ { "$7$f9", "$7$f2" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(D5B) | MASK(H5B) },
-	{ { "$7$S9", "$7$S2" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(E5B) | MASK(H5B) },
-	{ { "$M7" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5) },
-	{ { "$a$M7", "$M7$S5", "$M7$S" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5) },
-	{ { "$m$M7" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5) },
-	{ { "$m7" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5B) },
-	{ { "$d7" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(A5) },
+	{ { "$7" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) | MASK(MPP_H0B) },
+	{ { "$a7", "$7$S5", "$7$S" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "$h", "$h7", "$m7$f5" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0B) | MASK(MPP_H0B) },
+	{ { "$7$f5" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0B) | MASK(MPP_H0B) },
+	{ { "$7$f9", "$7$f2" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) | MASK(MPP_D0B) | MASK(MPP_H0B) },
+	{ { "$7$S9", "$7$S2" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) | MASK(MPP_E0B) | MASK(MPP_H0B) },
+	{ { "$M7" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) | MASK(MPP_H0) },
+	{ { "$a$M7", "$M7$S5", "$M7$S" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_A0B) | MASK(MPP_H0) },
+	{ { "$m$M7" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0) | MASK(MPP_H0) },
+	{ { "$m7" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0) | MASK(MPP_H0B) },
+	{ { "$d7" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0B) | MASK(MPP_A0) },
 
 	/* second */
-	{ { "2", "$M2", "dom2" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(D5) },
-	{ { "$a2", "2$S5" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(D5) },
-	{ { "$m$M2" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(D5) },
-	{ { "$m2" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(D5) },
-	{ { "$a$M2" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(D5) },
-	{ { "$h2" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(D5) },
-	{ { "$h$f2" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(D5B) },
+	{ { "2", "$M2", "dom2" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) | MASK(MPP_D0) },
+	{ { "$a2", "2$S5" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_A0B) | MASK(MPP_D0) },
+	{ { "$m$M2" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0) | MASK(MPP_D0) },
+	{ { "$m2" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0) | MASK(MPP_D0) },
+	{ { "$a$M2" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_A0B) | MASK(MPP_D0) },
+	{ { "$h2" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0B) | MASK(MPP_D0) },
+	{ { "$h$f2" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0B) | MASK(MPP_D0B) },
 
 	/* agumented and major seconds and sevenths susXXX */
-	{ { "7sus$S1", "7sus$f2" }, MASK(C5) | MASK(D5B) | MASK(G5) | MASK(H5B) },
-	{ { "$a7sus$S1", "$a7sus$f2" }, MASK(C5) | MASK(D5B) | MASK(A5B) | MASK(H5B) },
-	{ { "2sus$S1", "2sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(G5) },
-	{ { "$a2sus$S1", "$a2sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(A5B) },
-	{ { "7sus2" }, MASK(C5) | MASK(D5) | MASK(G5) | MASK(H5B) },
-	{ { "$a7sus2" }, MASK(C5) | MASK(D5) | MASK(A5B) | MASK(H5B) },
-	{ { "7sus$S2", "7sus$f3" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5B) },
-	{ { "$a7sus$S2", "$a7sus$f3" }, MASK(C5) | MASK(E5B) | MASK(A5B) | MASK(H5B) },
-	{ { "2sus$S2", "2sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(G5) },
-	{ { "$a2sus$S2", "$a2sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(A5B) },
-	{ { "7sus4", "7sus" }, MASK(C5) | MASK(F5) | MASK(G5) | MASK(H5B) },
-	{ { "$a7sus4", "$a7sus" }, MASK(C5) | MASK(F5) | MASK(A5B) | MASK(H5B) },
-	{ { "2sus4", "2sus" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) },
-	{ { "$a2sus4", "$a2sus" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(A5B) },
-	{ { "7sus$S4", "7sus$f5" }, MASK(C5) | MASK(G5B) | MASK(G5) | MASK(H5B) },
-	{ { "$a7sus$S4", "$a7sus$f5" }, MASK(C5) | MASK(G5B) | MASK(A5B) | MASK(H5B) },
-	{ { "2sus$S4", "2sus$f5" }, MASK(C5) | MASK(D5) | MASK(G5B) | MASK(G5) },
-	{ { "$a2sus$S4", "$a2sus$f5" }, MASK(C5) | MASK(D5) | MASK(G5B) | MASK(A5B) },
-	{ { "$a7sus5" }, MASK(C5) | MASK(G5) | MASK(A5B) | MASK(H5B) },
-	{ { "$a2sus5" }, MASK(C5) | MASK(D5) | MASK(G5) | MASK(A5B) },
-	{ { "7sus$S5", "7sus$f6" }, MASK(C5) | MASK(G5) | MASK(A5B) | MASK(H5B) },
-	{ { "2sus$S5", "2sus$f6" }, MASK(C5) | MASK(D5) | MASK(G5) | MASK(A5B) },
-	{ { "7sus6" }, MASK(C5) | MASK(G5) | MASK(A5) | MASK(H5B) },
-	{ { "$a7sus6" }, MASK(C5) | MASK(A5B) | MASK(A5) | MASK(H5B) },
-	{ { "2sus6" }, MASK(C5) | MASK(D5) | MASK(G5) | MASK(A5) },
-	{ { "$a2sus6" }, MASK(C5) | MASK(D5) | MASK(A5B) | MASK(A5) },
-	{ { "2sus$S6", "2sus$f7" }, MASK(C5) | MASK(D5) | MASK(G5) | MASK(H5B) },
-	{ { "$a2sus$S6", "$a2sus$f7" }, MASK(C5) | MASK(D5) | MASK(A5B) | MASK(H5B) },
-	{ { "7sus7" }, MASK(C5) | MASK(G5) | MASK(H5B) | MASK(H5) },
-	{ { "$a7sus7" }, MASK(C5) | MASK(A5B) | MASK(H5B) | MASK(H5) },
-	{ { "2sus7" }, MASK(C5) | MASK(D5) | MASK(G5) | MASK(H5) },
-	{ { "$a2sus7" }, MASK(C5) | MASK(D5) | MASK(A5B) | MASK(H5) },
+	{ { "7sus$S1", "7sus$f2" }, MASK(MPP_C0) | MASK(MPP_D0B) | MASK(MPP_G0) | MASK(MPP_H0B) },
+	{ { "$a7sus$S1", "$a7sus$f2" }, MASK(MPP_C0) | MASK(MPP_D0B) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "2sus$S1", "2sus$f2" }, MASK(MPP_C0) | MASK(MPP_D0B) | MASK(MPP_D0) | MASK(MPP_G0) },
+	{ { "$a2sus$S1", "$a2sus$f2" }, MASK(MPP_C0) | MASK(MPP_D0B) | MASK(MPP_D0) | MASK(MPP_A0B) },
+	{ { "7sus2" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_G0) | MASK(MPP_H0B) },
+	{ { "$a7sus2" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "7sus$S2", "7sus$f3" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0) | MASK(MPP_H0B) },
+	{ { "$a7sus$S2", "$a7sus$f3" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "2sus$S2", "2sus$f3" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_E0B) | MASK(MPP_G0) },
+	{ { "$a2sus$S2", "$a2sus$f3" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_E0B) | MASK(MPP_A0B) },
+	{ { "7sus4", "7sus" }, MASK(MPP_C0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_H0B) },
+	{ { "$a7sus4", "$a7sus" }, MASK(MPP_C0) | MASK(MPP_F0) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "2sus4", "2sus" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) },
+	{ { "$a2sus4", "$a2sus" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0B) },
+	{ { "7sus$S4", "7sus$f5" }, MASK(MPP_C0) | MASK(MPP_G0B) | MASK(MPP_G0) | MASK(MPP_H0B) },
+	{ { "$a7sus$S4", "$a7sus$f5" }, MASK(MPP_C0) | MASK(MPP_G0B) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "2sus$S4", "2sus$f5" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_G0B) | MASK(MPP_G0) },
+	{ { "$a2sus$S4", "$a2sus$f5" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_G0B) | MASK(MPP_A0B) },
+	{ { "$a7sus5" }, MASK(MPP_C0) | MASK(MPP_G0) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "$a2sus5" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_G0) | MASK(MPP_A0B) },
+	{ { "7sus$S5", "7sus$f6" }, MASK(MPP_C0) | MASK(MPP_G0) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "2sus$S5", "2sus$f6" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_G0) | MASK(MPP_A0B) },
+	{ { "7sus6" }, MASK(MPP_C0) | MASK(MPP_G0) | MASK(MPP_A0) | MASK(MPP_H0B) },
+	{ { "$a7sus6" }, MASK(MPP_C0) | MASK(MPP_A0B) | MASK(MPP_A0) | MASK(MPP_H0B) },
+	{ { "2sus6" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_G0) | MASK(MPP_A0) },
+	{ { "$a2sus6" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_A0B) | MASK(MPP_A0) },
+	{ { "2sus$S6", "2sus$f7" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_G0) | MASK(MPP_H0B) },
+	{ { "$a2sus$S6", "$a2sus$f7" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "7sus7" }, MASK(MPP_C0) | MASK(MPP_G0) | MASK(MPP_H0B) | MASK(MPP_H0) },
+	{ { "$a7sus7" }, MASK(MPP_C0) | MASK(MPP_A0B) | MASK(MPP_H0B) | MASK(MPP_H0) },
+	{ { "2sus7" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_G0) | MASK(MPP_H0) },
+	{ { "$a2sus7" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_A0B) | MASK(MPP_H0) },
 
 	/* fourth */
-	{ { "4", "$M4", "dom4" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(D5) | MASK(F5) },
-	{ { "$m4", "$m$M4" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(D5) | MASK(F5) },
-	{ { "$a4", "4$S5", "$a$M4" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(D5) | MASK(F5) },
-	{ { "$h4" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(D5B) | MASK(F5) },
+	{ { "4", "$M4", "dom4" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) | MASK(MPP_D0) | MASK(MPP_F0) },
+	{ { "$m4", "$m$M4" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0) | MASK(MPP_D0) | MASK(MPP_F0) },
+	{ { "$a4", "4$S5", "$a$M4" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_A0B) | MASK(MPP_D0) | MASK(MPP_F0) },
+	{ { "$h4" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0B) | MASK(MPP_D0B) | MASK(MPP_F0) },
 
 	/* ninth */
-	{ { "9", "dom9" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5B) | MASK(D5) },
-	{ { "$M9" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5) | MASK(D5) },
-	{ { "$m$M9" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5) | MASK(D5) },
-	{ { "$m9" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5B) | MASK(D5) },
-	{ { "$a$M9" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5) | MASK(D5) },
-	{ { "$a9", "9$S5" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5B) | MASK(D5) },
-	{ { "$h9" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(H5B) | MASK(D5) },
-	{ { "$h$f9" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(H5B) | MASK(D5B) },
-	{ { "$d9" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(A5) | MASK(D5) },
-	{ { "$db9" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(A5) | MASK(D5B) },
+	{ { "9", "dom9" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) | MASK(MPP_H0B) | MASK(MPP_D0) },
+	{ { "$M9" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) | MASK(MPP_H0) | MASK(MPP_D0) },
+	{ { "$m$M9" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0) | MASK(MPP_H0) | MASK(MPP_D0) },
+	{ { "$m9" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0) | MASK(MPP_H0B) | MASK(MPP_D0) },
+	{ { "$a$M9" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_A0B) | MASK(MPP_H0) | MASK(MPP_D0) },
+	{ { "$a9", "9$S5" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_A0B) | MASK(MPP_H0B) | MASK(MPP_D0) },
+	{ { "$h9" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0B) | MASK(MPP_H0B) | MASK(MPP_D0) },
+	{ { "$h$f9" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0B) | MASK(MPP_H0B) | MASK(MPP_D0B) },
+	{ { "$d9" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0B) | MASK(MPP_A0) | MASK(MPP_D0) },
+	{ { "$db9" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0B) | MASK(MPP_A0) | MASK(MPP_D0B) },
 
 	/* agumented and major fourths and ninths susXXX */
-	{ { "4sus$S1", "4sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(F5) | MASK(G5) },
-	{ { "$a4sus$S1", "$a4sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(F5) | MASK(A5B) },
-	{ { "9sus$S1", "9sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(G5) | MASK(H5B) },
-	{ { "$a9sus$S1", "$a9sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(A5B) | MASK(H5B) },
-	{ { "4sus$S2", "4sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(F5) | MASK(G5) },
-	{ { "$a4sus$S2", "$a4sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(F5) | MASK(A5B) },
-	{ { "9sus$S2", "9sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(G5) | MASK(H5B) },
-	{ { "$a9sus$S2", "$a9sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(A5B) | MASK(H5B) },
-	{ { "9sus4", "9sus" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(H5B) },
-	{ { "$a9sus4", "$a9sus" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(H5B) },
-	{ { "4sus$S4", "4sus$f5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5B) | MASK(G5) },
-	{ { "$a4sus$S4", "$a4sus$f5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5B) | MASK(A5B) },
-	{ { "9sus$S4", "9sus$f5" }, MASK(C5) | MASK(D5) | MASK(G5B) | MASK(G5) | MASK(H5B) },
-	{ { "$a9sus$S4", "$a9sus$f5" }, MASK(C5) | MASK(D5) | MASK(G5B) | MASK(A5B) | MASK(H5B) },
-	{ { "$a4sus5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5B) },
-	{ { "$a9sus5" }, MASK(C5) | MASK(D5) | MASK(G5) | MASK(A5B) | MASK(H5B) },
-	{ { "4sus$S5", "4sus$f6" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5B) },
-	{ { "9sus$S5", "9sus$f6" }, MASK(C5) | MASK(D5) | MASK(G5) | MASK(A5B) | MASK(H5B) },
-	{ { "4sus6" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5) },
-	{ { "$a4sus6" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(A5) },
-	{ { "9sus6" }, MASK(C5) | MASK(D5) | MASK(G5) | MASK(A5) | MASK(H5B) },
-	{ { "$a9sus6" }, MASK(C5) | MASK(D5) | MASK(A5B) | MASK(A5) | MASK(H5B) },
-	{ { "4sus$S6", "4sus$f7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(H5B) },
-	{ { "$a4sus$S6", "$a4sus$f7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(H5B) },
-	{ { "4sus7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(H5) },
-	{ { "$a4sus7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(H5) },
-	{ { "9sus7" }, MASK(C5) | MASK(D5) | MASK(G5) | MASK(H5B) | MASK(H5) },
-	{ { "$a9sus7" }, MASK(C5) | MASK(D5) | MASK(A5B) | MASK(H5B) | MASK(H5) },
+	{ { "4sus$S1", "4sus$f2" }, MASK(MPP_C0) | MASK(MPP_D0B) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) },
+	{ { "$a4sus$S1", "$a4sus$f2" }, MASK(MPP_C0) | MASK(MPP_D0B) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0B) },
+	{ { "9sus$S1", "9sus$f2" }, MASK(MPP_C0) | MASK(MPP_D0B) | MASK(MPP_D0) | MASK(MPP_G0) | MASK(MPP_H0B) },
+	{ { "$a9sus$S1", "$a9sus$f2" }, MASK(MPP_C0) | MASK(MPP_D0B) | MASK(MPP_D0) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "4sus$S2", "4sus$f3" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_E0B) | MASK(MPP_F0) | MASK(MPP_G0) },
+	{ { "$a4sus$S2", "$a4sus$f3" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_E0B) | MASK(MPP_F0) | MASK(MPP_A0B) },
+	{ { "9sus$S2", "9sus$f3" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_E0B) | MASK(MPP_G0) | MASK(MPP_H0B) },
+	{ { "$a9sus$S2", "$a9sus$f3" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_E0B) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "9sus4", "9sus" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_H0B) },
+	{ { "$a9sus4", "$a9sus" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "4sus$S4", "4sus$f5" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0B) | MASK(MPP_G0) },
+	{ { "$a4sus$S4", "$a4sus$f5" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0B) | MASK(MPP_A0B) },
+	{ { "9sus$S4", "9sus$f5" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_G0B) | MASK(MPP_G0) | MASK(MPP_H0B) },
+	{ { "$a9sus$S4", "$a9sus$f5" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_G0B) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "$a4sus5" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_A0B) },
+	{ { "$a9sus5" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_G0) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "4sus$S5", "4sus$f6" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_A0B) },
+	{ { "9sus$S5", "9sus$f6" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_G0) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "4sus6" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_A0) },
+	{ { "$a4sus6" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0B) | MASK(MPP_A0) },
+	{ { "9sus6" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_G0) | MASK(MPP_A0) | MASK(MPP_H0B) },
+	{ { "$a9sus6" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_A0B) | MASK(MPP_A0) | MASK(MPP_H0B) },
+	{ { "4sus$S6", "4sus$f7" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_H0B) },
+	{ { "$a4sus$S6", "$a4sus$f7" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "4sus7" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_H0) },
+	{ { "$a4sus7" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0B) | MASK(MPP_H0) },
+	{ { "9sus7" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_G0) | MASK(MPP_H0B) | MASK(MPP_H0) },
+	{ { "$a9sus7" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_A0B) | MASK(MPP_H0B) | MASK(MPP_H0) },
 
 	/* sixth */
-	{ { "6", "$M6", "dom6" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(D5) | MASK(F5) | MASK(A5) },
-	{ { "62" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(A5) | MASK(D5) },
-	{ { "69" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(A5) | MASK(D5) },
-	{ { "64" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(A5) | MASK(F5) },
-	{ { "$m6", "$m$M6" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(D5) | MASK(F5) | MASK(A5) },
-	{ { "$a6", "6$S5", "$a$M6" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(D5) | MASK(F5) | MASK(A5) },
-	{ { "$h6" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(D5) | MASK(F5) | MASK(A5) },
+	{ { "6", "$M6", "dom6" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0) },
+	{ { "62" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) | MASK(MPP_A0) | MASK(MPP_D0) },
+	{ { "69" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) | MASK(MPP_A0) | MASK(MPP_D0) },
+	{ { "64" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) | MASK(MPP_A0) | MASK(MPP_F0) },
+	{ { "$m6", "$m$M6" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0) },
+	{ { "$a6", "6$S5", "$a$M6" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_A0B) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0) },
+	{ { "$h6" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0B) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0) },
 
 	/* eleventh */
-	{  { "11", "dom11" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5B) | MASK(D5) | MASK(F5) },
-	{  { "$M11" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5) | MASK(D5) | MASK(F5) },
-	{  { "$m$M11" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5) | MASK(D5) | MASK(F5) },
-	{  { "$m11" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5B) | MASK(D5) | MASK(F5) },
-	{  { "$a$M11" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5) | MASK(D5) | MASK(F5) },
-	{  { "$a11", "11$S5" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5B) | MASK(D5) | MASK(F5) },
-	{  { "$h11" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(H5B) | MASK(D5B) | MASK(F5) },
-	{  { "$d11" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(A5) | MASK(D5B) | MASK(E5) },
+	{  { "11", "dom11" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) | MASK(MPP_H0B) | MASK(MPP_D0) | MASK(MPP_F0) },
+	{  { "$M11" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) | MASK(MPP_H0) | MASK(MPP_D0) | MASK(MPP_F0) },
+	{  { "$m$M11" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0) | MASK(MPP_H0) | MASK(MPP_D0) | MASK(MPP_F0) },
+	{  { "$m11" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0) | MASK(MPP_H0B) | MASK(MPP_D0) | MASK(MPP_F0) },
+	{  { "$a$M11" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_A0B) | MASK(MPP_H0) | MASK(MPP_D0) | MASK(MPP_F0) },
+	{  { "$a11", "11$S5" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_A0B) | MASK(MPP_H0B) | MASK(MPP_D0) | MASK(MPP_F0) },
+	{  { "$h11" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0B) | MASK(MPP_H0B) | MASK(MPP_D0B) | MASK(MPP_F0) },
+	{  { "$d11" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0B) | MASK(MPP_A0) | MASK(MPP_D0B) | MASK(MPP_E0) },
 
 	/* agumented and major sixths and elevenths susXXX */
-	{ { "6sus$S1", "6sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5) },
-	{ { "$a6sus$S1", "$a6sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(A5) },
-	{ { "11sus$S1", "11sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(H5B) },
-	{ { "$a11sus$S1", "$a11sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(H5B) },
-	{ { "6sus$S2", "6sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(F5) | MASK(G5) | MASK(A5) },
-	{ { "$a6sus$S2", "$a6sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(F5) | MASK(A5B) | MASK(A5) },
-	{ { "11sus$S2", "11sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(F5) | MASK(G5) | MASK(H5B) },
-	{ { "$a11sus$S2", "$a11sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(F5) | MASK(A5B) | MASK(H5B) },
-	{ { "6sus$S4", "6sus$f5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5B) | MASK(G5) | MASK(A5) },
-	{ { "$a6sus$S4", "$a6sus$f5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5B) | MASK(A5B) | MASK(A5) },
-	{ { "11sus$S4", "11sus$f5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5B) | MASK(G5) | MASK(H5B) },
-	{ { "$a11sus$S4", "$a11sus$f5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5B) | MASK(A5B) | MASK(H5B) },
-	{ { "$a6sus5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5B) | MASK(A5) },
-	{ { "$a11sus5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5B) | MASK(H5B) },
-	{ { "6sus$S5", "6sus$f6" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5B) | MASK(A5) },
-	{ { "11sus$S5", "11sus$f6" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5B) | MASK(H5B) },
-	{ { "11sus6" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5) | MASK(H5B) },
-	{ { "$a11sus6" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(A5) | MASK(H5B) },
-	{ { "6sus$S6", "6sus$f7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5) | MASK(H5B) },
-	{ { "$a6sus$S6", "$a6sus$f7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(A5) | MASK(H5B) },
-	{ { "6sus7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5) | MASK(H5) },
-	{ { "$a6sus7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(A5) | MASK(H5) },
-	{ { "11sus7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(H5B) | MASK(H5) },
-	{ { "$a11sus7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(H5B) | MASK(H5) },
+	{ { "6sus$S1", "6sus$f2" }, MASK(MPP_C0) | MASK(MPP_D0B) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_A0) },
+	{ { "$a6sus$S1", "$a6sus$f2" }, MASK(MPP_C0) | MASK(MPP_D0B) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0B) | MASK(MPP_A0) },
+	{ { "11sus$S1", "11sus$f2" }, MASK(MPP_C0) | MASK(MPP_D0B) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_H0B) },
+	{ { "$a11sus$S1", "$a11sus$f2" }, MASK(MPP_C0) | MASK(MPP_D0B) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "6sus$S2", "6sus$f3" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_E0B) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_A0) },
+	{ { "$a6sus$S2", "$a6sus$f3" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_E0B) | MASK(MPP_F0) | MASK(MPP_A0B) | MASK(MPP_A0) },
+	{ { "11sus$S2", "11sus$f3" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_E0B) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_H0B) },
+	{ { "$a11sus$S2", "$a11sus$f3" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_E0B) | MASK(MPP_F0) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "6sus$S4", "6sus$f5" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0B) | MASK(MPP_G0) | MASK(MPP_A0) },
+	{ { "$a6sus$S4", "$a6sus$f5" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0B) | MASK(MPP_A0B) | MASK(MPP_A0) },
+	{ { "11sus$S4", "11sus$f5" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0B) | MASK(MPP_G0) | MASK(MPP_H0B) },
+	{ { "$a11sus$S4", "$a11sus$f5" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0B) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "$a6sus5" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_A0B) | MASK(MPP_A0) },
+	{ { "$a11sus5" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "6sus$S5", "6sus$f6" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_A0B) | MASK(MPP_A0) },
+	{ { "11sus$S5", "11sus$f6" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_A0B) | MASK(MPP_H0B) },
+	{ { "11sus6" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_A0) | MASK(MPP_H0B) },
+	{ { "$a11sus6" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0B) | MASK(MPP_A0) | MASK(MPP_H0B) },
+	{ { "6sus$S6", "6sus$f7" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_A0) | MASK(MPP_H0B) },
+	{ { "$a6sus$S6", "$a6sus$f7" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0B) | MASK(MPP_A0) | MASK(MPP_H0B) },
+	{ { "6sus7" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_A0) | MASK(MPP_H0) },
+	{ { "$a6sus7" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0B) | MASK(MPP_A0) | MASK(MPP_H0) },
+	{ { "11sus7" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_H0B) | MASK(MPP_H0) },
+	{ { "$a11sus7" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0B) | MASK(MPP_H0B) | MASK(MPP_H0) },
  
 	/* thirteenth */
-	{  { "13", "dom13" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5B) | MASK(D5) | MASK(F5) | MASK(A5) },
-	{  { "$M13" }, MASK(C5) | MASK(E5) | MASK(G5) | MASK(H5) | MASK(D5) | MASK(F5) | MASK(A5) },
-	{  { "$m$M13" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5) | MASK(D5) | MASK(F5) | MASK(A5) },
-	{  { "$m13" }, MASK(C5) | MASK(E5B) | MASK(G5) | MASK(H5B) | MASK(D5) | MASK(F5) | MASK(A5) },
-	{  { "$a$M13" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5) | MASK(D5) | MASK(F5) | MASK(A5) },
-	{  { "$a13", "13$S5" }, MASK(C5) | MASK(E5) | MASK(A5B) | MASK(H5B) | MASK(D5) | MASK(F5) | MASK(A5) },
-	{  { "$h13" }, MASK(C5) | MASK(E5B) | MASK(G5B) | MASK(H5B) | MASK(D5) | MASK(F5) | MASK(A5) },
+	{  { "13", "dom13" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) | MASK(MPP_H0B) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0) },
+	{  { "$M13" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) | MASK(MPP_H0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0) },
+	{  { "$m$M13" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0) | MASK(MPP_H0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0) },
+	{  { "$m13" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0) | MASK(MPP_H0B) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0) },
+	{  { "$a$M13" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_A0B) | MASK(MPP_H0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0) },
+	{  { "$a13", "13$S5" }, MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_A0B) | MASK(MPP_H0B) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0) },
+	{  { "$h13" }, MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0B) | MASK(MPP_H0B) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0) },
 
 	/* agumented and major thirteenths susXXX */
-	{ { "13sus$S1", "13sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5) | MASK(H5B) },
-	{ { "$a13sus$S1", "$a13sus$f2" }, MASK(C5) | MASK(D5B) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(A5) | MASK(H5B) },
-	{ { "13sus$S2", "13sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(F5) | MASK(G5) | MASK(A5) | MASK(H5B) },
-	{ { "$a13sus$S2", "$a13sus$f3" }, MASK(C5) | MASK(D5) | MASK(E5B) | MASK(F5) | MASK(A5B) | MASK(A5) | MASK(H5B) },
-	{ { "13sus$S4", "13sus$f5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5B) | MASK(G5) | MASK(A5) | MASK(H5B) },
-	{ { "$a13sus$S4", "$a13sus$f5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5B) | MASK(A5B) | MASK(A5) | MASK(H5B) },
-	{ { "$a13sus5" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5B) | MASK(A5) | MASK(H5B) },
-	{ { "13sus$S5", "13sus$f6" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5B) | MASK(A5) | MASK(H5B) },
-	{ { "13sus7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(G5) | MASK(A5) | MASK(H5B) | MASK(H5) },
-	{ { "$a13sus7" }, MASK(C5) | MASK(D5) | MASK(F5) | MASK(A5B) | MASK(A5) | MASK(H5B) | MASK(H5) },
+	{ { "13sus$S1", "13sus$f2" }, MASK(MPP_C0) | MASK(MPP_D0B) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_A0) | MASK(MPP_H0B) },
+	{ { "$a13sus$S1", "$a13sus$f2" }, MASK(MPP_C0) | MASK(MPP_D0B) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0B) | MASK(MPP_A0) | MASK(MPP_H0B) },
+	{ { "13sus$S2", "13sus$f3" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_E0B) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_A0) | MASK(MPP_H0B) },
+	{ { "$a13sus$S2", "$a13sus$f3" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_E0B) | MASK(MPP_F0) | MASK(MPP_A0B) | MASK(MPP_A0) | MASK(MPP_H0B) },
+	{ { "13sus$S4", "13sus$f5" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0B) | MASK(MPP_G0) | MASK(MPP_A0) | MASK(MPP_H0B) },
+	{ { "$a13sus$S4", "$a13sus$f5" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0B) | MASK(MPP_A0B) | MASK(MPP_A0) | MASK(MPP_H0B) },
+	{ { "$a13sus5" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_A0B) | MASK(MPP_A0) | MASK(MPP_H0B) },
+	{ { "13sus$S5", "13sus$f6" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_A0B) | MASK(MPP_A0) | MASK(MPP_H0B) },
+	{ { "13sus7" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_G0) | MASK(MPP_A0) | MASK(MPP_H0B) | MASK(MPP_H0) },
+	{ { "$a13sus7" }, MASK(MPP_C0) | MASK(MPP_D0) | MASK(MPP_F0) | MASK(MPP_A0B) | MASK(MPP_A0) | MASK(MPP_H0B) | MASK(MPP_H0) },
 };
+
+QString MppKeyStr[256];
 
 #define	MAX_SCORES 2048
 
@@ -339,7 +358,7 @@ static unsigned mpp_max_variant;
 static uint32_t
 MppRor(uint32_t val, uint8_t n)
 {
-	return (((val >> n) | (val << (12 - n))) & 0xfff);
+	return (((val >> n) | (val << (MPP_MAX_BANDS - n))) & 0xFFFFFFU);
 }
 
 static uint8_t
@@ -358,7 +377,7 @@ MppBitsToString(uint32_t bits)
 {
 	QString temp;
 	uint8_t x;
-	for (x = 0; x != 12; x++) {
+	for (x = 0; x != MPP_MAX_BANDS; x++) {
 		if (bits & 1) {
 			temp += QString(score_bits[x]);
 			if (bits != 1)
@@ -372,7 +391,7 @@ MppBitsToString(uint32_t bits)
 static void
 MppScoreStoreAdd(const class score_variant &orig, unsigned &y, const unsigned which)
 {
-	uint32_t mask = MASK(which) | MASK(H5);
+	uint32_t mask = MASK(which) | MASK(MPP_H0);
 
 	/* avoid sus and add together */
 	if (orig.pattern.indexOf(QString("sus")) != -1)
@@ -506,6 +525,12 @@ MppScoreVariantInit(void)
 	unsigned z;
 	unsigned t;
 
+	for (x = 0; x != 256; x++) {
+		const char *ptr = MppBaseKeyToString24(x % MPP_MAX_BANDS, 0);
+		MppKeyStr[x] = QString("%1%2%3").arg(QChar(ptr[0])).arg((x + 1) / MPP_MAX_BANDS)
+		    .arg(ptr + 1).toUpper();
+	}
+	
 	/* allocate array for score variants */
 	mpp_score_variant = new score_variant [MAX_SCORES];
 
@@ -528,7 +553,7 @@ MppScoreVariantInit(void)
 	/* compute all adds */
 	
 	for (x = 0; x != mpp_max_variant; x++) {
-		for (z = 0; z != 24; z++)
+		for (z = 0; z != 2 * MPP_MAX_BANDS; z++)
 			MppScoreStoreAdd(mpp_score_variant[x], y, z);
 	}
 
@@ -538,12 +563,12 @@ MppScoreVariantInit(void)
 		if (mpp_score_variant[x].duplicate)
 			continue;
 		for (z = x + 1; z != y; z++) {
-			for (t = 0; t != 12; t++) {
+			for (t = 0; t != MPP_MAX_BANDS; t++) {
 				if (MppRor(mpp_score_variant[z].footprint, t) ==
 					    mpp_score_variant[x].footprint)
 					break;
 			}
-			if (t != 12)
+			if (t != MPP_MAX_BANDS)
 				mpp_score_variant[z].duplicate = 1 + x;
 		}
 	}
@@ -566,7 +591,7 @@ MppScoreVariantInit(void)
 			continue;
 		temp = mpp_score_variant[mpp_score_variant[x].duplicate - 1];
 
-		for (t = 0; t != 12; t++) {
+		for (t = 0; t != MPP_MAX_BANDS; t++) {
 			if (MppRor(mpp_score_variant[x].footprint, t) == temp.footprint)
 				break;
 		}
@@ -597,35 +622,42 @@ mpp_get_key(const QString &ptr, int &index)
 	if (index >= ptr.length())
 		return (0);
 	if (ptr[index] == 'C') {
-		key = C5;
+		key = MPP_C0;
 		index++;
 	} else if (ptr[index] == 'D') {
-		key = D5;
+		key = MPP_D0;
 		index++;
 	} else if (ptr[index] == 'E') {
-		key = E5;
+		key = MPP_E0;
 		index++;
 	} else if (ptr[index] == 'F') {
-		key = F5;
+		key = MPP_F0;
 		index++;
 	} else if (ptr[index] == 'G') {
-		key = G5;
+		key = MPP_G0;
 		index++;
 	} else if (ptr[index] == 'A') {
-		key = A5;
+		key = MPP_A0;
 		index++;
 	} else if (ptr[index] == 'H' || ptr[index] == 'B') {
-		key = H5;
+		key = MPP_H0;
 		index++;
 	} else {
 		return (0);
 	}
+	key += (MPP_MAX_BANDS * 5);
 	if (index < ptr.length()) {
-		if (ptr[index] == '#') {
-			key++;
+		if (ptr[index] == 'q') {
+			key -= 3;
+			index++;
+		} else if (ptr[index] == 'c') {
+			key -= 1;
+			index++;
+		} else if (ptr[index] == '#') {
+			key += 2;
 			index++;
 		} else if (ptr[index] == 'b') {
-			key--;
+			key -= 2;
 			index++;
 		}
 	}
@@ -636,7 +668,7 @@ uint8_t
 MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 {
 	QString out;
-	uint8_t temp[12];
+	uint8_t temp[MPP_MAX_BANDS];
 	uint32_t footprint = 0;
 	unsigned int x;
 	int y;
@@ -655,7 +687,7 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 	else
 		is_sharp = 0;
 
-	for (x = 0; x != 12; x++) {
+	for (x = 0; x != MPP_MAX_BANDS; x++) {
 		if (pinfo->stats[x] != 0)
 			footprint |= (1 << x);
 	}
@@ -665,14 +697,14 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 
 	best_l = 0;
 	best_x = mpp_max_variant;
-	best_y = 12;
-	best_z = 12;
+	best_y = MPP_MAX_BANDS;
+	best_z = MPP_MAX_BANDS;
 
 	for (x = 0; x != mpp_max_variant; x++) {
 		if (mpp_score_variant[x].duplicate)
 			continue;
 		int plen = mpp_score_variant[x].pattern.length();
-		for (y = 0; y != 12; y++) {
+		for (y = 0; y != MPP_MAX_BANDS; y++) {
 			z = MppSumbits(mpp_score_variant[x].footprint ^ MppRor(footprint, y));
 			/* if possible, get rid of the slash */
 			if (z < best_z || (z == best_z && mpp_max_variant != best_x &&
@@ -687,12 +719,12 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 	x = best_x;
 	y = best_y;
 
-	if (x == mpp_max_variant || y == 12)
+	if (x == mpp_max_variant || y == MPP_MAX_BANDS)
 		return (1);	/* not found */
 
-	for (n = z = 0; z != 12; z++) {
+	for (n = z = 0; z != MPP_MAX_BANDS; z++) {
 		if (mpp_score_variant[x].footprint & (1 << z))
-			temp[n++] = z + y + C5;
+			temp[n++] = z + y + (MPP_MAX_BANDS * 5);
 	}
 	if (n == 0)
 		return (1);	/* not found */
@@ -705,11 +737,11 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 		mid_sort(temp, n);
 
 		if (temp[n-1] < pinfo->key_max) {
-			mid_trans(temp, n, 1);
+			MppTrans(temp, n, 1);
 			rol++;
 			flags |= 1;
 		} else if (temp[n-1] > pinfo->key_max) {
-			mid_trans(temp, n, -1);
+			MppTrans(temp, n, -1);
 			rol--;
 			flags |= 2;
 		} else {
@@ -719,12 +751,12 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 
 	rol_value = rol;
 
-	out += MppBaseKeyToString(y, is_sharp);
+	out += MppBaseKeyToString24(y, is_sharp);
 	out += MppScoreExpandPattern(mpp_score_variant[x].pattern);
 
 	if (y != pinfo->key_base) {
 		out += "/";
-		out += MppBaseKeyToString(pinfo->key_base, is_sharp);
+		out += MppBaseKeyToString24(pinfo->key_base, is_sharp);
 	}
 
 	lin_edit->setText(out);
@@ -817,14 +849,14 @@ mpp_parse_chord(const QString &input, int8_t rol,
 
 	pout[n++] = base;
 
-	for (y = 0; y != 12; y++) {
+	for (y = 0; y != MPP_MAX_BANDS; y++) {
 		if (!(mpp_score_variant[x].footprint & (1 << y)))
 			continue;
 		if (n < *pn)
 			pout[n++] = y + key;
 	}
 
-	mid_trans(pout + 1, n - 1, rol);
+	MppTrans(pout + 1, n - 1, rol);
 
 	*pn = n;
 	*pvar = x;
@@ -890,7 +922,7 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	memset(current_score, 0, sizeof(current_score));
 	memset(auto_base, 0, sizeof(auto_base));
 
-	gb->addWidget(new QLabel(tr("[CDEFGABH][#b][...][/CDEFGABH[#b]]")),
+	gb->addWidget(new QLabel(tr("[CDEFGABH][#qbc][...][/CDEFGABH[#qbc]]")),
 	    0,0,1,4, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	gb->addWidget(but_rol_down, 2,0,1,1);
@@ -930,7 +962,7 @@ MppDecodeTab :: handle_play_press(int value)
 	uint8_t x;
 
 	mw->atomic_lock();
-	for (x = 0; x != MPP_MAX_VAR_OFF; x++) {
+	for (x = 0; x != MPP_MAX_BANDS; x++) {
 		if (auto_base[x] != 0)
 			mw->output_key(sm->synthChannel, auto_base[x], vel, 0, 0);
 	}
@@ -947,7 +979,7 @@ MppDecodeTab :: handle_play_release(int value)
 	uint8_t x;
 
 	mw->atomic_lock();
-	for (x = 0; x != MPP_MAX_VAR_OFF; x++) {
+	for (x = 0; x != MPP_MAX_BANDS; x++) {
 		if (auto_base[x] != 0)
 			mw->output_key(sm->synthChannel, auto_base[x], 0, 0, 0);
 	}
@@ -1080,7 +1112,9 @@ MppDecodeTab :: handle_parse(int change_var)
 			if ((endpos > startpos) &&
 			    (chord[startpos] == 'b' ||
 			     chord[startpos] == 'B' ||
-			     chord[startpos] == '#'))
+			     chord[startpos] == '#' ||
+			     chord[startpos] == 'q' ||
+			     chord[startpos] == 'c'))
 				startpos++;	/* keep modifier too */
 
 			QString temp = MppScoreExpandPattern(mpp_score_variant[var].pattern);
@@ -1101,29 +1135,25 @@ MppDecodeTab :: handle_parse(int change_var)
 
 	if (cbx_auto_base->isChecked()) {
 
-		while (b_auto >= (int)(current_score[1] & 0x7F))
-			b_auto -= 12;
+		while (b_auto >= (int)current_score[1])
+			b_auto -= MPP_MAX_BANDS;
 
-		if (b_auto >= 12) {
-		  auto_base[0] = (b_auto - 12) & 0x7F;
-		  out += QString(mid_key_str[auto_base[0]]) +
-			  QString(" ");
+		if (b_auto >= MPP_MAX_BANDS) {
+			auto_base[0] = b_auto - MPP_MAX_BANDS;
+			out += QString(MppKeyStr[auto_base[0]]) + QString(" ");
 		}
 		if (b_auto >= 0) {
-		  auto_base[1] = (b_auto - 0) & 0x7F;
-		  out += QString(mid_key_str[auto_base[1]]) +
-			  QString(" ");
+			auto_base[1] = b_auto;
+			out += QString(MppKeyStr[auto_base[1]]) + QString(" ");
 		}
 	}
 
 	for (x = 1; x < n; x++) {
-		out += QString(mid_key_str[current_score[x] & 0x7F]) +
-		  QString(" ");
+		out += QString(MppKeyStr[current_score[x]]) + QString(" ");
 	}
 
 done:
-	out += QString("/* ") + lin_edit->text().trimmed() 
-	  + QString(" */");
+	out += QString("/* ") + lin_edit->text().trimmed() + QString(" */");
 
 	lin_out->setText(out);
 }

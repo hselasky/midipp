@@ -70,8 +70,8 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 	bpm = 120;
 	enabled = 0;
 	chan = 9;
-	key_bar = C5;
-	key_beat = C4;
+	key_bar = MPP_C0 + (5 * MPP_MAX_BANDS);
+	key_beat = MPP_C0 + (4 * MPP_MAX_BANDS);
 	mode = 0;
 
 	tim_config = new QTimer();
@@ -103,11 +103,11 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 	spn_chan = new MppChanSel(chan, 0);
 	connect(spn_chan, SIGNAL(valueChanged(int)), this, SLOT(handleChanChanged(int)));
 
-	spn_key_bar = new MppSpinBox();
+	spn_key_bar = new MppSpinBox(0, MPP_MAX_BANDS / 12);
 	spn_key_bar->setValue(key_bar);
 	connect(spn_key_bar, SIGNAL(valueChanged(int)), this, SLOT(handleKeyBarChanged(int)));
 
-	spn_key_beat = new MppSpinBox();
+	spn_key_beat = new MppSpinBox(0, MPP_MAX_BANDS / 12);
 	spn_key_beat->setValue(key_beat);
 	connect(spn_key_beat, SIGNAL(valueChanged(int)), this, SLOT(handleKeyBeatChanged(int)));
 

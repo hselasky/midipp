@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "midipp_element.h"
+#include "midipp_decode.h"
 
 static int
 MppCompareValue(const void *pa, const void *pb)
@@ -395,12 +396,17 @@ MppHead :: operator += (MppElement *elem)
 		break;
 
 	case MPP_T_SCORE:
-		elem->value[0] += 12 * elem->getIntValue(&off);
+		elem->value[0] += MPP_MAX_BANDS * elem->getIntValue(&off);
 		ch = elem->getChar(&off);
 		if (ch == 'B' || ch == 'b')
-			elem->value[0]--;
-		if (elem->value[0] > 127)
-			elem->value[0] = 127;
+			elem->value[0] -= 2;
+		else if (ch == 'Q' || ch == 'q')
+			elem->value[0] -= 3;
+		else if (ch == 'C' || ch == 'c')
+			elem->value[0] -= 1;
+
+		if (elem->value[0] > 255)
+			elem->value[0] = 255;
 		else if (elem->value[0] < 0)
 			elem->value[0] = 0;
 		break;
@@ -408,10 +414,10 @@ MppHead :: operator += (MppElement *elem)
 	case MPP_T_TRANSPOSE:
 		elem->value[0] = elem->getIntValue(&off);
 		/* range check transpose value */
-		if (elem->value[0] < -128)
-			elem->value[0] = -128;
-		else if (elem->value[0] > 127)
-			elem->value[0] = 127;
+		if (elem->value[0] < -255)
+			elem->value[0] = -255;
+		else if (elem->value[0] > 255)
+			elem->value[0] = 255;
 		/* check for transpose mode */
 		ch = elem->getChar(&off);
 		if (ch == '.') {
@@ -462,25 +468,25 @@ MppHead :: operator += (QChar ch)
 		if (state.command == 0) {
 			if (ch == 'C') {
 				*this += state.elem;
-				state.elem = new MppElement(MPP_T_SCORE, state.line, C0);
+				state.elem = new MppElement(MPP_T_SCORE, state.line, MPP_C0);
 			} else if (ch == 'D') {
 				*this += state.elem;
-				state.elem = new MppElement(MPP_T_SCORE, state.line, D0);
+				state.elem = new MppElement(MPP_T_SCORE, state.line, MPP_D0);
 			} else if (ch == 'E') {
 				*this += state.elem;
-				state.elem = new MppElement(MPP_T_SCORE, state.line, E0);
+				state.elem = new MppElement(MPP_T_SCORE, state.line, MPP_E0);
 			} else if (ch == 'F') {
 				*this += state.elem;
-				state.elem = new MppElement(MPP_T_SCORE, state.line, F0);
+				state.elem = new MppElement(MPP_T_SCORE, state.line, MPP_F0);
 			} else if (ch == 'G') {
 				*this += state.elem;
-				state.elem = new MppElement(MPP_T_SCORE, state.line, G0);
+				state.elem = new MppElement(MPP_T_SCORE, state.line, MPP_G0);
 			} else if (ch == 'A') {
 				*this += state.elem;
-				state.elem = new MppElement(MPP_T_SCORE, state.line, A0);
+				state.elem = new MppElement(MPP_T_SCORE, state.line, MPP_A0);
 			} else if (ch == 'H' || ch == 'B') {
 				*this += state.elem;
-				state.elem = new MppElement(MPP_T_SCORE, state.line, H0);
+				state.elem = new MppElement(MPP_T_SCORE, state.line, MPP_H0);
 			} else if (ch == 'T') {
 				*this += state.elem;
 				state.elem = new MppElement(MPP_T_CHANNEL, state.line);
@@ -728,12 +734,12 @@ MppHead :: getChord(int line, MppChordElement *pinfo)
 				if (ptr->type != MPP_T_SCORE)
 					continue;
 				key = ptr->value[0];
-				pinfo->stats[key % 12]++;
+				pinfo->stats[key % MPP_MAX_BANDS]++;
 				if (key > pinfo->key_max)
 					pinfo->key_max = key;
 			}
 
-			for (x = y = 0; x != 12; x++) {
+			for (x = y = 0; x != MPP_MAX_BANDS; x++) {
 				if (pinfo->stats[x] > pinfo->stats[y])
 					y = x;
 			}
@@ -856,9 +862,9 @@ MppHead :: autoMelody(int which)
 	int steps;
 	int num;
 	int dup;
-	int am_keys[12];
-	int cur_keys[12];
-	int sort_keys[12];
+	int am_keys[MPP_MAX_BANDS];
+	int cur_keys[MPP_MAX_BANDS];
+	int sort_keys[MPP_MAX_BANDS];
 	int last = 0;
 	int am_step;
 	int x;
@@ -882,7 +888,7 @@ MppHead :: autoMelody(int which)
 				int rem;
 
 				last = ptr->value[0];
-				rem = last % 12;
+				rem = last % MPP_MAX_BANDS;
 				if (cur_keys[rem] == 0)
 					num++;
 				else
@@ -914,14 +920,14 @@ MppHead :: autoMelody(int which)
 		memset(sort_keys, 0xFF, sizeof(sort_keys));
 
 		/* gather candidates */
-		for (x = 0; x != 12; x++) {
+		for (x = 0; x != MPP_MAX_BANDS; x++) {
 			int delta;
 			int rem;
 
 			if (am_keys[x] == 0 || cur_keys[x] != 0)
 				continue;
 
-			rem = last % 12;
+			rem = last % MPP_MAX_BANDS;
 			if (x > rem)
 				delta = x - rem;
 			else
@@ -930,13 +936,13 @@ MppHead :: autoMelody(int which)
 			rem = x + last - rem;
 
 			while (rem >= last)
-				rem -= 12;
+				rem -= MPP_MAX_BANDS;
 
 			sort_keys[delta] = rem;
 		}
 
-		/* decide closest candidate */
-		for (x = y = 0; x != 12; x++) {
+		/* decide on closest candidate */
+		for (x = y = 0; x != MPP_MAX_BANDS; x++) {
 			if (sort_keys[x] > -1) {
 				if (y == which)
 					break;
@@ -945,13 +951,13 @@ MppHead :: autoMelody(int which)
 		}
 
 		/* add melody, if any */
-		if (x == 12)
+		if (x == MPP_MAX_BANDS)
 			continue;
 
 		key = sort_keys[x];
 
 		ptr = new MppElement(MPP_T_SCORE, start->line, key);
-		ptr->txt = QString(mid_key_str[key]);
+		ptr->txt = MppKeyStr[key];
 
 		psc = new MppElement(MPP_T_SPACE, start->line);
 		psc->txt = QString(" ");
@@ -1040,6 +1046,8 @@ MppHead :: transposeScore(int adjust, int sharp)
 					} else if (cn == 'b') {
 						sharp--;
 						x++;
+					} else if (cn == 'c' || cn == 'q') {
+						x++;
 					}
 				}
 			}
@@ -1056,11 +1064,11 @@ MppHead :: transposeScore(int adjust, int sharp)
 
 		if (ptr->type == MPP_T_SCORE) {
 			ptr->value[0] += adjust;
-			if (ptr->value[0] < 0 || ptr->value[0] > 127) {
+			if (ptr->value[0] < 0 || ptr->value[0] > 255) {
 				ptr->txt = QString();
 				ptr->type = MPP_T_UNKNOWN;
 			} else {
-				ptr->txt = QString(mid_key_str[ptr->value[0]]);
+				ptr->txt = MppKeyStr[ptr->value[0]];
 			}
 			continue;
 		}
@@ -1081,37 +1089,45 @@ MppHead :: transposeScore(int adjust, int sharp)
 			QChar cn = ptr->txt[x + 1];
 
 			if (ch == 'A')
-				key = A0;
+				key = MPP_A0;
 			else if (ch == 'B' || ch == 'H')
-				key = H0;
+				key = MPP_H0;
 			else if (ch == 'C')
-				key = C0;
+				key = MPP_C0;
 			else if (ch == 'D')
-				key = D0;
+				key = MPP_D0;
 			else if (ch == 'E')
-				key = E0;
+				key = MPP_E0;
 			else if (ch == 'F')
-				key = F0;
+				key = MPP_F0;
 			else if (ch == 'G')
-				key = G0;
+				key = MPP_G0;
 			else
 				key = -1;
 
 			if (key > -1) {
 				/* can be negative */
-				key += adjust % 12;
+				key += adjust % MPP_MAX_BANDS;
 
-				if (cn == 'b') {
-					key = (12 + key + 11) % 12;
-					out += MppBaseKeyToString(key, sharp);
+				if (cn == 'q') {
+					key = (MPP_MAX_BANDS - 3 + key) % MPP_MAX_BANDS;
+					out += MppBaseKeyToString24(key, sharp);
+					x++;
+				} else if (cn == 'c') {
+					key = (MPP_MAX_BANDS - 1 + key) % MPP_MAX_BANDS;
+					out += MppBaseKeyToString24(key, sharp);
+					x++;
+				} else if (cn == 'b') {
+					key = (MPP_MAX_BANDS - 2 + key) % MPP_MAX_BANDS;
+					out += MppBaseKeyToString24(key, sharp);
 					x++;
 				} else if (cn == '#') {
-					key = (12 + key + 1) % 12;
-					out += MppBaseKeyToString(key, sharp);
+					key = (MPP_MAX_BANDS + 2 + key) % MPP_MAX_BANDS;
+					out += MppBaseKeyToString24(key, sharp);
 					x++;
 				} else {
-					key = (12 + key) % 12;
-					out += MppBaseKeyToString(key, sharp);
+					key = (MPP_MAX_BANDS + key) % MPP_MAX_BANDS;
+					out += MppBaseKeyToString24(key, sharp);
 				}
 				continue;
 			}
@@ -1137,9 +1153,9 @@ MppHead :: limitScore(int limit)
 	int y;
 	int z;
 	int temp;
-	int map[12];
+	int map[MPP_MAX_BANDS];
 
-	if (limit < 0 || limit > 127)
+	if (limit < 0 || limit > 255)
 		return;
 
 	start = stop = 0;
@@ -1160,7 +1176,7 @@ MppHead :: limitScore(int limit)
 
 		/* setup map */
 
-		for (x = 0; x != 12; x++)
+		for (x = 0; x != MPP_MAX_BANDS; x++)
 			map[x] = limit;
 
 		/* re-align */
@@ -1169,7 +1185,7 @@ MppHead :: limitScore(int limit)
 
 			/* get current score */
 			temp = array[x]->value[0];
-			y = temp % 12;
+			y = temp % MPP_MAX_BANDS;
 
 			/* compute length */
 
@@ -1181,13 +1197,13 @@ MppHead :: limitScore(int limit)
 			/* adjust */
 
 			while (temp < map[y])
-				temp += 12;
+				temp += MPP_MAX_BANDS;
 			while (temp >= map[y])
-				temp -= 12;
+				temp -= MPP_MAX_BANDS;
 
 			/* range check */
 
-			if (temp < 0 || temp > 127) {
+			if (temp < 0 || temp > 255) {
 				for (; x != z; x--) {
 					array[x]->type = MPP_T_UNKNOWN;
 					array[x]->value[0] = 0;
@@ -1197,7 +1213,7 @@ MppHead :: limitScore(int limit)
 				map[y] = temp;
 				for (; x != z; x--) {
 					array[x]->value[0] = temp;
-					array[x]->txt = QString(mid_key_str[temp]);
+					array[x]->txt = MppKeyStr[temp];
 				}
 			}
 		}

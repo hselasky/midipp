@@ -112,15 +112,15 @@ Q_DECL_EXPORT void
 MppSplitBaseTreble(const uint8_t *score, uint8_t num, uint8_t *base, uint8_t *nbase,
     uint8_t *treble, uint8_t *ntreble)
 {
-	uint8_t stats[12] = {};
-	uint8_t count[12] = {};
+	uint8_t stats[MPP_MAX_BANDS] = {};
+	uint8_t count[MPP_MAX_BANDS] = {};
 	uint8_t x;
 	uint8_t key;
 	uint8_t nb = 0;
 	uint8_t nt = 0;
 
 	for (x = 0; x != num; x++)
-		stats[score[x] % 12]++;
+		stats[score[x] % MPP_MAX_BANDS]++;
 
 	/*
 	 * Treble only: C0
@@ -129,9 +129,9 @@ MppSplitBaseTreble(const uint8_t *score, uint8_t num, uint8_t *base, uint8_t *nb
 	 */
 	for (x = 0; x != num; x++) {
 		key = score[x];
-		if (stats[key % 12] == 1) {
+		if (stats[key % MPP_MAX_BANDS] == 1) {
 			treble[nt++] = key;
-		} else if (count[key % 12]++ < 2) {
+		} else if (count[key % MPP_MAX_BANDS]++ < 2) {
 			base[nb++] = key;
 		} else {
 			treble[nt++] = key;
@@ -142,48 +142,76 @@ MppSplitBaseTreble(const uint8_t *score, uint8_t num, uint8_t *base, uint8_t *nb
 }
 
 Q_DECL_EXPORT const char *
-MppBaseKeyToString(int key, int sharp)
+MppBaseKeyToString24(int key, int sharp)
 {
 	switch (key) {
-	case A0:
+	/* majors */
+	case MPP_A0:
 		return ("A");
-	case H0:
+	case MPP_H0:
 		return ("H");
-	case C0:
+	case MPP_C0:
 		return ("C");
-	case D0:
+	case MPP_D0:
 		return ("D");
-	case E0:
+	case MPP_E0:
 		return ("E");
-	case F0:
+	case MPP_F0:
 		return ("F");
-	case G0:
+	case MPP_G0:
 		return ("G");
-	case H0B:
+	/* flats */
+	case MPP_H0B:
 		if (sharp)
 			return ("A#");
 		else
 			return ("Hb");
-	case A0B:
+	case MPP_A0B:
 		if (sharp)
 			return ("G#");
 		else
 			return ("Ab");
-	case G0B:
+	case MPP_G0B:
 		if (sharp)
 			return ("F#");
 		else
 			return ("Gb");
-	case E0B:
+	case MPP_E0B:
 		if (sharp)
 			return ("D#");
 		else
 			return ("Eb");
-	case D0B:
+	case MPP_D0B:
 		if (sharp)
 			return ("C#");
 		else
 			return ("Db");
+	/* quarter sharps */
+	case MPP_D0Q:
+		return ("Dq");
+	case MPP_E0Q:
+		return ("Eq");
+	case MPP_G0Q:
+		return ("Gq");
+	case MPP_A0Q:
+		return ("Aq");
+	case MPP_H0Q:
+		return ("Hq");
+	/* quarter flats */
+	case MPP_D0C:
+		return ("Dc");
+	case MPP_E0C:
+		return ("Ec");
+	case MPP_F0C:
+		return ("Fc");
+	case MPP_G0C:
+		return ("Gc");
+	case MPP_A0C:
+		return ("Ac");
+	case MPP_H0C:
+		return ("Hc");
+	case MPP_C1C:
+		return ("Cc");
 	default:
 		return ("??");
 	}
@@ -378,6 +406,37 @@ MppSort(void **ptr, size_t n, MppCmp_t *fn, void *arg)
 
 	while (MppSortXform(ptr, max, n, fn, arg))
 		;
+}
+
+Q_DECL_EXPORT void
+MppTrans(uint8_t *ptr, size_t num, int ntrans)
+{
+	uint8_t temp;
+
+	if (num == 0)
+		return;
+
+	mid_sort(ptr, num);
+
+	if (ntrans < 0) {
+		while (ntrans++) {
+			temp = ptr[num - 1];
+			if (temp < MPP_MAX_BANDS)
+				return;
+			temp -= MPP_MAX_BANDS;
+			ptr[num - 1] = temp;
+			mid_sort(ptr, num);
+		}
+	} else if (ntrans > 0) {
+		while (ntrans--) {
+			temp = ptr[0];
+			if (temp > (255 - MPP_MAX_BANDS))
+				return;
+			temp += MPP_MAX_BANDS;
+			ptr[0] = temp;
+			mid_sort(ptr, num);
+		}
+	}
 }
 
 #ifdef HAVE_SCREENSHOT

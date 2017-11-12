@@ -198,15 +198,17 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	butScoreFileSaveAs = new QPushButton(tr("Save As"));
 	butScoreFilePrint = new QPushButton(tr("Print"));
 	butScoreFileAlign = new QPushButton(tr("Align"));
-	spnScoreFileAlign = new MppSpinBox();
-	spnScoreFileAlign->setValue(F5);
+	spnScoreFileAlign = new MppSpinBox(0,1,0);
+	spnScoreFileAlign->setValue(MPP_F0 + MPP_MAX_BANDS * 5);
 	butScoreFileScale = new QPushButton(tr("Scale"));
 	spnScoreFileScale = new QSpinBox();
 	spnScoreFileScale->setRange(0, 60000);
 	spnScoreFileScale->setSuffix(" ms");
 	spnScoreFileScale->setValue(1000);
-	butScoreFileStepUp = new QPushButton(tr("Step Up"));
-	butScoreFileStepDown = new QPushButton(tr("Step Down"));
+	butScoreFileStepUpHalf = new QPushButton(tr("Step Up H"));
+	butScoreFileStepDownHalf = new QPushButton(tr("Step Down H"));
+	butScoreFileStepUpQuart = new QPushButton(tr("Step Up Q"));
+	butScoreFileStepDownQuart = new QPushButton(tr("Step Down Q"));
 	butScoreFileSetSharp = new QPushButton(tr("Set #"));
 	butScoreFileSetFlat = new QPushButton(tr("Set b"));
 	butScoreFileAutoMel[0] = new MppButton(tr("AutoMel 1"), 0);
@@ -228,15 +230,18 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	gbScoreFile->addWidget(spnScoreFileAlign, 5, 1, 1, 1);
 	gbScoreFile->addWidget(butScoreFileScale, 6, 0, 1, 1);
 	gbScoreFile->addWidget(spnScoreFileScale, 6, 1, 1, 1);
-	gbScoreFile->addWidget(butScoreFileStepUp, 7, 0, 1, 1);
-	gbScoreFile->addWidget(butScoreFileStepDown, 7, 1, 1, 1);
-	gbScoreFile->addWidget(butScoreFileSetSharp, 8, 0, 1, 1);
-	gbScoreFile->addWidget(butScoreFileSetFlat, 8, 1, 1, 1);
-	gbScoreFile->addWidget(butScoreFileAutoMel[0], 9, 0, 1, 1);
-	gbScoreFile->addWidget(butScoreFileAutoMel[1], 9, 1, 1, 1);
-	gbScoreFile->addWidget(butScoreFileReplaceAll, 10, 0, 1, 2);
-	gbScoreFile->addWidget(butScoreFileExport, 11, 0, 1, 2);
-	gbScoreFile->addWidget(butScoreFileExportNoChords, 12, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileStepUpHalf, 7, 0, 1, 1);
+	gbScoreFile->addWidget(butScoreFileStepDownHalf, 7, 1, 1, 1);
+	gbScoreFile->addWidget(butScoreFileStepUpQuart, 8, 0, 1, 1);
+	gbScoreFile->addWidget(butScoreFileStepDownQuart, 8, 1, 1, 1);
+
+	gbScoreFile->addWidget(butScoreFileSetSharp, 9, 0, 1, 1);
+	gbScoreFile->addWidget(butScoreFileSetFlat, 9, 1, 1, 1);
+	gbScoreFile->addWidget(butScoreFileAutoMel[0], 10, 0, 1, 1);
+	gbScoreFile->addWidget(butScoreFileAutoMel[1], 10, 1, 1, 1);
+	gbScoreFile->addWidget(butScoreFileReplaceAll, 11, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileExport, 12, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileExportNoChords, 13, 0, 1, 2);
 
 	connect(butScoreFileNew, SIGNAL(released()), this, SLOT(handleScoreFileNew()));
 	connect(butScoreFileOpen, SIGNAL(released()), this, SLOT(handleScoreFileOpen()));
@@ -244,8 +249,10 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	connect(butScoreFileSaveAs, SIGNAL(released()), this, SLOT(handleScoreFileSaveAs()));
 	connect(butScoreFilePrint, SIGNAL(released()), this, SLOT(handleScorePrint()));
 	connect(butScoreFileAlign, SIGNAL(released()), this, SLOT(handleScoreFileAlign()));
-	connect(butScoreFileStepUp, SIGNAL(released()), this, SLOT(handleScoreFileStepUp()));
-	connect(butScoreFileStepDown, SIGNAL(released()), this, SLOT(handleScoreFileStepDown()));
+	connect(butScoreFileStepUpHalf, SIGNAL(released()), this, SLOT(handleScoreFileStepUpHalf()));
+	connect(butScoreFileStepDownHalf, SIGNAL(released()), this, SLOT(handleScoreFileStepDownHalf()));
+	connect(butScoreFileStepUpQuart, SIGNAL(released()), this, SLOT(handleScoreFileStepUpQuart()));
+	connect(butScoreFileStepDownQuart, SIGNAL(released()), this, SLOT(handleScoreFileStepDownQuart()));
 	connect(butScoreFileSetSharp, SIGNAL(released()), this, SLOT(handleScoreFileSetSharp()));
 	connect(butScoreFileSetFlat, SIGNAL(released()), this, SLOT(handleScoreFileSetFlat()));
 	connect(butScoreFileScale, SIGNAL(released()), this, SLOT(handleScoreFileScale()));
@@ -1070,11 +1077,13 @@ int
 MppScoreMain :: checkHalfPassThru(int key)
 {
 	static const uint8_t is_black[12] = {0,1,0,1,0,0,1,0,1,0,1,0};
+	int bk = baseKey / (MPP_MAX_BANDS / 12);
+	int ck = key / (MPP_MAX_BANDS / 12);
 
-	return ((key >= mid_next_key(baseKey, -1)) &&
-	    (key <= mid_next_key(baseKey, +1)) &&
-	    (is_black[((uint8_t)key) % 12U] ==
-	     is_black[((uint8_t)baseKey) % 12U]));
+	return ((ck >= mid_next_key(bk, -1)) &&
+	    (ck <= mid_next_key(bk, +1)) &&
+	    (is_black[((uint8_t)ck) % 12U] ==
+	     is_black[((uint8_t)bk) % 12U]));
 }
 
 /* must be called locked */
@@ -1300,11 +1309,13 @@ MppScoreMain :: handleKeyRemovePast(MppScoreEntry *pn, uint32_t key_delay)
 void
 MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 {
+  	int bk = baseKey / (MPP_MAX_BANDS / 12);
+	int ck = in_key / (MPP_MAX_BANDS / 12);
 	MppScoreEntry mse;
 	uint8_t map;
 	int off;
 
-	off = in_key - (int)baseKey;
+	off = ck - bk;
 	if (off < 0 || off >= MPP_MAX_CHORD_MAP)
 		return;
 
@@ -1377,10 +1388,12 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 void
 MppScoreMain :: handleKeyPressureChord(int in_key, int vel, uint32_t key_delay)
 {
+    	int bk = baseKey / (MPP_MAX_BANDS / 12);
+	int ck = in_key / (MPP_MAX_BANDS / 12);
 	MppScoreEntry *pn;
 	int off;
 
-	off = in_key - (int)baseKey;
+	off = ck - bk;
 	if (off < 0 || off >= MPP_MAX_CHORD_MAP)
 		return;
 
@@ -1399,10 +1412,12 @@ MppScoreMain :: handleKeyPressureChord(int in_key, int vel, uint32_t key_delay)
 void
 MppScoreMain :: handleKeyReleaseChord(int in_key, uint32_t key_delay)
 {
+      	int bk = baseKey / (MPP_MAX_BANDS / 12);
+	int ck = in_key / (MPP_MAX_BANDS / 12);
 	MppScoreEntry *pn;
 	int off;
 
-	off = in_key - (int)baseKey;
+	off = ck - bk;
 	if (off < 0 || off >= MPP_MAX_CHORD_MAP)
 		return;
 
@@ -1435,7 +1450,7 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 	int nfoot;
 	int vel_other;
 	int transpose;
-	uint8_t footprint[12];
+	uint8_t footprint[MPP_MAX_BANDS];
 
 	head.currLine(&start, &stop);
 	head.state.did_jump = 0;
@@ -1460,7 +1475,7 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 				if (duration <= 0)
 					break;
 				nscore++;
-				temp = ptr->value[0] % 12;
+				temp = ptr->value[0] % MPP_MAX_BANDS;
 				if (footprint[temp] == 0) {
 					footprint[temp] = 1;
 					nfoot++;
@@ -1499,14 +1514,27 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 			int out_vel;
 			int delay;
 			int temp;
+			int mult;
 
 			case MPP_T_TRANSPOSE:
 				if (transpose == MPP_INVALID_TRANSPOSE)
 					break;
 
-				transpose = ptr->value[0] + key_trans;
+				switch (ptr->value[1]) {
+				case 3:
+				case 4:
+				case 5:
+					mult = 1;
+					break;
+				default:
+					mult = 2;
+					break;
+				}
+				transpose = (ptr->value[0] * mult) + key_trans;
+
 				switch (ptr->value[1]) {
 				case 1:
+				case 4:
 					temp = mainWindow->getCurrTransposeScore();
 					if (temp >= 0)
 						transpose += temp;
@@ -1514,9 +1542,10 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 						transpose = MPP_INVALID_TRANSPOSE;
 					break;
 				case 2:
+				case 5:
 					temp = mainWindow->getCurrTransposeScore();
 					if (temp >= 0)
-						transpose += temp % 12;
+						transpose += temp % MPP_MAX_BANDS;
 					else
 						transpose = MPP_INVALID_TRANSPOSE;
 					break;
@@ -1558,7 +1587,7 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 					out_vel = vel_other;
 
 				out_key = ptr->value[0] + in_key + transpose;
-				if (out_key < 0 || out_key > 127)
+				if (out_key < 0 || out_key > 255)
 					break;
 
 				ch = (synthChannel + channel) & 0xF;
@@ -1951,15 +1980,27 @@ MppScoreMain :: handleScoreFileScale(void)
 }
 
 void
-MppScoreMain :: handleScoreFileStepUp(void)
+MppScoreMain :: handleScoreFileStepUpHalf(void)
 {
-	handleScoreFileEffect(1, 1, 0);
+	handleScoreFileEffect(1, MPP_MAX_BANDS / 12, 0);
 }
 
 void
-MppScoreMain :: handleScoreFileStepDown(void)
+MppScoreMain :: handleScoreFileStepDownHalf(void)
 {
-	handleScoreFileEffect(1, -1, 0);
+	handleScoreFileEffect(1, -MPP_MAX_BANDS / 12, 0);
+}
+
+void
+MppScoreMain :: handleScoreFileStepUpQuart(void)
+{
+	handleScoreFileEffect(1, MPP_MAX_BANDS / 24, 0);
+}
+
+void
+MppScoreMain :: handleScoreFileStepDownQuart(void)
+{
+	handleScoreFileEffect(1, -MPP_MAX_BANDS / 24, 0);
 }
 
 void

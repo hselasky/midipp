@@ -278,15 +278,18 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " * J<P><number> - jumps to the given label [0..31] \n"
 	    " *     and optionally starts a new page(P) in printouts.\n"
 	    " * S\"<string .(chord) .(chord)>\" - creates a visual string.\n"
-	    " * CDEFGAH<number><B> - defines a score in the given octave [0..10].\n"
+	    " * CDEFGAH<number><QBC> - defines a score in the given octave [0..10].\n"
 	    " * X[+/-]<number> - transpose the subsequent scores by the given\n"
 	    " *  number of steps, -128..+127. There are 12 steps in a so-called octave.\n"
 	    " * X[+/-]<number>.<mode>\n"
-	    " * X[+/-]<number>.0 - fixed transposition. (default)\n"
-	    " * X[+/-]<number>.1 - dynamic transposition using full\n"
+	    " * X[+/-]<number>.0 - fixed transposition, 12-steps. (default)\n"
+	    " * X[+/-]<number>.1 - dynamic transposition using full, 12-steps\n"
 	    " *   bass score. (available in chord mode only)\n"
 	    " * X[+/-]<number>.2 - dynamic transposition using remainder of\n"
-	    " *   full bass score, 0..11. (available in chord mode only)\n"
+	    " *   full bass score, 12-steps. (available in chord mode only)\n"
+	    " * X[+/-]<number>.3 - same as 0 only 24-steps.\n"
+	    " * X[+/-]<number>.4 - same as 1 only 24-steps.\n"
+	    " * X[+/-]<number>.5 - same as 2 only 24-steps.\n"
 	    " */\n"
 	    "\n"
 	    "/*\n"
@@ -1632,15 +1635,23 @@ MppMainWindow :: do_key_press(int key, int vel, int dur)
 			vel = 2;
 	}
 
-	if (key > 127)
+	if (key > 255)
 		return;
 	else if (key < 0)
 		return;
-
 	if (dur < 0)
 		return;
 
-	mid_key_press(d, key, vel, dur);
+	/* quarter notes go to the secondary channel */
+	if (key & 1)
+		d->channel = (d->channel + 1) & 0xF;
+
+	mid_key_press(d, key / 2, vel, dur);
+
+	/* restore */
+	if (key & 1)
+		d->channel = (d->channel - 1) & 0xF;
+
 }
 
 /* must be called locked */
@@ -1781,7 +1792,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 	}
 	if (umidi20_event_is_key_start(event)) {
 
-		key = umidi20_event_get_key(event) & 0x7F;
+		key = (umidi20_event_get_key(event) & 0x7F) * (MPP_MAX_BANDS / 12);
 		vel = umidi20_event_get_velocity(event);
 
 		if (mw->scoreRecordOff == 0) {
@@ -1824,7 +1835,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 		} else if (what & UMIDI20_WHAT_KEY_PRESSURE) {
 
-			key = umidi20_event_get_key(event) & 0x7F;
+			key = (umidi20_event_get_key(event) & 0x7F) * (MPP_MAX_BANDS / 12);
 			vel = umidi20_event_get_pressure(event) & 0x7F;
 
 			switch (sm->keyMode) {
@@ -1855,14 +1866,14 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 		} else if (umidi20_event_is_key_start(event)) {
 
-			key = umidi20_event_get_key(event) & 0x7F;
+			key = (umidi20_event_get_key(event) & 0x7F) * (MPP_MAX_BANDS / 12);
 			vel = umidi20_event_get_velocity(event);
 
 			sm->handleMidiKeyPressLocked(key, vel);
 
 		} else if (umidi20_event_is_key_end(event)) {
 
-			key = umidi20_event_get_key(event) & 0x7F;
+			key = (umidi20_event_get_key(event) & 0x7F) * (MPP_MAX_BANDS / 12);
 
 			sm->handleMidiKeyReleaseLocked(key);
 
@@ -2402,7 +2413,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 				out_block += buf;
 			}
 
-			out_block += mid_key_str[umidi20_event_get_key(event)];
+			out_block += mid_key_str[umidi20_event_get_key(event) & 0x7F];
 			out_block += " ";
 		}
 	}

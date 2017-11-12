@@ -33,8 +33,8 @@ class MppSpinBox : public QSpinBox
 	Q_OBJECT;
 
 public:
-	MppSpinBox(QWidget *parent = 0);
-	~MppSpinBox();
+	MppSpinBox(QWidget *parent = 0, int step = 1, int allow_neg = 1);
+	~MppSpinBox() {};
 
 	int valueFromText(const QString &n) const;
 	QString textFromValue(int n) const;

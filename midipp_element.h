@@ -83,7 +83,7 @@ struct MppChordElement {
 	MppElement *chord;
 	MppElement *start;
 	MppElement *stop;
-	int stats[12];
+	int stats[MPP_MAX_BANDS];
 	int key_max;
 	int key_base;
 };

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010-2017 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,7 +28,6 @@
 
 #include "midipp.h"
 
-#define	MPP_MAX_VAR_OFF 12
 #define	MPP_SCORE_KEYMAX 4
 
 struct score_variant_initial {
@@ -83,8 +82,8 @@ public:
 	int rol_value;
 	int delta_v;
 
-	uint8_t current_score[MPP_MAX_VAR_OFF];
-	uint8_t auto_base[MPP_MAX_VAR_OFF];
+	uint8_t current_score[MPP_MAX_BANDS];
+	uint8_t auto_base[MPP_MAX_BANDS];
 
 public slots:
 
@@ -99,6 +98,7 @@ public slots:
 };
 
 extern class score_variant *mpp_score_variant;
+extern QString MppKeyStr[256];
 
 extern uint8_t mpp_find_chord(QString input, uint8_t *pbase, uint8_t *pkey, uint32_t *pvar);
 extern uint8_t mpp_parse_chord(const QString &input, int8_t rol, uint8_t *pout, uint8_t *pn, uint32_t *pvar, int);

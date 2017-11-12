@@ -124,8 +124,10 @@ public:
 	MppSpinBox *spnScoreFileAlign;
 	QPushButton *butScoreFileScale;
 	QSpinBox *spnScoreFileScale;
-	QPushButton *butScoreFileStepUp;
-	QPushButton *butScoreFileStepDown;
+	QPushButton *butScoreFileStepUpHalf;
+	QPushButton *butScoreFileStepDownHalf;
+	QPushButton *butScoreFileStepUpQuart;
+	QPushButton *butScoreFileStepDownQuart;
 	QPushButton *butScoreFileSetSharp;
 	QPushButton *butScoreFileSetFlat;
 	QPushButton *butScoreFileExport;
@@ -182,8 +184,10 @@ public slots:
 	void handleScoreFileSaveAs();
 	void handleScorePrint();
 	void handleScoreFileAlign(void);
-	void handleScoreFileStepUp(void);
-	void handleScoreFileStepDown(void);
+	void handleScoreFileStepUpHalf(void);
+	void handleScoreFileStepDownHalf(void);
+	void handleScoreFileStepUpQuart(void);
+	void handleScoreFileStepDownQuart(void);
 	void handleScoreFileSetSharp(void);
 	void handleScoreFileSetFlat(void);
 	void handleScoreFileScale(void);
