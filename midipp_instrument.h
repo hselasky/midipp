@@ -34,7 +34,7 @@ class MppInstrumentTab : public QObject
 
 public:
 	MppInstrumentTab(MppMainWindow * = 0);
-	~MppInstrumentTab() { };
+	~MppInstrumentTab();
 
 	MppMainWindow *mw;
 	

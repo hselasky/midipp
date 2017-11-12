@@ -119,6 +119,13 @@ MppInstrumentTab :: MppInstrumentTab(MppMainWindow *_mw)
 	connect(but_instr_unmute_all, SIGNAL(released()), this, SLOT(handle_instr_unmute_all()));
 }
 
+MppInstrumentTab :: ~MppInstrumentTab()
+{
+	mw->atomic_lock();
+	mw->tab_instrument = 0;
+	mw->atomic_unlock();
+}
+
 void
 MppInstrumentTab :: handle_non_channel_muted_changed(int value)
 {
@@ -130,6 +137,9 @@ MppInstrumentTab :: handle_non_channel_muted_changed(int value)
 void
 MppInstrumentTab :: handle_instr_channel_changed(int chan)
 {
+  	if (this == 0)
+		return;
+
 	int temp[2];
 
 	temp[0] = spn_instr_bank[chan]->value();
@@ -184,6 +194,9 @@ MppInstrumentTab :: handle_instr_program_all()
 void 
 MppInstrumentTab :: handle_instr_changed(int dummy)
 {
+	if (this == 0)
+		return;
+
 	struct mid_data *d = &mw->mid_data;
 	int temp[3];
 	uint8_t curr_chan;
@@ -296,6 +309,8 @@ MppInstrumentTab :: handle_instr_changed(int dummy)
 void 
 MppInstrumentTab :: handle_instr_reset()
 {
+	if (this == 0)
+		return;
 
 	but_non_channel_mute_all->setSelection(0);
 
