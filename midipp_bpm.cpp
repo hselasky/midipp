@@ -204,6 +204,8 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 MppBpm :: ~MppBpm()
 {
 	umidi20_unset_timer(&MppTimerCallback, this);
+
+	tim_config->stop();
 }
 
 void

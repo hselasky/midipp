@@ -648,19 +648,22 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 MppMainWindow :: ~MppMainWindow()
 {
+	watchdog->stop();
+	tim_config_apply->stop();
+
 	MidiUnInit();
 }
 
 void
 MppMainWindow :: closeEvent(QCloseEvent *event)
 {
-	exit(0);
+	QCoreApplication::exit(0);
 }
 
 void
 MppMainWindow :: handle_quit()
 {
-	exit(0);
+	QCoreApplication::exit(0);
 }
 
 void
@@ -2678,10 +2681,8 @@ MppMainWindow :: MidiUnInit(void)
 	atomic_unlock();
 
 	for (n = 0; n != MPP_MAX_DEVS; n++) {
-		if (deviceName[n] != NULL) {
-			free(deviceName[n]);
-			deviceName[n] = NULL;
-		}
+		free(deviceName[n]);
+		deviceName[n] = NULL;
 	}
 }
 

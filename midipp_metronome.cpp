@@ -136,6 +136,8 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 
 MppMetronome :: ~MppMetronome()
 {
+	tim_config->stop();
+
 	umidi20_unset_timer(&MppMetronomeCallback, this);
 }
 

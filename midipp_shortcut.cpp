@@ -144,7 +144,7 @@ MppShortcutTab :: MppShortcutTab(MppMainWindow *_mw)
 
 MppShortcutTab :: ~MppShortcutTab()
 {
-
+	watchdog->stop();
 }
 
 /* this function is called locked */
