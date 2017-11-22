@@ -2200,8 +2200,10 @@ MppScoreMain :: outputControl(uint8_t ctrl, uint8_t val)
 		chan &= 0xF;
 	}
 
-	if (ctrl == 0x40)
+	if (ctrl == 0x40) {
 		mw->tab_loop->add_pedal(val);
+		lastPedalValue = val;
+	}
 }
 
 /* must be called locked */

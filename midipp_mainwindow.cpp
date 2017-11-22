@@ -3037,10 +3037,16 @@ MppMainWindow :: getCurrTransposeScore(void)
 {
 	for (int x = 0; x != MPP_MAX_VIEWS; x++) {
 		MppScoreMain *sm = scores_main[x];
+		unsigned int y;
+
 		if (sm->keyMode != MM_PASS_NONE_CHORD_PIANO &&
 		    sm->keyMode != MM_PASS_NONE_CHORD_GUITAR)
 			continue;
-		if (sm->head.isFirst())
+		for (y = 0; y != MPP_MAX_CHORD_MAP; y++) {
+			if (sm->score_past[y].dur != 0)
+				break;
+		}
+		if (y == MPP_MAX_CHORD_MAP && sm->lastPedalValue <= 0x40)
 			continue;
 		if (sm->score_future_base[0].dur == 0)
 			continue;

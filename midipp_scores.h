@@ -172,6 +172,7 @@ public:
 	uint8_t chordContrast;
 	uint8_t chordNormalize;
 	uint8_t songEventsOn;
+	uint8_t lastPedalValue;
 
 	uint8_t auto_zero_end[0];
 
