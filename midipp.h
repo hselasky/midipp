@@ -130,29 +130,32 @@
 #define	MPP_INVALID_TRANSPOSE	4095
 
 #define	MPP_C0 0
-#define	MPP_D0Q 1
 #define	MPP_D0B 2
-#define	MPP_D0C 3
 #define	MPP_D0 4
-#define	MPP_E0Q 5
 #define	MPP_E0B 6
-#define	MPP_E0C 7
 #define	MPP_E0 8
-#define	MPP_F0C 9
 #define	MPP_F0 10
-#define	MPP_G0Q 11
 #define	MPP_G0B 12
-#define	MPP_G0C 13
 #define	MPP_G0 14
-#define	MPP_A0Q 15
 #define	MPP_A0B 16
-#define	MPP_A0C 17
 #define	MPP_A0 18
-#define	MPP_H0Q 19
 #define	MPP_H0B 20
-#define	MPP_H0C 21
 #define	MPP_H0 22
+
+#ifdef HAVE_QUARTERTONE
+#define	MPP_D0Q 1
+#define	MPP_D0C 3
+#define	MPP_E0Q 5
+#define	MPP_E0C 7
+#define	MPP_F0C 9
+#define	MPP_G0Q 11
+#define	MPP_G0C 13
+#define	MPP_A0Q 15
+#define	MPP_A0C 17
+#define	MPP_H0Q 19
+#define	MPP_H0C 21
 #define	MPP_C1C 23
+#endif
 
 #define	STRLCPY(a,b,c) do { \
     strncpy(a,b,c); ((char *)(a))[(c)-1] = 0; \

@@ -73,6 +73,7 @@ static const char *score_xor[] = {
 
 /* common standard */
 
+#ifdef HAVE_QUARTERTONE
 static const char *score_quarter_sharp[] = {
 	"$q", "q", 0
 };
@@ -80,6 +81,7 @@ static const char *score_quarter_sharp[] = {
 static const char *score_quarter_flat[] = {
 	"$c", "c", 0
 };
+#endif
 
 static const char *score_sharp[] = {
 	"$S", "+", "#", 0
@@ -107,8 +109,10 @@ static const char **score_macros[] = {
 	score_xor,
 	score_sharp,
 	score_flat,
+#ifdef HAVE_QUARTERTONE
 	score_quarter_sharp,
 	score_quarter_flat,
+#endif
 	score_half_dim,
 	score_seventh,
 	0
@@ -647,18 +651,27 @@ mpp_get_key(const QString &ptr, int &index)
 	}
 	key += (MPP_MAX_BANDS * 5);
 	if (index < ptr.length()) {
-		if (ptr[index] == 'q') {
+		switch (ptr[index].toLatin1()) {
+#ifdef HAVE_QUARTERTONE
+		case 'q':
 			key -= 3;
 			index++;
-		} else if (ptr[index] == 'c') {
+			break;
+		case 'c':
 			key -= 1;
 			index++;
-		} else if (ptr[index] == '#') {
+			break;
+#endif
+		case '#':
 			key += 2;
 			index++;
-		} else if (ptr[index] == 'b') {
+			break;
+		case 'b':
 			key -= 2;
 			index++;
+			break;
+		default:
+			break;
 		}
 	}
 	return (key);
@@ -922,7 +935,12 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	memset(current_score, 0, sizeof(current_score));
 	memset(auto_base, 0, sizeof(auto_base));
 
-	gb->addWidget(new QLabel(tr("[CDEFGABH][#qbc][...][/CDEFGABH[#qbc]]")),
+	gb->addWidget(
+#ifdef HAVE_QUARTERTONE
+	    new QLabel(tr("[CDEFGABH][#qbc][...][/CDEFGABH[#qbc]]")),
+#else
+	    new QLabel(tr("[CDEFGABH][#b][...][/CDEFGABH[#b]]")),
+#endif
 	    0,0,1,4, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	gb->addWidget(but_rol_down, 2,0,1,1);
@@ -1112,9 +1130,11 @@ MppDecodeTab :: handle_parse(int change_var)
 			if ((endpos > startpos) &&
 			    (chord[startpos] == 'b' ||
 			     chord[startpos] == 'B' ||
-			     chord[startpos] == '#' ||
+#ifdef HAVE_QUARTERTONE
 			     chord[startpos] == 'q' ||
-			     chord[startpos] == 'c'))
+			     chord[startpos] == 'c' ||
+#endif
+			     chord[startpos] == '#'))
 				startpos++;	/* keep modifier too */
 
 			QString temp = MppScoreExpandPattern(mpp_score_variant[var].pattern);

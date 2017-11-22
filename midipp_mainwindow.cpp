@@ -278,7 +278,13 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " * J<P><number> - jumps to the given label [0..31] \n"
 	    " *     and optionally starts a new page(P) in printouts.\n"
 	    " * S\"<string .(chord) .(chord)>\" - creates a visual string.\n"
-	    " * CDEFGAH<number><QBC> - defines a score in the given octave [0..10].\n"
+	    " * CDEFGAH<number>"
+#ifdef HAVE_QUARTERTONE
+	    "<QBC>"
+#else
+	    "<B>"
+#endif
+	    " - defines a score in the given octave [0..10].\n"
 	    " * X[+/-]<number> - transpose the subsequent scores by the given\n"
 	    " *  number of steps, -128..+127. There are 12 steps in a so-called octave.\n"
 	    " * X[+/-]<number>.<mode>\n"
@@ -287,9 +293,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " *   bass score. (available in chord mode only)\n"
 	    " * X[+/-]<number>.2 - dynamic transposition using remainder of\n"
 	    " *   full bass score, 12-steps. (available in chord mode only)\n"
+#ifdef HAVE_QUARTERTONE
 	    " * X[+/-]<number>.3 - same as 0 only 24-steps.\n"
 	    " * X[+/-]<number>.4 - same as 1 only 24-steps.\n"
 	    " * X[+/-]<number>.5 - same as 2 only 24-steps.\n"
+#endif
 	    " */\n"
 	    "\n"
 	    "/*\n"
@@ -1639,19 +1647,26 @@ MppMainWindow :: do_key_press(int key, int vel, int dur)
 		return;
 	else if (key < 0)
 		return;
+#ifndef HAVE_QUARTERTONE
+	if (key & 1)
+		return;
+#endif
 	if (dur < 0)
 		return;
 
+#ifdef HAVE_QUARTERTONE
 	/* quarter notes go to the secondary channel */
 	if (key & 1)
 		d->channel = (d->channel + 1) & 0xF;
+#endif
 
 	mid_key_press(d, key / 2, vel, dur);
 
+#ifdef HAVE_QUARTERTONE
 	/* restore */
 	if (key & 1)
 		d->channel = (d->channel - 1) & 0xF;
-
+#endif
 }
 
 /* must be called locked */

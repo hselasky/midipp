@@ -29,6 +29,13 @@
 MppSpinBox :: MppSpinBox(QWidget *parent, int step, int allow_neg)
   : QSpinBox(parent)
 {
+#ifdef HAVE_QUARTERTONE
+	if (step < 1)
+		step = 1;
+#else
+	if (step < 2)
+		step = 2;
+#endif
 	if (allow_neg)
 		setRange(-256 + step, 256 - step);
 	else
@@ -142,6 +149,7 @@ MppSpinBox :: valueFromText(const QString &n) const
 		rem -= 2;
 		ch++;
 		break;
+#ifdef HAVE_QUARTERTONE
 	case 'q':
 	case 'Q':
 		rem -= 3;
@@ -152,6 +160,7 @@ MppSpinBox :: valueFromText(const QString &n) const
 		rem -= 1;
 		ch++;
 		break;
+#endif
 	case '#':
 		rem += 2;
 		ch++;

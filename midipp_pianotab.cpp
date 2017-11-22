@@ -338,6 +338,7 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 	paint.setFont(fnt);
 
 	ypos = h - 2 * unit + uh;
+#ifdef HAVE_QUARTERTONE
 	drawTextBox(paint, MPP_D0Q, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 0.5 - small, ypos - small / 4.0, "-");
 	drawTextBox(paint, MPP_D0B, small, small, unit / 2.0 + uq + dx * 0.5 - small / 2.0, ypos + small / 3.0, "#");
 	drawTextBox(paint, MPP_D0C, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 0.5, ypos - small / 4.0, "+");
@@ -355,6 +356,13 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 	drawTextBox(paint, MPP_H0B, small, small, unit / 2.0 + uq + dx * 5.5 - small / 2.0, ypos + small / 3.0, "#");
 	drawTextBox(paint, MPP_H0C, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 5.5, ypos - small / 4.0, "+");
 	drawTextBox(paint, MPP_C1C, small, small, unit / 2.0 + uq + dx * 6.5 - small / 2.0, ypos + small / 3.0, "%");
+#else
+	drawTextBox(paint, MPP_D0B, unit, unit, unit / 2.0 + uq + dx * 0.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_E0B, unit, unit, unit / 2.0 + uq + dx * 1.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_G0B, unit, unit, unit / 2.0 + uq + dx * 3.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_A0B, unit, unit, unit / 2.0 + uq + dx * 4.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_H0B, unit, unit, unit / 2.0 + uq + dx * 5.5 - unit / 2.0, ypos, "#");
+#endif
 
 	ypos = h - unit + uh;
 	snprintf(buffer, sizeof(buffer), "C%d", base);
@@ -373,7 +381,7 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 	drawTextBox(paint, MPP_H0, unit, unit, uq + dx * 6.0, ypos, buffer);
 
 	ypos = h + unit;
-
+#ifdef HAVE_QUARTERTONE
 	drawTextBox(paint, MPP_D0Q + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 0.5 - small, ypos - small / 4.0, "-");
 	drawTextBox(paint, MPP_D0B + MPP_MAX_BANDS, small, small, unit / 2.0 + uq + dx * 0.5 - small / 2.0, ypos + small / 3.0, "#");
 	drawTextBox(paint, MPP_D0C + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 0.5, ypos - small / 4.0, "+");
@@ -391,6 +399,13 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 	drawTextBox(paint, MPP_H0B + MPP_MAX_BANDS, small, small, unit / 2.0 + uq + dx * 5.5 - small / 2.0, ypos + small / 3.0, "#");
 	drawTextBox(paint, MPP_H0C + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 5.5, ypos - small / 4.0, "+");
 	drawTextBox(paint, MPP_C1C + MPP_MAX_BANDS, small, small, unit / 2.0 + uq + dx * 6.5 - small / 2.0, ypos + small / 3.0, "%");
+#else
+	drawTextBox(paint, MPP_D0B + MPP_MAX_BANDS, unit, unit, unit / 2.0 + uq + dx * 0.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_E0B + MPP_MAX_BANDS, unit, unit, unit / 2.0 + uq + dx * 1.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_G0B + MPP_MAX_BANDS, unit, unit, unit / 2.0 + uq + dx * 3.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_A0B + MPP_MAX_BANDS, unit, unit, unit / 2.0 + uq + dx * 4.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_H0B + MPP_MAX_BANDS, unit, unit, unit / 2.0 + uq + dx * 5.5 - unit / 2.0, ypos, "#");
+#endif
 
 	ypos = h + 2*unit;
 	snprintf(buffer, sizeof(buffer), "C%d", base + 1);

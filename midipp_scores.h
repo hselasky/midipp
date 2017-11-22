@@ -126,8 +126,10 @@ public:
 	QSpinBox *spnScoreFileScale;
 	QPushButton *butScoreFileStepUpHalf;
 	QPushButton *butScoreFileStepDownHalf;
+#ifdef HAVE_QUARTERTONE
 	QPushButton *butScoreFileStepUpQuart;
 	QPushButton *butScoreFileStepDownQuart;
+#endif
 	QPushButton *butScoreFileSetSharp;
 	QPushButton *butScoreFileSetFlat;
 	QPushButton *butScoreFileExport;
@@ -186,8 +188,10 @@ public slots:
 	void handleScoreFileAlign(void);
 	void handleScoreFileStepUpHalf(void);
 	void handleScoreFileStepDownHalf(void);
+#ifdef HAVE_QUARTERTONE
 	void handleScoreFileStepUpQuart(void);
 	void handleScoreFileStepDownQuart(void);
+#endif
 	void handleScoreFileSetSharp(void);
 	void handleScoreFileSetFlat(void);
 	void handleScoreFileScale(void);

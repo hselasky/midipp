@@ -207,8 +207,10 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	spnScoreFileScale->setValue(1000);
 	butScoreFileStepUpHalf = new QPushButton(tr("Step Up H"));
 	butScoreFileStepDownHalf = new QPushButton(tr("Step Down H"));
+#ifdef HAVE_QUARTERTONE
 	butScoreFileStepUpQuart = new QPushButton(tr("Step Up Q"));
 	butScoreFileStepDownQuart = new QPushButton(tr("Step Down Q"));
+#endif
 	butScoreFileSetSharp = new QPushButton(tr("Set #"));
 	butScoreFileSetFlat = new QPushButton(tr("Set b"));
 	butScoreFileAutoMel[0] = new MppButton(tr("AutoMel 1"), 0);
@@ -232,8 +234,10 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	gbScoreFile->addWidget(spnScoreFileScale, 6, 1, 1, 1);
 	gbScoreFile->addWidget(butScoreFileStepUpHalf, 7, 0, 1, 1);
 	gbScoreFile->addWidget(butScoreFileStepDownHalf, 7, 1, 1, 1);
+#ifdef HAVE_QUARTERTONE
 	gbScoreFile->addWidget(butScoreFileStepUpQuart, 8, 0, 1, 1);
 	gbScoreFile->addWidget(butScoreFileStepDownQuart, 8, 1, 1, 1);
+#endif
 
 	gbScoreFile->addWidget(butScoreFileSetSharp, 9, 0, 1, 1);
 	gbScoreFile->addWidget(butScoreFileSetFlat, 9, 1, 1, 1);
@@ -251,8 +255,10 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	connect(butScoreFileAlign, SIGNAL(released()), this, SLOT(handleScoreFileAlign()));
 	connect(butScoreFileStepUpHalf, SIGNAL(released()), this, SLOT(handleScoreFileStepUpHalf()));
 	connect(butScoreFileStepDownHalf, SIGNAL(released()), this, SLOT(handleScoreFileStepDownHalf()));
+#ifdef HAVE_QUARTERTONE
 	connect(butScoreFileStepUpQuart, SIGNAL(released()), this, SLOT(handleScoreFileStepUpQuart()));
 	connect(butScoreFileStepDownQuart, SIGNAL(released()), this, SLOT(handleScoreFileStepDownQuart()));
+#endif
 	connect(butScoreFileSetSharp, SIGNAL(released()), this, SLOT(handleScoreFileSetSharp()));
 	connect(butScoreFileSetFlat, SIGNAL(released()), this, SLOT(handleScoreFileSetFlat()));
 	connect(butScoreFileScale, SIGNAL(released()), this, SLOT(handleScoreFileScale()));
@@ -1521,11 +1527,13 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 					break;
 
 				switch (ptr->value[1]) {
+#ifdef HAVE_QUARTERTONE
 				case 3:
 				case 4:
 				case 5:
 					mult = 1;
 					break;
+#endif
 				default:
 					mult = 2;
 					break;
@@ -1534,7 +1542,9 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 
 				switch (ptr->value[1]) {
 				case 1:
+#ifdef HAVE_QUARTERTONE
 				case 4:
+#endif
 					temp = mainWindow->getCurrTransposeScore();
 					if (temp >= 0)
 						transpose += temp;
@@ -1542,7 +1552,9 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 						transpose = MPP_INVALID_TRANSPOSE;
 					break;
 				case 2:
+#ifdef HAVE_QUARTERTONE
 				case 5:
+#endif
 					temp = mainWindow->getCurrTransposeScore();
 					if (temp >= 0)
 						transpose += temp % MPP_MAX_BANDS;
@@ -1991,6 +2003,7 @@ MppScoreMain :: handleScoreFileStepDownHalf(void)
 	handleScoreFileEffect(1, -MPP_MAX_BANDS / 12, 0);
 }
 
+#ifdef HAVE_QUARTERTONE
 void
 MppScoreMain :: handleScoreFileStepUpQuart(void)
 {
@@ -2002,6 +2015,7 @@ MppScoreMain :: handleScoreFileStepDownQuart(void)
 {
 	handleScoreFileEffect(1, -MPP_MAX_BANDS / 24, 0);
 }
+#endif
 
 void
 MppScoreMain :: handleScoreFileSetSharp(void)

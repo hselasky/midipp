@@ -186,7 +186,7 @@ MppBaseKeyToString24(int key, int sharp)
 			return ("C#");
 		else
 			return ("Db");
-	/* quarter sharps */
+#ifdef HAVE_QUARTERTONE
 	case MPP_D0Q:
 		return ("Dq");
 	case MPP_E0Q:
@@ -212,6 +212,7 @@ MppBaseKeyToString24(int key, int sharp)
 		return ("Hc");
 	case MPP_C1C:
 		return ("Cc");
+#endif
 	default:
 		return ("??");
 	}

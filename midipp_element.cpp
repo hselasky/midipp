@@ -398,12 +398,24 @@ MppHead :: operator += (MppElement *elem)
 	case MPP_T_SCORE:
 		elem->value[0] += MPP_MAX_BANDS * elem->getIntValue(&off);
 		ch = elem->getChar(&off);
-		if (ch == 'B' || ch == 'b')
+		switch (ch.toLatin1()) {
+		case 'B':
+		case 'b':
 			elem->value[0] -= 2;
-		else if (ch == 'Q' || ch == 'q')
+			break;
+#ifdef HAVE_QUARTERTONE
+		case 'Q':
+		case 'q':
 			elem->value[0] -= 3;
-		else if (ch == 'C' || ch == 'c')
+			break;
+		case 'C':
+		case 'c':
 			elem->value[0] -= 1;
+			break;
+#endif
+		default:
+			break;
+		}
 
 		if (elem->value[0] > 255)
 			elem->value[0] = 255;
@@ -1032,23 +1044,36 @@ MppHead :: transposeScore(int adjust, int sharp)
 				QChar ch = ptr->txt[x];
 				QChar cn = ptr->txt[x + 1];
 
-				if (ch == 'A' ||
-				    ch == 'B' ||
-				    ch == 'C' ||
-				    ch == 'D' ||
-				    ch == 'E' ||
-				    ch == 'F' ||
-				    ch == 'G' ||
-				    ch == 'H') {
-					if (cn == '#') {
+				switch (ch.toLatin1()) {
+				case 'A':
+				case 'B':
+				case 'C':
+				case 'D':
+				case 'E':
+				case 'F':
+				case 'G':
+				case 'H':
+					switch (cn.toLatin1()) {
+					case '#':
 						sharp++;
 						x++;
-					} else if (cn == 'b') {
+						break;
+					case 'b':
 						sharp--;
 						x++;
-					} else if (cn == 'c' || cn == 'q') {
+						break;
+#ifdef HAVE_QUARTERTONE
+					case 'c':
+					case 'q':
 						x++;
+						break;
+#endif
+					default:
+						break;
 					}
+					break;
+				default:
+					break;
 				}
 			}
 		}
@@ -1109,25 +1134,33 @@ MppHead :: transposeScore(int adjust, int sharp)
 				/* can be negative */
 				key += adjust % MPP_MAX_BANDS;
 
-				if (cn == 'q') {
+				switch (cn.toLatin1()) {
+#ifdef HAVE_QUARTERTONE
+				case 'q':
 					key = (MPP_MAX_BANDS - 3 + key) % MPP_MAX_BANDS;
 					out += MppBaseKeyToString24(key, sharp);
 					x++;
-				} else if (cn == 'c') {
+					break;
+				case 'c':
 					key = (MPP_MAX_BANDS - 1 + key) % MPP_MAX_BANDS;
 					out += MppBaseKeyToString24(key, sharp);
 					x++;
-				} else if (cn == 'b') {
+					break;
+#endif			
+				case 'b':
 					key = (MPP_MAX_BANDS - 2 + key) % MPP_MAX_BANDS;
 					out += MppBaseKeyToString24(key, sharp);
 					x++;
-				} else if (cn == '#') {
+					break;
+				case '#':
 					key = (MPP_MAX_BANDS + 2 + key) % MPP_MAX_BANDS;
 					out += MppBaseKeyToString24(key, sharp);
 					x++;
-				} else {
+					break;
+				default:
 					key = (MPP_MAX_BANDS + key) % MPP_MAX_BANDS;
 					out += MppBaseKeyToString24(key, sharp);
+					break;
 				}
 				continue;
 			}

@@ -81,6 +81,10 @@ DEFINES += HAVE_NO_SHOW
 DEFINES += HAVE_SCREENSHOT
 }
 
+!isEmpty(HAVE_QUARTERTONE) {
+DEFINES += HAVE_QUARTERTONE
+}
+
 HEADERS		+= midipp.h
 HEADERS		+= midipp_bpm.h
 HEADERS		+= midipp_button.h
