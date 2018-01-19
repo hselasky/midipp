@@ -1656,6 +1656,8 @@ MppMainWindow :: do_key_press(int key, int vel, int dur)
 #else
 	if (key > 127)
 		return;
+	else if (key < 0)
+		return;
 #endif
 	if (dur < 0)
 		return;
