@@ -95,7 +95,11 @@
 #include "TargetConditionals.h"
 #endif
 
+#ifdef HAVE_QUARTERTONE
 #define	MPP_MAX_BANDS	24	/* number of divisions per octave */
+#else
+#define	MPP_MAX_BANDS	12	/* number of divisions per octave */
+#endif
 #define	MPP_MAX_CHORD_MAP	30
 #define	MPP_MAX_BUTTON_MAP	16
 #define	MPP_MAX_VIEWS	2
