@@ -142,7 +142,7 @@ MppSplitBaseTreble(const uint8_t *score, uint8_t num, uint8_t *base, uint8_t *nb
 }
 
 Q_DECL_EXPORT const char *
-MppBaseKeyToString24(int key, int sharp)
+MppBaseKeyToString(int key, int sharp)
 {
 	switch (key) {
 	/* majors */

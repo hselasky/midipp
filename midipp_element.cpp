@@ -1138,28 +1138,28 @@ MppHead :: transposeScore(int adjust, int sharp)
 #ifdef HAVE_QUARTERTONE
 				case 'q':
 					key = (MPP_MAX_BANDS - 3 + key) % MPP_MAX_BANDS;
-					out += MppBaseKeyToString24(key, sharp);
+					out += MppBaseKeyToString(key, sharp);
 					x++;
 					break;
 				case 'c':
 					key = (MPP_MAX_BANDS - 1 + key) % MPP_MAX_BANDS;
-					out += MppBaseKeyToString24(key, sharp);
+					out += MppBaseKeyToString(key, sharp);
 					x++;
 					break;
 #endif
 				case 'b':
 					key = (MPP_MAX_BANDS - 2 + key) % MPP_MAX_BANDS;
-					out += MppBaseKeyToString24(key, sharp);
+					out += MppBaseKeyToString(key, sharp);
 					x++;
 					break;
 				case '#':
 					key = (MPP_MAX_BANDS + 2 + key) % MPP_MAX_BANDS;
-					out += MppBaseKeyToString24(key, sharp);
+					out += MppBaseKeyToString(key, sharp);
 					x++;
 					break;
 				default:
 					key = (MPP_MAX_BANDS + key) % MPP_MAX_BANDS;
-					out += MppBaseKeyToString24(key, sharp);
+					out += MppBaseKeyToString(key, sharp);
 					break;
 				}
 				continue;

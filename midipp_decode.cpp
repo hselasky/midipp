@@ -553,7 +553,7 @@ MppScoreVariantInit(void)
 	unsigned t;
 
 	for (x = 0; x != 256; x++) {
-		const char *ptr = MppBaseKeyToString24(x % MPP_MAX_BANDS, 0);
+		const char *ptr = MppBaseKeyToString(x % MPP_MAX_BANDS, 0);
 		MppKeyStr[x] = QString("%1%2%3").arg(QChar(ptr[0])).arg((x + 1) / MPP_MAX_BANDS)
 		    .arg(ptr + 1).toUpper();
 	}
@@ -787,12 +787,12 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 
 	rol_value = rol;
 
-	out += MppBaseKeyToString24(y, is_sharp);
+	out += MppBaseKeyToString(y, is_sharp);
 	out += MppScoreExpandPattern(mpp_score_variant[x].pattern);
 
 	if (y != pinfo->key_base) {
 		out += "/";
-		out += MppBaseKeyToString24(pinfo->key_base, is_sharp);
+		out += MppBaseKeyToString(pinfo->key_base, is_sharp);
 	}
 
 	lin_edit->setText(out);

@@ -277,7 +277,7 @@ extern QString MppReadFile(const QString &);
 extern void MppWriteFile(const QString &, QString text);
 extern uint8_t MppReadRawFile(const QString &, QByteArray *pdata);
 extern uint8_t MppWriteRawFile(const QString &, QByteArray *pdata);
-extern const char *MppBaseKeyToString24(int key, int sharp);
+extern const char *MppBaseKeyToString(int key, int sharp);
 extern void MppScoreVariantInit(void);
 extern uint8_t MppIsLabel(const QString &);
 extern void MppSplitBaseTreble(const uint8_t *, uint8_t, uint8_t *, uint8_t *, uint8_t *, uint8_t *);
