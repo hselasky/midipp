@@ -401,7 +401,7 @@ MppHead :: operator += (MppElement *elem)
 		switch (ch.toLatin1()) {
 		case 'B':
 		case 'b':
-			elem->value[0] -= 2;
+			elem->value[0] -= (MPP_MAX_BANDS / 12);
 			break;
 #ifdef HAVE_QUARTERTONE
 		case 'Q':

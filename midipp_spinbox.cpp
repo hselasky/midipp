@@ -146,7 +146,7 @@ MppSpinBox :: valueFromText(const QString &n) const
 		break;
 	case 'b':
 	case 'B':
-		rem -= 2;
+		rem -= (MPP_MAX_BANDS / 12);
 		ch++;
 		break;
 #ifdef HAVE_QUARTERTONE
@@ -162,7 +162,7 @@ MppSpinBox :: valueFromText(const QString &n) const
 		break;
 #endif
 	case '#':
-		rem += 2;
+		rem += (MPP_MAX_BANDS / 12);
 		ch++;
 		break;
 	case 0:

@@ -686,11 +686,11 @@ mpp_get_key(const QString &ptr, int &index)
 			break;
 #endif
 		case '#':
-			key += 2;
+			key += (MPP_MAX_BANDS / 12);
 			index++;
 			break;
 		case 'b':
-			key -= 2;
+			key -= (MPP_MAX_BANDS / 12);
 			index++;
 			break;
 		default:

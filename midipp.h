@@ -133,18 +133,20 @@
 #define	MPP_CHAN_NONE		2
 #define	MPP_INVALID_TRANSPOSE	4095
 
-#define	MPP_C0 0
-#define	MPP_D0B 2
-#define	MPP_D0 4
-#define	MPP_E0B 6
-#define	MPP_E0 8
-#define	MPP_F0 10
-#define	MPP_G0B 12
-#define	MPP_G0 14
-#define	MPP_A0B 16
-#define	MPP_A0 18
-#define	MPP_H0B 20
-#define	MPP_H0 22
+#define	MPP_K2N(x)  ((x) * (MPP_MAX_BANDS / 12))
+
+#define	MPP_C0 MPP_K2N(0)
+#define	MPP_D0B MPP_K2N(1)
+#define	MPP_D0 MPP_K2N(2)
+#define	MPP_E0B MPP_K2N(3)
+#define	MPP_E0 MPP_K2N(4)
+#define	MPP_F0 MPP_K2N(5)
+#define	MPP_G0B MPP_K2N(6)
+#define	MPP_G0 MPP_K2N(7)
+#define	MPP_A0B MPP_K2N(8)
+#define	MPP_A0 MPP_K2N(9)
+#define	MPP_H0B MPP_K2N(10)
+#define	MPP_H0 MPP_K2N(11)
 
 #ifdef HAVE_QUARTERTONE
 #define	MPP_D0Q 1
