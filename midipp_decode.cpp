@@ -101,7 +101,7 @@ static const char *score_seventh[] = {
 
 static const char **score_macros[] = {
 	score_major,
-	score_minor,	
+	score_minor,
 	score_aug,
 	score_dim,
 	score_and,
@@ -557,7 +557,7 @@ MppScoreVariantInit(void)
 		MppKeyStr[x] = QString("%1%2%3").arg(QChar(ptr[0])).arg((x + 1) / MPP_MAX_BANDS)
 		    .arg(ptr + 1).toUpper();
 	}
-	
+
 	/* allocate array for score variants */
 	mpp_score_variant = new score_variant [MAX_SCORES];
 
@@ -686,11 +686,11 @@ mpp_get_key(const QString &ptr, int &index)
 			break;
 #endif
 		case '#':
-			key += (MPP_MAX_BANDS / 12);
+			key += MPP_BAND_STEP_12;
 			index++;
 			break;
 		case 'b':
-			key -= (MPP_MAX_BANDS / 12);
+			key -= MPP_BAND_STEP_12;
 			index++;
 			break;
 		default:

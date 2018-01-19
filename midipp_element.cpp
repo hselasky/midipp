@@ -401,7 +401,7 @@ MppHead :: operator += (MppElement *elem)
 		switch (ch.toLatin1()) {
 		case 'B':
 		case 'b':
-			elem->value[0] -= (MPP_MAX_BANDS / 12);
+			elem->value[0] -= MPP_BAND_STEP_12;
 			break;
 #ifdef HAVE_QUARTERTONE
 		case 'Q':
@@ -1146,7 +1146,7 @@ MppHead :: transposeScore(int adjust, int sharp)
 					out += MppBaseKeyToString24(key, sharp);
 					x++;
 					break;
-#endif			
+#endif
 				case 'b':
 					key = (MPP_MAX_BANDS - 2 + key) % MPP_MAX_BANDS;
 					out += MppBaseKeyToString24(key, sharp);

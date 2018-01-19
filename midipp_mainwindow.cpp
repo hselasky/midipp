@@ -1646,12 +1646,15 @@ MppMainWindow :: do_key_press(int key, int vel, int dur)
 			vel = 2;
 	}
 
+#ifndef HAVE_QUARTERTONE
 	if (key > 255)
 		return;
 	else if (key < 0)
 		return;
-#ifndef HAVE_QUARTERTONE
 	if (key & 1)
+		return;
+#else
+	if (key > 127)
 		return;
 #endif
 	if (dur < 0)
@@ -1663,7 +1666,7 @@ MppMainWindow :: do_key_press(int key, int vel, int dur)
 		d->channel = (d->channel + 1) & 0xF;
 #endif
 
-	mid_key_press(d, key / 2, vel, dur);
+	mid_key_press(d, key / MPP_BAND_STEP_12, vel, dur);
 
 #ifdef HAVE_QUARTERTONE
 	/* restore */
@@ -1810,12 +1813,12 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 	}
 	if (umidi20_event_is_key_start(event)) {
 
-		key = (umidi20_event_get_key(event) & 0x7F) * (MPP_MAX_BANDS / 12);
+		key = (umidi20_event_get_key(event) & 0x7F) * MPP_BAND_STEP_12;
 		vel = umidi20_event_get_velocity(event);
 
 		if (mw->scoreRecordOff == 0) {
 			if (mw->numInputEvents < MPP_MAX_QUEUE) {
-				mw->inputEvents[mw->numInputEvents] = key / (MPP_MAX_BANDS / 12);
+				mw->inputEvents[mw->numInputEvents] = key / MPP_BAND_STEP_12;
 				mw->numInputEvents++;
 				mw->lastInputEvent = umidi20_get_curr_position();
 			}
@@ -1853,7 +1856,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 		} else if (what & UMIDI20_WHAT_KEY_PRESSURE) {
 
-			key = (umidi20_event_get_key(event) & 0x7F) * (MPP_MAX_BANDS / 12);
+			key = (umidi20_event_get_key(event) & 0x7F) * MPP_BAND_STEP_12;
 			vel = umidi20_event_get_pressure(event) & 0x7F;
 
 			switch (sm->keyMode) {
@@ -1884,14 +1887,14 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 		} else if (umidi20_event_is_key_start(event)) {
 
-			key = (umidi20_event_get_key(event) & 0x7F) * (MPP_MAX_BANDS / 12);
+			key = (umidi20_event_get_key(event) & 0x7F) * MPP_BAND_STEP_12;
 			vel = umidi20_event_get_velocity(event);
 
 			sm->handleMidiKeyPressLocked(key, vel);
 
 		} else if (umidi20_event_is_key_end(event)) {
 
-			key = (umidi20_event_get_key(event) & 0x7F) * (MPP_MAX_BANDS / 12);
+			key = (umidi20_event_get_key(event) & 0x7F) * MPP_BAND_STEP_12;
 
 			sm->handleMidiKeyReleaseLocked(key);
 

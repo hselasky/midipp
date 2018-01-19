@@ -132,8 +132,9 @@
 #define	MPP_CHAN_ANY		1
 #define	MPP_CHAN_NONE		2
 #define	MPP_INVALID_TRANSPOSE	4095
+#deifne	MPP_BAND_STEP_12 (MPP_MAX_BANDS / 12)
 
-#define	MPP_K2N(x)  ((x) * (MPP_MAX_BANDS / 12))
+#define	MPP_K2N(x)  ((x) * MPP_BAND_STEP_12)
 
 #define	MPP_C0 MPP_K2N(0)
 #define	MPP_D0B MPP_K2N(1)

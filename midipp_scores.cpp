@@ -1083,8 +1083,8 @@ int
 MppScoreMain :: checkHalfPassThru(int key)
 {
 	static const uint8_t is_black[12] = {0,1,0,1,0,0,1,0,1,0,1,0};
-	int bk = baseKey / (MPP_MAX_BANDS / 12);
-	int ck = key / (MPP_MAX_BANDS / 12);
+	int bk = baseKey / MPP_BAND_STEP_12;
+	int ck = key / MPP_BAND_STEP_12;
 
 	return ((ck >= mid_next_key(bk, -1)) &&
 	    (ck <= mid_next_key(bk, +1)) &&
@@ -1315,8 +1315,8 @@ MppScoreMain :: handleKeyRemovePast(MppScoreEntry *pn, uint32_t key_delay)
 void
 MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 {
-  	int bk = baseKey / (MPP_MAX_BANDS / 12);
-	int ck = in_key / (MPP_MAX_BANDS / 12);
+	int bk = baseKey / MPP_BAND_STEP_12;
+	int ck = in_key / MPP_BAND_STEP_12;
 	MppScoreEntry mse;
 	uint8_t map;
 	int off;
@@ -1394,8 +1394,8 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 void
 MppScoreMain :: handleKeyPressureChord(int in_key, int vel, uint32_t key_delay)
 {
-    	int bk = baseKey / (MPP_MAX_BANDS / 12);
-	int ck = in_key / (MPP_MAX_BANDS / 12);
+	int bk = baseKey / MPP_BAND_STEP_12;
+	int ck = in_key / MPP_BAND_STEP_12;
 	MppScoreEntry *pn;
 	int off;
 
@@ -1418,8 +1418,8 @@ MppScoreMain :: handleKeyPressureChord(int in_key, int vel, uint32_t key_delay)
 void
 MppScoreMain :: handleKeyReleaseChord(int in_key, uint32_t key_delay)
 {
-      	int bk = baseKey / (MPP_MAX_BANDS / 12);
-	int ck = in_key / (MPP_MAX_BANDS / 12);
+	int bk = baseKey / MPP_BAND_STEP_12;
+	int ck = in_key / MPP_BAND_STEP_12;
 	MppScoreEntry *pn;
 	int off;
 
@@ -1994,13 +1994,13 @@ MppScoreMain :: handleScoreFileScale(void)
 void
 MppScoreMain :: handleScoreFileStepUpHalf(void)
 {
-	handleScoreFileEffect(1, MPP_MAX_BANDS / 12, 0);
+	handleScoreFileEffect(1,MPP_BAND_STEP_12 0);
 }
 
 void
 MppScoreMain :: handleScoreFileStepDownHalf(void)
 {
-	handleScoreFileEffect(1, -MPP_MAX_BANDS / 12, 0);
+	handleScoreFileEffect(1, MPP_BAND_STEP_12 0);
 }
 
 #ifdef HAVE_QUARTERTONE

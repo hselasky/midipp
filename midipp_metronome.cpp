@@ -103,11 +103,11 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 	spn_chan = new MppChanSel(chan, 0);
 	connect(spn_chan, SIGNAL(valueChanged(int)), this, SLOT(handleChanChanged(int)));
 
-	spn_key_bar = new MppSpinBox(0, MPP_MAX_BANDS / 12);
+	spn_key_bar = new MppSpinBox(0,MPP_BAND_STEP_12;
 	spn_key_bar->setValue(key_bar);
 	connect(spn_key_bar, SIGNAL(valueChanged(int)), this, SLOT(handleKeyBarChanged(int)));
 
-	spn_key_beat = new MppSpinBox(0, MPP_MAX_BANDS / 12);
+	spn_key_beat = new MppSpinBox(0,MPP_BAND_STEP_12;
 	spn_key_beat->setValue(key_beat);
 	connect(spn_key_beat, SIGNAL(valueChanged(int)), this, SLOT(handleKeyBeatChanged(int)));
 

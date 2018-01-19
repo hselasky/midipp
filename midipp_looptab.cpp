@@ -53,7 +53,7 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 	for (n = 0; n != MPP_LOOP_MAX; n++) {
 		spn_chan[n] = new MppChanSel(0, 0);
 
-		spn_key[n] = new MppSpinBox(0, MPP_MAX_BANDS / 12, 0);
+		spn_key[n] = new MppSpinBox(0,MPP_BAND_STEP_12 0);
 		spn_key[n]->setValue(MPP_MAX_BANDS * n);
 
 		snprintf(buf, sizeof(buf), "Loop%X", n);
@@ -152,7 +152,7 @@ MppLoopTab :: add_key(uint8_t in_key, uint8_t vel)
 	uint8_t n;
 
 	/* ignore quarter keys for now */
-	if (in_key % (MPP_MAX_BANDS / 12))
+	if (in_key % MPP_BAND_STEP_12)
 		return;
 
 	pos = mw->get_time_offset();
@@ -175,7 +175,7 @@ MppLoopTab :: add_key(uint8_t in_key, uint8_t vel)
 	
 		mid_set_channel(d, chan_val[n]);
 		mid_set_position(d, pos - first_pos[n]);
-		mid_key_press(d, in_key / 2, vel, 0);
+		mid_key_press(d, in_key / MPP_BAND_STEP_12, vel, 0);
 	}
 }
 
@@ -257,7 +257,7 @@ MppLoopTab :: fill_loop_data(int n, int vel, int key_off)
 
 	UMIDI20_QUEUE_FOREACH(event, &(track[n]->queue)) {
 
-		key = (umidi20_event_get_key(event) & 0x7F) * (MPP_MAX_BANDS / 12);
+		key = (umidi20_event_get_key(event) & 0x7F) * MPP_BAND_STEP_12;
 
 		key += key_off;
 
