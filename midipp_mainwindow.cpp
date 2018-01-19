@@ -1815,7 +1815,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 		if (mw->scoreRecordOff == 0) {
 			if (mw->numInputEvents < MPP_MAX_QUEUE) {
-				mw->inputEvents[mw->numInputEvents] = key;
+				mw->inputEvents[mw->numInputEvents] = key / (MPP_MAX_BANDS / 12);
 				mw->numInputEvents++;
 				mw->lastInputEvent = umidi20_get_curr_position();
 			}
