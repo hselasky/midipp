@@ -1646,7 +1646,7 @@ MppMainWindow :: do_key_press(int key, int vel, int dur)
 			vel = 2;
 	}
 
-#ifndef HAVE_QUARTERTONE
+#ifdef HAVE_QUARTERTONE
 	if (key > 255)
 		return;
 	else if (key < 0)
