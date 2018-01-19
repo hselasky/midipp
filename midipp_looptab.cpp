@@ -53,7 +53,7 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 	for (n = 0; n != MPP_LOOP_MAX; n++) {
 		spn_chan[n] = new MppChanSel(0, 0);
 
-		spn_key[n] = new MppSpinBox(0,MPP_BAND_STEP_12 0);
+		spn_key[n] = new MppSpinBox(0,MPP_BAND_STEP_12,0);
 		spn_key[n]->setValue(MPP_MAX_BANDS * n);
 
 		snprintf(buf, sizeof(buf), "Loop%X", n);

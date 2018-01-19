@@ -1994,26 +1994,26 @@ MppScoreMain :: handleScoreFileScale(void)
 void
 MppScoreMain :: handleScoreFileStepUpHalf(void)
 {
-	handleScoreFileEffect(1,MPP_BAND_STEP_12 0);
+	handleScoreFileEffect(1,MPP_BAND_STEP_12,0);
 }
 
 void
 MppScoreMain :: handleScoreFileStepDownHalf(void)
 {
-	handleScoreFileEffect(1, MPP_BAND_STEP_12 0);
+	handleScoreFileEffect(1, MPP_BAND_STEP_12,0);
 }
 
 #ifdef HAVE_QUARTERTONE
 void
 MppScoreMain :: handleScoreFileStepUpQuart(void)
 {
-	handleScoreFileEffect(1, MPP_MAX_BANDS / 24, 0);
+	handleScoreFileEffect(1, MPP_BAND_STEP_24, 0);
 }
 
 void
 MppScoreMain :: handleScoreFileStepDownQuart(void)
 {
-	handleScoreFileEffect(1, -MPP_MAX_BANDS / 24, 0);
+	handleScoreFileEffect(1, -MPP_BAND_STEP_24, 0);
 }
 #endif
 

@@ -406,11 +406,11 @@ MppHead :: operator += (MppElement *elem)
 #ifdef HAVE_QUARTERTONE
 		case 'Q':
 		case 'q':
-			elem->value[0] -= 3;
+			elem->value[0] -= 3 * MPP_BAND_STEP_24;
 			break;
 		case 'C':
 		case 'c':
-			elem->value[0] -= 1;
+			elem->value[0] -= MPP_BAND_STEP_24;
 			break;
 #endif
 		default:

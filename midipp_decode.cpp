@@ -677,11 +677,11 @@ mpp_get_key(const QString &ptr, int &index)
 		switch (ptr[index].toLatin1()) {
 #ifdef HAVE_QUARTERTONE
 		case 'q':
-			key -= 3;
+			key -= 3 * MPP_BAND_STEP_24;
 			index++;
 			break;
 		case 'c':
-			key -= 1;
+			key -= MPP_BAND_STEP_24;
 			index++;
 			break;
 #endif
