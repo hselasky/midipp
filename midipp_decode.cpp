@@ -118,6 +118,7 @@ static const char **score_macros[] = {
 	0
 };
 
+#ifdef HAVE_QUARTERTONE
 static const char *score_bits[MPP_MAX_BANDS + 1] = {
 	"C",
 	"Dq", "Db", "Dc", "D",
@@ -129,7 +130,6 @@ static const char *score_bits[MPP_MAX_BANDS + 1] = {
 	"Cc", "?"
 };
 
-#ifdef HAVE_QUARTERTONE
 static const char *score_name_sharp[2 * MPP_MAX_BANDS] = {
 	"1", "$q2", "$S1", "$c2", "2", "$q3", "$S2", "$c3", "3", "$c4", "4", "$q5", "$S4", "$c5", "5", "$q6", "$S5", "$c6", "6", "$q7", "$S6", "$c7", "7", "$c8",
 	"8", "$q9", "$S8", "$c9", "9", "$q10", "$S9", "$c10", "10", "$c11", "11", "$q12", "$S11", "$c12", "12", "$q13", "$S12", "$c13", "13", "$q14", "$S13", "$c14", "14", "$c15",
@@ -140,6 +140,17 @@ static const char *score_name_flat[2 * MPP_MAX_BANDS] = {
 	"8", "$q9", "$f9", "$c9", "9", "$q10", "$f10", "$c10", "10", "$c11", "11", "$q12", "$f12", "$c12", "12", "$q13", "$f13", "$c13", "13", "$q14", "$f14", "$c14", "14", "$c15",
 };
 #else
+static const char *score_bits[MPP_MAX_BANDS + 1] = {
+	"C",
+	"Db", "D",
+	"Eb", "E",
+	"F",
+	"Gb", "G",
+	"Ab", "A",
+	"Hb", "H",
+	"?"
+};
+
 static const char *score_name_sharp[2 * MPP_MAX_BANDS] = {
 	"1", "$S1", "2", "$S2", "3", "4", "$S4", "5", "$S5", "6", "$S6", "7",
 	"8", "$S8", "9", "$S9", "10", "11", "$S11", "12", "$S12", "13", "$S13", "14",
