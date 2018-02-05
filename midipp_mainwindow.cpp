@@ -1660,7 +1660,7 @@ MppMainWindow :: handle_stop(int flag)
 	uint64_t *pkey;
 	uint8_t ScMidiTriggered;
 	uint8_t ScMidiRecordOff;
-	uint8_t out_key;
+	int out_key;
 	uint8_t chan;
 	uint8_t x;
 	uint8_t z;
