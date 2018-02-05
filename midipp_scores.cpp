@@ -848,13 +848,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 		memset(pVisual, 0, size);
 	}
 
-	/* account for subdivisions */
-	for (x = 0; x != 16; x++)
-		active_channels |= (head.state.subdiv_map[x] << x);
-	/* check for wrap around */
-	active_channels |= (active_channels >> 16);
-	active_channels &= 0xFFFF;
-
 	head.dotReorder();
 
 	index = 0;
@@ -2121,7 +2114,8 @@ MppScoreMain :: handleScoreFileReplaceAll(void)
 uint16_t
 MppScoreMain :: outputMaskGet(void)
 {
-	uint16_t mask;
+	uint32_t mask;
+	int x;
 
 	switch (keyMode) {
 	case MM_PASS_ALL:
@@ -2129,11 +2123,18 @@ MppScoreMain :: outputMaskGet(void)
 		break;
 	case MM_PASS_NONE_CHORD_PIANO:
 	case MM_PASS_NONE_CHORD_GUITAR:
-		mask = active_channels;
-		if (synthChannelBase > -1)
-			mask |= 1U << ((synthChannelBase - synthChannel) & 0xF);
-		if (synthChannelTreb > -1)
-			mask |= 1U << ((synthChannelTreb - synthChannel) & 0xF);
+		mask = head.state.subdiv_map;
+		if (synthChannelBase > -1) {
+			const int y = (synthChannelBase - synthChannel) & 0xF;
+			mask |= head.state.subdiv_map << y;
+		}
+		if (synthChannelTreb > -1) {
+			const int y = (synthChannelTreb - synthChannel) & 0xF;
+			mask |= head.state.subdiv_map << y;
+		}
+		/* check for wrap around */
+		mask |= (mask >> 16);
+		mask &= 0xFFFF;
 		break;
 	default:
 		mask = active_channels;

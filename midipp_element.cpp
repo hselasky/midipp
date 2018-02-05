@@ -201,13 +201,11 @@ MppHead :: operator += (MppElement *elem)
 	QChar ch;
 	int off;
 	int x;
-	int channel;
 
 	if (elem == 0)
 		return;
 
 	off = 1;
-	channel = 0;
 
 	switch (elem->type) {
 	case MPP_T_CHANNEL:
@@ -216,8 +214,6 @@ MppHead :: operator += (MppElement *elem)
 			elem->value[0] = 0;
 		else if (elem->value[0] > 15)
 			elem->value[0] = 15;
-		/* store current channel */
-		channel = elem->value[0] & 15;
 		break; 
 
 	case MPP_T_COMMAND:
@@ -366,7 +362,8 @@ MppHead :: operator += (MppElement *elem)
 			rem = MPP_BAND_REM_BITREV(rem);
 			elem->value[0] += rem;
 		}
-		state.subdiv_map[channel] |= 1U << MPP_BAND_REM(elem->value[0]);
+		x = MPP_BAND_REM_BITREV(elem->value[0]);
+		state.subdiv_map |= (1U << x);
 		break;
 
 	case MPP_T_TRANSPOSE:
@@ -398,10 +395,6 @@ MppHead :: operator += (MppElement *elem)
 			else if (elem->value[1] > 0xffffff)
 				elem->value[1] = 0xffffff;
 		}
-		break;
-
-	case MPP_T_NEWLINE:
-		channel = 0;
 		break;
 
 	default:

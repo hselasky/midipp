@@ -216,7 +216,7 @@ public:
 		MppElement *last_stop;
 		MppElement *elem;
 		MppElement *label_start[MPP_MAX_LABELS];
-		uint16_t subdiv_map[16];
+		uint32_t subdiv_map;
 	} state;
 
 	MppHead();
