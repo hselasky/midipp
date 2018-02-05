@@ -440,36 +440,36 @@ MppDecodeTab :: handle_insert()
 void
 MppDecodeTab :: handle_rol_up()
 {
+	handle_play_release();
 	MppRolUpChord(chord_mask, chord_key);
 	handle_refresh();
-	handle_play_release();
 	handle_play_press();
 }
 
 void
 MppDecodeTab :: handle_rol_down()
 {
+	handle_play_release();
 	MppRolDownChord(chord_mask, chord_key);
 	handle_refresh();
-	handle_play_release();
 	handle_play_press();
 }
 
 void
 MppDecodeTab :: handle_mod_up()
 {
+	handle_play_release();
 	MppNextChordRoot(chord_mask, chord_step);
 	handle_refresh();
-	handle_play_release();
 	handle_play_press();
 }
 
 void
 MppDecodeTab :: handle_mod_down()
 {
+	handle_play_release();
 	MppPrevChordRoot(chord_mask, chord_step);
 	handle_refresh();
-	handle_play_release();
 	handle_play_press();
 }
 
@@ -483,7 +483,7 @@ MppDecodeTab :: handle_stepping()
 void
 MppDecodeTab :: handle_refresh()
 {
-	QString out_key = "U1 ";
+	QString out_key;
 	QString str;
 	int key_bass;
 	int log2_step;
@@ -532,7 +532,7 @@ MppDecodeTab :: handle_refresh()
 void
 MppDecodeTab :: handle_parse()
 {
-	QString out_key = "U1 ";
+	QString out_key;
 	MppChord_t mask;
 	int key_bass;
 	uint32_t rem;
