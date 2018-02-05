@@ -38,8 +38,9 @@ MppMetronomeOutput(MppMetronome *mm, struct mid_data *d)
 	unsigned y = mm->mode + 1;
 
 	for (x = 0; x != y; x++) {
-		mid_key_press(d, (x != 0) ? mm->key_beat : mm->key_bar,
-		    mm->volume, 60000 / (2 * y * mm->bpm) + 1);
+		int key = ((x != 0) ? mm->key_beat : mm->key_bar) / MPP_BAND_STEP_12;
+		if (key > -1 && key < 128)
+			mid_key_press(d, key, mm->volume, 60000 / (2 * y * mm->bpm) + 1);
 		mid_delay(d, 60000 / (y * mm->bpm) + 1);
 	}
 }
@@ -70,8 +71,8 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 	bpm = 120;
 	enabled = 0;
 	chan = 9;
-	key_bar = MPP_C0 + (5 * MPP_MAX_BANDS);
-	key_beat = MPP_C0 + (4 * MPP_MAX_BANDS);
+	key_bar = (MPP_C0 + (5 * 12)) * MPP_BAND_STEP_12;
+	key_beat = (MPP_C0 + (4 * 12)) * MPP_BAND_STEP_12;
 	mode = 0;
 
 	tim_config = new QTimer();
@@ -103,11 +104,11 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 	spn_chan = new MppChanSel(chan, 0);
 	connect(spn_chan, SIGNAL(valueChanged(int)), this, SLOT(handleChanChanged(int)));
 
-	spn_key_bar = new MppSpinBox(0,MPP_BAND_STEP_12);
+	spn_key_bar = new MppSpinBox(0);
 	spn_key_bar->setValue(key_bar);
 	connect(spn_key_bar, SIGNAL(valueChanged(int)), this, SLOT(handleKeyBarChanged(int)));
 
-	spn_key_beat = new MppSpinBox(0,MPP_BAND_STEP_12);
+	spn_key_beat = new MppSpinBox(0);
 	spn_key_beat->setValue(key_beat);
 	connect(spn_key_beat, SIGNAL(valueChanged(int)), this, SLOT(handleKeyBeatChanged(int)));
 

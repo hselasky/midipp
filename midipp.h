@@ -95,11 +95,8 @@
 #include "TargetConditionals.h"
 #endif
 
-#ifdef HAVE_QUARTERTONE
-#define	MPP_MAX_BANDS	24	/* number of divisions per octave */
-#else
-#define	MPP_MAX_BANDS	12	/* number of divisions per octave */
-#endif
+#define	MPP_MAX_SUBDIV	16			/* limited by number of MIDI channels */
+#define	MPP_MAX_BANDS	(12 * MPP_MAX_SUBDIV)	/* number of divisions per octave */
 #define	MPP_MAX_CHORD_MAP	30
 #define	MPP_MAX_BUTTON_MAP	16
 #define	MPP_MAX_VIEWS	2
@@ -117,7 +114,7 @@
 #define	MPP_MAGIC_DEVNO	(UMIDI20_N_DEVICES - 1)
 #define	MPP_DEFAULT_URL "http://home.selasky.org/midipp/database.tar.gz"
 #define	MPP_DEFAULT_CMD_KEY C3
-#define	MPP_DEFAULT_BASE_KEY (MPP_C0 + MPP_MAX_BANDS * 5)
+#define	MPP_DEFAULT_BASE_KEY ((MPP_C0 + 12 * 5) * MPP_BAND_STEP_12)
 #define	MPP_VISUAL_MARGIN	8
 #define	MPP_VISUAL_R_MAX	8
 #define	MPP_VISUAL_C_MAX	20
@@ -131,39 +128,87 @@
 #define	MPP_POPUP_DELAY		2000	/* ms */
 #define	MPP_CHAN_ANY		1
 #define	MPP_CHAN_NONE		2
-#define	MPP_INVALID_TRANSPOSE	4095
+
+/* list of supported band steps */
 #define	MPP_BAND_STEP_12 (MPP_MAX_BANDS / 12)
 #define	MPP_BAND_STEP_24 (MPP_MAX_BANDS / 24)
+#define	MPP_BAND_STEP_48 (MPP_MAX_BANDS / 48)
+#define	MPP_BAND_STEP_96 (MPP_MAX_BANDS / 96)
+#define	MPP_BAND_STEP_192 (MPP_MAX_BANDS / 192)
 
-#define	MPP_K2N(x)  ((x) * MPP_BAND_STEP_12)
+#define	MPP_BAND_REM(x) \
+    ((MPP_MAX_BANDS + ((x) % MPP_MAX_BANDS)) % MPP_MAX_BANDS)
 
-#define	MPP_C0 MPP_K2N(0)
-#define	MPP_D0B MPP_K2N(1)
-#define	MPP_D0 MPP_K2N(2)
-#define	MPP_E0B MPP_K2N(3)
-#define	MPP_E0 MPP_K2N(4)
-#define	MPP_F0 MPP_K2N(5)
-#define	MPP_G0B MPP_K2N(6)
-#define	MPP_G0 MPP_K2N(7)
-#define	MPP_A0B MPP_K2N(8)
-#define	MPP_A0 MPP_K2N(9)
-#define	MPP_H0B MPP_K2N(10)
-#define	MPP_H0 MPP_K2N(11)
+#define	MPP_BAND_REM_BITREV(x) ({		\
+	int __retval = 0;			\
+	if (x & 1)				\
+		__retval |= 8;			\
+	if (x & 2)				\
+		__retval |= 4;			\
+	if (x & 4)				\
+		__retval |= 2;			\
+	if (x & 8)				\
+		__retval |= 1;			\
+	__retval;				\
+})
 
-#ifdef HAVE_QUARTERTONE
-#define	MPP_D0Q 1
-#define	MPP_D0C 3
-#define	MPP_E0Q 5
-#define	MPP_E0C 7
-#define	MPP_F0C 9
-#define	MPP_G0Q 11
-#define	MPP_G0C 13
-#define	MPP_A0Q 15
-#define	MPP_A0C 17
-#define	MPP_H0Q 19
-#define	MPP_H0C 21
-#define	MPP_C1C 23
-#endif
+#define	MPP_BAND_TO_KEY(x) ({			\
+	int __retval = 0;			\
+	int __x = MPP_BAND_REM(x);		\
+	if (__x & 1)				\
+		__retval += 32 * 3;		\
+	if (__x & 2)				\
+		__retval += 16 * 3;		\
+	if (__x & 4)				\
+		__retval += 8 * 3;		\
+	if (__x & 8)				\
+		__retval += 4 * 3;		\
+	if (__x & 16)				\
+		__retval += 2 * 3;		\
+	if (__x & 32)				\
+		__retval += 1 * 3;		\
+	if (__x & 64)				\
+		__retval += 1;			\
+	if (__x & 128)				\
+		__retval += 2;			\
+	__retval;				\
+})
+
+#define	MPP_KEY_TO_BAND(x) ({			\
+	int __rem = MPP_BAND_REM(x);		\
+	int __retval = (__rem % 3) *		\
+	    (MPP_MAX_BANDS / 3);		\
+	int __x = __rem / 3;			\
+	if (__x & 1)				\
+		__retval += 32;			\
+	if (__x & 2)				\
+		__retval += 16;			\
+	if (__x & 4)				\
+		__retval += 8;			\
+	if (__x & 8)				\
+		__retval += 4;			\
+	if (__x & 16)				\
+		__retval += 2;			\
+	if (__x & 32)				\
+		__retval += 1;			\
+	__retval;				\
+})
+
+#define	MPP_KEY_MIN (1 << 31)
+
+/* list of basic 12-step score values */
+#define	MPP_C0 0
+#define	MPP_D0B 1
+#define	MPP_D0 2
+#define	MPP_E0B 3
+#define	MPP_E0 4
+#define	MPP_F0 5
+#define	MPP_G0B 6
+#define	MPP_G0 7
+#define	MPP_A0B 8
+#define	MPP_A0 9
+#define	MPP_H0B 10
+#define	MPP_H0 11
 
 #define	STRLCPY(a,b,c) do { \
     strncpy(a,b,c); ((char *)(a))[(c)-1] = 0; \
@@ -207,12 +252,15 @@ class MppSpinBox;
 class MppTabBar;
 class MppVolume;
 
+struct MppChord;
 struct MppChordElement;
+
+typedef struct MppChord MppChord_t;
 
 class QPrinter;
 
 struct MppScoreEntry {
-	uint8_t key;
+	int key;
 	uint8_t dur;
 	uint8_t channel;
 	uint8_t channelSec;
@@ -281,14 +329,15 @@ extern uint8_t MppWriteRawFile(const QString &, QByteArray *pdata);
 extern const char *MppBaseKeyToString(int key, int sharp);
 extern void MppScoreVariantInit(void);
 extern uint8_t MppIsLabel(const QString &);
-extern void MppSplitBaseTreble(const uint8_t *, uint8_t, uint8_t *, uint8_t *, uint8_t *, uint8_t *);
+extern void MppSplitBaseTreble(const int *, uint8_t, int *, uint8_t *, int *, uint8_t *);
 extern const QString MppChordModChars;
 extern const QString MppVersion;
 extern const QString MppIconFile;
 
 typedef int (MppCmp_t)(void *, const void *, const void *);
 extern void MppSort(void **, size_t, MppCmp_t *, void *);
-extern void MppTrans(uint8_t *ptr, size_t num, int ntrans);
+extern void MppSort(int *, size_t);
+extern void MppTrans(int *ptr, size_t num, int ntrans);
 
 #ifdef HAVE_SCREENSHOT
 extern void MppScreenShot(QWidget *, QApplication &);

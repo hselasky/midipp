@@ -42,7 +42,7 @@ public:
 	MppLoopTab(QWidget *parent, MppMainWindow *);
 	~MppLoopTab();
 
-	void add_key(uint8_t key, uint8_t vel);
+	void add_key(int key, uint8_t vel);
 	void add_pedal(uint8_t val);
 	int handle_trigN(int key, int amp);
 	void handle_clearN(int n);
@@ -83,8 +83,8 @@ public:
 	struct umidi20_song *song;
 	struct umidi20_track *track[MPP_LOOP_MAX];
 
+	int key_val[MPP_LOOP_MAX];
 	uint8_t chan_val[MPP_LOOP_MAX];
-	uint8_t key_val[MPP_LOOP_MAX];
 	uint8_t pedal_rec;
 	uint8_t loop_on;
 	uint8_t needs_update;

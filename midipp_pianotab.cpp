@@ -120,14 +120,14 @@ MppPianoTab :: mouseReleaseEvent(QMouseEvent *event)
 	}
 }
 
-uint8_t
+int
 MppPianoTab :: getBaseKey()
 {
-	uint8_t baseKey;
+	int baseKey;
 
 	mw->atomic_lock();
   	baseKey = mw->scores_main[state.view_index]->baseKey;
-	baseKey -= baseKey % MPP_MAX_BANDS;
+	baseKey -= MPP_BAND_REM(baseKey);
 	mw->atomic_unlock();
 
 	return (baseKey);
@@ -186,6 +186,7 @@ MppPianoTab :: processKey(uint8_t release, char which)
 		default:
 			return;
 		}
+		key *= MPP_BAND_STEP_12;
 		if (state.last_key)
 			key += MPP_MAX_BANDS;
 		break;
@@ -338,90 +339,50 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 	paint.setFont(fnt);
 
 	ypos = h - 2 * unit + uh;
-#ifdef HAVE_QUARTERTONE
-	drawTextBox(paint, MPP_D0Q, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 0.5 - small, ypos - small / 4.0, "-");
-	drawTextBox(paint, MPP_D0B, small, small, unit / 2.0 + uq + dx * 0.5 - small / 2.0, ypos + small / 3.0, "#");
-	drawTextBox(paint, MPP_D0C, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 0.5, ypos - small / 4.0, "+");
-	drawTextBox(paint, MPP_E0Q, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 1.5 - small, ypos - small / 4.0, "-");
-	drawTextBox(paint, MPP_E0B, small, small, unit / 2.0 + uq + dx * 1.5 - small / 2.0, ypos + small / 3.0, "#");
-	drawTextBox(paint, MPP_E0C, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 1.5, ypos - small / 4.0, "+");
-	drawTextBox(paint, MPP_F0C, small, small, unit / 2.0 + uq + dx * 2.5 - small / 2.0, ypos + small / 3.0, "%");
-	drawTextBox(paint, MPP_G0Q, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 3.5 - small, ypos - small / 4.0, "-");
-	drawTextBox(paint, MPP_G0B, small, small, unit / 2.0 + uq + dx * 3.5 - small / 2.0, ypos + small / 3.0, "#");
-	drawTextBox(paint, MPP_G0C, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 3.5, ypos - small / 4.0, "+");
-	drawTextBox(paint, MPP_A0Q, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 4.5 - small, ypos - small / 4.0, "-");
-	drawTextBox(paint, MPP_A0B, small, small, unit / 2.0 + uq + dx * 4.5 - small / 2.0, ypos + small / 3.0, "#");
-	drawTextBox(paint, MPP_A0C, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 4.5, ypos - small / 4.0, "+");
-	drawTextBox(paint, MPP_H0Q, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 5.5 - small, ypos - small / 4.0, "-");
-	drawTextBox(paint, MPP_H0B, small, small, unit / 2.0 + uq + dx * 5.5 - small / 2.0, ypos + small / 3.0, "#");
-	drawTextBox(paint, MPP_H0C, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 5.5, ypos - small / 4.0, "+");
-	drawTextBox(paint, MPP_C1C, small, small, unit / 2.0 + uq + dx * 6.5 - small / 2.0, ypos + small / 3.0, "%");
-#else
-	drawTextBox(paint, MPP_D0B, unit, unit, unit / 2.0 + uq + dx * 0.5 - unit / 2.0, ypos, "#");
-	drawTextBox(paint, MPP_E0B, unit, unit, unit / 2.0 + uq + dx * 1.5 - unit / 2.0, ypos, "#");
-	drawTextBox(paint, MPP_G0B, unit, unit, unit / 2.0 + uq + dx * 3.5 - unit / 2.0, ypos, "#");
-	drawTextBox(paint, MPP_A0B, unit, unit, unit / 2.0 + uq + dx * 4.5 - unit / 2.0, ypos, "#");
-	drawTextBox(paint, MPP_H0B, unit, unit, unit / 2.0 + uq + dx * 5.5 - unit / 2.0, ypos, "#");
-#endif
+	drawTextBox(paint, MPP_D0B * MPP_BAND_STEP_12, unit, unit, unit / 2.0 + uq + dx * 0.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_E0B * MPP_BAND_STEP_12, unit, unit, unit / 2.0 + uq + dx * 1.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_G0B * MPP_BAND_STEP_12, unit, unit, unit / 2.0 + uq + dx * 3.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_A0B * MPP_BAND_STEP_12, unit, unit, unit / 2.0 + uq + dx * 4.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_H0B * MPP_BAND_STEP_12, unit, unit, unit / 2.0 + uq + dx * 5.5 - unit / 2.0, ypos, "#");
 
 	ypos = h - unit + uh;
 	snprintf(buffer, sizeof(buffer), "C%d", base);
-	drawTextBox(paint, MPP_C0, unit, unit, uq + dx * 0.0, ypos, buffer);
+	drawTextBox(paint, MPP_C0 * MPP_BAND_STEP_12, unit, unit, uq + dx * 0.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "D%d", base);
-	drawTextBox(paint, MPP_D0, unit, unit, uq + dx * 1.0, ypos, buffer);
+	drawTextBox(paint, MPP_D0 * MPP_BAND_STEP_12, unit, unit, uq + dx * 1.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "E%d", base);
-	drawTextBox(paint, MPP_E0, unit, unit, uq + dx * 2.0, ypos, buffer);
+	drawTextBox(paint, MPP_E0 * MPP_BAND_STEP_12, unit, unit, uq + dx * 2.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "F%d", base);
-	drawTextBox(paint, MPP_F0, unit, unit, uq + dx * 3.0, ypos, buffer);
+	drawTextBox(paint, MPP_F0 * MPP_BAND_STEP_12, unit, unit, uq + dx * 3.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "G%d", base);
-	drawTextBox(paint, MPP_G0, unit, unit, uq + dx * 4.0, ypos, buffer);
+	drawTextBox(paint, MPP_G0 * MPP_BAND_STEP_12, unit, unit, uq + dx * 4.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "A%d", base);
-	drawTextBox(paint, MPP_A0, unit, unit, uq + dx * 5.0, ypos, buffer);
+	drawTextBox(paint, MPP_A0 * MPP_BAND_STEP_12, unit, unit, uq + dx * 5.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "H%d", base);
-	drawTextBox(paint, MPP_H0, unit, unit, uq + dx * 6.0, ypos, buffer);
+	drawTextBox(paint, MPP_H0 * MPP_BAND_STEP_12, unit, unit, uq + dx * 6.0, ypos, buffer);
 
 	ypos = h + unit;
-#ifdef HAVE_QUARTERTONE
-	drawTextBox(paint, MPP_D0Q + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 0.5 - small, ypos - small / 4.0, "-");
-	drawTextBox(paint, MPP_D0B + MPP_MAX_BANDS, small, small, unit / 2.0 + uq + dx * 0.5 - small / 2.0, ypos + small / 3.0, "#");
-	drawTextBox(paint, MPP_D0C + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 0.5, ypos - small / 4.0, "+");
-	drawTextBox(paint, MPP_E0Q + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 1.5 - small, ypos - small / 4.0, "-");
-	drawTextBox(paint, MPP_E0B + MPP_MAX_BANDS, small, small, unit / 2.0 + uq + dx * 1.5 - small / 2.0, ypos + small / 3.0, "#");
-	drawTextBox(paint, MPP_E0C + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 1.5, ypos - small / 4.0, "+");
-	drawTextBox(paint, MPP_F0C + MPP_MAX_BANDS, small, small, unit / 2.0 + uq + dx * 2.5 - small / 2.0, ypos + small / 3.0, "%");
-	drawTextBox(paint, MPP_G0Q + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 3.5 - small, ypos - small / 4.0, "-");
-	drawTextBox(paint, MPP_G0B + MPP_MAX_BANDS, small, small, unit / 2.0 + uq + dx * 3.5 - small / 2.0, ypos + small / 3.0, "#");
-	drawTextBox(paint, MPP_G0C + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 3.5, ypos - small / 4.0, "+");
-	drawTextBox(paint, MPP_A0Q + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 4.5 - small, ypos - small / 4.0, "-");
-	drawTextBox(paint, MPP_A0B + MPP_MAX_BANDS, small, small, unit / 2.0 + uq + dx * 4.5 - small / 2.0, ypos + small / 3.0, "#");
-	drawTextBox(paint, MPP_A0C + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 4.5, ypos - small / 4.0, "+");
-	drawTextBox(paint, MPP_H0Q + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 5.5 - small, ypos - small / 4.0, "-");
-	drawTextBox(paint, MPP_H0B + MPP_MAX_BANDS, small, small, unit / 2.0 + uq + dx * 5.5 - small / 2.0, ypos + small / 3.0, "#");
-	drawTextBox(paint, MPP_H0C + MPP_MAX_BANDS, ss, ss, (small - ss) / 2.0 + unit / 2.0 + uq + dx * 5.5, ypos - small / 4.0, "+");
-	drawTextBox(paint, MPP_C1C + MPP_MAX_BANDS, small, small, unit / 2.0 + uq + dx * 6.5 - small / 2.0, ypos + small / 3.0, "%");
-#else
-	drawTextBox(paint, MPP_D0B + MPP_MAX_BANDS, unit, unit, unit / 2.0 + uq + dx * 0.5 - unit / 2.0, ypos, "#");
-	drawTextBox(paint, MPP_E0B + MPP_MAX_BANDS, unit, unit, unit / 2.0 + uq + dx * 1.5 - unit / 2.0, ypos, "#");
-	drawTextBox(paint, MPP_G0B + MPP_MAX_BANDS, unit, unit, unit / 2.0 + uq + dx * 3.5 - unit / 2.0, ypos, "#");
-	drawTextBox(paint, MPP_A0B + MPP_MAX_BANDS, unit, unit, unit / 2.0 + uq + dx * 4.5 - unit / 2.0, ypos, "#");
-	drawTextBox(paint, MPP_H0B + MPP_MAX_BANDS, unit, unit, unit / 2.0 + uq + dx * 5.5 - unit / 2.0, ypos, "#");
-#endif
+	drawTextBox(paint, MPP_D0B * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, unit / 2.0 + uq + dx * 0.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_E0B * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, unit / 2.0 + uq + dx * 1.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_G0B * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, unit / 2.0 + uq + dx * 3.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_A0B * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, unit / 2.0 + uq + dx * 4.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_H0B * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, unit / 2.0 + uq + dx * 5.5 - unit / 2.0, ypos, "#");
 
 	ypos = h + 2*unit;
 	snprintf(buffer, sizeof(buffer), "C%d", base + 1);
-	drawTextBox(paint, MPP_C0 + MPP_MAX_BANDS, unit, unit, uq + dx * 0.0, ypos, buffer);
+	drawTextBox(paint, MPP_C0 * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, uq + dx * 0.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "D%d", base + 1);
-	drawTextBox(paint, MPP_D0 + MPP_MAX_BANDS, unit, unit, uq + dx * 1.0, ypos, buffer);
+	drawTextBox(paint, MPP_D0 * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, uq + dx * 1.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "E%d", base + 1);
-	drawTextBox(paint, MPP_E0 + MPP_MAX_BANDS, unit, unit, uq + dx * 2.0, ypos, buffer);
+	drawTextBox(paint, MPP_E0 * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, uq + dx * 2.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "F%d", base + 1);
-	drawTextBox(paint, MPP_F0 + MPP_MAX_BANDS, unit, unit, uq + dx * 3.0, ypos, buffer);
+	drawTextBox(paint, MPP_F0 * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, uq + dx * 3.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "G%d", base + 1);
-	drawTextBox(paint, MPP_G0 + MPP_MAX_BANDS, unit, unit, uq + dx * 4.0, ypos, buffer);
+	drawTextBox(paint, MPP_G0 * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, uq + dx * 4.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "A%d", base + 1);
-	drawTextBox(paint, MPP_A0 + MPP_MAX_BANDS, unit, unit, uq + dx * 5.0, ypos, buffer);
+	drawTextBox(paint, MPP_A0 * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, uq + dx * 5.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "H%d", base + 1);
-	drawTextBox(paint, MPP_H0 + MPP_MAX_BANDS, unit, unit, uq + dx * 6.0, ypos, buffer);
+	drawTextBox(paint, MPP_H0 * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, uq + dx * 6.0, ypos, buffer);
 
 	uf /= 3.0;
 	fnt.setPixelSize(uf);

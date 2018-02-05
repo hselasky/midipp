@@ -23,6 +23,7 @@
  * SUCH DAMAGE.
  */
 
+#include "midipp_chords.h"
 #include "midipp_decode.h"
 #include "midipp_mainwindow.h"
 #include "midipp_scores.h"
@@ -30,10 +31,16 @@
 #include "midipp_import.h"
 #include "midipp_button.h"
 
-static int
-midipp_import_find_chord(const QString &str)
+static bool
+midipp_import_find_chord(const QString &str, int step)
 {
-	return (mpp_find_chord(str, NULL, NULL, NULL));
+	uint32_t rem;
+	uint32_t bass;
+	MppChord_t mask;
+
+	MppStringToChordGeneric(mask, rem, bass, step, str);
+
+	return (mask.test(0) == 0);
 }
 
 static uint8_t
@@ -78,7 +85,7 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 			if (ps->d_word[i_score][ai].off == x) {
 				QString *ptr = &ps->d_word[i_score][ai].name;
 
-				if (midipp_import_find_chord(*ptr) == 0) {
+				if (midipp_import_find_chord(*ptr, ps->step) == 0) {
 					MppDecodeTab *ptab = ps->sm->mainWindow->tab_chord_gl;
 
 					output = 1;
@@ -201,7 +208,7 @@ midipp_import_parse(class midipp_import *ps)
 			if (midipp_import_is_chord(
 			    ps->d_word[ps->index][n_word].name) != 0 &&
 			    midipp_import_find_chord(
-			    ps->d_word[ps->index][n_word].name) == 0) {
+			    ps->d_word[ps->index][n_word].name, ps->step) == 0) {
 				n_chord++;
 			}
 			n_word ++;
@@ -297,7 +304,7 @@ midipp_import_parse(class midipp_import *ps)
 }
 
 Q_DECL_EXPORT uint8_t
-midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm)
+midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm, int step)
 {
 	QChar ch;
 	int off;
@@ -318,6 +325,7 @@ midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm)
 	ps->max_off = 0;
 	ps->index = 0;
 	ps->load_more = 1;
+	ps->step = step;
 
 	for (off = 0; off != str.size(); off++) {
 		ch = str[off];
@@ -383,15 +391,20 @@ MppImportTab :: MppImportTab(MppMainWindow *parent)
 	butImportFileSaveAs = new QPushButton(tr("Save As"));
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
-		butImport[x] = new MppButton(QString("To %1-Scores").arg(QChar('A' + x)), x);
-		connect(butImport[x], SIGNAL(released(int)), this, SLOT(handleImport(int)));
+		butImport[x][0] = new MppButton(QString("To %1-Scores 12S").arg(QChar('A' + x)), x);
+		connect(butImport[x][0], SIGNAL(released(int)), this, SLOT(handleImport12(int)));
+		butImport[x][1] = new MppButton(QString("To %1-Scores MS").arg(QChar('A' + x)), x);
+		connect(butImport[x][1], SIGNAL(released(int)), this, SLOT(handleImportMS(int)));
 	}
 	gbImport = new MppGroupBox(tr("Lyrics"));
 	gbImport->addWidget(butImportFileNew, 0, 0, 1, 1);
 	gbImport->addWidget(butImportFileOpen, 1, 0, 1, 1);
 	gbImport->addWidget(butImportFileSaveAs, 2, 0, 1, 1);
-	for (x = 0; x != MPP_MAX_VIEWS; x++)
-		gbImport->addWidget(butImport[x], 3 + x, 0, 1, 1);
+
+	for (x = 0; x != MPP_MAX_VIEWS; x++) {
+		gbImport->addWidget(butImport[x][0], 3 + 2 * x, 0, 1, 1);
+		gbImport->addWidget(butImport[x][1], 3 + 2 * x + 1, 0, 1, 1);
+	}
 
 	connect(butImportFileNew, SIGNAL(released()), this, SLOT(handleImportNew()));
 	connect(butImportFileOpen, SIGNAL(released()), this, SLOT(handleImportOpen()));
@@ -459,11 +472,22 @@ MppImportTab :: handleImportSaveAs()
 }
 
 void
-MppImportTab :: handleImport(int n)
+MppImportTab :: handleImport12(int n)
 {
 	class midipp_import ps;
 
-	midipp_import(editWidget->toPlainText(), &ps, mainWindow->scores_main[n]);
+	midipp_import(editWidget->toPlainText(), &ps, mainWindow->scores_main[n], MPP_BAND_STEP_12);
+
+	mainWindow->handle_compile();
+	mainWindow->handle_make_scores_visible(mainWindow->scores_main[n]);
+}
+
+void
+MppImportTab :: handleImportMS(int n)
+{
+	class midipp_import ps;
+
+	midipp_import(editWidget->toPlainText(), &ps, mainWindow->scores_main[n], 1);
 
 	mainWindow->handle_compile();
 	mainWindow->handle_make_scores_visible(mainWindow->scores_main[n]);

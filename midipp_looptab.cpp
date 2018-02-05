@@ -53,8 +53,8 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 	for (n = 0; n != MPP_LOOP_MAX; n++) {
 		spn_chan[n] = new MppChanSel(0, 0);
 
-		spn_key[n] = new MppSpinBox(0,MPP_BAND_STEP_12,0);
-		spn_key[n]->setValue(MPP_MAX_BANDS * n);
+		spn_key[n] = new MppSpinBox(0,0);
+		spn_key[n]->setValue(MPP_BAND_STEP_12 * n);
 
 		snprintf(buf, sizeof(buf), "Loop%X", n);
 
@@ -145,7 +145,7 @@ MppLoopTab :: ~MppLoopTab()
 
 /* This function must be called locked */
 void
-MppLoopTab :: add_key(uint8_t in_key, uint8_t vel)
+MppLoopTab :: add_key(int in_key, uint8_t vel)
 {
 	struct mid_data *d = &mid_data;
 	uint32_t pos;
@@ -153,6 +153,11 @@ MppLoopTab :: add_key(uint8_t in_key, uint8_t vel)
 
 	/* ignore quarter keys for now */
 	if (in_key % MPP_BAND_STEP_12)
+		return;
+	in_key /= MPP_BAND_STEP_12;
+
+	/* range check */
+	if (in_key < 0 || in_key > 127)
 		return;
 
 	pos = mw->get_time_offset();
@@ -175,7 +180,7 @@ MppLoopTab :: add_key(uint8_t in_key, uint8_t vel)
 	
 		mid_set_channel(d, chan_val[n]);
 		mid_set_position(d, pos - first_pos[n]);
-		mid_key_press(d, in_key / MPP_BAND_STEP_12, vel, 0);
+		mid_key_press(d, in_key, vel, 0);
 	}
 }
 
@@ -381,7 +386,7 @@ MppLoopTab :: handle_clearN(int n)
 void
 MppLoopTab :: handle_reset()
 {
-	uint8_t n;
+	int n;
 
 	mw->atomic_lock();
 	for (n = 0; n != MPP_LOOP_MAX; n++)
@@ -395,7 +400,7 @@ MppLoopTab :: handle_reset()
 
 	for (n = 0; n != MPP_LOOP_MAX; n++) {
 		spn_chan[n]->setValue(0);
-		spn_key[n]->setValue(MPP_MAX_BANDS * n);
+		spn_key[n]->setValue(MPP_BAND_STEP_12 * n);
 	}
 }
 

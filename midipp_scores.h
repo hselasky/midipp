@@ -126,10 +126,8 @@ public:
 	QSpinBox *spnScoreFileScale;
 	QPushButton *butScoreFileStepUpHalf;
 	QPushButton *butScoreFileStepDownHalf;
-#ifdef HAVE_QUARTERTONE
-	QPushButton *butScoreFileStepUpQuart;
-	QPushButton *butScoreFileStepDownQuart;
-#endif
+	QPushButton *butScoreFileStepUpSingle;
+	QPushButton *butScoreFileStepDownSingle;
 	QPushButton *butScoreFileSetSharp;
 	QPushButton *butScoreFileSetFlat;
 	QPushButton *butScoreFileExport;
@@ -152,19 +150,20 @@ public:
 	int visual_x_max;
 	int unit;
 
-	uint32_t pressedKeys[MPP_PRESSED_MAX];
-	uint32_t frozenKeys[MPP_PRESSED_MAX];
+	uint64_t pressedKeys[MPP_PRESSED_MAX];
+	uint64_t frozenKeys[MPP_PRESSED_MAX];
 
 	int picScroll;
-	uint16_t active_channels;
+	uint32_t active_channels;
+
+	int baseKey;
+	int whatPlayKeyLocked;
 
 	int8_t inputChannel;
 	uint8_t synthChannel;
 	int8_t synthChannelBase;
 	int8_t synthChannelTreb;
-	uint8_t baseKey;
 	uint8_t delayNoise;
-	uint8_t whatPlayKeyLocked;
 	uint8_t last_key;
 	uint8_t last_vel;
 	uint8_t keyMode;
@@ -189,10 +188,8 @@ public slots:
 	void handleScoreFileAlign(void);
 	void handleScoreFileStepUpHalf(void);
 	void handleScoreFileStepDownHalf(void);
-#ifdef HAVE_QUARTERTONE
-	void handleScoreFileStepUpQuart(void);
-	void handleScoreFileStepDownQuart(void);
-#endif
+	void handleScoreFileStepUpSingle(void);
+	void handleScoreFileStepDownSingle(void);
 	void handleScoreFileSetSharp(void);
 	void handleScoreFileSetFlat(void);
 	void handleScoreFileScale(void);

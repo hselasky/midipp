@@ -73,7 +73,7 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	but_done = new QPushButton(tr("Close"));
 	connect(but_done, SIGNAL(released()), this, SLOT(accept()));
 
-	spn_base = new MppSpinBox(0,MPP_BAND_STEP_12,0);
+	spn_base = new MppSpinBox(0,0);
 	spn_base->setValue(0);
 	connect(spn_base, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 

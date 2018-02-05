@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2017 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,195 +25,70 @@
 
 #include "midipp_spinbox.h"
 #include "midipp_decode.h"
+#include "midipp_element.h"
 
-MppSpinBox :: MppSpinBox(QWidget *parent, int step, int allow_neg)
+static void
+MppValueFromText(const QString &str, int &value, int &valid)
+{
+	MppElement *ptr;
+	MppHead temp;
+
+	temp += str;
+        temp.flush();
+
+	value = 0;
+	valid = 0;
+
+	TAILQ_FOREACH(ptr, &temp.head, entry) {
+		if (ptr->type == MPP_T_SCORE_SUBDIV) {
+			value = ptr->value[0];
+			valid++;
+		} else {
+			valid = 0;
+			break;
+		}
+	}
+}
+
+MppSpinBox :: MppSpinBox(QWidget *parent, int allow_neg)
   : QSpinBox(parent)
 {
-#ifdef HAVE_QUARTERTONE
-	if (step < 1)
-		step = 1;
-#else
-	if (step < 2)
-		step = 2;
-#endif
 	if (allow_neg)
-		setRange(-256 + step, 256 - step);
+		setRange(0x8000, 0x7fff);
 	else
-		setRange(0, 256 - step);
-	setSingleStep(step);
+		setRange(0, 0x7fff);
+	setSingleStep(MPP_BAND_STEP_12);
 }
 
 int
-MppSpinBox :: valueFromText(const QString &n) const
+MppSpinBox :: valueFromText(const QString &str) const
 {
-	const QChar *ch = n.data();
-	int temp;
-	int rem;
-	int c;
-	int neg = 0;
-	int error = minimum() - 1;
-	int step = singleStep();
+	int value;
+	int valid;
 
-	c = ch->toLatin1();
-
-	switch (c) {
-	case '-':
-		neg = 1;
-		ch++;
-		break;
-	default:
-		break;
-	}
-
-	c = ch->toLatin1();
-
-	switch (c) {
-	case 'C':
-		rem = MPP_C0;
-		ch++;
-		break;
-	case 'D':
-		rem = MPP_D0;
-		ch++;
-		break;
-	case 'E':
-		rem = MPP_E0;
-		ch++;
-		break;
-	case 'F':
-		rem = MPP_F0;
-		ch++;
-		break;
-	case 'G':
-		rem = MPP_G0;
-		ch++;
-		break;
-	case 'A':
-		rem = MPP_A0;
-		ch++;
-		break;
-	case 'H':
-	case 'B':
-		rem = MPP_H0;
-		ch++;
-		break;
-	case 0:
-		if (ch->isNull()) {
-			rem = 0;
-			break;
-		}
-	default:
-		return (error);
-	}
-
-	c = ch->toLatin1();
-
-	switch (c) {
-	case '0':
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-	case '8':
-	case '9':
-		temp = (c - '0') * MPP_MAX_BANDS;
-		ch++;
-		break;
-	default:
-		temp = 0;
-		break;
-	}
-
-	c = ch->toLatin1();
-
-	switch (c) {
-	case '0':
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-	case '8':
-	case '9':
-		temp *= 10;
-		temp += (c - '0') * MPP_MAX_BANDS;
-		ch++;
-		break;
-	case 'b':
-	case 'B':
-		rem -= MPP_BAND_STEP_12;
-		ch++;
-		break;
-#ifdef HAVE_QUARTERTONE
-	case 'q':
-	case 'Q':
-		rem -= 3 * MPP_BAND_STEP_24;
-		ch++;
-		break;
-	case 'c':
-	case 'C':
-		rem -= MPP_BAND_STEP_24;
-		ch++;
-		break;
-#endif
-	case '#':
-		rem += MPP_BAND_STEP_12;
-		ch++;
-		break;
-	case 0:
-		if (ch->isNull())
-			break;
-	default:
-		return (error);
-	}
-
-	c = ch->toLatin1();
-
-	if (c != 0)
-		return (error);
-
-	rem += temp;
-
-	/* check alignment  */
-	if (rem % step)
-		return (error);
-
-	/* check if negative */
-	if (neg)
-		rem = -rem;
-
-	return (rem);
+	MppValueFromText(str, value, valid);
+	if (valid)
+		return (value);
+	return (0);
 }
 
 QString
 MppSpinBox :: textFromValue(int n) const
 {
-	QString temp;
-
-	if (n < 0) {
-		n = -n;
-		temp = "-";
-	}
-	if (n < 256)
-		return (temp + MppKeyStr[n]);
-	return ("");
+	return (MppKeyStr(n));
 }
 
 QValidator::State
 MppSpinBox :: validate(QString &input, int &pos) const
 {
-	int temp = valueFromText(input);
+	int value;
+	int valid;
 
-	if (temp < minimum())
-		return (QValidator::Invalid);
+	if (input.isEmpty() == 0) {
+		MppValueFromText(input, value, valid);
 
-	if (temp > maximum())
-		return (QValidator::Invalid);
-
+		if (valid == 0 || value < minimum() || value > maximum())
+			return (QValidator::Invalid);
+	}
 	return (QValidator::Acceptable);
 }

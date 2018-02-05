@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2017 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,22 +26,7 @@
 #ifndef _MIDIPP_DECODE_H_
 #define	_MIDIPP_DECODE_H_
 
-#include "midipp.h"
-
-#define	MPP_SCORE_KEYMAX 4
-
-struct score_variant_initial {
-	const char *pattern[MPP_SCORE_KEYMAX];
-	uint32_t footprint;
-};
-
-class score_variant {
-public:
-	score_variant() { footprint = 0; duplicate = 0; pattern = QString(); }
-	QString pattern;
-	uint32_t footprint;
-	uint32_t duplicate;
-};
+#include "midipp_chords.h"
 
 class MppDecodeTab : public QWidget
 {
@@ -71,19 +56,20 @@ public:
 	QPushButton *but_mod_up;
 	QPushButton *but_mod_down;
 
-	QLabel *lbl_status;
+	MppButtonMap *but_map_step;
+	MppButtonMap *but_map_volume;
+	MppButtonMap *but_map_view;
 
-	MppCheckBox *cbx_auto_base;
-
-	MppButton *but_play[MPP_MAX_VIEWS][3];
-
+	QPushButton *but_play;
 	QPushButton *but_insert;
 
-	int rol_value;
+	int chord_key;
+	int chord_bass;
+	int chord_step;
+	int chord_sharp;
 	int delta_v;
 
-	uint8_t current_score[MPP_MAX_BANDS];
-	uint8_t auto_base[MPP_MAX_BANDS];
+	MppChord_t chord_mask;
 
 public slots:
 
@@ -91,16 +77,16 @@ public slots:
 	void handle_rol_down();
 	void handle_mod_up();
 	void handle_mod_down();
-	void handle_play_press(int);
-	void handle_play_release(int);
+	void handle_play_press();
+	void handle_play_release();
 	void handle_insert();
-	void handle_parse(int = 0);
+	void handle_parse();
+	void handle_refresh();
+	void handle_stepping();
 };
 
-extern class score_variant *mpp_score_variant;
-extern QString MppKeyStr[256];
-
-extern uint8_t mpp_find_chord(QString input, uint8_t *pbase, uint8_t *pkey, uint32_t *pvar);
-extern uint8_t mpp_parse_chord(const QString &input, int8_t rol, uint8_t *pout, uint8_t *pn, uint32_t *pvar, int);
+extern const QString MppKeyStr(int key);
+extern const QString MppKeyStrNoOctave(int key);
+extern const QString MppBitsToString(const MppChord_t &, int);
 
 #endif		/* _MIDIPP_DECODE_H_ */

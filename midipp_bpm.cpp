@@ -99,7 +99,7 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 	spn_bpm_amp->setRange(1, 127);
 	connect(spn_bpm_amp, SIGNAL(valueChanged(int)), this, SLOT(handle_config_change()));
 
-	spn_bpm_key = new MppSpinBox(0,1,0);
+	spn_bpm_key = new MppSpinBox(0,0);
 	connect(spn_bpm_key, SIGNAL(valueChanged(int)), this, SLOT(handle_config_change()));
 
 	spn_bpm_period_ref = new QSpinBox();

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,10 +33,10 @@ class MppSpinBox : public QSpinBox
 	Q_OBJECT;
 
 public:
-	MppSpinBox(QWidget *parent = 0, int step = 1, int allow_neg = 1);
+	MppSpinBox(QWidget *parent = 0, int allow_neg = 1);
 	~MppSpinBox() {};
 
-	int valueFromText(const QString &n) const;
+	int valueFromText(const QString &) const;
 	QString textFromValue(int n) const;
 	QValidator::State validate(QString &input, int &pos) const;
 };

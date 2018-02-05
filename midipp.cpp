@@ -109,18 +109,18 @@ MppIsLabel(const QString &str)
 }
 
 Q_DECL_EXPORT void
-MppSplitBaseTreble(const uint8_t *score, uint8_t num, uint8_t *base, uint8_t *nbase,
-    uint8_t *treble, uint8_t *ntreble)
+MppSplitBaseTreble(const int *score, uint8_t num, int *base, uint8_t *nbase,
+    int *treble, uint8_t *ntreble)
 {
 	uint8_t stats[MPP_MAX_BANDS] = {};
 	uint8_t count[MPP_MAX_BANDS] = {};
 	uint8_t x;
-	uint8_t key;
+	int key;
 	uint8_t nb = 0;
 	uint8_t nt = 0;
 
 	for (x = 0; x != num; x++)
-		stats[score[x] % MPP_MAX_BANDS]++;
+		stats[MPP_BAND_REM(score[x])]++;
 
 	/*
 	 * Treble only: C0
@@ -128,10 +128,14 @@ MppSplitBaseTreble(const uint8_t *score, uint8_t num, uint8_t *base, uint8_t *nb
 	 * Bass and Treble: C0 C1 C2 or C0 C0 C1
 	 */
 	for (x = 0; x != num; x++) {
+		uint32_t rem;
+
 		key = score[x];
-		if (stats[key % MPP_MAX_BANDS] == 1) {
+		rem = MPP_BAND_REM(key);
+
+		if (stats[rem] == 1) {
 			treble[nt++] = key;
-		} else if (count[key % MPP_MAX_BANDS]++ < 2) {
+		} else if (count[rem]++ < 2) {
 			base[nb++] = key;
 		} else {
 			treble[nt++] = key;
@@ -139,83 +143,6 @@ MppSplitBaseTreble(const uint8_t *score, uint8_t num, uint8_t *base, uint8_t *nb
 	}
 	*nbase = nb;
 	*ntreble = nt;
-}
-
-Q_DECL_EXPORT const char *
-MppBaseKeyToString(int key, int sharp)
-{
-	switch (key) {
-	/* majors */
-	case MPP_A0:
-		return ("A");
-	case MPP_H0:
-		return ("H");
-	case MPP_C0:
-		return ("C");
-	case MPP_D0:
-		return ("D");
-	case MPP_E0:
-		return ("E");
-	case MPP_F0:
-		return ("F");
-	case MPP_G0:
-		return ("G");
-	/* flats */
-	case MPP_H0B:
-		if (sharp)
-			return ("A#");
-		else
-			return ("Hb");
-	case MPP_A0B:
-		if (sharp)
-			return ("G#");
-		else
-			return ("Ab");
-	case MPP_G0B:
-		if (sharp)
-			return ("F#");
-		else
-			return ("Gb");
-	case MPP_E0B:
-		if (sharp)
-			return ("D#");
-		else
-			return ("Eb");
-	case MPP_D0B:
-		if (sharp)
-			return ("C#");
-		else
-			return ("Db");
-#ifdef HAVE_QUARTERTONE
-	case MPP_D0Q:
-		return ("Dq");
-	case MPP_E0Q:
-		return ("Eq");
-	case MPP_G0Q:
-		return ("Gq");
-	case MPP_A0Q:
-		return ("Aq");
-	case MPP_H0Q:
-		return ("Hq");
-	/* quarter flats */
-	case MPP_D0C:
-		return ("Dc");
-	case MPP_E0C:
-		return ("Ec");
-	case MPP_F0C:
-		return ("Fc");
-	case MPP_G0C:
-		return ("Gc");
-	case MPP_A0C:
-		return ("Ac");
-	case MPP_H0C:
-		return ("Hc");
-	case MPP_C1C:
-		return ("Cc");
-#endif
-	default:
-		return ("??");
-	}
 }
 
 Q_DECL_EXPORT QString
@@ -410,32 +337,38 @@ MppSort(void **ptr, size_t n, MppCmp_t *fn, void *arg)
 }
 
 Q_DECL_EXPORT void
-MppTrans(uint8_t *ptr, size_t num, int ntrans)
+MppSort(int *ptr, size_t num)
 {
-	uint8_t temp;
+	size_t i, j;
 
+	for (i = 0; i != num; i++) {
+		for (j = i + 1; j != num; j++) {
+			if (ptr[i] > ptr[j]) {
+				int temp = ptr[i];
+				ptr[i] = ptr[j];
+				ptr[j] = temp;
+			}
+		}
+	}
+}
+
+Q_DECL_EXPORT void
+MppTrans(int *ptr, size_t num, int ntrans)
+{
 	if (num == 0)
 		return;
 
-	mid_sort(ptr, num);
+	MppSort(ptr, num);
 
 	if (ntrans < 0) {
 		while (ntrans++) {
-			temp = ptr[num - 1];
-			if (temp < MPP_MAX_BANDS)
-				return;
-			temp -= MPP_MAX_BANDS;
-			ptr[num - 1] = temp;
-			mid_sort(ptr, num);
+			ptr[num - 1] -= MPP_MAX_BANDS;
+			MppSort(ptr, num);
 		}
 	} else if (ntrans > 0) {
 		while (ntrans--) {
-			temp = ptr[0];
-			if (temp > (255 - MPP_MAX_BANDS))
-				return;
-			temp += MPP_MAX_BANDS;
-			ptr[0] = temp;
-			mid_sort(ptr, num);
+			ptr[0] += MPP_MAX_BANDS;
+			MppSort(ptr, num);
 		}
 	}
 }
@@ -472,7 +405,7 @@ static const struct option midipp_opts[] = {
 	{ NULL, 0, NULL, 0 }
 };
 
-const QString MppVersion("MIDI Player Pro v1.3.5");
+const QString MppVersion("MIDI Player Pro v2.0.0");
 const QString MppIconFile(":/midipp.png");
 
 Q_DECL_EXPORT int

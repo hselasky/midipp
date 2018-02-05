@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2017 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2017-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,6 +25,7 @@
 
 #include "midipp_musicxml.h"
 #include "midipp_checkbox.h"
+#include "midipp_chords.h"
 #include "midipp_decode.h"
 
 #define	MXML_MAX_TAGS 8
@@ -53,8 +54,8 @@ static const char *MppGetNoteString[12] = {
 	"G",
 	"Ab",
 	"A",
-	"Bb",
-	"B",
+	"Hb",
+	"H",
 };
 
 static int
@@ -417,11 +418,12 @@ MppReadMusicXML(const QByteArray &data, uint32_t flags, uint32_t ipart, uint32_t
 						} else if (tags[3] == "harmony") {
 							if (si == 4) {
 								/* end of harmony */
-								QString harmony;
-								uint32_t combo;
+								QString harmony[2];
 								uint8_t x;
-								uint8_t bass;
-								uint8_t root;
+								uint8_t which;
+								uint32_t bass;
+								uint32_t root;
+								MppChord_t mask;
 
 								root = MppGetNoteNumber(root_step, root_alter, "5");
 
@@ -430,23 +432,27 @@ MppReadMusicXML(const QByteArray &data, uint32_t flags, uint32_t ipart, uint32_t
 								else
 									bass = MppGetNoteNumber(bass_step, bass_alter, "5");
 
-								harmony = QString(MppGetNoteString[root % 12]) + kind;
+								harmony[0] = QString(MppGetNoteString[root % 12]) + kind;
 								if (root != bass) {
-									harmony += QString("/") +
+									harmony[0] += QString("/") +
 									    QString(MppGetNoteString[bass % 12]);
 								}
 
-								if (mpp_find_chord(harmony, &bass, &root, &combo)) {
-									/* fallback to major */
-									harmony = QString(MppGetNoteString[root % 12]);
-									if (root != bass) {
-										harmony += QString("/") +
-										    QString(MppGetNoteString[bass % 12]);
-									}
-									if (mpp_find_chord(harmony, &bass, &root, &combo)) {
-										goto skip_harmony;
-									}
+								/* fallback to major */
+								harmony[1] = QString(MppGetNoteString[root % 12]);
+								if (root != bass) {
+									harmony[1] += QString("/") +
+									    QString(MppGetNoteString[bass % 12]);
 								}
+
+								for (which = 0; which != 2; which++) {
+									MppStringToChordGeneric(mask, root, bass,
+									    MPP_BAND_STEP_12, harmony[which]);
+									if (mask.test(0))
+										break;
+								}
+								if (which == 2)
+									goto skip_harmony;
 
 								if (do_new_line != 0) {
 									do_new_line = 0;
@@ -458,24 +464,25 @@ MppReadMusicXML(const QByteArray &data, uint32_t flags, uint32_t ipart, uint32_t
 
 								if (flags & MXML_FLAG_KEEP_CHORDS) {
 									output_string += "(";
-									output_string += harmony;
+									output_string += harmony[which];
 									output_string += ")";
 								}
 
 								if (flags & MXML_FLAG_CONV_CHORDS) {
 									output_scores += "U1 ";
-									output_scores += mid_key_str[C3 + (bass % 12)];
+									output_scores += MppKeyStr((3 * 12 + (bass % 12)) * MPP_BAND_STEP_12);
 									output_scores += " ";
-									output_scores += mid_key_str[C4 + (bass % 12)];
+									output_scores += MppKeyStr((4 * 12 + (bass % 12)) * MPP_BAND_STEP_12);
 									output_scores += " ";
 
-									for (x = 0; x != 12; x++) {
-										if (!(mpp_score_variant[combo].footprint & (1 << x)))
+									for (x = 0; x != MPP_MAX_BANDS; x++) {
+										if (mask.test(x) == 0)
 											continue;
-										output_scores += mid_key_str[C5 + x + (root % 12)];
+										output_scores += MppKeyStr(
+										    (5 * 12 + (root % 12)) * MPP_BAND_STEP_12);
 										output_scores += " ";
 									}
-									output_scores += QString("/* ") + harmony + QString(" */\n");
+									output_scores += QString("/* ") + harmony[which] + QString(" */\n");
 								}
 							skip_harmony:;
 							}

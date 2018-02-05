@@ -41,7 +41,7 @@ public:
 
 	void processKey(uint8_t, char);
 	void releaseAll();
-	uint8_t getBaseKey();
+	int getBaseKey();
 
 	MppMainWindow *mw;
 

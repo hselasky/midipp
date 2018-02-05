@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013-2017 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,7 +46,7 @@ enum MppElementType {
 	MPP_T_LABEL,
 	MPP_T_MACRO,
 	MPP_T_NEWLINE,
-	MPP_T_SCORE,
+	MPP_T_SCORE_SUBDIV,
 	MPP_T_SPACE,
 	MPP_T_STRING_CMD,
 	MPP_T_STRING_DESC,
@@ -216,6 +216,7 @@ public:
 		MppElement *last_stop;
 		MppElement *elem;
 		MppElement *label_start[MPP_MAX_LABELS];
+		uint16_t subdiv_map[16];
 	} state;
 
 	MppHead();
@@ -225,6 +226,7 @@ public:
 	int getChord(int, MppChordElement *);
 	void reset();
 	void clear();
+	void sortScore();
 	void optimise();
 	void autoMelody(int);
 	void transposeScore(int, int = 0);
@@ -255,7 +257,6 @@ public:
 };
 
 extern int MppSpaceOnly(QString &);
-extern int MppIsChord(QString &);
 extern QString MppDeQuoteChord(QString &);
 extern QString MppDeQuoteString(QString &);
 

@@ -33,8 +33,8 @@ struct MppSheetRow {
 	int	col;
 	short	label;
 	short	playing;
-	short	playkey;
-	short	playchan;
+	int	playkey;
+	int	playchan;
 	union {
 		struct {
 			int	chan;

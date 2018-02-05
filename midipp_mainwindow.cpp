@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2017 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -229,7 +229,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_help->setLineWrapMode(QPlainTextEdit::NoWrap);
 	tab_help->setPlainText(tr(
 	    "/*\n"
-	    " * Copyright (c) 2009-2017 Hans Petter Selasky. All rights reserved.\n"
+	    " * Copyright (c) 2009-2018 Hans Petter Selasky. All rights reserved.\n"
 	    " */\n"
 
 	    "\n"
@@ -278,26 +278,16 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " * J<P><number> - jumps to the given label [0..31] \n"
 	    " *     and optionally starts a new page(P) in printouts.\n"
 	    " * S\"<string .(chord) .(chord)>\" - creates a visual string.\n"
-	    " * CDEFGAH<number>"
-#ifdef HAVE_QUARTERTONE
-	    "<QBC>"
-#else
-	    "<B>"
-#endif
-	    " - defines a score in the given octave [0..10].\n"
-	    " * X[+/-]<number> - transpose the subsequent scores by the given\n"
-	    " *  number of steps, -128..+127. There are 12 steps in a so-called octave.\n"
-	    " * X[+/-]<number>.<mode>\n"
-	    " * X[+/-]<number>.0 - fixed transposition, 12-steps. (default)\n"
-	    " * X[+/-]<number>.1 - dynamic transposition using full, 12-steps\n"
-	    " *   bass score. (available in chord mode only)\n"
-	    " * X[+/-]<number>.2 - dynamic transposition using remainder of\n"
-	    " *   full bass score, 12-steps. (available in chord mode only)\n"
-#ifdef HAVE_QUARTERTONE
-	    " * X[+/-]<number>.3 - same as 0 only 24-steps.\n"
-	    " * X[+/-]<number>.4 - same as 1 only 24-steps.\n"
-	    " * X[+/-]<number>.5 - same as 2 only 24-steps.\n"
-#endif
+	    " * CDEFGABH<number><B>[.<subdivision>]"
+	    " - defines a score in the given octave [0..10] and subdivision [0..15].\n"
+	    " * X[+/-]<number>[.<subdivision>][.<mode>] - transpose the subsequent scores by the given\n"
+	    " *  number of steps. There are 12 steps in an octave.\n"
+	    " * X[+/-]<number>.<subdivision>.<mode>\n"
+	    " * X[+/-]<number>.<subdivision>.0 - fixed transposition. (default)\n"
+	    " * X[+/-]<number>.<subdivision>.1 - dynamic transposition using full\n"
+	    " *   bass score in chord mode.\n"
+	    " * X[+/-]<number>.<subdivision>.2 - dynamic transposition using remainder of\n"
+	    " *   bass score in chord mode.\n"
 	    " */\n"
 	    "\n"
 	    "/*\n"
@@ -1634,6 +1624,7 @@ MppMainWindow :: do_key_press(int key, int vel, int dur)
 {
 	struct mid_data *d = &mid_data;
 	int ch = mid_get_channel(d);
+	int rem;
 
 	if (vel != 0) {
 		vel = (synthVolume[ch] * vel) / MPP_VOLUME_UNIT;
@@ -1646,42 +1637,27 @@ MppMainWindow :: do_key_press(int key, int vel, int dur)
 			vel = 2;
 	}
 
-#ifdef HAVE_QUARTERTONE
-	if (key > 255)
-		return;
-	else if (key < 0)
-		return;
-	if (key & 1)
-		return;
-#else
-	if (key > 127)
-		return;
-	else if (key < 0)
-		return;
-#endif
-	if (dur < 0)
+	rem = MPP_BAND_REM_BITREV(key);
+	key /= MPP_MAX_SUBDIV;
+
+	/* range check */
+	if (key > 127 || key < 0 || dur < 0)
 		return;
 
-#ifdef HAVE_QUARTERTONE
-	/* quarter notes go to the secondary channel */
-	if (key & 1)
-		d->channel = (d->channel + 1) & 0xF;
-#endif
+	/* shift channel according to subdivision */
+	d->channel = (d->channel + rem) & 0xF;
 
-	mid_key_press(d, key / MPP_BAND_STEP_12, vel, dur);
+	mid_key_press(d, key, vel, dur);
 
-#ifdef HAVE_QUARTERTONE
 	/* restore */
-	if (key & 1)
-		d->channel = (d->channel - 1) & 0xF;
-#endif
+	d->channel = (d->channel - rem) & 0xF;
 }
 
 /* must be called locked */
 void
 MppMainWindow :: handle_stop(int flag)
 {
-	uint32_t *pkey;
+	uint64_t *pkey;
 	uint8_t ScMidiTriggered;
 	uint8_t ScMidiRecordOff;
 	uint8_t out_key;
@@ -1705,7 +1681,7 @@ MppMainWindow :: handle_stop(int flag)
 
 		if (*pkey != 0) {
 
-			out_key = (*pkey >> 8) & 0xFF;
+			out_key = (*pkey >> 32) & -1U;
 			chan = (*pkey >> 16) & 0xFF;
 			delay = (*pkey >> 24) & 0xFF;
 

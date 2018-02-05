@@ -80,7 +80,7 @@ public:
 	uint32_t duty_ticks;
 	uint32_t period_ref;
 	uint32_t period_cur;
-	uint8_t key;
+	int key;
 	uint8_t view_out[MPP_MAX_VIEWS];
 	uint8_t view_sync[MPP_MAX_VIEWS];
 	uint8_t amp;

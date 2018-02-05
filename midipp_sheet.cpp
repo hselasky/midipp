@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2016-2017 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2016-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -96,8 +96,14 @@ MppSheet::sizeInit()
 static const QString
 MppTransToString(int trans_number, int trans_mode)
 {
+	int rem = MPP_BAND_REM_BITREV(trans_number);
+
+	trans_number -= rem;
+
 	if (trans_mode != 0) {
-		return QString("X%1.%2 ").arg(trans_number).arg(trans_mode);
+		return QString("X%1.%2.%3 ").arg(trans_number / MPP_MAX_SUBDIV).arg(rem).arg(trans_mode);
+	} else if (rem != 0) {
+		return QString("X%1.%2 ").arg(trans_number).arg(rem);
 	} else {
 		return QString("X%1 ").arg(trans_number);
 	}
@@ -118,14 +124,14 @@ MppSheetRowToString(MppSheetRow * ptr)
 		}
 		ret += QString("M%1").arg(ptr->u.macro.num);
 		break;
-	case MPP_T_SCORE:
+	case MPP_T_SCORE_SUBDIV:
 		if (ptr->u.score.chan != 0)
 			ret += QString("T%1 ").arg(ptr->u.score.chan);
 		if (ptr->u.score.trans_mode != 0 || ptr->u.score.trans_number != 0) {
 			ret += MppTransToString(ptr->u.score.trans_number,
 			    ptr->u.score.trans_mode);
 		}
-		ret += MppKeyStr[ptr->u.score.num];
+		ret += MppKeyStr(ptr->u.score.num);
 		break;
 	default:
 		break;
@@ -138,44 +144,50 @@ MppSheetRowCompareType(const void *_pa, const void *_pb)
 {
 	MppSheetRow *pa = (MppSheetRow *) _pa;
 	MppSheetRow *pb = (MppSheetRow *) _pb;
-	int ret;
+	int64_t ret;
 
 	ret = pb->type - pa->type;
 	if (ret != 0)
-		return (ret);
+		goto done;
 	switch (pa->type) {
 	case MPP_T_MACRO:
 		ret = pa->u.macro.chan - pb->u.macro.chan;
 		if (ret != 0)
-			return (ret);
+			goto done;
 		ret = pa->u.macro.trans_number - pb->u.macro.trans_number;
 		if (ret != 0)
-			return (ret);
+			goto done;
 		ret = pa->u.macro.trans_mode - pb->u.macro.trans_mode;
 		if (ret != 0)
-			return (ret);
+			goto done;
 		ret = pa->u.macro.num - pb->u.macro.num;
 		if (ret != 0)
-			return (ret);
+			goto done;
 		break;
-	case MPP_T_SCORE:
+	case MPP_T_SCORE_SUBDIV:
 		ret = pa->u.score.chan - pb->u.score.chan;
 		if (ret != 0)
-			return (ret);
+			goto done;
 		ret = pa->u.score.trans_number - pb->u.score.trans_number;
 		if (ret != 0)
-			return (ret);
+			goto done;
 		ret = pa->u.score.trans_mode - pb->u.score.trans_mode;
 		if (ret != 0)
-			return (ret);
+			goto done;
 		ret = pa->u.score.num - pb->u.score.num;
 		if (ret != 0)
-			return (ret);
+			goto done;
 		break;
 	default:
 		break;
 	}
-	return (0);
+done:
+	if (ret < 0)
+		return (-1);
+	else if (ret > 0)
+		return (1);
+	else
+		return (0);
 }
 
 static int
@@ -224,7 +236,7 @@ MppSheet::outputColumn(ssize_t col)
 			}
 			ret += QString("M%1 ").arg(entries_rows[x].u.macro.num);
 			break;
-		case MPP_T_SCORE:
+		case MPP_T_SCORE_SUBDIV:
 			if (any == 0 || ndur != dur) {
 				dur = ndur;
 				ret += QString("U%1%2 ").arg((dur + 1)/2).arg((dur & 1) ? "" : ".");
@@ -240,7 +252,7 @@ MppSheet::outputColumn(ssize_t col)
 				trans_mode = entries_rows[x].u.score.trans_mode;
 				ret += MppTransToString(trans_number, trans_mode);
 			}
-			ret += MppKeyStr[entries_rows[x].u.score.num];
+			ret += MppKeyStr(entries_rows[x].u.score.num);
 			break;
 		default:
 			break;
@@ -283,7 +295,7 @@ MppSheet::compile(MppHead & head)
 		for (ptr = start; ptr != stop; ptr = ptr->next()) {
 			switch (ptr->type) {
 			case MPP_T_MACRO:
-			case MPP_T_SCORE:
+			case MPP_T_SCORE_SUBDIV:
 				n++;
 				any = 1;
 				break;
@@ -347,7 +359,7 @@ MppSheet::compile(MppHead & head)
 				n++;
 				any = 1;
 				break;
-			case MPP_T_SCORE:
+			case MPP_T_SCORE_SUBDIV:
 				entries_cols[num_cols].label = label;
 				entries_cols[num_cols].line = ptr->line;
 				ptemp[n].type = ptr->type;
@@ -406,7 +418,7 @@ MppSheet::compile(MppHead & head)
 		case MPP_T_MACRO:
 			entries_ptr[ptemp[x].col + ((num_rows - 1) * num_cols)] = 1;
 			break;
-		case MPP_T_SCORE:
+		case MPP_T_SCORE_SUBDIV:
 			entries_ptr[ptemp[x].col + ((num_rows - 1) * num_cols)] =
 			    ptemp[x].u.score.dur;
 			break;
@@ -561,14 +573,14 @@ MppSheet :: getTranspose(int trans_mode)
 		if (temp >= 0)
 			return (temp);
 		else
-			return (MPP_INVALID_TRANSPOSE);
+			return (MPP_KEY_MIN);
 	case 2:
 	case 5:
 		temp = mw->getCurrTransposeScore();
 		if (temp >= 0)
-			return (temp % MPP_MAX_BANDS);
+			return (MPP_BAND_REM(temp));
 		else
-			return (MPP_INVALID_TRANSPOSE);
+			return (MPP_KEY_MIN);
 	default:
 		break;
 	}
@@ -630,12 +642,10 @@ MppSheet::mousePressEvent(QMouseEvent * event)
 			if (entries_ptr[x + (y * num_cols)] < 1)
 				continue;
 			switch (entries_rows[y].type) {
-			case MPP_T_SCORE:
+			case MPP_T_SCORE_SUBDIV:
 				num = entries_rows[y].u.score.num +
 				    entries_rows[y].u.score.trans_number +
 				    getTranspose(entries_rows[y].u.score.trans_mode);
-				if (num < 0 || num > 255)
-					break;
 				chan = (sm->synthChannel +
 				    entries_rows[y].u.score.chan) & 0xF;
 				mw->output_key(chan, num, 75, 0, 0);
@@ -651,12 +661,10 @@ MppSheet::mousePressEvent(QMouseEvent * event)
 		int num;
 		int chan;
 		switch (entries_rows[y].type) {
-		case MPP_T_SCORE:
+		case MPP_T_SCORE_SUBDIV:
 			num = entries_rows[y].u.score.num +
 			    entries_rows[y].u.score.trans_number +
 			    getTranspose(entries_rows[y].u.score.trans_mode);
-			if (num < 0 || num > 255)
-				break;
 			chan = (sm->synthChannel +
 			    entries_rows[y].u.score.chan) & 0xF;
 			mw->output_key(chan, num, 75, 0, 0);
@@ -684,7 +692,7 @@ MppSheet::mouseReleaseEvent(QMouseEvent * event)
 		entries_rows[y].playing = 0;
 
 		switch (entries_rows[y].type) {
-		case MPP_T_SCORE:
+		case MPP_T_SCORE_SUBDIV:
 			num = entries_rows[y].playkey;
 			chan = entries_rows[y].playchan;
 			mw->output_key(chan, num, 0, 0, 0);

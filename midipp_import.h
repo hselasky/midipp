@@ -48,6 +48,7 @@ public:
 	int n_chords[2];
 	int n_words[2];
 	int max_off;
+	int step;
 
 	uint8_t index;
 	uint8_t load_more;
@@ -57,7 +58,6 @@ class MppImportTab : public QObject
 {
 	Q_OBJECT;
 public:
-
 	MppImportTab(MppMainWindow *parent);
 	~MppImportTab();
 
@@ -67,17 +67,17 @@ public:
 	QPushButton *butImportFileNew;
 	QPushButton *butImportFileOpen;
 	QPushButton *butImportFileSaveAs;
-	MppButton *butImport[MPP_MAX_VIEWS];
+	MppButton *butImport[MPP_MAX_VIEWS][2];
 	MppGroupBox *gbImport;
 
 public slots:
-
 	void handleImportNew();
 	void handleImportOpen();
 	void handleImportSaveAs();
-	void handleImport(int);
+	void handleImport12(int);
+	void handleImportMS(int);
 };
 
-extern uint8_t midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm);
+extern uint8_t midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm, int step);
 
 #endif		/* _MIDIPP_IMPORT_H_ */

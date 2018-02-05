@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013-2017 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,19 +26,8 @@
 #include <string.h>
 
 #include "midipp_element.h"
+#include "midipp_chords.h"
 #include "midipp_decode.h"
-
-static int
-MppCompareValue(const void *pa, const void *pb)
-{
-	MppElement *ma = *((MppElement **)pa);
-	MppElement *mb = *((MppElement **)pb);
-	if (ma->value[0] > mb->value[0])
-		return (1);
-	if (ma->value[0] < mb->value[0])
-		return (-1);
-	return (0);
-}
 
 Q_DECL_EXPORT int
 MppSpaceOnly(QString &str)
@@ -52,41 +41,6 @@ MppSpaceOnly(QString &str)
 	return (1);
 }
 
-Q_DECL_EXPORT int
-MppIsChord(QString &str)
-{
-	int x;
-	int y;
-
-	if (str.size() > 1) {
-		QChar ch = str[1];
-
-		if (ch != 'A' &&
-		    ch != 'B' &&
-		    ch != 'C' &&
-		    ch != 'D' &&
-		    ch != 'E' &&
-		    ch != 'F' &&
-		    ch != 'G' &&
-		    ch != 'H')
-			return (0);
-	} else {
-		return (0);
-	}
-	for (x = 0; x != str.size(); x++) {
-		QChar ch = str[x];
-
-		if (ch.isDigit() || ch.isLetter())
-			goto skip;
-		for (y = 0; y != MppChordModChars.size(); y++) {
-			if (ch == MppChordModChars[y])
-				goto skip;
-		}
-		return (0);
-	skip:;
-	}
-	return (1);
-}
 
 Q_DECL_EXPORT QString
 MppDeQuoteChord(QString &str)
@@ -247,11 +201,13 @@ MppHead :: operator += (MppElement *elem)
 	QChar ch;
 	int off;
 	int x;
+	int channel;
 
 	if (elem == 0)
 		return;
 
 	off = 1;
+	channel = 0;
 
 	switch (elem->type) {
 	case MPP_T_CHANNEL:
@@ -260,6 +216,8 @@ MppHead :: operator += (MppElement *elem)
 			elem->value[0] = 0;
 		else if (elem->value[0] > 15)
 			elem->value[0] = 15;
+		/* store current channel */
+		channel = elem->value[0] & 15;
 		break; 
 
 	case MPP_T_COMMAND:
@@ -395,47 +353,34 @@ MppHead :: operator += (MppElement *elem)
 		}
 		break;
 
-	case MPP_T_SCORE:
-		elem->value[0] += MPP_MAX_BANDS * elem->getIntValue(&off);
+	case MPP_T_SCORE_SUBDIV:
+		elem->value[0] += 12 * elem->getIntValue(&off);
 		ch = elem->getChar(&off);
-		switch (ch.toLatin1()) {
-		case 'B':
-		case 'b':
-			elem->value[0] -= MPP_BAND_STEP_12;
-			break;
-#ifdef HAVE_QUARTERTONE
-		case 'Q':
-		case 'q':
-			elem->value[0] -= 3 * MPP_BAND_STEP_24;
-			break;
-		case 'C':
-		case 'c':
-			elem->value[0] -= MPP_BAND_STEP_24;
-			break;
-#endif
-		default:
-			break;
+		if (ch == 'B' || ch == 'b') {
+			elem->value[0] -= 1;
+			ch = elem->getChar(&off);
 		}
-
-		if (elem->value[0] > 255)
-			elem->value[0] = 255;
-		else if (elem->value[0] < 0)
-			elem->value[0] = 0;
+		elem->value[0] *= MPP_MAX_SUBDIV;
+		if (ch == '.') {
+			int rem = elem->getIntValue(&off);
+			rem = MPP_BAND_REM_BITREV(rem);
+			elem->value[0] += rem;
+		}
+		state.subdiv_map[channel] |= 1U << MPP_BAND_REM(elem->value[0]);
 		break;
 
 	case MPP_T_TRANSPOSE:
 		elem->value[0] = elem->getIntValue(&off);
-		/* range check transpose value */
-		if (elem->value[0] < -255)
-			elem->value[0] = -255;
-		else if (elem->value[0] > 255)
-			elem->value[0] = 255;
-		/* check for transpose mode */
+		elem->value[0] *= MPP_MAX_SUBDIV;
 		ch = elem->getChar(&off);
 		if (ch == '.') {
+			int rem = elem->getIntValue(&off);
+			rem = MPP_BAND_REM_BITREV(rem);
+			elem->value[0] += rem;
+			ch = elem->getChar(&off);
+		}
+		if (ch == '.') {
 			elem->value[1] = elem->getIntValue(&off);
-		} else {
-			elem->value[1] = 0;
 		}
 		break;
 
@@ -453,6 +398,10 @@ MppHead :: operator += (MppElement *elem)
 			else if (elem->value[1] > 0xffffff)
 				elem->value[1] = 0xffffff;
 		}
+		break;
+
+	case MPP_T_NEWLINE:
+		channel = 0;
 		break;
 
 	default:
@@ -480,25 +429,25 @@ MppHead :: operator += (QChar ch)
 		if (state.command == 0) {
 			if (ch == 'C') {
 				*this += state.elem;
-				state.elem = new MppElement(MPP_T_SCORE, state.line, MPP_C0);
+				state.elem = new MppElement(MPP_T_SCORE_SUBDIV, state.line, MPP_C0);
 			} else if (ch == 'D') {
 				*this += state.elem;
-				state.elem = new MppElement(MPP_T_SCORE, state.line, MPP_D0);
+				state.elem = new MppElement(MPP_T_SCORE_SUBDIV, state.line, MPP_D0);
 			} else if (ch == 'E') {
 				*this += state.elem;
-				state.elem = new MppElement(MPP_T_SCORE, state.line, MPP_E0);
+				state.elem = new MppElement(MPP_T_SCORE_SUBDIV, state.line, MPP_E0);
 			} else if (ch == 'F') {
 				*this += state.elem;
-				state.elem = new MppElement(MPP_T_SCORE, state.line, MPP_F0);
+				state.elem = new MppElement(MPP_T_SCORE_SUBDIV, state.line, MPP_F0);
 			} else if (ch == 'G') {
 				*this += state.elem;
-				state.elem = new MppElement(MPP_T_SCORE, state.line, MPP_G0);
+				state.elem = new MppElement(MPP_T_SCORE_SUBDIV, state.line, MPP_G0);
 			} else if (ch == 'A') {
 				*this += state.elem;
-				state.elem = new MppElement(MPP_T_SCORE, state.line, MPP_A0);
+				state.elem = new MppElement(MPP_T_SCORE_SUBDIV, state.line, MPP_A0);
 			} else if (ch == 'H' || ch == 'B') {
 				*this += state.elem;
-				state.elem = new MppElement(MPP_T_SCORE, state.line, MPP_H0);
+				state.elem = new MppElement(MPP_T_SCORE_SUBDIV, state.line, MPP_H0);
 			} else if (ch == 'T') {
 				*this += state.elem;
 				state.elem = new MppElement(MPP_T_CHANNEL, state.line);
@@ -682,7 +631,9 @@ MppHead :: getChord(int line, MppChordElement *pinfo)
 	int x;
 	int y;
 
+	/* set default values */
 	memset(pinfo, 0, sizeof(*pinfo));
+	pinfo->key_max = MPP_KEY_MIN;
 
 	start = stop = 0;
 
@@ -700,7 +651,7 @@ MppHead :: getChord(int line, MppChordElement *pinfo)
 		}
 		for (ptr = start; ptr != stop;
 		    ptr = TAILQ_NEXT(ptr, entry)) {
-			if (ptr->type == MPP_T_SCORE)
+			if (ptr->type == MPP_T_SCORE_SUBDIV)
 				break;
 		}
 
@@ -740,15 +691,13 @@ MppHead :: getChord(int line, MppChordElement *pinfo)
 			pinfo->stop = stop;
 
 			/* compute chord profile */
-			for (ptr = start; ptr != stop;
-			     ptr = TAILQ_NEXT(ptr, entry)) {
-				int key;
-				if (ptr->type != MPP_T_SCORE)
-					continue;
-				key = ptr->value[0];
-				pinfo->stats[key % MPP_MAX_BANDS]++;
-				if (key > pinfo->key_max)
-					pinfo->key_max = key;
+			for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
+				if (ptr->type == MPP_T_SCORE_SUBDIV) {
+					int key = ptr->value[0];
+					if (key > pinfo->key_max)
+						pinfo->key_max = key;
+					pinfo->stats[MPP_BAND_REM(key)]++;
+				}
 			}
 
 			for (x = y = 0; x != MPP_MAX_BANDS; x++) {
@@ -817,7 +766,7 @@ MppHead :: optimise()
 				ptr->type = MPP_T_UNKNOWN;
 				ptr->txt = QString();
 			}
-		} else if (ptr->type == MPP_T_SCORE ||
+		} else if (ptr->type == MPP_T_SCORE_SUBDIV ||
 		    ptr->type == MPP_T_MACRO) {
 			has_score = 1;
 		}
@@ -877,7 +826,7 @@ MppHead :: autoMelody(int which)
 	int am_keys[MPP_MAX_BANDS];
 	int cur_keys[MPP_MAX_BANDS];
 	int sort_keys[MPP_MAX_BANDS];
-	int last = 0;
+	int max = MPP_KEY_MIN;
 	int am_step;
 	int x;
 	int y;
@@ -896,11 +845,15 @@ MppHead :: autoMelody(int which)
 
 		for (dup = num = 0, ptr = start; ptr != stop;
 		    ptr = TAILQ_NEXT(ptr, entry)) {
-			if (ptr->type == MPP_T_SCORE) {
+			if (ptr->type == MPP_T_SCORE_SUBDIV) {
 				int rem;
 
-				last = ptr->value[0];
-				rem = last % MPP_MAX_BANDS;
+				/* get maximum value */
+				if (max < ptr->value[0])
+					max = ptr->value[0];
+
+				/* get remainder */
+				rem = MPP_BAND_REM(ptr->value[0]);
 				if (cur_keys[rem] == 0)
 					num++;
 				else
@@ -929,7 +882,8 @@ MppHead :: autoMelody(int which)
 		}
 
 		/* compute second score */
-		memset(sort_keys, 0xFF, sizeof(sort_keys));
+		for (x = 0; x != MPP_MAX_BANDS; x++)
+			sort_keys[x] = MPP_KEY_MIN;
 
 		/* gather candidates */
 		for (x = 0; x != MPP_MAX_BANDS; x++) {
@@ -939,15 +893,16 @@ MppHead :: autoMelody(int which)
 			if (am_keys[x] == 0 || cur_keys[x] != 0)
 				continue;
 
-			rem = last % MPP_MAX_BANDS;
+			/* compute absolute difference */
+			rem = MPP_BAND_REM(max);
 			if (x > rem)
 				delta = x - rem;
 			else
 				delta = rem - x;
 
-			rem = x + last - rem;
-
-			while (rem >= last)
+			/* reduce frequency to fit below max */
+			rem = x + max - MPP_BAND_REM(max);
+			if (rem >= max)
 				rem -= MPP_MAX_BANDS;
 
 			sort_keys[delta] = rem;
@@ -955,7 +910,7 @@ MppHead :: autoMelody(int which)
 
 		/* decide on closest candidate */
 		for (x = y = 0; x != MPP_MAX_BANDS; x++) {
-			if (sort_keys[x] > -1) {
+			if (sort_keys[x] > MPP_KEY_MIN) {
 				if (y == which)
 					break;
 				y++;
@@ -968,25 +923,25 @@ MppHead :: autoMelody(int which)
 
 		key = sort_keys[x];
 
-		ptr = new MppElement(MPP_T_SCORE, start->line, key);
-		ptr->txt = MppKeyStr[key];
-
-		psc = new MppElement(MPP_T_SPACE, start->line);
-		psc->txt = QString(" ");
-
+		ptr = new MppElement(MPP_T_SCORE_SUBDIV, start->line, key);
+		ptr->txt = MppKeyStr(key);
 		TAILQ_INSERT_BEFORE(start, ptr, entry);
-		TAILQ_INSERT_BEFORE(start, psc, entry);
 
-		/* update stop pointer, if any */
+		/* update stop pointer of chord line, if any */
 		if (am_stop == start)
 			am_stop = ptr;
+		
+		ptr = new MppElement(MPP_T_SPACE, start->line);
+		ptr->txt = QString(" ");
+		TAILQ_INSERT_BEFORE(start, ptr, entry);
 
 		duration = 1;
 
 		/* update duration of conflicting scores */
 		for (ptr = am_start; ptr != am_stop;
 		    ptr = TAILQ_NEXT(ptr, entry)) {
-			if (ptr->type == MPP_T_SCORE) {
+			if (ptr->type == MPP_T_SCORE_SUBDIV) {
+
 				if (ptr->value[0] != key)
 					continue;
 				if (duration < (2 * (steps - am_step - 1)))
@@ -1021,235 +976,297 @@ MppHead :: autoMelody(int which)
 			}
 		}
 	}
+
+	sortScore();
+}
+
+struct MppKeyInfo {
+	int channel;
+	int duration;
+	int key;
+};
+
+static int
+MppCompareKeyInfo(const void *pa, const void *pb)
+{
+	MppKeyInfo *ma = (MppKeyInfo *)pa;
+	MppKeyInfo *mb = (MppKeyInfo *)pb;
+
+	if (ma->channel > mb->channel)
+		return (1);
+	if (ma->channel < mb->channel)
+		return (-1);
+	if (ma->duration > mb->duration)
+		return (1);
+	if (ma->duration < mb->duration)
+		return (-1);
+	if (ma->key > mb->key)
+		return (1);
+	if (ma->key < mb->key)
+		return (-1);
+	return (0);
+}
+
+void
+MppHead :: sortScore()
+{
+	MppElement *start;
+	MppElement *stop;
+	MppElement *ptr;
+	int duration;
+	int channel;
+
+	while (foreachLine(&start, &stop) != 0) {
+		struct MppKeyInfo *mk;
+		size_t num = 0;
+		size_t i;
+
+		for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
+			switch (ptr->type) {
+			case MPP_T_SCORE_SUBDIV:
+				num++;
+				break;
+			default:
+				break;
+			}
+		}
+
+		if (num == 0)
+			continue;
+
+		mk = (struct MppKeyInfo *)malloc(num * sizeof(*mk));
+		if (mk == 0)
+			continue;
+
+		channel = 0;
+		duration = 1;
+		num = 0;
+
+		/* extract all keys */
+		for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
+			switch (ptr->type) {
+			case MPP_T_DURATION:
+				duration = ptr->value[0];
+				ptr->type = MPP_T_UNKNOWN;
+				ptr->txt = QString();
+				break;
+			case MPP_T_CHANNEL:
+				channel = ptr->value[0];
+				ptr->type = MPP_T_UNKNOWN;
+				ptr->txt = QString();
+				break;
+			case MPP_T_SCORE_SUBDIV:
+				mk[num].channel = channel;
+				mk[num].duration = duration;
+				mk[num].key = ptr->value[0];
+				num++;
+				ptr->type = MPP_T_UNKNOWN;
+				ptr->txt = QString();
+				break;
+			default:
+				break;
+			}
+		}
+
+		mergesort(mk, num, sizeof(*mk), MppCompareKeyInfo);
+
+		/* output */
+
+		channel = 0;
+		duration = 1;
+
+		for (i = 0; i != num; i++) {
+			if (i != 0 && MppCompareKeyInfo(mk + i, mk + i - 1) == 0)
+				continue;
+			if (channel != mk[i].channel) {
+				channel = mk[i].channel;
+				ptr = new MppElement(MPP_T_CHANNEL, start->line, channel);
+				ptr->txt = QString("T%1").arg(channel);
+				TAILQ_INSERT_BEFORE(start, ptr, entry);
+
+				ptr = new MppElement(MPP_T_SPACE, start->line);
+				ptr->txt = QString(" ");
+				TAILQ_INSERT_BEFORE(start, ptr, entry);
+			}
+			if (duration != mk[i].duration) {
+				duration = mk[i].duration;
+				ptr = new MppElement(MPP_T_DURATION, start->line, duration);
+				ptr->txt = QString("U%1%2").arg((duration + 1) / 2)
+				    .arg((duration & 1) ? "" : ".");
+				TAILQ_INSERT_BEFORE(start, ptr, entry);
+
+				ptr = new MppElement(MPP_T_SPACE, start->line);
+				ptr->txt = QString(" ");
+				TAILQ_INSERT_BEFORE(start, ptr, entry);
+			}
+			ptr = new MppElement(MPP_T_SCORE_SUBDIV, start->line, mk[i].key);
+			ptr->txt = MppKeyStr(mk[i].key);
+			TAILQ_INSERT_BEFORE(start, ptr, entry);
+
+			ptr = new MppElement(MPP_T_SPACE, start->line);
+			ptr->txt = QString(" ");
+			TAILQ_INSERT_BEFORE(start, ptr, entry);
+		}
+		free(mk);
+	}
 }
 
 void
 MppHead :: transposeScore(int adjust, int sharp)
 {
 	MppElement *ptr;
-	int x;
 
 	if (sharp == 0) {
 		/* figure out sharp or flat */
 		TAILQ_FOREACH(ptr, &head, entry) {
-
 			if (ptr->type != MPP_T_STRING_CHORD)
-				continue;			
-
+				continue;
 			/* Chords should not contain spaces of any kind */
 			if (MppIsChord(ptr->txt) == 0)
 				continue;
 
-			for (x = 0; x < ptr->txt.size() - 1; x++) {
-				QChar ch = ptr->txt[x];
-				QChar cn = ptr->txt[x + 1];
-
-				switch (ch.toLatin1()) {
-				case 'A':
-				case 'B':
-				case 'C':
-				case 'D':
-				case 'E':
-				case 'F':
-				case 'G':
-				case 'H':
-					switch (cn.toLatin1()) {
-					case '#':
-						sharp++;
-						x++;
-						break;
-					case 'b':
-						sharp--;
-						x++;
-						break;
-#ifdef HAVE_QUARTERTONE
-					case 'c':
-					case 'q':
-						x++;
-						break;
-#endif
-					default:
-						break;
-					}
-					break;
-				default:
-					break;
-				}
+			/* If any sharp is seen, select sharp */
+			if (ptr->txt.indexOf("#") > -1) {
+				sharp = 1;
+				break;
 			}
 		}
 	}
 
-	/* convert to boolean */
-	if (sharp >= 0)
-		sharp = 1;	/* sharp */
-	else
-		sharp = 0;	/* flat */
+	/* convert into boolean */
+	sharp = sharp ? 1 : 0;
 
 	TAILQ_FOREACH(ptr, &head, entry) {
-
-		if (ptr->type == MPP_T_SCORE) {
+		switch (ptr->type) {
+		case MPP_T_SCORE_SUBDIV:
 			ptr->value[0] += adjust;
-			if (ptr->value[0] < 0 || ptr->value[0] > 255) {
-				ptr->txt = QString();
-				ptr->type = MPP_T_UNKNOWN;
-			} else {
-				ptr->txt = MppKeyStr[ptr->value[0]];
-			}
-			continue;
+			ptr->txt = MppKeyStr(ptr->value[0]);
+			break;
+		case MPP_T_STRING_CHORD:
+			MppStepChordGeneric(ptr->txt, adjust, sharp);
+			break;
+		default:
+			break;
 		}
-
-		if (ptr->type != MPP_T_STRING_CHORD)
-			continue;
-
-		/* Chords should not contain spaces of any kind */
-		if (MppIsChord(ptr->txt) == 0)
-			continue;
-
-		QString out;
-
-		for (x = 0; x < ptr->txt.size() - 1; x++) {
-			int key;
-
-			QChar ch = ptr->txt[x];
-			QChar cn = ptr->txt[x + 1];
-
-			if (ch == 'A')
-				key = MPP_A0;
-			else if (ch == 'B' || ch == 'H')
-				key = MPP_H0;
-			else if (ch == 'C')
-				key = MPP_C0;
-			else if (ch == 'D')
-				key = MPP_D0;
-			else if (ch == 'E')
-				key = MPP_E0;
-			else if (ch == 'F')
-				key = MPP_F0;
-			else if (ch == 'G')
-				key = MPP_G0;
-			else
-				key = -1;
-
-			if (key > -1) {
-				/* can be negative */
-				key += adjust % MPP_MAX_BANDS;
-
-				switch (cn.toLatin1()) {
-#ifdef HAVE_QUARTERTONE
-				case 'q':
-					key = (MPP_MAX_BANDS - 3 + key) % MPP_MAX_BANDS;
-					out += MppBaseKeyToString(key, sharp);
-					x++;
-					break;
-				case 'c':
-					key = (MPP_MAX_BANDS - 1 + key) % MPP_MAX_BANDS;
-					out += MppBaseKeyToString(key, sharp);
-					x++;
-					break;
-#endif
-				case 'b':
-					key = (MPP_MAX_BANDS - 2 + key) % MPP_MAX_BANDS;
-					out += MppBaseKeyToString(key, sharp);
-					x++;
-					break;
-				case '#':
-					key = (MPP_MAX_BANDS + 2 + key) % MPP_MAX_BANDS;
-					out += MppBaseKeyToString(key, sharp);
-					x++;
-					break;
-				default:
-					key = (MPP_MAX_BANDS + key) % MPP_MAX_BANDS;
-					out += MppBaseKeyToString(key, sharp);
-					break;
-				}
-				continue;
-			}
-			out += ch;
-		}
-		/* last character too */
-		out += ptr->txt[ptr->txt.size() - 1];
-
-		/* put new text in place */
-		ptr->txt = out;
 	}
 }
 
 void
 MppHead :: limitScore(int limit)
 {
-	MppElement *start;
-	MppElement *stop;
+	MppElement *start = 0;
+	MppElement *stop = 0;
 	MppElement *ptr;
-	MppElement *array[128];
-	int num;
-	int x;
-	int y;
-	int z;
-	int temp;
-	int map[MPP_MAX_BANDS];
 
-	if (limit < 0 || limit > 255)
-		return;
+	while (foreachLine(&start, &stop)) {
+		struct MppKeyInfo *mk;
+		size_t num = 0;
+		size_t i;
+		size_t j;
+		int channel;
+		int duration;
 
-	start = stop = 0;
-
-	while (foreachLine(&start, &stop) != 0) {
-		for (num = 0, ptr = start; ptr != stop;
-		    ptr = TAILQ_NEXT(ptr, entry)) {
-			if (ptr->type == MPP_T_SCORE && num < 128) {
-				array[num++] = ptr;
-			}
+		for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
+			if (ptr->type == MPP_T_SCORE_SUBDIV)
+				num++;
 		}
+
 		if (num == 0)
 			continue;
 
-		/* sort scores by value */
+		mk = (struct MppKeyInfo *)malloc(num * sizeof(*mk));
+		if (mk == 0)
+			continue;
+		channel = 0;
+		duration = 1;
+		num = 0;
 
-		qsort(array, num, sizeof(void *), MppCompareValue);
-
-		/* setup map */
-
-		for (x = 0; x != MPP_MAX_BANDS; x++)
-			map[x] = limit;
-
-		/* re-align */
-
-		for (x = num - 1; x != -1; ) {
-
-			/* get current score */
-			temp = array[x]->value[0];
-			y = temp % MPP_MAX_BANDS;
-
-			/* compute length */
-
-			for (z = x - 1; z != -1; z--) {
-				if (array[x]->value[0] != array[z]->value[0])
-					break;
-			}
-
-			/* adjust */
-
-			while (temp < map[y])
-				temp += MPP_MAX_BANDS;
-			while (temp >= map[y])
-				temp -= MPP_MAX_BANDS;
-
-			/* range check */
-
-			if (temp < 0 || temp > 255) {
-				for (; x != z; x--) {
-					array[x]->type = MPP_T_UNKNOWN;
-					array[x]->value[0] = 0;
-					array[x]->txt = QString();
-				}
-			} else {
-				map[y] = temp;
-				for (; x != z; x--) {
-					array[x]->value[0] = temp;
-					array[x]->txt = MppKeyStr[temp];
-				}
+		/* extract all keys */
+		for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
+			switch (ptr->type) {
+			case MPP_T_DURATION:
+				duration = ptr->value[0];
+				ptr->type = MPP_T_UNKNOWN;
+				ptr->txt = QString();
+				break;
+			case MPP_T_CHANNEL:
+				channel = ptr->value[0];
+				ptr->type = MPP_T_UNKNOWN;
+				ptr->txt = QString();
+				break;
+			case MPP_T_SCORE_SUBDIV:
+				mk[num].channel = channel;
+				mk[num].duration = duration;
+				mk[num].key = ptr->value[0];
+				num++;
+				ptr->type = MPP_T_UNKNOWN;
+				ptr->txt = QString();
+				break;
+			default:
+				break;
 			}
 		}
+
+		/* import scores */
+		for (i = 0; i != num; i++) {
+			mk[i].key = MPP_BAND_REM(mk[i].key) + limit - MPP_BAND_REM(limit);
+			if (mk[i].key >= limit)
+				mk[i].key -= MPP_MAX_BANDS;
+		}
+
+		mergesort(mk, num, sizeof(*mk), MppCompareKeyInfo);
+
+		/* figure out the duplicates and move them down */
+		for (i = num; i--; ) {
+			for (j = i; j--; ) {
+				if (mk[i].channel != mk[j].channel)
+					break;
+				if (mk[i].key == mk[j].key)
+					mk[j].key -= MPP_MAX_BANDS;
+			}
+		}
+
+		mergesort(mk, num, sizeof(*mk), MppCompareKeyInfo);
+
+		/* output */
+
+		channel = 0;
+		duration = 1;
+
+		for (i = 0; i != num; i++) {
+			if (i != 0 && MppCompareKeyInfo(mk + i, mk + i - 1) == 0)
+				continue;
+			if (channel != mk[i].channel) {
+				channel = mk[i].channel;
+				ptr = new MppElement(MPP_T_CHANNEL, start->line, channel);
+				ptr->txt = QString("T%1").arg(channel);
+				TAILQ_INSERT_BEFORE(start, ptr, entry);
+
+				ptr = new MppElement(MPP_T_SPACE, start->line);
+				ptr->txt = QString(" ");
+				TAILQ_INSERT_BEFORE(start, ptr, entry);
+			}
+			if (duration != mk[i].duration) {
+				duration = mk[i].duration;
+				ptr = new MppElement(MPP_T_DURATION, start->line, duration);
+				ptr->txt = QString("U%1%2").arg((duration + 1) / 2)
+				    .arg((duration & 1) ? "" : ".");
+				TAILQ_INSERT_BEFORE(start, ptr, entry);
+
+				ptr = new MppElement(MPP_T_SPACE, start->line);
+				ptr->txt = QString(" ");
+				TAILQ_INSERT_BEFORE(start, ptr, entry);
+			}
+			ptr = new MppElement(MPP_T_SCORE_SUBDIV, start->line, mk[i].key);
+			ptr->txt = MppKeyStr(mk[i].key);
+			TAILQ_INSERT_BEFORE(start, ptr, entry);
+
+			ptr = new MppElement(MPP_T_SPACE, start->line);
+			ptr->txt = QString(" ");
+			TAILQ_INSERT_BEFORE(start, ptr, entry);
+		}
+
+		free(mk);
 	}
 }
 
@@ -1448,7 +1465,7 @@ MppHead :: stepLine(MppElement **ppstart, MppElement **ppstop)
 					if (!to--)
 						goto done;
 					break;
-				} else if (ptr->type == MPP_T_SCORE ||
+				} else if (ptr->type == MPP_T_SCORE_SUBDIV ||
 				    ptr->type == MPP_T_MACRO ||
 				    ptr->type == MPP_T_TIMER) {
 					/* valid event */
