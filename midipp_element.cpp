@@ -362,8 +362,6 @@ MppHead :: operator += (MppElement *elem)
 			rem = MPP_BAND_REM_BITREV(rem);
 			elem->value[0] += rem;
 		}
-		x = MPP_BAND_REM_BITREV(elem->value[0]);
-		state.subdiv_map |= (1U << x);
 		break;
 
 	case MPP_T_TRANSPOSE:

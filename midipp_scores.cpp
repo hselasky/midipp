@@ -777,6 +777,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 
 	/* set initial mask for active channels */
 	active_channels = 1;
+	subdiv_map = 0;
 
 	/* no automatic melody */
 	auto_melody = 0;
@@ -832,6 +833,8 @@ MppScoreMain :: handleParse(const QString &pstr)
 			} else if (ptr->type == MPP_T_JUMP) {
 				if (ptr->value[1] & MPP_FLAG_JUMP_PAGE)
 					index = 0;
+			} else if (ptr->type == MPP_T_SCORE_SUBDIV) {
+				subdiv_map |= (1U << MPP_BAND_REM_BITREV(ptr->value[0]));
 			}
 		}
 		/* compute maximum number of score lines */
@@ -2122,14 +2125,14 @@ MppScoreMain :: outputMaskGet(void)
 		break;
 	case MM_PASS_NONE_CHORD_PIANO:
 	case MM_PASS_NONE_CHORD_GUITAR:
-		mask = head.state.subdiv_map;
+		mask = subdiv_map;
 		if (synthChannelBase > -1) {
 			const int y = (synthChannelBase - synthChannel) & 0xF;
-			mask |= head.state.subdiv_map << y;
+			mask |= subdiv_map << y;
 		}
 		if (synthChannelTreb > -1) {
 			const int y = (synthChannelTreb - synthChannel) & 0xF;
-			mask |= head.state.subdiv_map << y;
+			mask |= subdiv_map << y;
 		}
 		/* check for wrap around */
 		mask |= (mask >> 16);
