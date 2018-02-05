@@ -2115,7 +2115,6 @@ uint16_t
 MppScoreMain :: outputMaskGet(void)
 {
 	uint32_t mask;
-	int x;
 
 	switch (keyMode) {
 	case MM_PASS_ALL:
