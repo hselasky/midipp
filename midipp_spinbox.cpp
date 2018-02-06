@@ -54,7 +54,7 @@ MppSpinBox :: MppSpinBox(QWidget *parent, int allow_neg)
   : QSpinBox(parent)
 {
 	if (allow_neg)
-		setRange(0x8000, 0x7fff);
+		setRange(-0x8000, 0x7fff);
 	else
 		setRange(0, 0x7fff);
 	setSingleStep(MPP_BAND_STEP_12);
