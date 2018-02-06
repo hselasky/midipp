@@ -1976,7 +1976,7 @@ MppScoreMain :: handleScoreFileStepUpHalf(void)
 void
 MppScoreMain :: handleScoreFileStepDownHalf(void)
 {
-	handleScoreFileEffect(1, MPP_BAND_STEP_12,0);
+	handleScoreFileEffect(1,-MPP_BAND_STEP_12,0);
 }
 
 void
