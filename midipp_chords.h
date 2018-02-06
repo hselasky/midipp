@@ -159,36 +159,26 @@ struct MppChord {
 	};
 };
 
-extern MppChord_t MppFindChordRoot(MppChord_t, uint32_t &);
-
 class MppScoreVariant {
 public:
 	MppScoreVariant(uint32_t _chord, const char *a, const char *b = 0,
-	    const char *c = 0, const char *d = 0) {
-		footprint.zero();
-		for (int x = 0; x != 12; x++) {
-			if ((_chord >> x) & 1)
-				footprint.set(x * MPP_BAND_STEP_12);
-		}
-		pattern[0] = a;
-		pattern[1] = b;
-		pattern[2] = c;
-		pattern[3] = d;
-	};
+	    const char *c = 0, const char *d = 0);
 	~MppScoreVariant() { };
 	const char * pattern[4];
 	MppChord_t footprint;
+	uint32_t rots;
 };
 
 extern void MppRolUpChord(MppChord_t &input, int &delta);
 extern void MppRolDownChord(MppChord_t &input, int &delta);
 extern void MppNextChordRoot(MppChord_t &input, int step = 1);
 extern void MppPrevChordRoot(MppChord_t &input, int step = 1);
+extern MppChord_t MppFindChordRoot(MppChord_t, uint32_t &);
 extern int MppIsChord(QString &);
 
 extern void MppChordToStringGeneric(MppChord_t mask, uint32_t rem, uint32_t bass, uint32_t is_chord, uint32_t step, QString &retval);
 extern void MppStringToChordGeneric(MppChord_t &mask, uint32_t &rem, uint32_t &bass, uint32_t step, const QString &str);
-extern const QString MppKeyToStringGeneric(uint32_t key, uint32_t sharp);
+extern const QString MppKeyToStringGeneric(int key, int sharp);
 extern void MppStepChordGeneric(QString &str, int adjust, uint32_t sharp);
 
 #endif		/* _MIDIPP_CHORDS_H_ */

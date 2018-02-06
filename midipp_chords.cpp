@@ -25,7 +25,11 @@
 
 #include "midipp_chords.h"
 
-/* common standard */
+/* allowed chord modifier characters */
+
+const QString MppChordModChars = QString::fromUtf8("%./+-#Δ&|^°");
+
+/* common public chord standard */
 
 static const char *score_major[] = {
 	"$M", "M", "Δ", "j", "Ma", "maj", "major", 0
@@ -322,7 +326,7 @@ MppGetValue(const QString &str, int &off)
 }
 
 Q_DECL_EXPORT void
-MppRolUpChord(MppChord_t &input, int &delta)
+MppRolDownChord(MppChord_t &input, int &delta)
 {
 	if (input.test(0) == 0)
 		return;
@@ -336,14 +340,13 @@ MppRolUpChord(MppChord_t &input, int &delta)
 }
 
 Q_DECL_EXPORT void
-MppRolDownChord(MppChord_t &input, int &delta)
+MppRolUpChord(MppChord_t &input, int &delta)
 {
 	if (input.test(0) == 0)
 		return;
-
 	while (input.test(MPP_MAX_BANDS) == 0) {
 		input.shl();
-		delta--;
+		delta++;
 	}
 	input.tog(0);
 	input.tog(MPP_MAX_BANDS);
@@ -385,8 +388,8 @@ MppFindChordRoot(MppChord_t input, uint32_t &rots)
 	MppChord_t retval = input;
 	uint32_t tmprot = 0;
 
-	rots = tmprot = 0;
-	while (1) {
+	rots = 0;
+	for (uint32_t x = 0; x != MPP_MAX_BANDS; x++) {
 		if (input.test(0)) {
 			input.tog(0);
 			input.tog(MPP_MAX_BANDS);
@@ -411,13 +414,16 @@ MppIsChord(QString &str)
 	int x;
 	int y;
 
-	for (x = 0; x != str.size(); x++) {
+	for (x = 0; x != str.length(); x++) {
 		QChar ch = str[x];
 
 		if (retval == 0 && ch.isLetter()) {
 			retval = 1;
 			if (ch < 'A' || ch > 'H')
 				return (0);
+		} else if (retval != 0 && ch == '/') {
+			retval = 0;
+			goto next;
 		}
 		if (ch.isDigit() || ch.isLetter())
 			goto next;
@@ -455,7 +461,7 @@ MppExpandPattern12(const QString &pattern, QString &str)
 }
 
 static bool
-MppScoreMatchPattern12(const QString &pattern, const QString &str, int &add, int t = 0, int u = 0)
+MppScoreMatchPattern12(const QString &pattern, const QString &str, int &add, int t, int &u)
 {
 	while (1) {
 		if (t >= pattern.length()) {
@@ -504,7 +510,7 @@ MppScoreMatchPattern12(const QString &pattern, const QString &str, int &add, int
 				}
 				add = (add + 12) % 12;
 			}
-			return (u == str.length() || str[u] == '/');
+			return (u == str.length() || str[u] == '/' || str[u] == '%');
 		} else if (pattern[t] == '$') {
 		  	int x;
 			int y;
@@ -517,11 +523,14 @@ MppScoreMatchPattern12(const QString &pattern, const QString &str, int &add, int
 			for (y = 1; score_macros[x][y]; y++) {
 				QString temp = QString::fromUtf8(score_macros[x][y]);
 				if (str.indexOf(temp, u) == u) {
+					int nu = u + temp.length();
 					/* there might be more matches, need to recurse */
 					bool found = MppScoreMatchPattern12(
-					    pattern, str, add, t + 2, u + temp.length());
-					if (found)
+					    pattern, str, add, t + 2, nu);
+					if (found) {
+						u = nu;
 						return (found);
+					}
 				}
 			}
 			return (false);
@@ -536,273 +545,244 @@ MppScoreMatchPattern12(const QString &pattern, const QString &str, int &add, int
 	}
 }
 
-static void
-MppStringToChord12(MppChord_t &mask, uint32_t &rem, uint32_t &bass, const QString &str)
+static int
+MppStringDecodeKey(const QString &str, int &off)
 {
 	const uint8_t map[8] = { MPP_A0, MPP_H0, MPP_C0, MPP_D0,
 				 MPP_E0, MPP_F0, MPP_G0, MPP_H0 };
-	uint32_t diff;
+	int x;
+	int y = off;
 	char ch;
+
+	if (y >= str.length())
+		goto error;
+
+	ch = str[y].toLatin1();
+	if (ch < 'A' || ch > 'H')
+		goto error;
+
+	/* regular chord notation */
+	x = map[ch - 'A'];
+	y++;
+	if (y != str.length()) {
+		if (str[y] == 'b') {
+			x = (11 + x) % 12;
+			/* advance */
+			y++;
+		} else if (str[y] == '#') {
+			x = (1 + x) % 12;
+			/* advance */
+			y++;
+		}
+	}
+	x *= MPP_BAND_STEP_12;
+
+	/* check for subdivision marker */
+	if (y != str.length() && str[y].isDigit()) {
+		int z;
+		int rem;
+
+		z = y;
+		rem = MppGetValue(str, z);
+		if (rem > 0 && z != str.length() && str[z] == '.') {
+			x += MPP_BAND_REM_BITREV(rem);
+			/* advance */
+			y = z + 1;
+		}
+	}
+	off = y;
+	return (x);
+error:
+	return (-1);
+}
+
+static int
+MppStringDecodeNumeric(const QString &str, int &off)
+{
 	int x;
 	int y;
+
+	y = off;
+	x = MppGetValue(str, y);
+	if (x < 1)
+		goto error;
+	off = y;
+	return (MPP_KEY_TO_BAND(x));
+error:
+	return (-1);
+}
+
+Q_DECL_EXPORT void
+MppStringToChordGeneric(MppChord_t &mask, uint32_t &rem, uint32_t &bass, uint32_t step, const QString &str)
+{
+	uint32_t diff;
 	int add;
+	int y;
 
 	if (str.isEmpty())
 		goto error;
 
-	ch = str[0].toLatin1();
-	if (ch < 'A' || ch > 'H')
+	y = 0;
+	rem = bass = MppStringDecodeKey(str, y);
+	if (rem == -1U)
 		goto error;
 
-	x = map[ch - 'A'];
-	y = 1;
-	if (str.length() > y) {
-		if (str[y] == 'b') {
-			x = (11 + x) % 12;
-			y++;
-		} else if (str[y] == '#') {
-			x = (1 + x) % 12;
-			y++;
-		}
-	}
-
-	rem = bass = x * MPP_BAND_STEP_12;
 	mask.zero();
 	mask.set(0);
 
-	for (x = 0; x != (sizeof(MppScoreVariants12) / sizeof(MppScoreVariants12[0])); x++) {
-	    for (int z = 0; MppScoreVariants12[x].pattern[z]; z++) {
+	for (size_t x = 0; x != (sizeof(MppScoreVariants12) / sizeof(MppScoreVariants12[0])); x++) {
+	    for (size_t z = 0; MppScoreVariants12[x].pattern[z]; z++) {
 		QString pat = QString::fromUtf8(MppScoreVariants12[x].pattern[z]);
+		int nu = y;
 		add = -1;
-		if (MppScoreMatchPattern12(pat, str, add, 0, y)) {
-			y = str.indexOf("/");
-			if (y < 0)
-				y = str.length();
-			mask = MppScoreVariants12[x].footprint;
-			if (add > -1)
-				mask.set(add * MPP_BAND_STEP_12);
-			mask = MppFindChordRoot(mask, diff);
-			rem += diff;
-			rem %= MPP_MAX_BANDS;
-			goto next;
+		if (MppScoreMatchPattern12(pat, str, add, 0, nu) == 0)
+			continue;
+		y = nu;
+		/* set mask */
+		mask = MppScoreVariants12[x].footprint;
+		/* check for add */
+		if (add > -1) {
+			if (mask.test(add * MPP_BAND_STEP_12))
+				goto error;
+			mask.set(add * MPP_BAND_STEP_12);
 		}
+		/* adjust for rotation */
+		rem = (rem + MppScoreVariants12[x].rots) % MPP_MAX_BANDS;
+		goto next;
 	    }
 	}
 next:
-	for (x = y; x != str.length(); x++) {
-		if (str[x] == '/') {
-			if ((x + 2) == str.length()) {
-				if (str[x + 1] < QChar('A') || str[x + 1] > QChar('H'))
-					goto error;
-				bass = map[str[x + 1].toLatin1() - 'A'] * MPP_BAND_STEP_12;
-				break;
-			} else if ((x + 3) == str.length()) {
-				if (str[x + 1] < QChar('A') || str[x + 1] > QChar('H'))
-					goto error;
-				if (str[x + 2] == 'b') {
-					bass = (11 + map[str[x + 1].toLatin1() - 'A']) % 12;
-					bass *= MPP_BAND_STEP_12;
-					break;
-				} else if (str[x + 2] == '#') {
-					bass = (1 + map[str[x + 1].toLatin1() - 'A']) % 12;
-					bass *= MPP_BAND_STEP_12;
-					break;
-				}
-			}
-		}
-		goto error;
+	while (y != str.length() && str[y] == '%') {
+		y++;
+		diff = MppStringDecodeNumeric(str, y);
+		if (diff == -1U || (diff % step) || mask.test(diff))
+			goto error;
+		mask.set(diff);
 	}
-	if (MppFindChordRoot(mask, diff) != mask)
+	if (y != str.length()) {
+		if (str[y] != '/')
+			goto error;
+		y++;
+		bass = MppStringDecodeKey(str, y);
+		if (bass == -1U || y != str.length())
+			goto error;
+	}
+	if ((rem % step) || (bass % step))
 		goto error;
 	return;
 error:
 	mask.zero();
 	rem = 0;
 	bass = 0;
-}
-
-static const char *
-MppKeyToString12(uint32_t key, uint32_t sharp)
-{
-
-	switch (key / MPP_BAND_STEP_12) {
-	/* majors */
-	case MPP_A0:
-		return ("A");
-	case MPP_H0:
-		return ("H");
-	case MPP_C0:
-		return ("C");
-	case MPP_D0:
-		return ("D");
-	case MPP_E0:
-		return ("E");
-	case MPP_F0:
-		return ("F");
-	case MPP_G0:
-		return ("G");
-	/* flats */
-	case MPP_H0B:
-		if (sharp)
-			return ("A#");
-		else
-			return ("Hb");
-	case MPP_A0B:
-		if (sharp)
-			return ("G#");
-		else
-			return ("Ab");
-	case MPP_G0B:
-		if (sharp)
-			return ("F#");
-		else
-			return ("Gb");
-	case MPP_E0B:
-		if (sharp)
-			return ("D#");
-		else
-			return ("Eb");
-	case MPP_D0B:
-		if (sharp)
-			return ("C#");
-		else
-			return ("Db");
-	default:
-		return ("");
-	}
 }
 
 Q_DECL_EXPORT void
 MppChordToStringGeneric(MppChord_t mask, uint32_t rem, uint32_t bass, uint32_t sharp, uint32_t step, QString &retval)
 {
 	uint32_t rots;
-	uint32_t x;
+
+	rem = rem % MPP_MAX_BANDS;
+	bass = bass % MPP_MAX_BANDS;
+
+	/* check if conversion is valid */
+	if ((rem % step) || (bass % step) || mask.test(0) == 0)
+		goto error;
 
 	/* get root chord */
 	mask = MppFindChordRoot(mask, rots);
 
-	/* adjust for rotation */
-	rem = (rem + rots + MPP_MAX_BANDS - (MPP_BAND_STEP_12 * 9)) % MPP_MAX_BANDS;
-	bass = (bass + MPP_MAX_BANDS - (MPP_BAND_STEP_12 * 9)) % MPP_MAX_BANDS;
-
-	/* check if conversion is valid */
-	if ((rem % step) || (bass % step))
-		goto error;
-
+	/* adjust for rotations */
+	rem = (rem + rots) % MPP_MAX_BANDS;
+	
 	/* look for known chords */
-	if ((rem % MPP_BAND_STEP_12) == 0 || (bass % MPP_BAND_STEP_12) == 0) {
-		for (x = 0; x != (sizeof(MppScoreVariants12) / sizeof(MppScoreVariants12[0])); x++) {
-			if (MppScoreVariants12[x].footprint == mask) {	
-				QString pat = QString::fromUtf8(MppScoreVariants12[x].pattern[0]);
-				MppExpandPattern12(pat, retval);
-				rem = (rem + (MPP_BAND_STEP_12 * 9)) % MPP_MAX_BANDS;
-				bass = (bass + (MPP_BAND_STEP_12 * 9)) % MPP_MAX_BANDS;
-				if (rem != bass) {
-					retval = MppKeyToString12(rem, sharp) + retval + QString("/") +
-					    MppKeyToString12(bass, sharp);
-				} else {
-					retval = MppKeyToString12(rem, sharp) + retval;
-				}
-				return;
-			}
-		}
+	for (size_t x = 0; x != (sizeof(MppScoreVariants12) / sizeof(MppScoreVariants12[0])); x++) {
+		if (MppScoreVariants12[x].footprint != mask)
+			continue;
+		QString pat = QString::fromUtf8(MppScoreVariants12[x].pattern[0]);
+		uint32_t y = MppScoreVariants12[x].rots;
+
+		/* expand pattern */
+		MppExpandPattern12(pat, retval);
+
+		/* adjust for rotations, again */
+		rem = (rem + MPP_MAX_BANDS - y) % MPP_MAX_BANDS;
+
+		retval = MppKeyToStringGeneric(rem, sharp) + retval;
+		if (rem != bass)
+			retval += QString("/") + MppKeyToStringGeneric(bass, sharp);
+		return;
 	}
 
-	rem = MPP_BAND_TO_KEY(rem);
-	bass = MPP_BAND_TO_KEY(bass);
+	retval = MppKeyToStringGeneric(rem, sharp) + QString("1");
 
-	if (mask.test(0) == 0)
-		goto error;
-
-	retval = QString("%1").arg(rem);
-
-	for (x = 1; x != MPP_MAX_BANDS; x++) {
+	/* use the generic way */
+	for (int x = 1; x != MPP_MAX_BANDS; x++) {
 		if (mask.test(x)) {
 			if (x % step)
 				goto error;
-			retval += QString("-%1").arg(MPP_BAND_TO_KEY(x));
+			retval += QString("%%1").arg(MPP_BAND_TO_KEY(x));
 		}
 	}
 	if (rem != bass) {
 		retval += "/";
-		retval += QString("%1").arg(bass);
+		retval += MppKeyToStringGeneric(bass, sharp);
 	}
 	return;
 error:
 	retval = QString();
 }
 
-Q_DECL_EXPORT void
-MppStringToChordGeneric(MppChord_t &mask, uint32_t &rem, uint32_t &bass, uint32_t step, const QString &str)
-{
-	int last = 0;
-	int off = 0;
-	int diff;
-	uint32_t rots;
-
-	if (str.isEmpty())
-		goto error;
-
-	if (step <= MPP_BAND_STEP_12) {
-		MppStringToChord12(mask, rem, bass, str);
-		if (mask.test(0))
-			return;
-	}
-	
-	rem = MppGetValue(str, off);
-	rem = bass = (MPP_KEY_TO_BAND(rem) + (MPP_BAND_STEP_12 * 9)) % MPP_MAX_BANDS;
-	if ((int)rem < 0 || (rem % step))
-		goto error;
-	mask.zero();
-	mask.set(0);
-
-	while (1) {
-		if (off == str.length())
-			break;
-		if (str[off] != '-')
-			break;
-		off++;
-
-		diff = MppGetValue(str, off);
-		diff = MPP_KEY_TO_BAND(diff);
-		if ((diff <= last) || (diff % step))
-			goto error;
-		mask.set(diff);
-		last = diff;
-	}
-
-	if (off != str.length() && str[off] == '/') {
-		off++;
-		bass = MppGetValue(str, off);
-		if ((int)bass < 0)
-			goto error;
-		bass = (MPP_KEY_TO_BAND(bass) + (MPP_BAND_STEP_12 * 9)) % MPP_MAX_BANDS;
-	}
-
-	if (off != str.length())
-		goto error;
-	if (MppFindChordRoot(mask, rots) != mask)
-		goto error;
-	return;
-error:
-	mask.zero();
-	rem = 0;
-	bass = 0;
-}
-
 Q_DECL_EXPORT const QString
-MppKeyToStringGeneric(uint32_t key)
+MppKeyToStringGeneric(int key, int sharp)
 {
-	/* 440.0Hz = "A" = 9 is zero reference */
-	key += MPP_MAX_BANDS - (MPP_BAND_STEP_12 * 9);
+	const char *map_sharp[12] = {
+		/* majors */
+		/* [MPP_C0] = */ "C",
+		/* [MPP_D0B] = */ "C#",
+		/* [MPP_D0] = */ "D",
+		/* [MPP_E0B] = */ "D#",
+		/* [MPP_E0] = */ "E",
+		/* [MPP_F0] = */ "F",
+		/* [MPP_G0B] = */ "F#",
+		/* [MPP_G0] = */ "G",
+		/* [MPP_A0B] = */ "G#",
+		/* [MPP_A0] = */ "A",
+		/* [MPP_H0B] = */ "A#",
+		/* [MPP_H0] = */ "H",
+	};
+	const char *map_flat[12] = {
+		/* majors */
+		/* [MPP_C0] = */ "C",
+		/* [MPP_D0B] = */ "Db",
+		/* [MPP_D0] = */ "D",
+		/* [MPP_E0B] = */ "Eb",
+		/* [MPP_E0] = */ "E",
+		/* [MPP_F0] = */ "F",
+		/* [MPP_G0B] = */ "Gb",
+		/* [MPP_G0] = */ "G",
+		/* [MPP_A0B] = */ "Ab",
+		/* [MPP_A0] = */ "A",
+		/* [MPP_H0B] = */ "Hb",
+		/* [MPP_H0] = */ "H",
+	};
+	QString retval;
+	int rem;
 
-	/* get absolute remainder */
 	key = MPP_BAND_REM(key);
+	rem = MPP_BAND_REM_BITREV(key);
+	key /= MPP_BAND_STEP_12;
 
-	/* bitreverse */
-	key = MPP_BAND_TO_KEY(key);
-
-	return (QString("%1").arg(key));
+	if (rem != 0) {
+		if (sharp)
+			return (QString("%1%2.").arg(map_sharp[key]).arg(rem));
+		else
+			return (QString("%1%2.").arg(map_flat[key]).arg(rem));
+	} else {
+		if (sharp)
+			return (QString("%1").arg(map_sharp[key]));
+		else
+			return (QString("%1").arg(map_flat[key]));
+	}
 }
 
 Q_DECL_EXPORT void
@@ -812,22 +792,8 @@ MppStepChordGeneric(QString &input, int adjust, uint32_t sharp)
 	MppChord_t mask;
 	uint32_t rem;
 	uint32_t bass;
-	uint32_t wrap;
 
-	/* Chords should not contain spaces of any kind */
-	if (MppIsChord(input) == 0)
-		return;
-
-	wrap = 0;
-	for (int off = 0; off != input.length(); off++) {
-		if (input[off] == '(' || input[off] == ')') {
-			wrap = 1;
-			continue;
-		}
-		str += input[off];
-	}
-
-	MppStringToChordGeneric(mask, rem, bass, 1, str);
+	MppStringToChordGeneric(mask, rem, bass, 1, input);
 
 	/* only step chords we understand */
 	if (mask.test(0) == 0)
@@ -845,8 +811,20 @@ MppStepChordGeneric(QString &input, int adjust, uint32_t sharp)
 	if (str.isEmpty())
 		return;
 
-	if (wrap)
-		input = QString("(") + str + QString(")");
-	else
-		input = str;
+	input = str;
+}
+
+MppScoreVariant :: MppScoreVariant(uint32_t _chord, const char *a,
+    const char *b, const char *c, const char *d)
+{
+	footprint.zero();
+	for (int x = 0; x != 12; x++) {
+		if ((_chord >> x) & 1)
+			footprint.set(x * MPP_BAND_STEP_12);
+	}
+	footprint = MppFindChordRoot(footprint, rots);
+	pattern[0] = a;
+	pattern[1] = b;
+	pattern[2] = c;
+	pattern[3] = d;
 }

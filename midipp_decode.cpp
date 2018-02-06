@@ -33,10 +33,6 @@
 #include "midipp_element.h"
 #include "midipp_groupbox.h"
 
-/* chord modifier characters */
-
-const QString MppChordModChars = QString::fromUtf8("()/+-#Δ&|^°");
-
 Q_DECL_EXPORT const QString
 MppKeyStr(int key)
 {
@@ -115,7 +111,7 @@ MppBitsToString(const MppChord_t &mask, int off)
 void
 MppScoreVariantInit(void)
 {
-	const int rk = 9 * MPP_BAND_STEP_12;
+	const int rk = 0;
 	const int s = MPP_BAND_STEP_24;
 	MppChord_t mask;
 	QString str;
@@ -137,8 +133,11 @@ MppScoreVariantInit(void)
 		MppChordToStringGeneric(mask, rk, rk, 0, MPP_BAND_STEP_24, str);
 		if (str.isEmpty())
 			str = "  ";
-		else
+		else {
+			if ((x % MPP_BAND_STEP_12) == 0)
+				z[0]++;
 			z[1]++;
+		}
 		Mpp.VariantList += str;
 		Mpp.VariantList += " = ";
 		Mpp.VariantList += MppBitsToString(mask, rk);
@@ -161,8 +160,12 @@ MppScoreVariantInit(void)
 			MppChordToStringGeneric(mask, rk, rk, 0, MPP_BAND_STEP_24, str);
 			if (str.isEmpty())
 				str = "   ";
-			else
+			else {
+				if ((x % MPP_BAND_STEP_12) == 0 &&
+				    (y % MPP_BAND_STEP_12) == 0)
+					z[0]++;
 				z[1]++;
+			}
 			Mpp.VariantList += str;
 			Mpp.VariantList += " = ";
 			Mpp.VariantList += MppBitsToString(mask, rk);
@@ -440,8 +443,14 @@ MppDecodeTab :: handle_insert()
 void
 MppDecodeTab :: handle_rol_up()
 {
+	int rols;
+
+	if (chord_key > (128 * MPP_MAX_SUBDIV - MPP_MAX_BANDS))
+		return;
 	handle_play_release();
-	MppRolUpChord(chord_mask, chord_key);
+	rols = 0;
+	MppRolDownChord(chord_mask, rols);
+	chord_key += (rols % MPP_MAX_BANDS);
 	handle_refresh();
 	handle_play_press();
 }
@@ -449,8 +458,14 @@ MppDecodeTab :: handle_rol_up()
 void
 MppDecodeTab :: handle_rol_down()
 {
+	int rols;
+
+	if (chord_key < 2 * MPP_MAX_BANDS)
+		return;
 	handle_play_release();
-	MppRolDownChord(chord_mask, chord_key);
+	rols = 0;
+	MppRolUpChord(chord_mask, rols);
+	chord_key -= (rols % MPP_MAX_BANDS);
 	handle_refresh();
 	handle_play_press();
 }
@@ -497,7 +512,8 @@ MppDecodeTab :: handle_refresh()
 	MppChordToStringGeneric(chord_mask, chord_key, key_bass,
 	    chord_sharp, chord_step, str);
 
-	for (log2_step = 0; ((MPP_MAX_SUBDIV / chord_step) >> log2_step) != 1; log2_step++)
+	for (log2_step = 0; ((MPP_MAX_SUBDIV /
+	    chord_step) >> log2_step) != 1; log2_step++)
 		;
 
 	out_key += MppKeyStr(key_bass);
