@@ -1921,6 +1921,7 @@ MppScoreMain :: handleScoreFileEffect(int which, int parm, int flag)
 	switch (which) {
 	case 0:
 		temp.limitScore(parm);
+		temp.optimise();
 		break;
 	case 1:
 		temp.transposeScore(parm, flag);
