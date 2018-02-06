@@ -1106,16 +1106,13 @@ void
 MppHead :: transposeScore(int adjust, int sharp)
 {
 	MppElement *ptr;
+	QString str;
 
 	if (sharp == 0) {
 		/* figure out sharp or flat */
 		TAILQ_FOREACH(ptr, &head, entry) {
 			if (ptr->type != MPP_T_STRING_CHORD)
 				continue;
-			/* Chords should not contain spaces of any kind */
-			if (MppIsChord(ptr->txt) == 0)
-				continue;
-
 			/* If any sharp is seen, select sharp */
 			if (ptr->txt.indexOf("#") > -1) {
 				sharp = 1;
@@ -1134,7 +1131,18 @@ MppHead :: transposeScore(int adjust, int sharp)
 			ptr->txt = MppKeyStr(ptr->value[0]);
 			break;
 		case MPP_T_STRING_CHORD:
-			MppStepChordGeneric(ptr->txt, adjust, sharp);
+			str = QString();
+
+			for (int x = 0; x != ptr->txt.length(); x++) {
+				QChar ch = ptr->txt[x];
+				if (x == 0 && ch == '(')
+					continue;
+				if (x == ptr->txt.length() - 1 && ch == ')')
+					continue;
+				str += ch;
+			}
+			MppStepChordGeneric(str, adjust, sharp);
+			ptr->txt = QString("(") + str + QString(")");
 			break;
 		default:
 			break;
