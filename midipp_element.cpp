@@ -29,18 +29,17 @@
 #include "midipp_chords.h"
 #include "midipp_decode.h"
 
-Q_DECL_EXPORT int
-MppSpaceOnly(QString &str)
+static int
+MppNormSpace(MppElement *ptr, int last)
 {
-	int x;
-
-	for (x = 0; x != str.size(); x++) {
-		if (str[x] != ' ' && str[x] != '\t')
-			return (0);
-	}
-	return (1);
+	if (last == MPP_T_SPACE && ptr->type == MPP_T_SPACE)
+		ptr->txt = ptr->txt.trimmed();
+	else if (last == MPP_T_UNKNOWN && ptr->type == MPP_T_SPACE)
+		ptr->txt = ptr->txt.trimmed();
+	else if (last != MPP_T_SPACE && ptr->type == MPP_T_SPACE)
+		ptr->txt = QString(" ") + ptr->txt.trimmed();
+	return (ptr->type);
 }
-
 
 Q_DECL_EXPORT QString
 MppDeQuoteChord(QString &str)
@@ -729,14 +728,14 @@ MppHead :: optimise()
 		} else if (ptr->type == MPP_T_DURATION) {
 			if (ptr->value[0] == duration) {
 				ptr->type = MPP_T_UNKNOWN;
-				ptr->txt = QString();
+				ptr->txt = "";
 			} else {
 				duration = ptr->value[0];
 			}
 		} else if (ptr->type == MPP_T_CHANNEL) {
 			if (ptr->value[0] == channel) {
 				ptr->type = MPP_T_UNKNOWN;
-				ptr->txt = QString();
+				ptr->txt = "";
 			} else {
 				channel = ptr->value[0];
 			}
@@ -750,12 +749,12 @@ MppHead :: optimise()
 		} else if (ptr->type == MPP_T_DURATION) {
 			if (has_score == 0) {
 				ptr->type = MPP_T_UNKNOWN;
-				ptr->txt = QString();
+				ptr->txt = "";
 			}
 		} else if (ptr->type == MPP_T_CHANNEL) {
 			if (has_score == 0) {
 				ptr->type = MPP_T_UNKNOWN;
-				ptr->txt = QString();
+				ptr->txt = "";
 			}
 		} else if (ptr->type == MPP_T_SCORE_SUBDIV ||
 		    ptr->type == MPP_T_MACRO) {
@@ -763,38 +762,20 @@ MppHead :: optimise()
 		}
 	}
 
-	/* accumulate spaces */
-	TAILQ_FOREACH(ptr, &head, entry) {
-		next = TAILQ_NEXT(ptr, entry);
-		if (next != 0 && MppSpaceOnly(ptr->txt) != 0 &&
-		    MppSpaceOnly(next->txt) != 0) {
-			ptr->txt = QString();
-			next->txt = QString(" ");
-		}
-	}
-
+	/* normalize spaces */
 	for (start = stop = 0; foreachLine(&start, &stop); ) {
-		/* remove space at beginning of each line */
-		ptr = start;
-		while (ptr != stop) {
-			if (MppSpaceOnly(ptr->txt) != 0) {
-				next = TAILQ_NEXT(ptr, entry);
-				TAILQ_REMOVE(&head, ptr, entry);
-				delete ptr;
-				ptr = next;
-			} else {
-				break;
-			}
-		}
+		int last = MPP_T_UNKNOWN;
+		for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry))
+			last = MppNormSpace(ptr, last);
 	}
 
 	/* remove unused entries, except labels */
 	for (ptr = TAILQ_FIRST(&head); ptr != NULL; ptr = next) {
 		next = TAILQ_NEXT(ptr, entry);
-		if (ptr->txt.size() != 0)
-			continue;
-		TAILQ_REMOVE(&head, ptr, entry);
-		delete ptr;
+		if (ptr->txt.isEmpty()) {
+			TAILQ_REMOVE(&head, ptr, entry);
+			delete ptr;
+		}
 	}
 
 	reset();
@@ -921,7 +902,7 @@ MppHead :: autoMelody(int which)
 		/* update stop pointer of chord line, if any */
 		if (am_stop == start)
 			am_stop = ptr;
-		
+
 		ptr = new MppElement(MPP_T_SPACE, start->line);
 		ptr->txt = QString(" ");
 		TAILQ_INSERT_BEFORE(start, ptr, entry);
@@ -1039,12 +1020,12 @@ MppHead :: sortScore()
 			case MPP_T_DURATION:
 				duration = ptr->value[0];
 				ptr->type = MPP_T_UNKNOWN;
-				ptr->txt = QString();
+				ptr->txt = "";
 				break;
 			case MPP_T_CHANNEL:
 				channel = ptr->value[0];
 				ptr->type = MPP_T_UNKNOWN;
-				ptr->txt = QString();
+				ptr->txt = "";
 				break;
 			case MPP_T_SCORE_SUBDIV:
 				mk[num].channel = channel;
@@ -1052,7 +1033,7 @@ MppHead :: sortScore()
 				mk[num].key = ptr->value[0];
 				num++;
 				ptr->type = MPP_T_UNKNOWN;
-				ptr->txt = QString();
+				ptr->txt = "";
 				break;
 			default:
 				break;
@@ -1131,7 +1112,7 @@ MppHead :: transposeScore(int adjust, int sharp)
 			ptr->txt = MppKeyStr(ptr->value[0]);
 			break;
 		case MPP_T_STRING_CHORD:
-			str = QString();
+			str = "";
 
 			for (int x = 0; x != ptr->txt.length(); x++) {
 				QChar ch = ptr->txt[x];
@@ -1186,12 +1167,12 @@ MppHead :: limitScore(int limit)
 			case MPP_T_DURATION:
 				duration = ptr->value[0];
 				ptr->type = MPP_T_UNKNOWN;
-				ptr->txt = QString();
+				ptr->txt = "";
 				break;
 			case MPP_T_CHANNEL:
 				channel = ptr->value[0];
 				ptr->type = MPP_T_UNKNOWN;
-				ptr->txt = QString();
+				ptr->txt = "";
 				break;
 			case MPP_T_SCORE_SUBDIV:
 				mk[num].channel = channel;
@@ -1199,7 +1180,7 @@ MppHead :: limitScore(int limit)
 				mk[num].key = ptr->value[0];
 				num++;
 				ptr->type = MPP_T_UNKNOWN;
-				ptr->txt = QString();
+				ptr->txt = "";
 				break;
 			default:
 				break;
@@ -1264,7 +1245,6 @@ MppHead :: limitScore(int limit)
 			ptr->txt = QString(" ");
 			TAILQ_INSERT_BEFORE(start, ptr, entry);
 		}
-
 		free(mk);
 	}
 }
@@ -1378,8 +1358,8 @@ MppHead :: toLyrics(int no_chords)
 
 	for (start = stop = 0; foreachLine(&start, &stop); ) {
 
-		linebuf[0] = QString();
-		linebuf[1] = QString();
+		linebuf[0] = "";
+		linebuf[1] = "";
 
 		for (ptr = start; ptr != stop;
 		    ptr = TAILQ_NEXT(ptr, entry)) {

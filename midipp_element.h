@@ -255,7 +255,6 @@ public:
 	void operator += (MppElement *);
 };
 
-extern int MppSpaceOnly(QString &);
 extern QString MppDeQuoteChord(QString &);
 extern QString MppDeQuoteString(QString &);
 
