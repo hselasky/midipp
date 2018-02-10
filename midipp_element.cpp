@@ -631,8 +631,7 @@ MppHead :: getChord(int line, MppChordElement *pinfo)
 
 		for (ptr = start; ptr != stop;
 		    ptr = TAILQ_NEXT(ptr, entry)) {
-			if (ptr->type == MPP_T_STRING_CHORD &&
-			    MppIsChord(ptr->txt) != 0) {
+			if (ptr->type == MPP_T_STRING_CHORD) {
 				string_start = start;
 				string_stop = stop;
 				counter = 0;

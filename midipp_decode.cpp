@@ -418,7 +418,8 @@ MppDecodeTab :: handle_insert()
 		if (info.start != 0) {
 			for (ptr = info.start; ptr != info.stop;
 			    ptr = TAILQ_NEXT(ptr, entry)) {
-				ptr->txt = QString();
+				ptr->type = MPP_T_UNKNOWN;
+				ptr->txt = "";
 			}
 
 			info.start->txt = mw->led_config_insert->text() +
