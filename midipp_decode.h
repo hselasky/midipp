@@ -72,7 +72,6 @@ public:
 	MppChord_t chord_mask;
 
 public slots:
-
 	void handle_rol_up();
 	void handle_rol_down();
 	void handle_mod_up();
@@ -83,6 +82,7 @@ public slots:
 	void handle_parse();
 	void handle_refresh();
 	void handle_stepping();
+	void handle_align(int);
 };
 
 extern const QString MppKeyStr(int key);

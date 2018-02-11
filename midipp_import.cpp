@@ -30,6 +30,7 @@
 #include "midipp_groupbox.h"
 #include "midipp_import.h"
 #include "midipp_button.h"
+#include "midipp_spinbox.h"
 
 static bool
 midipp_import_find_chord(const QString &str, int step)
@@ -93,7 +94,10 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 					out += ps->d_word[i_score][ai].name;
 					out += ")";
 
+					ptab->chord_step = ps->step;
 					ptab->setText(*ptr);
+					ptab->handle_align(ps->sm->spnScoreFileAlign->value());
+					ptab->handle_refresh();
 
 					scs += ps->sm->mainWindow->led_config_insert->text() +
 					    ptab->getText() +
@@ -393,7 +397,7 @@ MppImportTab :: MppImportTab(MppMainWindow *parent)
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
 		butImport[x][0] = new MppButton(QString("To %1-Scores 12S").arg(QChar('A' + x)), x);
 		connect(butImport[x][0], SIGNAL(released(int)), this, SLOT(handleImport12(int)));
-		butImport[x][1] = new MppButton(QString("To %1-Scores MS").arg(QChar('A' + x)), x);
+		butImport[x][1] = new MppButton(QString("To %1-Scores XXS").arg(QChar('A' + x)), x);
 		connect(butImport[x][1], SIGNAL(released(int)), this, SLOT(handleImportMS(int)));
 	}
 	gbImport = new MppGroupBox(tr("Lyrics"));

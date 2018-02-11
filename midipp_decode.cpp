@@ -183,7 +183,6 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 	uint32_t is_sharp;
 	uint32_t any = 0;
 	uint32_t key = 0;
-	uint32_t offset;
 	uint32_t bass;
 	MppChord_t footprint;
 
@@ -210,21 +209,22 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 
 	bass = MPP_BAND_REM(pinfo->key_base);
 	
-	offset = pinfo->key_max - MPP_BAND_REM(pinfo->key_max);
-	if ((int)(offset + key) >= (int)pinfo->key_max)
-		offset -= MPP_MAX_BANDS;
-
 	MppChordToStringGeneric(footprint, key, bass, is_sharp, chord_step, out);
 
 	if (out.isEmpty())
 		return (1);	/* not found */
 
-	chord_key = key + offset;
+	chord_key = key;
 	chord_bass = bass;
 	chord_sharp = is_sharp;
 	chord_mask = footprint;
 
+	lin_edit->blockSignals(1);
 	lin_edit->setText(out);
+	lin_edit->blockSignals(0);
+
+	handle_align(pinfo->key_max + 1);
+	handle_refresh();
 
 	return (0);
 }
@@ -442,6 +442,28 @@ MppDecodeTab :: handle_insert()
 }
 
 void
+MppDecodeTab :: handle_align(int key)
+{
+	if (key < (2 * MPP_MAX_BANDS) ||
+	    key > (128 * MPP_MAX_SUBDIV - MPP_MAX_BANDS))
+		return;
+
+	chord_key = key - MPP_BAND_REM(key) +
+	    MPP_MAX_BANDS + MPP_BAND_REM(chord_key);
+
+	for (int x = MPP_MAX_BANDS; x--; ) {
+		if (chord_mask.test(x) == 0)
+			continue;
+		if ((chord_key + x) < key)
+			break;
+		int rols = 0;
+		MppRolUpChord(chord_mask, rols);
+		chord_key -= (rols % MPP_MAX_BANDS);
+		x = MPP_MAX_BANDS;
+	}
+}
+
+void
 MppDecodeTab :: handle_rol_up()
 {
 	int rols;
@@ -596,7 +618,7 @@ MppDecodeTab :: handle_parse()
 error:
 	chord_mask.zero();
 	chord_mask.set(0);
-	lin_out->setText("U1 /* ERROR */");
+	lin_out->setText("/* ERROR */");
 }
 
 QString
@@ -608,7 +630,9 @@ MppDecodeTab :: getText()
 void
 MppDecodeTab :: setText(QString str)
 {
+  	lin_edit->blockSignals(1);
 	lin_edit->setText(str);
+	lin_edit->blockSignals(0);
 
 	handle_parse();
 }
