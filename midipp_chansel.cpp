@@ -49,14 +49,14 @@ MppChanSelDiag :: MppChanSelDiag(QWidget *parent, int val, int have_any) :
 	}
 
 	switch (have_any) {
-	case 1:
+	case MPP_CHAN_ANY:
 		pmb = new MppButton(MppChanName(-1, have_any), -1);
 		QDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int))); 
 		addWidget(pmb, 4, 0, 1, 1);
 		if (val == -1)
 			pmb->setFocus();
 		break;
-	case 2:
+	case MPP_CHAN_NONE:
 		pmb = new MppButton(MppChanName(-1, have_any), -1);
 		QDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int))); 
 		addWidget(pmb, 4, 0, 1, 1);
