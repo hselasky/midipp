@@ -507,7 +507,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	pl->setAlignment(Qt::AlignCenter);
 	gb_config_device->addWidget(pl, 0, 2, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
-		pl = new QLabel(tr("Record to\nview-%1").arg(QChar('A' + x)));
+		pl = new QLabel(tr("Input to\nview-%1").arg(QChar('A' + x)));
 		pl->setAlignment(Qt::AlignCenter);
 		gb_config_device->addWidget(pl, 0, 3 + x, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	}
