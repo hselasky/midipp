@@ -648,7 +648,7 @@ MppSheet::mousePressEvent(QMouseEvent * event)
 				    getTranspose(entries_rows[y].u.score.trans_mode);
 				chan = (sm->synthChannel +
 				    entries_rows[y].u.score.chan) & 0xF;
-				mw->output_key(chan, num, 75, 0, 0);
+				mw->output_key(sm->synthDevice, chan, num, 75, 0, 0);
 				entries_rows[y].playing = 1;
 				entries_rows[y].playkey = num;
 				entries_rows[y].playchan = chan;
@@ -667,7 +667,7 @@ MppSheet::mousePressEvent(QMouseEvent * event)
 			    getTranspose(entries_rows[y].u.score.trans_mode);
 			chan = (sm->synthChannel +
 			    entries_rows[y].u.score.chan) & 0xF;
-			mw->output_key(chan, num, 75, 0, 0);
+			mw->output_key(sm->synthDevice, chan, num, 75, 0, 0);
 			entries_rows[y].playing = 1;
 			entries_rows[y].playkey = num;
 			entries_rows[y].playchan = chan;
@@ -682,6 +682,7 @@ MppSheet::mousePressEvent(QMouseEvent * event)
 void
 MppSheet::mouseReleaseEvent(QMouseEvent * event)
 {
+  	MppScoreMain *sm = mw->scores_main[unit];
 	ssize_t y;
 
 	for (y = 0; y != num_rows; y++) {
@@ -695,7 +696,7 @@ MppSheet::mouseReleaseEvent(QMouseEvent * event)
 		case MPP_T_SCORE_SUBDIV:
 			num = entries_rows[y].playkey;
 			chan = entries_rows[y].playchan;
-			mw->output_key(chan, num, 0, 0, 0);
+			mw->output_key(sm->synthDevice, chan, num, 0, 0, 0);
 			break;
 		default:
 			break;

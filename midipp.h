@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2017 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -128,6 +128,8 @@
 #define	MPP_POPUP_DELAY		2000	/* ms */
 #define	MPP_CHAN_ANY		1
 #define	MPP_CHAN_NONE		2
+#define	MPP_DEV_ALL		1
+#define	MPP_DEV_NONE		2
 
 /* list of supported band steps */
 #define	MPP_BAND_STEP_12 (MPP_MAX_BANDS / 12)
@@ -224,6 +226,8 @@ class MppCustomTab;
 class MppDataBase;
 class MppDecodeTab;
 class MppDevices;
+class MppDevSel;
+class MppDevSelDiag;
 class MppElement;
 class MppGPro;
 class MppGridLayout;
@@ -261,7 +265,9 @@ class QPrinter;
 
 struct MppScoreEntry {
 	int key;
-	uint8_t dur;
+	int dur;
+	int8_t device;
+	int8_t deviceSec;
 	uint8_t channel;
 	uint8_t channelSec;
 };
@@ -320,6 +326,7 @@ public:
 extern Mpp Mpp;
 
 extern const QString MppChanName(int, int = 0);
+extern const QString MppDevName(int, int = 0);
 extern QString MppBaseName(const QString &);
 extern char *MppQStringToAscii(const QString &);
 extern QString MppReadFile(const QString &);

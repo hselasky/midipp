@@ -152,6 +152,9 @@ MppSettings :: doSave(void)
 			setValue("synthchannel", mw->scores_main[x]->synthChannel);
 			setValue("synthchannelbase", mw->scores_main[x]->synthChannelBase);
 			setValue("synthchanneltreb", mw->scores_main[x]->synthChannelTreb);
+			setValue("synthdevice", mw->scores_main[x]->synthDevice);
+			setValue("synthdevicebase", mw->scores_main[x]->synthDeviceBase);
+			setValue("synthdevicetreb", mw->scores_main[x]->synthDeviceTreb);
 			setValue("chordcontrast", mw->scores_main[x]->chordContrast);
 			setValue("chordnormalize", mw->scores_main[x]->chordNormalize);
 			setValue("songevents", mw->scores_main[x]->songEventsOn);
@@ -258,6 +261,9 @@ MppSettings :: doLoad(void)
 			int synthChannel = valueDefault(concat("view%d/synthchannel", x), 0);
 			int synthChannelBase = valueDefault(concat("view%d/synthchannelbase", x), -1);
 			int synthChannelTreb = valueDefault(concat("view%d/synthchanneltreb", x), -1);
+			int synthDevice = valueDefault(concat("view%d/synthdevice", x), -1);
+			int synthDeviceBase = valueDefault(concat("view%d/synthdevicebase", x), -1);
+			int synthDeviceTreb = valueDefault(concat("view%d/synthdevicetreb", x), -1);
 			int chordContrast = valueDefault(concat("view%d/chordcontrast", x), 128);
 			int chordNormalize = valueDefault(concat("view%d/chordnormalize", x), 128);
 			int songEvents = valueDefault(concat("view%d/songevents", x), 0);
@@ -274,6 +280,12 @@ MppSettings :: doLoad(void)
 				synthChannelBase = -1;
 			if (synthChannelTreb < 0 || synthChannelTreb > 15)
 				synthChannelTreb = -1;
+			if (synthDevice < 0 || synthDevice >= MPP_MAX_DEVS)
+				synthDevice = -1;
+			if (synthDeviceBase < 0 || synthDeviceBase >= MPP_MAX_DEVS)
+				synthDeviceBase = -1;
+			if (synthDeviceTreb < 0 || synthDeviceTreb >= MPP_MAX_DEVS)
+				synthDeviceTreb = -1;
 			if (chordContrast < 0 || chordContrast > 255)
 				chordContrast = 128;
 			if (chordNormalize < 0 || chordNormalize > 1)
@@ -289,6 +301,9 @@ MppSettings :: doLoad(void)
 			mw->scores_main[x]->synthChannel = synthChannel;
 			mw->scores_main[x]->synthChannelBase = synthChannelBase;
 			mw->scores_main[x]->synthChannelTreb = synthChannelTreb;
+			mw->scores_main[x]->synthDevice = synthDevice;
+			mw->scores_main[x]->synthDeviceBase = synthDeviceBase;
+			mw->scores_main[x]->synthDeviceTreb = synthDeviceTreb;
 			mw->scores_main[x]->chordContrast = chordContrast;
 			mw->scores_main[x]->chordNormalize = chordNormalize;
 			mw->scores_main[x]->songEventsOn = songEvents;

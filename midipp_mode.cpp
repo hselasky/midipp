@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011,2013 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,6 +26,7 @@
 #include "midipp.h"
 
 #include "midipp_chansel.h"
+#include "midipp_devsel.h"
 #include "midipp_buttonmap.h"
 #include "midipp_mode.h"
 #include "midipp_spinbox.h"
@@ -91,12 +92,21 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	spn_pri_chan = new MppChanSel(0, 0);
 	connect(spn_pri_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
+	spn_pri_dev = new MppDevSel(-1, MPP_DEV_ALL);
+	connect(spn_pri_dev, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	
 	spn_sec_base_chan = new MppChanSel(-1, MPP_CHAN_NONE);
 	connect(spn_sec_base_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
+	spn_sec_base_dev = new MppDevSel(-1, MPP_DEV_ALL);
+	connect(spn_sec_base_dev, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	
 	spn_sec_treb_chan = new MppChanSel(-1, MPP_CHAN_NONE);
 	connect(spn_sec_treb_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
+	spn_sec_treb_dev = new MppDevSel(-1, MPP_DEV_ALL);
+	connect(spn_sec_treb_dev, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	
 	gl->addWidget(gb_iconfig, 0, 0, 1, 2);
 	gl->addWidget(gb_oconfig, 1, 0, 1, 2);
 	gl->addWidget(gb_delay, 2, 0, 1, 2);
@@ -121,10 +131,15 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 
 	gb_oconfig->addWidget(new QLabel(tr("Primary channel")), 0, 0, 1, 1);
 	gb_oconfig->addWidget(spn_pri_chan, 0, 1, 1, 1);
+	gb_oconfig->addWidget(spn_pri_dev, 0, 2, 1, 1);
+
 	gb_oconfig->addWidget(new QLabel(tr("Secondary base channel")), 1, 0, 1, 1);
 	gb_oconfig->addWidget(spn_sec_base_chan, 1, 1, 1, 1);
+	gb_oconfig->addWidget(spn_sec_base_dev, 1, 2, 1, 1);
+
 	gb_oconfig->addWidget(new QLabel(tr("Secondary treble channel")), 2, 0, 1, 1);
 	gb_oconfig->addWidget(spn_sec_treb_chan, 2, 1, 1, 1);
+	gb_oconfig->addWidget(spn_sec_treb_dev, 2, 2, 1, 1);
 }
 
 MppMode :: ~MppMode()
@@ -141,6 +156,9 @@ MppMode :: update_all(void)
 	int channel;
 	int channelBase;
 	int channelTreb;
+	int device;
+	int deviceBase;
+	int deviceTreb;
 	int key_mode;
 	int chord_contrast;
 	int chord_norm;
@@ -153,6 +171,9 @@ MppMode :: update_all(void)
 	channel = sm->synthChannel;
 	channelBase = sm->synthChannelBase;
 	channelTreb = sm->synthChannelTreb;
+	device = sm->synthDevice;
+	deviceBase = sm->synthDeviceBase;
+	deviceTreb = sm->synthDeviceTreb;
 	key_mode = sm->keyMode;
 	chord_contrast = sm->chordContrast;
 	chord_norm = sm->chordNormalize;
@@ -166,6 +187,9 @@ MppMode :: update_all(void)
 	spn_pri_chan->setValue(channel);
 	spn_sec_base_chan->setValue(channelBase);
 	spn_sec_treb_chan->setValue(channelTreb);
+	spn_pri_dev->setValue(device);
+	spn_sec_base_dev->setValue(deviceBase);
+	spn_sec_treb_dev->setValue(deviceTreb);
 	but_mode->setSelection(key_mode);
 	cbx_norm->setChecked(chord_norm);
 	but_song_events->setSelection(song_events);
@@ -205,6 +229,9 @@ MppMode :: handle_reset()
 	spn_pri_chan->setValue(0);
 	spn_sec_base_chan->setValue(-1);
 	spn_sec_treb_chan->setValue(-1);
+	spn_pri_dev->setValue(-1);
+	spn_sec_base_dev->setValue(-1);
+	spn_sec_treb_dev->setValue(-1);
 	cbx_norm->setChecked(1);
 	but_mode->setSelection(0);
 	but_song_events->setSelection(0);
@@ -219,6 +246,9 @@ MppMode :: handle_changed()
 	int channel;
 	int channelBase;
 	int channelTreb;
+	int device;
+	int deviceBase;
+	int deviceTreb;
 	int key_mode;
 	int chord_contrast;
 	int chord_norm;
@@ -230,6 +260,9 @@ MppMode :: handle_changed()
 	channel = spn_pri_chan->value();
 	channelBase = spn_sec_base_chan->value();
 	channelTreb = spn_sec_treb_chan->value();
+	device = spn_pri_dev->value();
+	deviceBase = spn_sec_base_dev->value();
+	deviceTreb = spn_sec_treb_dev->value();
 	chord_contrast = sli_contrast->value();
 	chord_norm = cbx_norm->isChecked();
 	key_mode = but_mode->currSelection;
@@ -245,6 +278,9 @@ MppMode :: handle_changed()
 	sm->synthChannel = channel;
 	sm->synthChannelBase = channelBase;
 	sm->synthChannelTreb = channelTreb;
+	sm->synthDevice = device;
+	sm->synthDeviceBase = deviceBase;
+	sm->synthDeviceTreb = deviceTreb;
 	sm->keyMode = key_mode;
 	sm->chordContrast = chord_contrast;
 	sm->chordNormalize = chord_norm;

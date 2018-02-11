@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2013 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -164,6 +164,9 @@ public:
 	uint8_t synthChannel;
 	int8_t synthChannelBase;
 	int8_t synthChannelTreb;
+	int8_t synthDevice;
+	int8_t synthDeviceBase;
+	int8_t synthDeviceTreb;
 	uint8_t delayNoise;
 	uint8_t last_key;
 	uint8_t last_vel;

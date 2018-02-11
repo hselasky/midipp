@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2017 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -75,6 +75,22 @@ MppChanName(int channel, int other)
 		return (QString("CH::NONE"));
 	default:
 		return (QString("CH::UNDEF"));
+	}
+}
+
+Q_DECL_EXPORT const QString
+MppDevName(int device, int other)
+{
+	if (device >= 0 && device < MPP_MAX_DEVS)
+		return (QString("DEV::%1").arg(device + 1));
+
+	switch (other) {
+	case MPP_DEV_ALL:
+		return (QString("DEV::ALL"));
+	case MPP_DEV_NONE:
+		return (QString("DEV::NONE"));
+	default:
+		return (QString("DEV::UNDEF"));
 	}
 }
 

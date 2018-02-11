@@ -64,7 +64,7 @@ public:
 
 	void do_clock_stats(void);
 	void do_key_press(int key, int vel, int dur);
-	void output_key(int chan, int key, int vel, int delay, int dur);
+	void output_key(int dev, int chan, int key, int vel, int delay, int dur);
 
 	uint32_t get_time_offset(void);
 

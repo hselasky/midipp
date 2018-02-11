@@ -184,6 +184,9 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	inputChannel = -1;
 	synthChannelBase = -1;
 	synthChannelTreb = -1;
+	synthDevice = -1;
+	synthDeviceBase = -1;
+	synthDeviceTreb = -1;
 	unit = _unit;
 
 	/* Set parent */
@@ -1289,13 +1292,15 @@ MppScoreMain :: handleKeyRemovePast(MppScoreEntry *pn, uint32_t key_delay)
 		    score_past[x].key == pn->key &&
 		    score_past[x].channel == pn->channel) {
 
-			mainWindow->output_key(score_past[x].channel,
-			    pn->key, 0, key_delay, 0);
+			mainWindow->output_key(score_past[x].device,
+			    score_past[x].channel, score_past[x].key,
+			    0, key_delay, 0);
 
 			/* check for secondary event */
 			if (score_past[x].channelSec != 0) {
-				mainWindow->output_key(score_past[x].channelSec - 1,
-				    pn->key, 0, key_delay, 0);
+				mainWindow->output_key(score_past[x].deviceSec,
+				    score_past[x].channelSec - 1, score_past[x].key,
+				    0, key_delay, 0);
 			}
 
 			/* kill past score */
@@ -1314,7 +1319,7 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 {
 	int bk = baseKey / MPP_BAND_STEP_12;
 	int ck = in_key / MPP_BAND_STEP_12;
-	MppScoreEntry mse;
+	MppScoreEntry mse = {};
 	uint8_t map;
 	int off;
 
@@ -1356,19 +1361,24 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 	if (mse.dur == 0)
 		return;
 
-	/* update channel */
+	/* update channel and device */
 	mse.channel = (mse.channel + synthChannel) & 0xF;
+	mse.device = synthDevice;
 
 	/* remove key if already pressed */
 	if (handleKeyRemovePast(&mse, key_delay))
 		key_delay++;
 
 	if (map & MPP_CHORD_MAP_BASE) {
-		if (synthChannelBase != (int)mse.channel)
+		if (synthChannelBase != (int)mse.channel) {
 			mse.channelSec = synthChannelBase + 1;
+			mse.deviceSec = synthDeviceBase;
+		}
 	} else {
-		if (synthChannelTreb != (int)mse.channel)
+		if (synthChannelTreb != (int)mse.channel) {
 			mse.channelSec = synthChannelTreb + 1;
+			mse.deviceSec = synthDeviceTreb;
+		}
 	}
 
 	/* store information for key release command */
@@ -1377,11 +1387,11 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 	/* store information for pressure command */
 	score_pressure[off] = mse;
 
-	mainWindow->output_key(mse.channel, mse.key, vel, key_delay, 0);
+	mainWindow->output_key(mse.device, mse.channel, mse.key, vel, key_delay, 0);
 
 	/* check for secondary event */
 	if (mse.channelSec != 0) {
-		mainWindow->output_key(mse.channelSec - 1,
+		mainWindow->output_key(mse.deviceSec, mse.channelSec - 1,
 		    mse.key, vel, key_delay, 0);
 	}
 	mainWindow->cursorUpdate = 1;
@@ -1428,11 +1438,14 @@ MppScoreMain :: handleKeyReleaseChord(int in_key, uint32_t key_delay)
 
 	/* release key once, if any */
 	if (pn->dur != 0) {
-		mainWindow->output_key(pn->channel, pn->key, 0, key_delay, 0);
+		mainWindow->output_key(pn->device, pn->channel,
+		    pn->key, 0, key_delay, 0);
 
 		/* check for secondary event */
-		if (pn->channelSec != 0)
-			mainWindow->output_key(pn->channelSec - 1, pn->key, 0, key_delay, 0);
+		if (pn->channelSec != 0) {
+			mainWindow->output_key(pn->deviceSec, pn->channelSec - 1,
+			    pn->key, 0, key_delay, 0);
+		}
 		pn->dur = 0;
 	}
 }
@@ -1588,8 +1601,8 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 				if (setPressedKey(ch, out_key, duration, delay))
 					break;
 
-				mainWindow->output_key(ch, out_key, out_vel,
-				    key_delay + delay, 0);
+				mainWindow->output_key(synthDevice,
+				    ch, out_key, out_vel, key_delay + delay, 0);
 				break;
 
 			case MPP_T_DURATION:
@@ -1671,8 +1684,8 @@ MppScoreMain :: decrementDuration(uint32_t timeout)
 			/* clear entry */
 			pressedKeys[x] = 0;
 
-			mainWindow->output_key(chan, out_key, 0,
-			    timeout + delay, 0);
+			mainWindow->output_key(synthDevice, chan,
+			    out_key, 0, timeout + delay, 0);
 		}
 
 		if (pressedKeys[x] != 0)
@@ -2153,10 +2166,12 @@ MppScoreMain :: outputControl(uint8_t ctrl, uint8_t val)
 	MppMainWindow *mw = mainWindow;
 	struct mid_data *d = &mw->mid_data;
 	uint16_t mask;
-	uint8_t x;
 	uint8_t chan;
+	int device;
+	int x;
 
 	chan = synthChannel;
+	device = synthDevice;
 	mask = outputMaskGet();
 
 	/* the control event is distributed to all active channels */
@@ -2170,6 +2185,8 @@ MppScoreMain :: outputControl(uint8_t ctrl, uint8_t val)
 					if (mw->muteAllControl[x] != 0)
 						continue;
 				}
+				if (device != -1 && device != x)
+					continue;
 				if (mw->check_synth(x, chan, 0) == 0)
 					continue;
 				mid_control(d, ctrl, val);
@@ -2219,10 +2236,12 @@ MppScoreMain :: outputChanPressure(uint8_t pressure)
 	struct mid_data *d = &mw->mid_data;
 	uint16_t mask;
 	uint8_t chan;
-	uint8_t x;
 	uint8_t buf[4];
+	int device;
+	int x;
 
 	chan = synthChannel;
+	device = synthDevice;
 	mask = outputMaskGet();
 
 	buf[0] = 0xD0;
@@ -2234,6 +2253,8 @@ MppScoreMain :: outputChanPressure(uint8_t pressure)
 	while (mask) {
 		if (mask & 1) {
 			for (x = 0; x != MPP_MAX_DEVS; x++) {
+				if (device != -1 && device != x)
+					continue;
 				if (mw->check_synth(x, chan, 0))
 					mid_add_raw(d, buf, 2, 0);
 			}
@@ -2253,10 +2274,12 @@ MppScoreMain :: outputPitch(uint16_t val)
 	MppMainWindow *mw = mainWindow;
 	struct mid_data *d = &mw->mid_data;
 	uint16_t mask;
-	uint8_t x;
 	uint8_t chan;
+	int device;
+	int x;
 
 	chan = synthChannel;
+	device = synthDevice;
 
 	if (keyMode == MM_PASS_ALL)
 		mask = 1;
@@ -2268,6 +2291,8 @@ MppScoreMain :: outputPitch(uint16_t val)
 		if (mask & 1) {
 			for (x = 0; x != MPP_MAX_DEVS; x++) {
 				if (mw->muteAllControl[x] != 0)
+					continue;
+				if (device != -1 && device != x)
 					continue;
 				if (mw->check_synth(x, chan, 0) == 0)
 					continue;
@@ -2332,14 +2357,14 @@ MppScoreMain :: handleMidiKeyPressLocked(int key, int vel)
 		break;
 	case MM_PASS_ALL:
 		if (setPressedKey(chan, key, 255, 0) == 0)
-			mainWindow->output_key(chan, key, vel, 0, 0);
+			mainWindow->output_key(synthDevice, chan, key, vel, 0, 0);
 		break;
 	case MM_PASS_ONE_MIXED:
 		if (checkHalfPassThru(key) != 0) {
 			if (key == baseKey)
 				handleKeyPress(key, vel);
 		} else if (setPressedKey(chan, key, 255, 0) == 0) {
-			mainWindow->output_key(chan, key, vel, 0, 0);
+			mainWindow->output_key(synthDevice, chan, key, vel, 0, 0);
 		}
 		break;
 	default:
@@ -2368,12 +2393,12 @@ MppScoreMain :: handleMidiKeyReleaseLocked(int key)
 			if (key == baseKey)
 				handleKeyRelease(key);
 		} else if (setPressedKey(chan, key, 0, 0) == 0) {
-			mainWindow->output_key(chan, key, 0, 0, 0);
+			mainWindow->output_key(synthDevice, chan, key, 0, 0, 0);
 		}
 		break;
 	case MM_PASS_ALL:
 		if (setPressedKey(chan, key, 0, 0) == 0)
-			mainWindow->output_key(chan, key, 0, 0, 0);
+			mainWindow->output_key(synthDevice, chan, key, 0, 0, 0);
 		break;
 	default:
 		break;

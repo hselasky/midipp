@@ -540,7 +540,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 			gb_config_device->addWidget(cbx_config_dev[n][x], n + 1, 2 + x, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 		}
 
-		gb_config_device->addWidget(new QLabel(tr("Dev%1:").arg(n)), n + 1, 0, 1, 1, Qt::AlignHCenter|Qt::AlignLeft);
+		gb_config_device->addWidget(new QLabel(MppDevName(n)), n + 1, 0, 1, 1, Qt::AlignHCenter|Qt::AlignLeft);
 		gb_config_device->addWidget(led_config_dev[n], n + 1, 1, 1, 1);
 		gb_config_device->addWidget(but_config_mm[n], n + 1, 4 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 		gb_config_device->addWidget(but_config_dev[n], n + 1, 5 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
@@ -1702,7 +1702,8 @@ MppMainWindow :: handle_stop(int flag)
 			/* only release once */
 			*pkey = 0;
 
-			output_key(chan, out_key, 0, delay, 0);
+			output_key(scores_main[z]->synthDevice,
+			    chan, out_key, 0, delay, 0);
 		}
 	    }
 
@@ -1719,11 +1720,11 @@ MppMainWindow :: handle_stop(int flag)
 		/* only release once */
 		ps->dur = 0;
 
-		output_key(ps->channel, ps->key, 0, 0, 0);
+		output_key(ps->device, ps->channel, ps->key, 0, 0, 0);
 
 		/* check for secondary event */
 		if (ps->channelSec != 0)
-			output_key(ps->channelSec - 1, ps->key, 0, 0, 0);
+			output_key(ps->deviceSec, ps->channelSec - 1, ps->key, 0, 0, 0);
 	    }
 
 	    /* check if we should kill the pedal, modulation and pitch */
@@ -2728,10 +2729,10 @@ MppMainWindow :: handle_config_dev(int n, int automagic)
 }
 
 void
-MppMainWindow :: output_key(int chan, int key, int vel, int delay, int dur)
+MppMainWindow :: output_key(int dev, int chan, int key, int vel, int delay, int dur)
 {
 	struct mid_data *d = &mid_data;
-	uint8_t y;
+	int y;
 
 	/* check for time scaling */
 	if (dlg_bpm->period_cur != 0 && dlg_bpm->bpm_other != 0)
@@ -2739,6 +2740,8 @@ MppMainWindow :: output_key(int chan, int key, int vel, int delay, int dur)
 
 	/* output note to all synths first */
 	for (y = 0; y != MPP_MAX_DEVS; y++) {
+		if (dev != -1 && dev != y)
+			continue;
 		if (check_synth(y, chan, 0)) {
 			mid_delay(d, delay);
 			do_key_press(key, vel, dur);
