@@ -1370,12 +1370,14 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 		key_delay++;
 
 	if (map & MPP_CHORD_MAP_BASE) {
-		if (synthChannelBase != (int)mse.channel) {
+		if (synthChannelBase != (int)mse.channel ||
+		    synthDeviceBase != mse.device) {
 			mse.channelSec = synthChannelBase + 1;
 			mse.deviceSec = synthDeviceBase;
 		}
 	} else {
-		if (synthChannelTreb != (int)mse.channel) {
+		if (synthChannelTreb != (int)mse.channel ||
+		    synthDeviceTreb != mse.device) {
 			mse.channelSec = synthChannelTreb + 1;
 			mse.deviceSec = synthDeviceTreb;
 		}
