@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2012-2016 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2012-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -184,8 +184,7 @@ MppSettings :: doSave(void)
 			beginGroup(concat("device%d", y));
 			setValue("device", mw->led_config_dev[y]->text());
 			setValue("play", (int)mw->cbx_config_dev[y][0]->isChecked());
-			setValue("rec", (int)mw->cbx_config_dev[y][1]->isChecked());
-			setValue("synth", (int)mw->cbx_config_dev[y][2]->isChecked());
+			setValue("synth", (int)mw->cbx_config_dev[y][1 + MPP_MAX_VIEWS]->isChecked());
 			setValue("muteprog", mw->muteProgram[y]);
 			setValue("mutepedal", mw->mutePedal[y]);
 			setValue("enablelocalkeys", mw->enableLocalKeys[y]);
@@ -193,7 +192,7 @@ MppSettings :: doSave(void)
 			setValue("mutenonchannel", mw->muteAllNonChannel[y]);
 			setValue("muteallcontrol", mw->muteAllControl[y]);
 			for (x = 0; x != MPP_MAX_VIEWS; x++)
-				setValue(concat("view%d", x), (int)mw->cbx_config_dev[y][3 + x]->isChecked());
+				setValue(concat("view%d", x), (int)mw->cbx_config_dev[y][1 + x]->isChecked());
 			for (x = 0; x != 16; x++)
 				setValue(concat("mute%d", x), mw->muteMap[y][x]);
 			endGroup();
@@ -337,10 +336,9 @@ MppSettings :: doLoad(void)
 		for (y = 0; y != MPP_MAX_DEVS; y++) {
 			mw->led_config_dev[y]->setText(stringDefault(concat("device%d/device", y), ""));
 			mw->cbx_config_dev[y][0]->setChecked(valueDefault(concat("device%d/play", y), 0) ? 1 : 0);
-			mw->cbx_config_dev[y][1]->setChecked(valueDefault(concat("device%d/rec", y), 0) ? 1 : 0);
-			mw->cbx_config_dev[y][2]->setChecked(valueDefault(concat("device%d/synth", y), 0) ? 1 : 0);
+			mw->cbx_config_dev[y][1 + MPP_MAX_VIEWS]->setChecked(valueDefault(concat("device%d/synth", y), 0) ? 1 : 0);
 			for (x = 0; x != MPP_MAX_VIEWS; x++) {
-				mw->cbx_config_dev[y][3 + x]->setChecked(
+				mw->cbx_config_dev[y][1 + x]->setChecked(
 				    valueDefault(concat("device%d/view%d", y, x), (x == 0)));
 			}
 			int muteProgram = valueDefault(concat("device%d/muteprog", y), 0) ? 1 : 0;

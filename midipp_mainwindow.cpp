@@ -80,6 +80,7 @@ MppMainWindow :: noise8(uint8_t factor)
 MppMainWindow :: MppMainWindow(QWidget *parent)
   : QWidget(parent)
 {
+	QLabel *pl;
 	int n;
 	int x;
 
@@ -500,14 +501,25 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	gb_config_device = new MppGroupBox(tr("Device configuration"));
 
-	gb_config_device->addWidget(new QLabel(tr("Device Name")), 0, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gb_config_device->addWidget(new QLabel(tr("Play")), 0, 2, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gb_config_device->addWidget(new QLabel(tr("Rec.")), 0, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gb_config_device->addWidget(new QLabel(tr("Synth")), 0, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	for (x = 0; x != MPP_MAX_VIEWS; x++)
-		gb_config_device->addWidget(new QLabel(tr("View-%1").arg(QChar('A' + x))), 0, 5 + x, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gb_config_device->addWidget(new QLabel(tr("Mute Map")), 0, 5 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gb_config_device->addWidget(new QLabel(tr("DevSel")), 0, 6 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb_config_device->addWidget(new QLabel(tr("Device name")), 0, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+
+	pl = new QLabel(tr("Playback\nenable"));
+	pl->setAlignment(Qt::AlignCenter);
+	gb_config_device->addWidget(pl, 0, 2, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	for (x = 0; x != MPP_MAX_VIEWS; x++) {
+		pl = new QLabel(tr("Record to\nview-%1").arg(QChar('A' + x)));
+		pl->setAlignment(Qt::AlignCenter);
+		gb_config_device->addWidget(pl, 0, 3 + x, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	}
+	pl = new QLabel(tr("Synth\nenable"));
+	pl->setAlignment(Qt::AlignCenter);
+	gb_config_device->addWidget(pl, 0, 3 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+
+	gb_config_device->addWidget(new QLabel(tr("Mute map")), 0, 4 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+
+	pl = new QLabel(tr("Device\nselection"));
+	pl->setAlignment(Qt::AlignCenter);
+	gb_config_device->addWidget(pl, 0, 5 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	gb_config_device->setColumnStretch(1, 1);
 
@@ -522,7 +534,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		led_config_dev[n]->setMaxLength(256);
 		connect(led_config_dev[n], SIGNAL(textChanged(const QString &)), this, SLOT(handle_config_changed()));
 
-		for (x = 0; x != (3 + MPP_MAX_VIEWS); x++) {
+		for (x = 0; x != (2 + MPP_MAX_VIEWS); x++) {
 			cbx_config_dev[n][x] = new MppCheckBox(n);
 			connect(cbx_config_dev[n][x], SIGNAL(stateChanged(int,int)), this, SLOT(handle_config_changed()));
 			gb_config_device->addWidget(cbx_config_dev[n][x], n + 1, 2 + x, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
@@ -530,8 +542,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 		gb_config_device->addWidget(new QLabel(tr("Dev%1:").arg(n)), n + 1, 0, 1, 1, Qt::AlignHCenter|Qt::AlignLeft);
 		gb_config_device->addWidget(led_config_dev[n], n + 1, 1, 1, 1);
-		gb_config_device->addWidget(but_config_mm[n], n + 1, 5 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		gb_config_device->addWidget(but_config_dev[n], n + 1, 6 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		gb_config_device->addWidget(but_config_mm[n], n + 1, 4 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		gb_config_device->addWidget(but_config_dev[n], n + 1, 5 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	}
 
 	led_config_insert = new QLineEdit(QString());
@@ -1446,15 +1458,17 @@ MppMainWindow :: handle_config_apply(int devno)
 		deviceName[n] = MppQStringToAscii(led_config_dev[n]->text());
 
 		if (cbx_config_dev[n][0]->isChecked())
-			deviceBits |= 1UL << ((3*n)+0);
-		if (cbx_config_dev[n][1]->isChecked())
-			deviceBits |= 1UL << ((3*n)+1);
-		if (cbx_config_dev[n][2]->isChecked())
-			deviceBits |= 1UL << ((3*n)+2);
+			deviceBits |= MPP_DEV0_PLAY << (3 * n);
+
 		for (x = 0; x != MPP_MAX_VIEWS; x++) {
-			if (cbx_config_dev[n][3 + x]->isChecked())
-				devInputMaskCopy[n] |= (1U << x);
+			if (cbx_config_dev[n][1 + x]->isChecked() == 0)
+				continue;
+			devInputMaskCopy[n] |= (1U << x);
+			deviceBits |= MPP_DEV0_RECORD << (3 * n);
 		}
+
+		if (cbx_config_dev[n][1 + MPP_MAX_VIEWS]->isChecked())
+			deviceBits |= MPP_DEV0_SYNTH << (3 * n);
 	}
 
 	handle_config_reload();
@@ -2595,10 +2609,11 @@ MppMainWindow :: MidiInit(void)
 	int n;
 
 	cbx_config_dev[0][0]->setChecked(1);	/* Play */
-	cbx_config_dev[0][1]->setChecked(1);	/* Record */
-	cbx_config_dev[0][2]->setChecked(1);	/* Synth */
+	cbx_config_dev[0][1 + MPP_MAX_VIEWS]->setChecked(1);	/* Synth */
+
+	/* enable record on A-view */
 	for (n = 0; n != MPP_MAX_DEVS; n++)
-		cbx_config_dev[n][3]->setChecked(1);	/* View-A */
+		cbx_config_dev[n][1]->setChecked(1);	/* Rec-A */
 
 	led_config_dev[0]->setText(QString("X:"));
 
