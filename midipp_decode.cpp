@@ -458,7 +458,7 @@ MppDecodeTab :: handle_align(int key)
 			break;
 		int rols = 0;
 		MppRolUpChord(chord_mask, rols);
-		chord_key -= (rols % MPP_MAX_BANDS);
+		chord_key -= rols;
 		x = MPP_MAX_BANDS;
 	}
 }
@@ -473,7 +473,7 @@ MppDecodeTab :: handle_rol_up()
 	handle_play_release();
 	rols = 0;
 	MppRolDownChord(chord_mask, rols);
-	chord_key += (rols % MPP_MAX_BANDS);
+	chord_key += rols;
 	handle_refresh();
 	handle_play_press();
 }
@@ -488,7 +488,7 @@ MppDecodeTab :: handle_rol_down()
 	handle_play_release();
 	rols = 0;
 	MppRolUpChord(chord_mask, rols);
-	chord_key -= (rols % MPP_MAX_BANDS);
+	chord_key -= rols;
 	handle_refresh();
 	handle_play_press();
 }
