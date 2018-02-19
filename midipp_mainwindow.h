@@ -106,7 +106,6 @@ public:
 	uint32_t noiseRem;
 
 	uint32_t devInputMask[MPP_MAX_DEVS];
-	uint32_t chanUsageMask;
 	uint32_t startPosition;
 	uint32_t pausePosition;
 	uint32_t deviceBits;

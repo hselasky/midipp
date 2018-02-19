@@ -976,7 +976,6 @@ MppMainWindow :: handle_midi_file_new()
 		umidi20_event_queue_drain(&track[x]->queue);
 		any = 1;
 	}
-	chanUsageMask = 0;
 	atomic_unlock();
 
 	if (any) {
@@ -1099,11 +1098,6 @@ load_file:
 		    if (do_instr_check(event, NULL) != 0) {
 			event_copy = NULL;
 		    } else {
-			if (umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL) {
-				uint8_t chan;
-				chan = umidi20_event_get_channel(event);
-				chanUsageMask |= (1 << chan);
-			}
 			event_copy = umidi20_event_copy(event, 0);
 		    }
 		} else if (umidi20_event_get_what(event) &
@@ -1152,21 +1146,18 @@ MppMainWindow :: handle_midi_file_instr_prepend()
 	struct mid_data *d = &mid_data;
 	uint8_t x;
 
-	for (x = 0; x != 16; x++) {
-
-		/* 
-		 * Don't insert instrument bank and program commands
-		 * for channels without events!
-		 */
-		if (!(chanUsageMask & (1 << x)))
+	for (unsigned int n = 0; n != MPP_MAX_TRACKS; n++) {
+		if (check_mirror(n))
 			continue;
-
-		mid_set_channel(d, x);
-		mid_set_position(d, 0);
-		mid_set_device_no(d, 0xFF);
-		mid_set_bank_program(d, x,
-		    instr[x].bank,
-		    instr[x].prog);
+		for (x = 0; x != 16; x++) {
+			d->track = track[n];
+			mid_set_channel(d, x);
+			mid_set_position(d, 0);
+			mid_set_device_no(d, 0xFF);
+			mid_set_bank_program(d, x,
+			    instr[x].bank,
+			    instr[x].prog);
+		}
 	}
 }
 
@@ -1440,8 +1431,10 @@ MppMainWindow :: handle_config_reload()
 void
 MppMainWindow :: handle_config_apply(int devno)
 {
+	struct mid_data *d = &mid_data;
 	uint8_t ScMidiTriggered;
 	uint32_t devInputMaskCopy[MPP_MAX_DEVS];
+	uint32_t pos;
 	int n;
 	int x;
 	int y;
@@ -1457,13 +1450,13 @@ MppMainWindow :: handle_config_apply(int devno)
 		deviceName[n] = MppQStringToAscii(led_config_dev[n]->text());
 
 		if (cbx_config_dev[n][0]->isChecked())
-			deviceBits |= MPP_DEV0_PLAY << (2 * n);
+			deviceBits |= (MPP_DEV0_PLAY << (2 * n));
 
 		for (x = 0; x != MPP_MAX_VIEWS; x++) {
 			if (cbx_config_dev[n][1 + x]->isChecked() == 0)
 				continue;
 			devInputMaskCopy[n] |= (1U << x);
-			deviceBits |= MPP_DEV0_RECORD << (2 * n);
+			deviceBits |= (MPP_DEV0_RECORD << (2 * n));
 		}
 	}
 
@@ -1477,30 +1470,41 @@ MppMainWindow :: handle_config_apply(int devno)
 	ScMidiTriggered = midiTriggered;
 	midiTriggered = 1;
 
+	handle_midi_trigger();
+
+	/* compute relative time distance */
+	pos = umidi20_get_curr_position() - startPosition;
+
+	/* compensate for processing delay */
+	if (pos != 0)
+		pos--;
+
 	/*
 	 * Update local key enable/disable on all devices and
 	 * channels:
 	 */
-	for (n = 0, y = 0; n != MPP_MAX_TRACKS; n++) {
-		if (check_mirror(y))
-			continue;
+	for (n = 0, y = 0; n != MPP_MAX_DEVS; n++) {
+
 		for (x = 0; x != 16; x++) {
 			uint8_t buf[4];
 
-			if (check_play(n, x, 0) == 0)
-				continue;
+			d->track = track[0];
+			mid_set_channel(d, x);
+			mid_set_position(d, pos);
+			mid_set_device_no(d, n);
 
 			if (enableLocalKeys[n]) {
 				buf[0] = 0xB0 | x;
 				buf[1] = 0x7A;
 				buf[2] = 0x7F;
-				mid_add_raw(&mid_data, buf, 3, y);
+				mid_add_raw(d, buf, 3, y);
 			}
+
 			if (disableLocalKeys[n]) {
 				buf[0] = 0xB0 | x;
 				buf[1] = 0x7A;
 				buf[2] = 0x00;
-				mid_add_raw(&mid_data, buf, 3, y);
+				mid_add_raw(d, buf, 3, y);
 			}
 
 			/* wait a bit before sending next MIDI events */
@@ -1593,8 +1597,6 @@ MppMainWindow :: check_record(uint8_t index, uint8_t chan, uint32_t off)
 	pos = (umidi20_get_curr_position() - startPosition + off) & 0x3FFFFFFFU;
 	if (pos < MPP_MIN_POS)
 		pos = MPP_MIN_POS;
-
-	chanUsageMask |= (1 << chan);
 
 	d->track = track[index];
 	mid_set_channel(d, chan);
@@ -1970,9 +1972,7 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 				break;
 			}
 
-			if (devno < -1) {
-
-			} else for (int x = 0; x != MPP_MAX_DEVS; x++) {
+			for (int x = 0; x != MPP_MAX_DEVS; x++) {
 				if (devno != -1 && x != devno)
 					continue;
 				if (((mw->deviceBits >> (2 * x)) & MPP_DEV0_PLAY) == 0)
@@ -2005,8 +2005,7 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 					umidi20_event_queue_insert(&root_dev.play[x].queue,
 					    p_event, UMIDI20_CACHE_INPUT);
 				}
-			  }
-
+			}
 			do_drop = 1;
 		} else {
 			do_drop = 1;
@@ -2039,9 +2038,7 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 				break;
 			}
 
-			if (devno < -1) {
-
-			} else for (int x = 0; x != MPP_MAX_DEVS; x++) {
+			for (int x = 0; x != MPP_MAX_DEVS; x++) {
 				if (devno != -1 && x != devno)
 					continue;
 				if (((mw->deviceBits >> (2 * x)) & MPP_DEV0_PLAY) == 0)
@@ -2056,11 +2053,13 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 					umidi20_event_queue_insert(&root_dev.play[x].queue,
 					    p_event, UMIDI20_CACHE_INPUT);
 				}
-			  }
+			}
 			do_drop = 1;
 		} else {
 			do_drop = 1;
 		}
+	} else if (device_no >= MPP_MAGIC_DEVNO) {
+		do_drop = 1;
 	}
 	*drop = do_drop;
 	mw->atomic_unlock();
