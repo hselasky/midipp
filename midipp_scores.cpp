@@ -1686,7 +1686,7 @@ MppScoreMain :: decrementDuration(uint32_t timeout)
 			/* clear entry */
 			pressedKeys[x] = 0;
 
-			mainWindow->output_key(synthDevice, chan,
+			mainWindow->output_key(MPP_DEFAULT_TRACK(unit), chan,
 			    out_key, 0, timeout + delay, 0);
 		}
 
@@ -2341,14 +2341,14 @@ MppScoreMain :: handleMidiKeyPressLocked(int key, int vel)
 		break;
 	case MM_PASS_ALL:
 		if (setPressedKey(chan, key, 255, 0) == 0)
-			mainWindow->output_key(synthDevice, chan, key, vel, 0, 0);
+			mainWindow->output_key(MPP_DEFAULT_TRACK(unit), chan, key, vel, 0, 0);
 		break;
 	case MM_PASS_ONE_MIXED:
 		if (checkHalfPassThru(key) != 0) {
 			if (key == baseKey)
 				handleKeyPress(key, vel);
 		} else if (setPressedKey(chan, key, 255, 0) == 0) {
-			mainWindow->output_key(synthDevice, chan, key, vel, 0, 0);
+			mainWindow->output_key(MPP_DEFAULT_TRACK(unit), chan, key, vel, 0, 0);
 		}
 		break;
 	default:
@@ -2377,12 +2377,12 @@ MppScoreMain :: handleMidiKeyReleaseLocked(int key)
 			if (key == baseKey)
 				handleKeyRelease(key);
 		} else if (setPressedKey(chan, key, 0, 0) == 0) {
-			mainWindow->output_key(synthDevice, chan, key, 0, 0, 0);
+			mainWindow->output_key(MPP_DEFAULT_TRACK(unit), chan, key, 0, 0, 0);
 		}
 		break;
 	case MM_PASS_ALL:
 		if (setPressedKey(chan, key, 0, 0) == 0)
-			mainWindow->output_key(synthDevice, chan, key, 0, 0, 0);
+			mainWindow->output_key(MPP_DEFAULT_TRACK(unit), chan, key, 0, 0, 0);
 		break;
 	default:
 		break;
