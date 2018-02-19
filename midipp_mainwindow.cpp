@@ -2630,11 +2630,11 @@ MppMainWindow :: MidiInit(void)
 {
 	int n;
 
-	cbx_config_dev[0][0]->setChecked(1);	/* Play */
-
-	/* enable record on A-view */
-	for (n = 0; n != MPP_MAX_DEVS; n++)
-		cbx_config_dev[n][1]->setChecked(1);	/* Rec-A */
+	/* enable all output and input */
+	for (n = 0; n != MPP_MAX_DEVS; n++) {
+	  	cbx_config_dev[n][0]->setChecked(1);	/* Output */
+		cbx_config_dev[n][1]->setChecked(1);	/* Input view-A */
+	}
 
 	led_config_dev[0]->setText(QString("X:"));
 
