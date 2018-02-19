@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2017 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -1292,13 +1292,13 @@ MppScoreMain :: handleKeyRemovePast(MppScoreEntry *pn, uint32_t key_delay)
 		    score_past[x].key == pn->key &&
 		    score_past[x].channel == pn->channel) {
 
-			mainWindow->output_key(score_past[x].device,
+			mainWindow->output_key(score_past[x].track,
 			    score_past[x].channel, score_past[x].key,
 			    0, key_delay, 0);
 
 			/* check for secondary event */
 			if (score_past[x].channelSec != 0) {
-				mainWindow->output_key(score_past[x].deviceSec,
+				mainWindow->output_key(score_past[x].trackSec,
 				    score_past[x].channelSec - 1, score_past[x].key,
 				    0, key_delay, 0);
 			}
@@ -1363,7 +1363,7 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 
 	/* update channel and device */
 	mse.channel = (mse.channel + synthChannel) & 0xF;
-	mse.device = synthDevice;
+	mse.track = MPP_DEFAULT_TRACK(unit);
 
 	/* remove key if already pressed */
 	if (handleKeyRemovePast(&mse, key_delay))
@@ -1371,15 +1371,15 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 
 	if (map & MPP_CHORD_MAP_BASE) {
 		if (synthChannelBase != (int)mse.channel ||
-		    synthDeviceBase != mse.device) {
+		    synthDeviceBase != synthDevice) {
 			mse.channelSec = synthChannelBase + 1;
-			mse.deviceSec = synthDeviceBase;
+			mse.trackSec = MPP_BASS_TRACK(unit);
 		}
 	} else {
 		if (synthChannelTreb != (int)mse.channel ||
-		    synthDeviceTreb != mse.device) {
+		    synthDeviceTreb != synthDevice) {
 			mse.channelSec = synthChannelTreb + 1;
-			mse.deviceSec = synthDeviceTreb;
+			mse.trackSec = MPP_TREBLE_TRACK(unit);
 		}
 	}
 
@@ -1389,11 +1389,11 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 	/* store information for pressure command */
 	score_pressure[off] = mse;
 
-	mainWindow->output_key(mse.device, mse.channel, mse.key, vel, key_delay, 0);
+	mainWindow->output_key(mse.track, mse.channel, mse.key, vel, key_delay, 0);
 
 	/* check for secondary event */
 	if (mse.channelSec != 0) {
-		mainWindow->output_key(mse.deviceSec, mse.channelSec - 1,
+		mainWindow->output_key(mse.trackSec, mse.channelSec - 1,
 		    mse.key, vel, key_delay, 0);
 	}
 	mainWindow->cursorUpdate = 1;
@@ -1440,12 +1440,12 @@ MppScoreMain :: handleKeyReleaseChord(int in_key, uint32_t key_delay)
 
 	/* release key once, if any */
 	if (pn->dur != 0) {
-		mainWindow->output_key(pn->device, pn->channel,
+		mainWindow->output_key(pn->track, pn->channel,
 		    pn->key, 0, key_delay, 0);
 
 		/* check for secondary event */
 		if (pn->channelSec != 0) {
-			mainWindow->output_key(pn->deviceSec, pn->channelSec - 1,
+			mainWindow->output_key(pn->trackSec, pn->channelSec - 1,
 			    pn->key, 0, key_delay, 0);
 		}
 		pn->dur = 0;
@@ -1603,7 +1603,7 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 				if (setPressedKey(ch, out_key, duration, delay))
 					break;
 
-				mainWindow->output_key(synthDevice,
+				mainWindow->output_key(MPP_DEFAULT_TRACK(unit),
 				    ch, out_key, out_vel, key_delay + delay, 0);
 				break;
 
@@ -2161,22 +2161,18 @@ MppScoreMain :: outputChannelMaskGet(void)
 	return (mask);
 }
 
-uint16_t
-MppScoreMain :: outputDeviceMaskGet()
+
+uint8_t
+MppScoreMain :: outputTrackMirror(uint8_t which)
 {
-	uint16_t mask;
-
-	if (synthDevice == -1 ||
-	    (synthChannelTreb > -1 && synthDeviceTreb == -1) ||
-	    (synthChannelBase > -1 && synthDeviceBase == -1))
-		return (0xFFFFU);
-
-	mask = (1U << synthDevice);
-	if (synthChannelTreb > -1)
-		mask |= (1U << synthDeviceTreb);
-	if (synthChannelBase > -1)
-		mask |= (1U << synthDeviceBase);
-	return (mask);
+	/* check for broadcasters */
+	if (synthDevice == -1)
+		return (which != MPP_DEFAULT_TRACK(0));
+	if (synthChannelTreb > -1 && synthDeviceTreb == -1)
+		return (which != MPP_TREBLE_TRACK(0));
+	if (synthChannelBase > -1 && synthDeviceBase == -1)
+		return (which != MPP_BASS_TRACK(0));
+	return (0);
 }
 
 /* must be called locked */
@@ -2185,34 +2181,24 @@ MppScoreMain :: outputControl(uint8_t ctrl, uint8_t val)
 {
 	MppMainWindow *mw = mainWindow;
 	struct mid_data *d = &mw->mid_data;
+	const unsigned int off = unit * MPP_TRACKS_PER_VIEW;
 	uint16_t ChannelMask;
-	uint16_t DeviceMask;
 	uint8_t chan;
-	uint8_t x;
 
 	chan = synthChannel;
 	ChannelMask = outputChannelMaskGet();
-	DeviceMask = outputDeviceMaskGet();
 
 	/* the control event is distributed to all active channels */
 	while (ChannelMask) {
 		if (ChannelMask & 1) {
-			for (x = 0; x != MPP_MAX_DEVS; x++) {
-				if (ctrl == 0x40) {
-					if (mw->mutePedal[x] != 0)
-						continue;
-				} else {
-					if (mw->muteAllControl[x] != 0)
-						continue;
-				}
-				if (((DeviceMask >> x) & 1) == 0)
+			for (unsigned int x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
+				if (outputTrackMirror(x))
 					continue;
-				if (mw->check_synth(x, chan, 0) == 0)
-					continue;
-				mid_control(d, ctrl, val);
+				if (mw->check_play(off + x, chan, 0))
+					mid_control(d, ctrl, val);
+				if (mw->check_record(off + x, chan, 0))
+					mid_control(d, ctrl, val);
 			}
-			if (mw->check_record(chan, 0))
-				mid_control(d, ctrl, val);
 		}
 		ChannelMask /= 2;
 		chan++;
@@ -2231,7 +2217,6 @@ MppScoreMain :: outputKeyPressure(uint8_t chan, uint8_t key, uint8_t pressure)
 {
 	MppMainWindow *mw = mainWindow;
 	struct mid_data *d = &mw->mid_data;
-	uint8_t x;
 	uint8_t buf[4];
 
 	buf[0] = 0xA0;
@@ -2240,12 +2225,14 @@ MppScoreMain :: outputKeyPressure(uint8_t chan, uint8_t key, uint8_t pressure)
 	buf[3] = 0;
 
 	/* the pressure event is distributed to the specified channel */
-	for (x = 0; x != MPP_MAX_DEVS; x++) {
-		if (mw->check_synth(x, chan, 0))
+	for (unsigned int x = 0; x != MPP_MAX_TRACKS; x++) {
+		if (mw->check_mirror(x))
+			continue;
+		if (mw->check_play(x, chan, 0))
+			mid_add_raw(d, buf, 3, 0);
+		if (mw->check_record(x, chan, 0))
 			mid_add_raw(d, buf, 3, 0);
 	}
-	if (mw->check_record(chan, 0))
-		mid_add_raw(d, buf, 3, 0);
 }
 
 /* must be called locked */
@@ -2254,15 +2241,13 @@ MppScoreMain :: outputChanPressure(uint8_t pressure)
 {
 	MppMainWindow *mw = mainWindow;
 	struct mid_data *d = &mw->mid_data;
+	const unsigned int off = unit * MPP_TRACKS_PER_VIEW;
 	uint16_t ChannelMask;
-	uint16_t DeviceMask;
 	uint8_t chan;
 	uint8_t buf[4];
-	uint8_t x;
 
 	chan = synthChannel;
 	ChannelMask = outputChannelMaskGet();
-	DeviceMask = outputDeviceMaskGet();
 
 	buf[0] = 0xD0;
 	buf[1] = pressure & 0x7F;
@@ -2272,14 +2257,14 @@ MppScoreMain :: outputChanPressure(uint8_t pressure)
 	/* the pressure event is distributed to all active channels */
 	while (ChannelMask) {
 		if (ChannelMask & 1) {
-			for (x = 0; x != MPP_MAX_DEVS; x++) {
-				if (((DeviceMask >> x) & 1) == 0)
+			for (unsigned int x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
+				if (outputTrackMirror(x))
 					continue;
-				if (mw->check_synth(x, chan, 0))
+				if (mw->check_play(off + x, chan, 0))
+					mid_add_raw(d, buf, 2, 0);
+				if (mw->check_record(off + x, chan, 0))
 					mid_add_raw(d, buf, 2, 0);
 			}
-			if (mw->check_record(chan, 0))
-				mid_add_raw(d, buf, 2, 0);
 		}
 		ChannelMask /= 2;
 		chan++;
@@ -2293,21 +2278,17 @@ MppScoreMain :: outputPitch(uint16_t val)
 {
 	MppMainWindow *mw = mainWindow;
 	struct mid_data *d = &mw->mid_data;
-	uint16_t DeviceMask = outputDeviceMaskGet();
-	uint8_t x;
+	const unsigned int off = unit * MPP_TRACKS_PER_VIEW;
 
 	/* the control event is distributed to all active devices */
-	for (x = 0; x != MPP_MAX_DEVS; x++) {
-		if (mw->muteAllControl[x] != 0)
+	for (unsigned int x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
+		if (outputTrackMirror(x))
 			continue;
-		if (((DeviceMask >> x) & 1) == 0)
-			continue;
-		if (mw->check_synth(x, 0, 0) == 0)
-			continue;
-		mid_pitch_bend(d, val);
+		if (mw->check_play(off + x, 0, 0))
+			mid_pitch_bend(d, val);
+		if (mw->check_record(off + x, 0, 0))
+			mid_pitch_bend(d, val);
 	}
-	if (mw->check_record(0, 0))
-		mid_pitch_bend(d, val);
 }
 
 int

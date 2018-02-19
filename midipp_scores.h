@@ -81,7 +81,7 @@ public:
 	void handlePrintSub(QPrinter *pd, QPoint orig, float scale_f);
 	int handleScoreFileOpenSub(QString fname);
 	uint16_t outputChannelMaskGet(void);
-	uint16_t outputDeviceMaskGet(void);
+	uint8_t outputTrackMirror(uint8_t);
 	void outputControl(uint8_t ctrl, uint8_t val);
 	void outputKeyPressure(uint8_t chan, uint8_t key, uint8_t pressure);
 	void outputChanPressure(uint8_t pressure);

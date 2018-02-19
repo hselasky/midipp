@@ -43,7 +43,6 @@ MppSettings :: MppSettings(MppMainWindow *_parent, const QString & fname)
 {
 	mw = _parent;
 
-	save_volume = -1;
 	save_instruments = -1;
 	save_viewmode = -1;
 	save_devices = -1;
@@ -127,7 +126,6 @@ MppSettings :: doSave(void)
 	clear();
 
 	beginGroup("global");
-	setValue("save_volume", save_volume ? 1 : 0);
 	setValue("save_instruments", save_instruments ? 1 : 0);
 	setValue("save_viewmode", save_viewmode ? 1 : 0);
 	setValue("save_devices", save_devices ? 1 : 0);
@@ -155,20 +153,14 @@ MppSettings :: doSave(void)
 			setValue("synthdevice", mw->scores_main[x]->synthDevice);
 			setValue("synthdevicebase", mw->scores_main[x]->synthDeviceBase);
 			setValue("synthdevicetreb", mw->scores_main[x]->synthDeviceTreb);
+			setValue("synthvolume", mw->trackVolume[MPP_DEFAULT_TRACK(x)]);
+			setValue("synthvolumebase", mw->trackVolume[MPP_BASS_TRACK(x)]);
+			setValue("synthvolumetreb", mw->trackVolume[MPP_TREBLE_TRACK(x)]);
 			setValue("chordcontrast", mw->scores_main[x]->chordContrast);
 			setValue("chordnormalize", mw->scores_main[x]->chordNormalize);
 			setValue("songevents", mw->scores_main[x]->songEventsOn);
 			endGroup();
 		}
-	}
-
-	if (save_volume) {
-		beginGroup("volume");
-		for (x = 0; x != 16; x++) {
-			setValue(concat("play%d", x), mw->spn_volume_play[x]->value());
-			setValue(concat("synth%d", x), mw->spn_volume_synth[x]->value());
-		}
-		endGroup();
 	}
 
 	if (save_instruments) {
@@ -178,7 +170,6 @@ MppSettings :: doSave(void)
 			setValue(concat("prog%d", x), mw->tab_instrument->spn_instr_prog[x]->value());
 			setValue(concat("mute%d", x), (int)mw->tab_instrument->cbx_instr_mute[x]->isChecked());
 		}
-		setValue("nonchannelmute", mw->tab_instrument->but_non_channel_mute_all->currSelection);
 		endGroup();
 	}
 
@@ -187,7 +178,6 @@ MppSettings :: doSave(void)
 			beginGroup(concat("device%d", y));
 			setValue("device", mw->led_config_dev[y]->text());
 			setValue("play", (int)mw->cbx_config_dev[y][0]->isChecked());
-			setValue("synth", (int)mw->cbx_config_dev[y][1 + MPP_MAX_VIEWS]->isChecked());
 			setValue("muteprog", mw->muteProgram[y]);
 			setValue("mutepedal", mw->mutePedal[y]);
 			setValue("enablelocalkeys", mw->enableLocalKeys[y]);
@@ -240,7 +230,6 @@ MppSettings :: doLoad(void)
 	int x;
 	int y;
 
-	save_volume = valueDefault("global/save_volume", -1);
 	save_instruments = valueDefault("global/save_instruments", -1);
 	save_viewmode = valueDefault("global/save_viewmode", -1);
 	save_devices = valueDefault("global/save_devices", -1);
@@ -264,6 +253,9 @@ MppSettings :: doLoad(void)
 			int synthDevice = valueDefault(concat("view%d/synthdevice", x), -1);
 			int synthDeviceBase = valueDefault(concat("view%d/synthdevicebase", x), -1);
 			int synthDeviceTreb = valueDefault(concat("view%d/synthdevicetreb", x), -1);
+			int synthVolume = valueDefault(concat("view%d/synthvolume", x), -1);
+			int synthVolumeBase = valueDefault(concat("view%d/synthvolumebase", x), -1);
+			int synthVolumeTreb = valueDefault(concat("view%d/synthvolumetreb", x), -1);
 			int chordContrast = valueDefault(concat("view%d/chordcontrast", x), 128);
 			int chordNormalize = valueDefault(concat("view%d/chordnormalize", x), 128);
 			int songEvents = valueDefault(concat("view%d/songevents", x), 0);
@@ -286,6 +278,12 @@ MppSettings :: doLoad(void)
 				synthDeviceBase = -1;
 			if (synthDeviceTreb < 0 || synthDeviceTreb >= MPP_MAX_DEVS)
 				synthDeviceTreb = -1;
+			if (synthVolume < 0 || synthVolume >= MPP_VOLUME_MAX)
+				synthVolume = MPP_VOLUME_UNIT;
+			if (synthVolumeBase < 0 || synthVolumeBase >= MPP_VOLUME_MAX)
+				synthVolumeBase = MPP_VOLUME_UNIT;
+			if (synthVolumeTreb < 0 || synthVolumeTreb >= MPP_VOLUME_MAX)
+				synthVolumeTreb = MPP_VOLUME_UNIT;
 			if (chordContrast < 0 || chordContrast > 255)
 				chordContrast = 128;
 			if (chordNormalize < 0 || chordNormalize > 1)
@@ -304,6 +302,9 @@ MppSettings :: doLoad(void)
 			mw->scores_main[x]->synthDevice = synthDevice;
 			mw->scores_main[x]->synthDeviceBase = synthDeviceBase;
 			mw->scores_main[x]->synthDeviceTreb = synthDeviceTreb;
+			mw->trackVolume[MPP_DEFAULT_TRACK(x)] = synthVolume;
+			mw->trackVolume[MPP_BASS_TRACK(x)] = synthVolumeBase;
+			mw->trackVolume[MPP_TREBLE_TRACK(x)] = synthVolumeTreb;
 			mw->scores_main[x]->chordContrast = chordContrast;
 			mw->scores_main[x]->chordNormalize = chordNormalize;
 			mw->scores_main[x]->songEventsOn = songEvents;
@@ -323,35 +324,18 @@ MppSettings :: doLoad(void)
 		mw->mbm_key_mode_b->setSelection(value[1]);
 	}
 
-	if (save_volume > 0) {
-		for (x = 0; x != 16; x++) {
-			int play_vol;
-			int synth_vol;
-			play_vol = valueDefault(concat("volume/play%d", x), MPP_VOLUME_UNIT);
-			if (play_vol < 0 || play_vol > MPP_VOLUME_MAX)
-				play_vol = MPP_VOLUME_UNIT;
-			synth_vol = valueDefault(concat("volume/synth%d", x), MPP_VOLUME_UNIT);
-			if (synth_vol < 0 || synth_vol > MPP_VOLUME_MAX)
-				synth_vol = MPP_VOLUME_UNIT;
-			mw->spn_volume_play[x]->setValue(play_vol);
-			mw->spn_volume_synth[x]->setValue(synth_vol);
-		}
-	}
-
 	if (save_instruments > 0) {
 		for (x = 0; x != 16; x++) {
 			mw->tab_instrument->spn_instr_bank[x]->setValue(valueDefault(concat("instruments/bank%d", x), 0) & 16383);
 			mw->tab_instrument->spn_instr_prog[x]->setValue(valueDefault(concat("instruments/prog%d", x), 0) & 127);
 			mw->tab_instrument->cbx_instr_mute[x]->setChecked(valueDefault(concat("instruments/mute%d", x), 0) ? 1 : 0);
 		}
-		mw->tab_instrument->but_non_channel_mute_all->setSelection(valueDefault("nonchannelmute", 0) ? 1 : 0);
 	}
 
 	if (save_devices > 0) {
 		for (y = 0; y != MPP_MAX_DEVS; y++) {
 			mw->led_config_dev[y]->setText(stringDefault(concat("device%d/device", y), ""));
 			mw->cbx_config_dev[y][0]->setChecked(valueDefault(concat("device%d/play", y), 0) ? 1 : 0);
-			mw->cbx_config_dev[y][1 + MPP_MAX_VIEWS]->setChecked(valueDefault(concat("device%d/synth", y), 0) ? 1 : 0);
 			for (x = 0; x != MPP_MAX_VIEWS; x++) {
 				mw->cbx_config_dev[y][1 + x]->setChecked(
 				    valueDefault(concat("device%d/view%d", y, x), (x == 0)));
@@ -470,7 +454,6 @@ MppSettings :: handle_clean(void)
 	clear();
 
 	beginGroup("global");
-	setValue("save_volume", 1);
 	setValue("save_instruments", 1);
 	setValue("save_viewmode", 1);
 	setValue("save_devices", 1);
@@ -505,7 +488,6 @@ MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
 
 	gl = new QGridLayout(this);
 
-	cbx_volume = new MppCheckBox();
 	cbx_instruments = new MppCheckBox();
 	cbx_viewmode = new MppCheckBox();
 	cbx_deviceconfig = new MppCheckBox();
@@ -524,28 +506,26 @@ MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
 	setWindowTitle(tr("Configuration save and load selection"));
 	setWindowIcon(QIcon(MppIconFile));
 
-	gl->addWidget(new QLabel(tr("Save volume settings")), 0, 0, 1, 1);
-	gl->addWidget(new QLabel(tr("Save instrument settings")), 1, 0, 1, 1);
-	gl->addWidget(new QLabel(tr("Save view mode settings")), 2, 0, 1, 1);
-	gl->addWidget(new QLabel(tr("Save device configuration")), 3, 0, 1, 1);
-	gl->addWidget(new QLabel(tr("Save font selection")), 4, 0, 1, 1);
-	gl->addWidget(new QLabel(tr("Save database URL")), 5, 0, 1, 1);
-	gl->addWidget(new QLabel(tr("Save database contents")), 6, 0, 1, 1);
-	gl->addWidget(new QLabel(tr("Save custom MIDI commands")), 7, 0, 1, 1);
-	gl->addWidget(new QLabel(tr("Save shortcut MIDI commands")), 8, 0, 1, 1);
+	gl->addWidget(new QLabel(tr("Save instrument settings")), 0, 0, 1, 1);
+	gl->addWidget(new QLabel(tr("Save view mode settings")), 1, 0, 1, 1);
+	gl->addWidget(new QLabel(tr("Save device configuration")), 2, 0, 1, 1);
+	gl->addWidget(new QLabel(tr("Save font selection")), 3, 0, 1, 1);
+	gl->addWidget(new QLabel(tr("Save database URL")), 4, 0, 1, 1);
+	gl->addWidget(new QLabel(tr("Save database contents")), 5, 0, 1, 1);
+	gl->addWidget(new QLabel(tr("Save custom MIDI commands")), 6, 0, 1, 1);
+	gl->addWidget(new QLabel(tr("Save shortcut MIDI commands")), 7, 0, 1, 1);
 
-	gl->addWidget(cbx_volume, 0, 2, 1, 2);
-	gl->addWidget(cbx_instruments, 1, 2, 1, 2);
-	gl->addWidget(cbx_viewmode, 2, 2, 1, 2);
-	gl->addWidget(cbx_deviceconfig, 3, 2, 1, 2);
-	gl->addWidget(cbx_font, 4, 2, 1, 2);
-	gl->addWidget(cbx_database_url, 5, 2, 1, 2);
-	gl->addWidget(cbx_database_data, 6, 2, 1, 2);
-	gl->addWidget(cbx_custom, 7, 2, 1, 2);
-	gl->addWidget(cbx_shortcut, 8, 2, 1, 2);
+	gl->addWidget(cbx_instruments, 0, 2, 1, 2);
+	gl->addWidget(cbx_viewmode, 1, 2, 1, 2);
+	gl->addWidget(cbx_deviceconfig, 2, 2, 1, 2);
+	gl->addWidget(cbx_font, 3, 2, 1, 2);
+	gl->addWidget(cbx_database_url, 4, 2, 1, 2);
+	gl->addWidget(cbx_database_data, 5, 2, 1, 2);
+	gl->addWidget(cbx_custom, 6, 2, 1, 2);
+	gl->addWidget(cbx_shortcut, 7, 2, 1, 2);
 
-	gl->addWidget(but_reset, 9, 1, 1, 1);
-	gl->addWidget(but_ok, 9, 2, 1, 1);
+	gl->addWidget(but_reset, 8, 1, 1, 1);
+	gl->addWidget(but_ok, 8, 2, 1, 1);
 }
 
 MppSettingsWhat :: ~MppSettingsWhat(void)
@@ -556,7 +536,6 @@ MppSettingsWhat :: ~MppSettingsWhat(void)
 void
 MppSettingsWhat :: doShow(void)
 {
-	cbx_volume->setChecked(ms->save_volume ? 1 : 0);
 	cbx_instruments->setChecked(ms->save_instruments ? 1 : 0);
 	cbx_viewmode->setChecked(ms->save_viewmode ? 1 : 0);
 	cbx_deviceconfig->setChecked(ms->save_devices ? 1 : 0);
@@ -568,7 +547,6 @@ MppSettingsWhat :: doShow(void)
 
 	exec();
 
-	ms->save_volume = cbx_volume->isChecked() ? 1 : 0;
 	ms->save_instruments = cbx_instruments->isChecked() ? 1 : 0;
 	ms->save_viewmode = cbx_viewmode->isChecked() ? 1 : 0;
 	ms->save_devices = cbx_deviceconfig->isChecked() ? 1 : 0;
@@ -582,7 +560,6 @@ MppSettingsWhat :: doShow(void)
 void
 MppSettingsWhat :: handle_reset(void)
 {
-	cbx_volume->setChecked(1);
 	cbx_instruments->setChecked(1);
 	cbx_viewmode->setChecked(1);
 	cbx_deviceconfig->setChecked(1);

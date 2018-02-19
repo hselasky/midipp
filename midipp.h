@@ -100,6 +100,7 @@
 #define	MPP_MAX_CHORD_MAP	30
 #define	MPP_MAX_BUTTON_MAP	16
 #define	MPP_MAX_VIEWS	2
+#define	MPP_MAX_TRACKS  (MPP_TRACKS_PER_VIEW * MPP_MAX_VIEWS)
 #define	MPP_MAX_LINES	8192
 #define	MPP_MAX_SCORES	32
 #define	MPP_MAX_LABELS	32
@@ -111,7 +112,7 @@
 #define	MPP_WHEEL_STEP	(8 * 15)
 #define	MPP_PRESSED_MAX	128
 #define	MPP_MAX_DURATION 255	/* inclusive */
-#define	MPP_MAGIC_DEVNO	(UMIDI20_N_DEVICES - 1)
+#define	MPP_MAGIC_DEVNO	(UMIDI20_N_DEVICES - MPP_MAX_TRACKS)
 #define	MPP_DEFAULT_URL "http://home.selasky.org/midipp/database.tar.gz"
 #define	MPP_DEFAULT_CMD_KEY C3
 #define	MPP_DEFAULT_BASE_KEY ((MPP_C0 + 12 * 5) * MPP_BAND_STEP_12)
@@ -130,6 +131,17 @@
 #define	MPP_CHAN_NONE		2
 #define	MPP_DEV_ALL		1
 #define	MPP_DEV_NONE		2
+
+/* list of tracks supported */
+#define	MPP_DEFAULT_TRACK(n) ((n) * MPP_TRACKS_PER_VIEW + 0)
+#define	MPP_TREBLE_TRACK(n) ((n) * MPP_TRACKS_PER_VIEW + 1)
+#define	MPP_BASS_TRACK(n) ((n) * MPP_TRACKS_PER_VIEW + 2)
+
+#define	MPP_TRACKS_PER_VIEW 3
+
+#if (MPP_MAGIC_DEVNO < MPP_MAX_DEVS)
+#error "UMIDI20_N_DEVICES is too small."
+#endif
 
 /* list of supported band steps */
 #define	MPP_BAND_STEP_12 (MPP_MAX_BANDS / 12)
@@ -266,8 +278,8 @@ class QPrinter;
 struct MppScoreEntry {
 	int key;
 	int dur;
-	int8_t device;
-	int8_t deviceSec;
+	int8_t track;
+	int8_t trackSec;
 	uint8_t channel;
 	uint8_t channelSec;
 };

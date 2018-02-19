@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -111,10 +111,11 @@ MppCustomTab :: handle_send_custom(int which)
 	trig = mw->midiTriggered;
 	mw->midiTriggered = 1;
 
-	for (n = 0; n != MPP_MAX_DEVS; n++) {
-		if (mw->check_synth(n, 0, 0) != 0) {
+	for (n = 0; n != MPP_MAX_TRACKS; n++) {
+		if (mw->check_mirror(n))
+			continue;
+		if (mw->check_play(n, 0, 0))
 			mid_add_raw(&mw->mid_data, buf, y, 0);
-		}
 	}
 	mw->midiTriggered = trig;
 

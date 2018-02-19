@@ -77,12 +77,15 @@ public:
 
 	MppChanSel *spn_pri_chan;
 	MppDevSel *spn_pri_dev;
+	MppVolume *spn_pri_volume;
 
 	MppChanSel *spn_sec_base_chan;
 	MppDevSel *spn_sec_base_dev;
+	MppVolume *spn_sec_base_volume;
 
 	MppChanSel *spn_sec_treb_chan;
 	MppDevSel *spn_sec_treb_dev;
+	MppVolume *spn_sec_treb_volume;
 
 public slots:
 	void handle_reset();

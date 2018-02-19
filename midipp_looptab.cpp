@@ -280,38 +280,35 @@ MppLoopTab :: fill_loop_data(int n, int vel, int key_off)
 
 			val = umidi20_event_get_control_value(event);
 
-			for (y = 0; y != MPP_MAX_DEVS; y++) {
-				if (mw->check_synth(y, chan, pos)) {
+			for (y = 0; y != MPP_MAX_TRACKS; y++) {
+				if (mw->check_mirror(y))
+					continue;
+				if (mw->check_play(y, chan, pos))
 					mid_pedal(&mw->mid_data, val);
-				}
-			}
-
-			if (mw->check_record(chan, pos)) {
-				mid_pedal(&mw->mid_data, val);
+				if (mw->check_record(y, chan, pos))
+					mid_pedal(&mw->mid_data, val);
 			}
 
 		} else if (umidi20_event_is_key_start(event)) {
 
-			for (y = 0; y != MPP_MAX_DEVS; y++) {
-				if (mw->check_synth(y, chan, pos)) {
+			for (y = 0; y != MPP_MAX_TRACKS; y++) {
+				if (mw->check_mirror(y))
+					continue;
+				if (mw->check_play(y, chan, pos))
 					mw->do_key_press(key, vel, 0);
-				}
-			}
-
-			if (mw->check_record(chan, pos)) {
-				mw->do_key_press(key, vel, 0);
+				if (mw->check_record(y, chan, pos))
+					mw->do_key_press(key, vel, 0);
 			}
 
 		} else if (umidi20_event_is_key_end(event)) {
 
-			for (y = 0; y != MPP_MAX_DEVS; y++) {
-				if (mw->check_synth(y, chan, pos)) {
+			for (y = 0; y != MPP_MAX_TRACKS; y++) {
+				if (mw->check_mirror(y))
+					continue;
+				if (mw->check_play(y, chan, pos))
 					mw->do_key_press(key, 0, 0);
-				}
-			}
-
-			if (mw->check_record(chan, pos)) {
-				mw->do_key_press(key, 0, 0);
+				if (mw->check_record(y, chan, pos))
+					mw->do_key_press(key, 0, 0);
 			}
 		}
 	}

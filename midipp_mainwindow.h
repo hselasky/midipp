@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2017 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,9 +70,9 @@ public:
 
 	uint8_t noise8(uint8_t factor);
 	uint8_t do_instr_check(struct umidi20_event *event, uint8_t *pchan);
-	uint8_t check_play(uint8_t chan, uint32_t off);
-	uint8_t check_record(uint8_t chan, uint32_t off);
-	uint8_t check_synth(uint8_t device_no, uint8_t chan, uint32_t off);
+	uint8_t check_play(uint8_t index, uint8_t chan, uint32_t off);
+	uint8_t check_record(uint8_t index, uint8_t chan, uint32_t off);
+	uint8_t check_mirror(uint8_t index);
 
 	void handle_watchdog_sub(MppScoreMain *, int);
 
@@ -112,19 +112,8 @@ public:
 	uint32_t deviceBits;
 #define	MPP_DEV0_PLAY	0x0001UL
 #define	MPP_DEV0_RECORD	0x0002UL
-#define	MPP_DEV0_SYNTH	0x0004UL
-#define	MPP_DEV1_PLAY	0x0008UL
-#define	MPP_DEV1_RECORD	0x0010UL
-#define	MPP_DEV1_SYNTH	0x0020UL
-#define	MPP_DEV2_PLAY	0x0040UL
-#define	MPP_DEV2_RECORD	0x0080UL
-#define	MPP_DEV2_SYNTH	0x0100UL
-#define	MPP_DEV3_PLAY	0x0200UL
-#define	MPP_DEV3_RECORD	0x0400UL
-#define	MPP_DEV3_SYNTH	0x0800UL
 
-	uint16_t playVolume[16];
-	uint16_t synthVolume[16];
+	uint16_t trackVolume[MPP_MAX_TRACKS];
 
 	uint8_t muteProgram[MPP_MAX_DEVS];
 	uint8_t mutePedal[MPP_MAX_DEVS];
@@ -139,7 +128,6 @@ public:
 	uint8_t numControlEvents;
 	uint8_t cursorUpdate;
 
-	uint8_t nonChannelMuted;
 	uint8_t scoreRecordOff;
 	uint8_t controlRecordOn;
 	uint8_t instrUpdated;
@@ -193,8 +181,10 @@ public:
 
 	MppGroupBox *gb_midi_file;
 	QPushButton *but_midi_file_new;
-	QPushButton *but_midi_file_open;
-	QPushButton *but_midi_file_merge;
+	QPushButton *but_midi_file_open_single;
+	QPushButton *but_midi_file_open_multi;
+	QPushButton *but_midi_file_merge_single;
+	QPushButton *but_midi_file_merge_multi;
 	QPushButton *but_midi_file_save;
 	QPushButton *but_midi_file_save_as;
 	MppButton *but_midi_file_import[MPP_MAX_VIEWS];
@@ -255,7 +245,7 @@ public:
 	MppButton *but_config_dev[MPP_MAX_DEVS];
 	MppButton *but_config_mm[MPP_MAX_DEVS];
 	QLineEdit *led_config_dev[MPP_MAX_DEVS];
-	MppCheckBox *cbx_config_dev[MPP_MAX_DEVS][2 + MPP_MAX_VIEWS];
+	MppCheckBox *cbx_config_dev[MPP_MAX_DEVS][1 + MPP_MAX_VIEWS];
 
 	uint32_t dirty_config_mask;
 
@@ -280,18 +270,6 @@ public:
 
 	MppInstrumentTab *tab_instrument;
 
-	/* tab <Volume> */
-
-	MppGridLayout *tab_volume_gl;
-
-	MppGroupBox *gb_volume_play;
-	MppGroupBox *gb_volume_synth;
-
-	MppVolume *spn_volume_play[16];
-	MppVolume *spn_volume_synth[16];
-
-	QPushButton *but_volume_reset;
-
 	/* tab <Loop> */
 
 	MppLoopTab *tab_loop;
@@ -315,7 +293,7 @@ public:
 	/* MIDI stuff */
 	struct mid_data mid_data;
 	struct umidi20_song *song;
-	struct umidi20_track *track;
+	struct umidi20_track *track[MPP_MAX_TRACKS];
 
 	uint8_t auto_zero_end[0];
 
@@ -333,8 +311,10 @@ public slots:
 	void handle_sustain_release(int);
 	void handle_watchdog();
 	void handle_midi_file_new();
-	void handle_midi_file_merge_open();
-	void handle_midi_file_new_open();
+	void handle_midi_file_merge_single_open();
+	void handle_midi_file_new_single_open();
+	void handle_midi_file_merge_multi_open();
+	void handle_midi_file_new_multi_open();
 	void handle_midi_file_save();
 	void handle_midi_file_save_as();
 	void handle_rewind();
@@ -344,9 +324,6 @@ public slots:
 	void handle_config_reload();
 	void handle_config_view_fontsel();
 	void handle_config_edit_fontsel();
-
-	void handle_volume_changed(int);
-	void handle_volume_reset();
 
 	void handle_midi_file_import(int);
 	void handle_gpro_file_import(int);

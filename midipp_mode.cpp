@@ -34,6 +34,7 @@
 #include "midipp_mainwindow.h"
 #include "midipp_checkbox.h"
 #include "midipp_groupbox.h"
+#include "midipp_volume.h"
 
 MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 {
@@ -106,7 +107,19 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 
 	spn_sec_treb_dev = new MppDevSel(-1, MPP_DEV_ALL);
 	connect(spn_sec_treb_dev, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
-	
+
+	spn_pri_volume = new MppVolume();
+	spn_pri_volume->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
+	connect(spn_pri_volume, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+
+	spn_sec_base_volume = new MppVolume();
+	spn_sec_base_volume->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
+	connect(spn_sec_base_volume, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+
+	spn_sec_treb_volume = new MppVolume();
+	spn_sec_treb_volume->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
+	connect(spn_sec_treb_volume, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+
 	gl->addWidget(gb_iconfig, 0, 0, 1, 2);
 	gl->addWidget(gb_oconfig, 1, 0, 1, 2);
 	gl->addWidget(gb_delay, 2, 0, 1, 2);
@@ -129,17 +142,24 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	gb_iconfig->addWidget(new QLabel(tr("Channel")), 1, 0, 1, 1);
 	gb_iconfig->addWidget(spn_input_chan, 1, 1, 1, 1);
 
-	gb_oconfig->addWidget(new QLabel(tr("Primary channel")), 0, 0, 1, 1);
-	gb_oconfig->addWidget(spn_pri_chan, 0, 1, 1, 1);
-	gb_oconfig->addWidget(spn_pri_dev, 0, 2, 1, 1);
+	gb_oconfig->addWidget(new QLabel(tr("Channel")), 0, 1, 1, 1, Qt::AlignCenter);
+	gb_oconfig->addWidget(new QLabel(tr("Device")), 0, 2, 1, 1, Qt::AlignCenter);
+	gb_oconfig->addWidget(new QLabel(tr("Volume")), 0, 3, 1, 1, Qt::AlignCenter);
 
-	gb_oconfig->addWidget(new QLabel(tr("Secondary base channel")), 1, 0, 1, 1);
-	gb_oconfig->addWidget(spn_sec_base_chan, 1, 1, 1, 1);
-	gb_oconfig->addWidget(spn_sec_base_dev, 1, 2, 1, 1);
+	gb_oconfig->addWidget(new QLabel(tr("Primary")), 1, 0, 1, 1);
+	gb_oconfig->addWidget(spn_pri_chan, 1, 1, 1, 1);
+	gb_oconfig->addWidget(spn_pri_dev, 1, 2, 1, 1);
+	gb_oconfig->addWidget(spn_pri_volume, 1, 3, 1, 1);
 
-	gb_oconfig->addWidget(new QLabel(tr("Secondary treble channel")), 2, 0, 1, 1);
-	gb_oconfig->addWidget(spn_sec_treb_chan, 2, 1, 1, 1);
-	gb_oconfig->addWidget(spn_sec_treb_dev, 2, 2, 1, 1);
+	gb_oconfig->addWidget(new QLabel(tr("Secondary\nbass")), 2, 0, 1, 1);
+	gb_oconfig->addWidget(spn_sec_base_chan, 2, 1, 1, 1);
+	gb_oconfig->addWidget(spn_sec_base_dev, 2, 2, 1, 1);
+	gb_oconfig->addWidget(spn_sec_base_volume, 2, 3, 1, 1);
+
+	gb_oconfig->addWidget(new QLabel(tr("Secondary\ntreble")), 3, 0, 1, 1);
+	gb_oconfig->addWidget(spn_sec_treb_chan, 3, 1, 1, 1);
+	gb_oconfig->addWidget(spn_sec_treb_dev, 3, 2, 1, 1);
+	gb_oconfig->addWidget(spn_sec_treb_volume, 3, 3, 1, 1);
 }
 
 MppMode :: ~MppMode()
@@ -159,6 +179,9 @@ MppMode :: update_all(void)
 	int device;
 	int deviceBase;
 	int deviceTreb;
+	int volume;
+	int volumeBase;
+	int volumeTreb;
 	int key_mode;
 	int chord_contrast;
 	int chord_norm;
@@ -174,6 +197,9 @@ MppMode :: update_all(void)
 	device = sm->synthDevice;
 	deviceBase = sm->synthDeviceBase;
 	deviceTreb = sm->synthDeviceTreb;
+	volume = sm->mainWindow->trackVolume[MPP_DEFAULT_TRACK(sm->unit)];
+	volumeBase = sm->mainWindow->trackVolume[MPP_BASS_TRACK(sm->unit)];
+	volumeTreb = sm->mainWindow->trackVolume[MPP_TREBLE_TRACK(sm->unit)];
 	key_mode = sm->keyMode;
 	chord_contrast = sm->chordContrast;
 	chord_norm = sm->chordNormalize;
@@ -190,6 +216,9 @@ MppMode :: update_all(void)
 	spn_pri_dev->setValue(device);
 	spn_sec_base_dev->setValue(deviceBase);
 	spn_sec_treb_dev->setValue(deviceTreb);
+	spn_pri_volume->setValue(volume);
+	spn_sec_base_volume->setValue(volumeBase);
+	spn_sec_treb_volume->setValue(volumeTreb);
 	but_mode->setSelection(key_mode);
 	cbx_norm->setChecked(chord_norm);
 	but_song_events->setSelection(song_events);
@@ -232,6 +261,9 @@ MppMode :: handle_reset()
 	spn_pri_dev->setValue(-1);
 	spn_sec_base_dev->setValue(-1);
 	spn_sec_treb_dev->setValue(-1);
+	spn_pri_volume->setValue(MPP_VOLUME_UNIT);
+	spn_sec_base_volume->setValue(MPP_VOLUME_UNIT);
+	spn_sec_treb_volume->setValue(MPP_VOLUME_UNIT);
 	cbx_norm->setChecked(1);
 	but_mode->setSelection(0);
 	but_song_events->setSelection(0);
@@ -249,6 +281,9 @@ MppMode :: handle_changed()
 	int device;
 	int deviceBase;
 	int deviceTreb;
+	int volume;
+	int volumeBase;
+	int volumeTreb;
 	int key_mode;
 	int chord_contrast;
 	int chord_norm;
@@ -263,6 +298,9 @@ MppMode :: handle_changed()
 	device = spn_pri_dev->value();
 	deviceBase = spn_sec_base_dev->value();
 	deviceTreb = spn_sec_treb_dev->value();
+	volume = spn_pri_volume->value();
+	volumeBase = spn_sec_base_volume->value();
+	volumeTreb = spn_sec_treb_volume->value();
 	chord_contrast = sli_contrast->value();
 	chord_norm = cbx_norm->isChecked();
 	key_mode = but_mode->currSelection;
@@ -281,6 +319,9 @@ MppMode :: handle_changed()
 	sm->synthDevice = device;
 	sm->synthDeviceBase = deviceBase;
 	sm->synthDeviceTreb = deviceTreb;
+	sm->mainWindow->trackVolume[MPP_DEFAULT_TRACK(sm->unit)] = volume;
+	sm->mainWindow->trackVolume[MPP_BASS_TRACK(sm->unit)] = volumeBase;
+	sm->mainWindow->trackVolume[MPP_TREBLE_TRACK(sm->unit)] = volumeTreb;
 	sm->keyMode = key_mode;
 	sm->chordContrast = chord_contrast;
 	sm->chordNormalize = chord_norm;

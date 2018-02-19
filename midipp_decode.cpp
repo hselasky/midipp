@@ -350,12 +350,12 @@ MppDecodeTab :: handle_play_press()
 	else
 		key_bass -= 1 * MPP_MAX_BANDS;
 
-	mw->output_key(sm->synthDevice, sm->synthChannel, key_bass, vel, 0, 0);
-	mw->output_key(sm->synthDevice, sm->synthChannel, key_bass + MPP_MAX_BANDS, vel, 0, 0);
+	mw->output_key(MPP_DEFAULT_TRACK(sm->unit), sm->synthChannel, key_bass, vel, 0, 0);
+	mw->output_key(MPP_DEFAULT_TRACK(sm->unit), sm->synthChannel, key_bass + MPP_MAX_BANDS, vel, 0, 0);
 
 	for (int x = 0; x != MPP_MAX_BANDS; x++) {
 		if (chord_mask.test(x))
-			mw->output_key(sm->synthDevice, sm->synthChannel, chord_key + x, vel, 0, 0);
+			mw->output_key(MPP_DEFAULT_TRACK(sm->unit), sm->synthChannel, chord_key + x, vel, 0, 0);
 	}
 	mw->atomic_unlock();
 }
@@ -373,12 +373,12 @@ MppDecodeTab :: handle_play_release()
 	else
 		key_bass -= 1 * MPP_MAX_BANDS;
 
-	mw->output_key(sm->synthDevice, sm->synthChannel, key_bass, 0, 0, 0);
-	mw->output_key(sm->synthDevice, sm->synthChannel, key_bass + MPP_MAX_BANDS, 0, 0, 0);
+	mw->output_key(MPP_DEFAULT_TRACK(sm->unit), sm->synthChannel, key_bass, 0, 0, 0);
+	mw->output_key(MPP_DEFAULT_TRACK(sm->unit), sm->synthChannel, key_bass + MPP_MAX_BANDS, 0, 0, 0);
 
 	for (int x = 0; x != MPP_MAX_BANDS; x++) {
 		if (chord_mask.test(x))
-			mw->output_key(sm->synthDevice, sm->synthChannel, chord_key + x, 0, 0, 0);
+			mw->output_key(MPP_DEFAULT_TRACK(sm->unit), sm->synthChannel, chord_key + x, 0, 0, 0);
 	}
 	mw->atomic_unlock();
 }

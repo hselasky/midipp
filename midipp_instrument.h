@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2017 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2017-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -51,8 +51,6 @@ public:
 
 	MppCheckBox *cbx_instr_mute[16];
 
-	MppButtonMap *but_non_channel_mute_all;
-
 	QPushButton *but_instr_rem;
 	QPushButton *but_instr_program;
 	QPushButton *but_instr_program_all;
@@ -61,7 +59,6 @@ public:
 	QPushButton *but_instr_unmute_all;
 
 public slots:
-	void handle_non_channel_muted_changed(int);
 	void handle_instr_changed(int);
 	void handle_instr_reset();
 	void handle_instr_program();

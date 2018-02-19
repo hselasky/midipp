@@ -53,10 +53,14 @@ MppMetronomeCallback(void *arg)
 
         mw->atomic_lock();
         if (mm->enabled != 0 && mw->midiTriggered != 0) {
-		if (mw->check_play(mm->chan, 0))
-			MppMetronomeOutput(mm, &mw->mid_data);
-		if (mm->enabled == 2 && mw->check_record(mm->chan, 0) != 0)
-			MppMetronomeOutput(mm, &mw->mid_data);
+		for (unsigned int x = 0; x != MPP_MAX_TRACKS; x++) {
+			if (mw->check_mirror(x))
+				continue;
+			if (mw->check_play(x, mm->chan, 0))
+				MppMetronomeOutput(mm, &mw->mid_data);
+			if (mm->enabled == 2 && mw->check_record(x, mm->chan, 0) != 0)
+				MppMetronomeOutput(mm, &mw->mid_data);
+		}
 	}
         mw->atomic_unlock();
 }

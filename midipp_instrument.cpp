@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2017 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2017-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,9 +37,6 @@ MppInstrumentTab :: MppInstrumentTab(MppMainWindow *_mw)
 	mw = _mw;
 
 	gl = new MppGridLayout();
-
-	but_non_channel_mute_all = new MppButtonMap("Mute non-channel specific MIDI events\0NO\0YES\0", 2, 2);
-	connect(but_non_channel_mute_all, SIGNAL(selectionChanged(int)), this, SLOT(handle_non_channel_muted_changed(int)));
 
 	but_instr_program = new QPushButton(tr("Program One"));
 	but_instr_program_all = new QPushButton(tr("Program All"));
@@ -101,7 +98,6 @@ MppInstrumentTab :: MppInstrumentTab(MppMainWindow *_mw)
 
 	gl->addWidget(gb_instr_select, 0, 0, 1, 8);
 	gl->addWidget(gb_instr_table, 1, 0, 1, 8);
-	gl->addWidget(but_non_channel_mute_all, 2, 0, 1, 8);
 
 	gl->setRowStretch(3, 1);
 	gl->setColumnStretch(8, 1);
@@ -123,14 +119,6 @@ MppInstrumentTab :: ~MppInstrumentTab()
 {
 	mw->atomic_lock();
 	mw->tab_instrument = 0;
-	mw->atomic_unlock();
-}
-
-void
-MppInstrumentTab :: handle_non_channel_muted_changed(int value)
-{
-	mw->atomic_lock();
-	mw->nonChannelMuted = value;
 	mw->atomic_unlock();
 }
 
@@ -202,6 +190,7 @@ MppInstrumentTab :: handle_instr_changed(int dummy)
 	uint8_t curr_chan;
 	uint8_t x;
 	uint8_t y;
+	uint8_t z;
 	uint8_t update_curr;
 	uint8_t trig;
 
@@ -285,20 +274,23 @@ MppInstrumentTab :: handle_instr_changed(int dummy)
 	trig = mw->midiTriggered;
 	mw->midiTriggered = 1;
 
-	for (x = 0; x != 16; x++) {
+	for (z = x = 0; x != 16; x++) {
 		if (mw->instr[x].updated == 0)
 			continue;
 
 		mw->instr[x].updated = 0;
-		for (y = 0; y != MPP_MAX_DEVS; y++) {
-			if (mw->muteProgram[y] != 0)
+		for (y = 0; y != MPP_MAX_TRACKS; y++) {
+			if (mw->check_mirror(y))
 				continue;
-			if (mw->check_synth(y, x, 0) == 0)
+			if (mw->check_play(y, x, 0) == 0)
 				continue;
-			mid_delay(d, (4 * x));
+			mid_delay(d, z);
 			mid_set_bank_program(d, x, 
 			    mw->instr[x].bank,
 			    mw->instr[x].prog);
+
+			/* put some delay between the commands */
+			z++;
 		}
 	}
 
@@ -311,8 +303,6 @@ MppInstrumentTab :: handle_instr_reset()
 {
 	if (this == 0)
 		return;
-
-	but_non_channel_mute_all->setSelection(0);
 
 	for (unsigned int x = 0; x != 16; x++) {
 		spn_instr_bank[x]->blockSignals(1);
@@ -351,8 +341,6 @@ void
 MppInstrumentTab :: handle_instr_mute_all()
 {
 
-	but_non_channel_mute_all->setSelection(1);
-
 	for (unsigned int n = 0; n != 16; n++) {
 		cbx_instr_mute[n]->blockSignals(1);
 		cbx_instr_mute[n]->setChecked(1);
@@ -365,8 +353,6 @@ MppInstrumentTab :: handle_instr_mute_all()
 void
 MppInstrumentTab :: handle_instr_unmute_all()
 {
-
-	but_non_channel_mute_all->setSelection(0);
 
 	for (unsigned int n = 0; n != 16; n++) {
 		cbx_instr_mute[n]->blockSignals(1);
@@ -382,25 +368,23 @@ MppInstrumentTab :: handle_instr_rem()
 {
 	struct umidi20_event *event;
 	struct umidi20_event *event_next;
-	uint8_t chan;
-
-	if (mw->track == NULL)
-		return;
 
 	handle_instr_changed(0);
 
 	mw->atomic_lock();
 
-	UMIDI20_QUEUE_FOREACH_SAFE(event, &mw->track->queue, event_next) {
-		if (umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL) {
-			chan = umidi20_event_get_channel(event) & 0xF;
-			if (mw->instr[chan].muted) {
-				UMIDI20_IF_REMOVE(&mw->track->queue, event);
-				umidi20_event_free(event);
+	for (unsigned int x = 0; x != MPP_MAX_TRACKS; x++) {
+		if (mw->track[x] == 0)
+			continue;
+	
+		UMIDI20_QUEUE_FOREACH_SAFE(event, &mw->track[x]->queue, event_next) {
+			if (umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL) {
+				uint8_t chan = umidi20_event_get_channel(event) & 0xF;
+				if (mw->instr[chan].muted) {
+					UMIDI20_IF_REMOVE(&mw->track[x]->queue, event);
+					umidi20_event_free(event);
+				}
 			}
-		} else if (mw->nonChannelMuted) {
-			UMIDI20_IF_REMOVE(&mw->track->queue, event);
-			umidi20_event_free(event);
 		}
 	}
 

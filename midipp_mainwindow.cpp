@@ -42,7 +42,6 @@
 #include "midipp_gridlayout.h"
 #include "midipp_midi.h"
 #include "midipp_mode.h"
-#include "midipp_volume.h"
 #include "midipp_settings.h"
 #include "midipp_checkbox.h"
 #include "midipp_show.h"
@@ -90,7 +89,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	CurrMidiFileName = NULL;
 	song = NULL;
-	track = NULL;
+	memset(track, 0, sizeof(track));
 
 	umidi20_mutex_init(&mtx);
 
@@ -239,7 +238,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " * ===============\n"
 	    " *\n"
 	    " * U<number>[.] - specifies the duration of the following scores [0..255].\n"
-	    " * T<number> - specifies the track number of the following scores [0..15].\n"
+	    " * T<number> - specifies the channel offset for the following scores [0..15].\n"
 	    " * K<number> - defines a command [0..99].\n"
 	    " * W<number>.<number> - defines an autoplay timeout [1..9999ms].\n"
 	    " * K0 - no operation.\n"
@@ -315,7 +314,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_chord_gl = new MppDecodeTab(this);
 	tab_pianotab = new MppPianoTab(this);
 	tab_config_gl = new MppGridLayout();
-	tab_volume_gl = new MppGridLayout();
 
 	gl_ctrl = new MppGroupBox(tr("Main controls"));
 	gl_time = new MppGroupBox(tr("Time counter"));
@@ -345,7 +343,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_tb->addTab(tab_custom, tr("Custom"));
 	main_tb->addTab(tab_shortcut->gl, tr("Shortcut"));
 	main_tb->addTab(tab_instrument->gl, tr("Instrument"));
-	main_tb->addTab(tab_volume_gl, tr("Volume"));
 	main_tb->addTab(tab_database, tr("Database"));
 	main_tb->addTab(tab_help, tr("Help"));
 
@@ -354,21 +351,25 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_quit = new QPushButton(tr("Quit"));
 
 	but_midi_file_new = new QPushButton(tr("New"));
-	but_midi_file_open = new QPushButton(tr("Open"));
-	but_midi_file_merge = new QPushButton(tr("Merge"));
+	but_midi_file_open_single = new QPushButton(tr("Open as\nsingle device"));
+	but_midi_file_open_multi = new QPushButton(tr("Open as\nmulti device"));
+	but_midi_file_merge_single = new QPushButton(tr("Merge as\nsingle device"));
+	but_midi_file_merge_multi = new QPushButton(tr("Merge as\nmulti device"));
 	but_midi_file_save = new QPushButton(tr("Save"));
 	but_midi_file_save_as = new QPushButton(tr("Save As"));
 
 	gb_midi_file = new MppGroupBox(tr("MIDI File"));
 	gb_midi_file->addWidget(but_midi_file_new, 0, 0, 1, 1);
-	gb_midi_file->addWidget(but_midi_file_open, 1, 0, 1, 1);
-	gb_midi_file->addWidget(but_midi_file_merge, 2, 0, 1, 1);
-	gb_midi_file->addWidget(but_midi_file_save, 3, 0, 1, 1);
-	gb_midi_file->addWidget(but_midi_file_save_as, 4, 0, 1, 1);
+	gb_midi_file->addWidget(but_midi_file_open_single, 1, 0, 1, 1);
+	gb_midi_file->addWidget(but_midi_file_open_multi, 2, 0, 1, 1);
+	gb_midi_file->addWidget(but_midi_file_merge_single, 3, 0, 1, 1);
+	gb_midi_file->addWidget(but_midi_file_merge_multi, 4, 0, 1, 1);
+	gb_midi_file->addWidget(but_midi_file_save, 5, 0, 1, 1);
+	gb_midi_file->addWidget(but_midi_file_save_as, 6, 0, 1, 1);
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
 		but_midi_file_import[x] = new MppButton(QString("To %1-Scores").arg(QChar('A' + x)), x);
-		gb_midi_file->addWidget(but_midi_file_import[x], 5 + x, 0, 1, 1);
+		gb_midi_file->addWidget(but_midi_file_import[x], 7 + x, 0, 1, 1);
 		connect(but_midi_file_import[x], SIGNAL(released(int)), this, SLOT(handle_midi_file_import(int)));
 	}
 
@@ -503,7 +504,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	gb_config_device->addWidget(new QLabel(tr("Device name")), 0, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
-	pl = new QLabel(tr("Playback\nenable"));
+	pl = new QLabel(tr("Output\nenable"));
 	pl->setAlignment(Qt::AlignCenter);
 	gb_config_device->addWidget(pl, 0, 2, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
@@ -511,15 +512,12 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		pl->setAlignment(Qt::AlignCenter);
 		gb_config_device->addWidget(pl, 0, 3 + x, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	}
-	pl = new QLabel(tr("Synth\nenable"));
-	pl->setAlignment(Qt::AlignCenter);
-	gb_config_device->addWidget(pl, 0, 3 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
-	gb_config_device->addWidget(new QLabel(tr("Mute map")), 0, 4 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb_config_device->addWidget(new QLabel(tr("Mute map")), 0, 3 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	pl = new QLabel(tr("Device\nselection"));
 	pl->setAlignment(Qt::AlignCenter);
-	gb_config_device->addWidget(pl, 0, 5 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb_config_device->addWidget(pl, 0, 4 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	gb_config_device->setColumnStretch(1, 1);
 
@@ -534,7 +532,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		led_config_dev[n]->setMaxLength(256);
 		connect(led_config_dev[n], SIGNAL(textChanged(const QString &)), this, SLOT(handle_config_changed()));
 
-		for (x = 0; x != (2 + MPP_MAX_VIEWS); x++) {
+		for (x = 0; x != (1 + MPP_MAX_VIEWS); x++) {
 			cbx_config_dev[n][x] = new MppCheckBox(n);
 			connect(cbx_config_dev[n][x], SIGNAL(stateChanged(int,int)), this, SLOT(handle_config_changed()));
 			gb_config_device->addWidget(cbx_config_dev[n][x], n + 1, 2 + x, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
@@ -542,8 +540,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 		gb_config_device->addWidget(new QLabel(MppDevName(n)), n + 1, 0, 1, 1, Qt::AlignHCenter|Qt::AlignLeft);
 		gb_config_device->addWidget(led_config_dev[n], n + 1, 1, 1, 1);
-		gb_config_device->addWidget(but_config_mm[n], n + 1, 4 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		gb_config_device->addWidget(but_config_dev[n], n + 1, 5 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		gb_config_device->addWidget(but_config_mm[n], n + 1, 3 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		gb_config_device->addWidget(but_config_dev[n], n + 1, 4 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	}
 
 	led_config_insert = new QLineEdit(QString());
@@ -580,39 +578,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_config_gl->addWidget(mpp_settings->but_config_clean, x, 3, 1, 1);
 	tab_config_gl->setColumnStretch(8, 1);
 
-	/* <Volume> tab */
-
-	gb_volume_play = new MppGroupBox(tr("Playback"));
-	gb_volume_synth = new MppGroupBox(tr("Synth and Recording"));
-
-	but_volume_reset = new QPushButton(tr("Reset"));
-
-	for (n = 0; n != 16; n++) {
-		int y_off = (n & 8) ? 2 : 0;
-
-		spn_volume_synth[n] = new MppVolume();
-		spn_volume_synth[n]->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
-		connect(spn_volume_synth[n], SIGNAL(valueChanged(int)), this, SLOT(handle_volume_changed(int)));
-
-		spn_volume_play[n] = new MppVolume();
-		spn_volume_play[n]->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
-		connect(spn_volume_play[n], SIGNAL(valueChanged(int)), this, SLOT(handle_volume_changed(int)));
-
-		gb_volume_play->addWidget(new QLabel(MppChanName(n)), (n & 7) + x, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
-		gb_volume_play->addWidget(spn_volume_play[n], (n & 7) + x, 1 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-
-		gb_volume_synth->addWidget(new QLabel(MppChanName(n)), (n & 7) + x, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
-		gb_volume_synth->addWidget(spn_volume_synth[n], (n & 7) + x, 1 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-	}
-
-	tab_volume_gl->addWidget(gb_volume_play, 0, 0, 1, 1);
-	tab_volume_gl->addWidget(gb_volume_synth, 0, 1, 1, 1);
-
-	tab_volume_gl->setRowStretch(1, 1);
-	tab_volume_gl->setColumnStretch(4, 1);
-
-	tab_volume_gl->addWidget(but_volume_reset, 2, 0, 1, 2);
-
 	/* Connect all */
 
 	for (n = 0; n != MPP_MAX_LBUTTON; n++)
@@ -622,8 +587,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_quit, SIGNAL(released()), this, SLOT(handle_quit()));
 
 	connect(but_midi_file_new, SIGNAL(released()), this, SLOT(handle_midi_file_new()));
-	connect(but_midi_file_open, SIGNAL(released()), this, SLOT(handle_midi_file_new_open()));
-	connect(but_midi_file_merge, SIGNAL(released()), this, SLOT(handle_midi_file_merge_open()));
+	connect(but_midi_file_open_single, SIGNAL(released()), this, SLOT(handle_midi_file_new_single_open()));
+	connect(but_midi_file_merge_single, SIGNAL(released()), this, SLOT(handle_midi_file_merge_single_open()));
+	connect(but_midi_file_open_multi, SIGNAL(released()), this, SLOT(handle_midi_file_new_multi_open()));
+	connect(but_midi_file_merge_multi, SIGNAL(released()), this, SLOT(handle_midi_file_merge_multi_open()));
 	connect(but_midi_file_save, SIGNAL(released()), this, SLOT(handle_midi_file_save()));
 	connect(but_midi_file_save_as, SIGNAL(released()), this, SLOT(handle_midi_file_save_as()));
 
@@ -631,8 +598,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_midi_rewind, SIGNAL(pressed()), this, SLOT(handle_rewind()));
 	connect(but_config_view_fontsel, SIGNAL(released()), this, SLOT(handle_config_view_fontsel()));
 	connect(but_config_edit_fontsel, SIGNAL(released()), this, SLOT(handle_config_edit_fontsel()));
-
-	connect(but_volume_reset, SIGNAL(released()), this, SLOT(handle_volume_reset()));
 
 	connect(but_midi_pause, SIGNAL(pressed()), this, SLOT(handle_midi_pause()));
 
@@ -998,16 +963,23 @@ MppMainWindow :: handle_midi_file_clear_name()
 void
 MppMainWindow :: handle_midi_file_new()
 {
+	int any = 0;
+
 	handle_midi_file_clear_name();
 
 	handle_rewind();
 
-	if (track != NULL) {
-		atomic_lock();
-		umidi20_event_queue_drain(&(track->queue));
-		chanUsageMask = 0;
-		atomic_unlock();
+	atomic_lock();
+	for (unsigned int x = 0; x != MPP_MAX_TRACKS; x++) {
+		if (track[x] == 0)
+			continue;
+		umidi20_event_queue_drain(&track[x]->queue);
+		any = 1;
+	}
+	chanUsageMask = 0;
+	atomic_unlock();
 
+	if (any) {
 		tab_instrument->handle_instr_reset();
 		tab_instrument->handle_instr_channel_changed(0);
 	}
@@ -1018,23 +990,38 @@ MppMainWindow :: update_play_device_no()
 {
 	struct umidi20_event *event;
 
-	if (track == NULL)
-		return;
+	for (unsigned int x = 0; x != MPP_MAX_TRACKS; x++) {
+		if (track[x] == 0)
+			continue;
 
-	UMIDI20_QUEUE_FOREACH(event, &(track->queue))
-		event->device_no = MPP_MAGIC_DEVNO;	/* hint for "MidiEventTxCallback() */
+		/* hint for "MidiEventTxCallback() */
+		UMIDI20_QUEUE_FOREACH(event, &track[x]->queue)
+			event->device_no = MPP_MAGIC_DEVNO + x;
+	}
 }
 
 void
-MppMainWindow :: handle_midi_file_merge_open()
+MppMainWindow :: handle_midi_file_merge_single_open()
 {
 	handle_midi_file_open(1);
 }
 
 void
-MppMainWindow :: handle_midi_file_new_open()
+MppMainWindow :: handle_midi_file_new_single_open()
 {
 	handle_midi_file_open(0);
+}
+
+void
+MppMainWindow :: handle_midi_file_merge_multi_open()
+{
+	handle_midi_file_open(2|1);
+}
+
+void
+MppMainWindow :: handle_midi_file_new_multi_open()
+{
+	handle_midi_file_open(2|0);
 }
 
 void
@@ -1049,6 +1036,7 @@ MppMainWindow :: handle_midi_file_open(int how)
 	struct umidi20_event *event;
 	struct umidi20_event *event_copy;
 	QByteArray data;
+	unsigned int x;
 
 	diag->setAcceptMode(QFileDialog::AcceptOpen);
 	diag->setFileMode(QFileDialog::ExistingFile);
@@ -1057,7 +1045,7 @@ MppMainWindow :: handle_midi_file_open(int how)
 
 		Mpp.HomeDirMid = diag->directory().path();
 
-		if (how == 1) {
+		if (how & 1) {
 			handle_midi_file_clear_name();
 			handle_rewind();
 		} else {
@@ -1100,11 +1088,10 @@ load_file:
 
 	atomic_lock();
 
-	UMIDI20_QUEUE_FOREACH(track_copy, &(song_copy->queue)) {
+	x = 0;
+	UMIDI20_QUEUE_FOREACH(track_copy, &song_copy->queue) {
 
-	    printf("track %p\n", track_copy);
-
-	    UMIDI20_QUEUE_FOREACH(event, &(track_copy->queue)) {
+	    UMIDI20_QUEUE_FOREACH(event, &track_copy->queue) {
 
 	        if (umidi20_event_is_voice(event) ||
 		    umidi20_event_is_sysex(event)) {
@@ -1130,11 +1117,16 @@ load_file:
 			/* reserve low positions for channel program events */
 			if (event_copy->position < MPP_MIN_POS)
 				event_copy->position = MPP_MIN_POS;
-
-			umidi20_event_queue_insert(&(track->queue),
-			    event_copy, UMIDI20_CACHE_INPUT);
+			if (track[x] != 0) {
+				umidi20_event_queue_insert(&track[x]->queue,
+				    event_copy, UMIDI20_CACHE_INPUT);
+			} else {
+				umidi20_event_free(event_copy);
+			}
 		}
 	    }
+	    if ((how & 2) && ++x == MPP_MAX_TRACKS)
+		break;
 	}
 
 	umidi20_song_free(song_copy);
@@ -1182,8 +1174,13 @@ MppMainWindow :: handle_midi_file_instr_prepend()
 void
 MppMainWindow :: handle_midi_file_instr_delete()
 {
-	umidi20_event_queue_move(&(track->queue), NULL, 0,
-	    MPP_MIN_POS, 0, 0-1, UMIDI20_CACHE_INPUT);
+	for (unsigned int x = 0; x != MPP_MAX_TRACKS; x++) {
+		if (track[x] == 0)
+			continue;
+
+		umidi20_event_queue_move(&track[x]->queue, NULL, 0,
+		    MPP_MIN_POS, 0, 0-1, UMIDI20_CACHE_INPUT);
+	}
 }
 
 void
@@ -1360,7 +1357,7 @@ MppMainWindow :: handle_config_reload()
 			p_play = NULL;
 			p_rec = NULL;
 		}
-		if ((deviceBits & (MPP_DEV0_RECORD << (3 * n))) && 
+		if ((deviceBits & (MPP_DEV0_RECORD << (2 * n))) && 
 		    (p_rec != NULL) && (p_rec[0] != 0) &&
 		    (p_rec[1] == ':') && (p_rec[2] != 0))  {
 			switch (p_rec[0]) {
@@ -1392,7 +1389,7 @@ MppMainWindow :: handle_config_reload()
 			cfg.cfg_dev[n].rec_enabled_cfg = UMIDI20_DISABLE_CFG;
 		}
 
-		if ((deviceBits & ((MPP_DEV0_SYNTH | MPP_DEV0_PLAY) << (3 * n))) && 
+		if ((deviceBits & (MPP_DEV0_PLAY << (2 * n))) && 
 		    (p_play != NULL) && (p_play[0] != 0) &&
 		    (p_play[1] == ':') && (p_play[2] != 0))  {
 			switch (p_play[0]) {
@@ -1429,10 +1426,11 @@ MppMainWindow :: handle_config_reload()
 	}
 
 	/* enable magic device */
-	n = MPP_MAGIC_DEVNO;
-	STRLCPY(cfg.cfg_dev[n].play_fname, "/dev/null",
-	    sizeof(cfg.cfg_dev[n].play_fname));
-	cfg.cfg_dev[n].play_enabled_cfg = 1;
+	for (n = MPP_MAGIC_DEVNO; n != (MPP_MAGIC_DEVNO + MPP_MAX_TRACKS); n++) {
+		STRLCPY(cfg.cfg_dev[n].play_fname, "/dev/null",
+		    sizeof(cfg.cfg_dev[n].play_fname));
+		cfg.cfg_dev[n].play_enabled_cfg = 1;
+	}
 
 	umidi20_config_import(&cfg);
 
@@ -1446,6 +1444,7 @@ MppMainWindow :: handle_config_apply(int devno)
 	uint32_t devInputMaskCopy[MPP_MAX_DEVS];
 	int n;
 	int x;
+	int y;
 
 	deviceBits = 0;
 	memset(devInputMaskCopy, 0, sizeof(devInputMaskCopy));
@@ -1458,17 +1457,14 @@ MppMainWindow :: handle_config_apply(int devno)
 		deviceName[n] = MppQStringToAscii(led_config_dev[n]->text());
 
 		if (cbx_config_dev[n][0]->isChecked())
-			deviceBits |= MPP_DEV0_PLAY << (3 * n);
+			deviceBits |= MPP_DEV0_PLAY << (2 * n);
 
 		for (x = 0; x != MPP_MAX_VIEWS; x++) {
 			if (cbx_config_dev[n][1 + x]->isChecked() == 0)
 				continue;
 			devInputMaskCopy[n] |= (1U << x);
-			deviceBits |= MPP_DEV0_RECORD << (3 * n);
+			deviceBits |= MPP_DEV0_RECORD << (2 * n);
 		}
-
-		if (cbx_config_dev[n][1 + MPP_MAX_VIEWS]->isChecked())
-			deviceBits |= MPP_DEV0_SYNTH << (3 * n);
 	}
 
 	handle_config_reload();
@@ -1485,29 +1481,30 @@ MppMainWindow :: handle_config_apply(int devno)
 	 * Update local key enable/disable on all devices and
 	 * channels:
 	 */
-	for (n = 0; n != MPP_MAX_DEVS; n++) {
-
-		if (devno != -1 && devno != n)
+	for (n = 0, y = 0; n != MPP_MAX_TRACKS; n++) {
+		if (check_mirror(y))
 			continue;
-
 		for (x = 0; x != 16; x++) {
 			uint8_t buf[4];
 
-			if (check_synth(n, x, 0) == 0)
+			if (check_play(n, x, 0) == 0)
 				continue;
 
 			if (enableLocalKeys[n]) {
 				buf[0] = 0xB0 | x;
 				buf[1] = 0x7A;
 				buf[2] = 0x7F;
-				mid_add_raw(&mid_data, buf, 3, x);
+				mid_add_raw(&mid_data, buf, 3, y);
 			}
 			if (disableLocalKeys[n]) {
 				buf[0] = 0xB0 | x;
 				buf[1] = 0x7A;
 				buf[2] = 0x00;
-				mid_add_raw(&mid_data, buf, 3, x);
+				mid_add_raw(&mid_data, buf, 3, y);
 			}
+
+			/* wait a bit before sending next MIDI events */
+			y++;
 		}
 	}
 
@@ -1557,39 +1554,13 @@ MppMainWindow :: handle_config_edit_fontsel()
 }
 
 uint8_t
-MppMainWindow :: check_synth(uint8_t device_no, uint8_t chan, uint32_t off)
+MppMainWindow :: check_play(uint8_t index, uint8_t chan, uint32_t off)
 {
 	struct mid_data *d = &mid_data;
 	uint32_t pos;
 
-	if (device_no >= MPP_MAX_DEVS)
+	if (index >= MPP_MAX_TRACKS || chan >= 0x10)
 		return (0);
-
-	if (deviceBits & (MPP_DEV0_SYNTH << (3 * device_no))) {
-
-		handle_midi_trigger();
-
-		/* compute relative time distance */
-		pos = umidi20_get_curr_position() - startPosition + off;
-
-		/* compensate for processing delay */
-		if (pos != 0)
-			pos--;
-
-		mid_set_channel(d, chan & 0xF);
-		mid_set_position(d, pos);
-		mid_set_device_no(d, device_no);
-
-		return (1);
-	}
-	return (0);
-}
-
-uint8_t
-MppMainWindow :: check_play(uint8_t chan, uint32_t off)
-{
-	struct mid_data *d = &mid_data;
-	uint32_t pos;
 
 	handle_midi_trigger();
 
@@ -1600,23 +1571,22 @@ MppMainWindow :: check_play(uint8_t chan, uint32_t off)
 	if (pos != 0)
 		pos--;
 
-	mid_set_channel(d, chan & 0xF);
+	d->track = track[index];
+	mid_set_channel(d, chan);
 	mid_set_position(d, pos);
-	mid_set_device_no(d, MPP_MAGIC_DEVNO);
+	mid_set_device_no(d, MPP_MAGIC_DEVNO + index);
 
 	return (1);
 }
 
 uint8_t
-MppMainWindow :: check_record(uint8_t chan, uint32_t off)
+MppMainWindow :: check_record(uint8_t index, uint8_t chan, uint32_t off)
 {
 	struct mid_data *d = &mid_data;
 	uint32_t pos;
 
-	if (midiRecordOff)
+	if (midiRecordOff || index >= MPP_MAX_TRACKS || chan >= 0x10)
 		return (0);
-
-	chan &= 0xF;
 
 	handle_midi_trigger();
 
@@ -1626,6 +1596,7 @@ MppMainWindow :: check_record(uint8_t chan, uint32_t off)
 
 	chanUsageMask |= (1 << chan);
 
+	d->track = track[index];
 	mid_set_channel(d, chan);
 	mid_set_position(d, pos);
 	mid_set_device_no(d, 0xFF);
@@ -1633,23 +1604,38 @@ MppMainWindow :: check_record(uint8_t chan, uint32_t off)
 	return (1);
 }
 
+uint8_t
+MppMainWindow :: check_mirror(uint8_t index)
+{
+	if (index >= MPP_MAX_TRACKS)
+		return (1);
+
+	for (unsigned int n = 0; n != MPP_MAX_VIEWS; n++) {
+		MppScoreMain *sm = scores_main[n];
+
+		/* check for broadcasters */
+		if (sm->synthDevice == -1)
+			return (index != MPP_DEFAULT_TRACK(sm->unit));
+		if (sm->synthChannelTreb > -1 && sm->synthDeviceTreb == -1)
+			return (index != MPP_TREBLE_TRACK(sm->unit));
+		if (sm->synthChannelBase > -1 && sm->synthDeviceBase == -1)
+			return (index != MPP_BASS_TRACK(sm->unit));
+	}
+
+	/* else there are no mirrors */
+	return (0);
+}
+
 void
 MppMainWindow :: do_key_press(int key, int vel, int dur)
 {
 	struct mid_data *d = &mid_data;
-	int ch = mid_get_channel(d);
 	int rem;
 
-	if (vel != 0) {
-		vel = (synthVolume[ch] * vel) / MPP_VOLUME_UNIT;
-
-		if (vel > 127)
-			vel = 127;
-		else if (vel < 0)
-			vel = 0;
-		else if (vel == 1)
-			vel = 2;
-	}
+	if (vel > 127)
+		vel = 127;
+	else if (vel < 0)
+		vel = 0;
 
 	rem = MPP_BAND_REM_BITREV(key);
 	key /= MPP_MAX_SUBDIV;
@@ -1702,7 +1688,7 @@ MppMainWindow :: handle_stop(int flag)
 			/* only release once */
 			*pkey = 0;
 
-			output_key(scores_main[z]->synthDevice,
+			output_key(MPP_DEFAULT_TRACK(z),
 			    chan, out_key, 0, delay, 0);
 		}
 	    }
@@ -1720,11 +1706,11 @@ MppMainWindow :: handle_stop(int flag)
 		/* only release once */
 		ps->dur = 0;
 
-		output_key(ps->device, ps->channel, ps->key, 0, 0, 0);
+		output_key(ps->track, ps->channel, ps->key, 0, 0, 0);
 
 		/* check for secondary event */
 		if (ps->channelSec != 0)
-			output_key(ps->deviceSec, ps->channelSec - 1, ps->key, 0, 0, 0);
+			output_key(ps->trackSec, ps->channelSec - 1, ps->key, 0, 0, 0);
 	    }
 
 	    /* check if we should kill the pedal, modulation and pitch */
@@ -1914,8 +1900,7 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 	MppMainWindow *mw = (MppMainWindow *)arg;
 	struct umidi20_event *p_event;
 	uint32_t what;
-	int vel;
-	int do_drop = (device_no == MPP_MAGIC_DEVNO);
+	int do_drop = 0;
 
 	mw->atomic_lock();
 
@@ -1925,38 +1910,6 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 		uint8_t chan;
 
 		chan = umidi20_event_get_channel(event) & 0xF;
-
-		vel = umidi20_event_get_velocity(event);
-
-		/* check for playback event */
-		if (do_drop) {
-
-			uint8_t x;
-
-			if (vel != 0) {
-
-				vel = (vel * mw->playVolume[chan]) / MPP_VOLUME_UNIT;
-
-				if (vel > 127)
-					vel = 127;
-				else if (vel < 0)
-					vel = 0;
-
-				umidi20_event_set_velocity(event, vel);
-			}
-
-			/* check if we should duplicate events for other devices */
-			for (x = 0; x < MPP_MAX_DEVS; x++) {
-				if (mw->deviceBits & (MPP_DEV0_PLAY << (3 * x))) {
-					p_event = umidi20_event_copy(event, 1);
-					if (p_event != NULL) {
-						p_event->device_no = x;
-						umidi20_event_queue_insert(&(root_dev.play[x].queue),
-							p_event, UMIDI20_CACHE_INPUT);
-					}
-				}
-			}
-		}
 
 		if (mw->instr[chan].muted) {
 			do_drop = 1;
@@ -1971,37 +1924,142 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 						do_drop = 1;
 				}
 			}
+			/* check for program mute */
+			if (what & UMIDI20_WHAT_PROGRAM_VALUE) {
+			  	if (mw->muteProgram[device_no])
+					do_drop = 1;
+			}
 			/* check for channel mute */
 			if (mw->muteMap[device_no][chan]) {
 				do_drop = 1;
 			}
-		}
+		} else if (device_no >= MPP_MAGIC_DEVNO &&
+		    device_no < (MPP_MAGIC_DEVNO + MPP_MAX_TRACKS)) {
+			int vel = umidi20_event_get_velocity(event);
+			int index = device_no - MPP_MAGIC_DEVNO;
+			int devno = -2;	/* no device */
 
-	} else if (event->cmd[1] != 0xFF) {
+			if (vel != 0) {
+				/* adjust volume, if any */
+				vel = (vel * mw->trackVolume[index]) / MPP_VOLUME_UNIT;
 
-		/* check for playback event */
-		if (do_drop) {
+				if (vel > 127)
+					vel = 127;
+				else if (vel < 1)
+					vel = 1;
 
-			uint8_t x;
+				umidi20_event_set_velocity(event, vel);
+			}
 
 			/* check if we should duplicate events for other devices */
-			for (x = 0; x < MPP_MAX_DEVS; x++) {
-				if (mw->deviceBits & (MPP_DEV0_PLAY << (3 * x))) {
-					p_event = umidi20_event_copy(event, 1);
-					if (p_event != NULL) {
-						p_event->device_no = x;
-						umidi20_event_queue_insert(&(root_dev.play[x].queue),
-							p_event, UMIDI20_CACHE_INPUT);
+			MppScoreMain *sm = mw->scores_main[index / MPP_TRACKS_PER_VIEW];
+
+			switch (index % MPP_TRACKS_PER_VIEW) {
+			case MPP_DEFAULT_TRACK(0):
+				devno = sm->synthDevice;
+				break;
+			case MPP_TREBLE_TRACK(0):
+				if (sm->synthChannelTreb > -1)
+					devno = sm->synthDeviceTreb;
+				break;
+			case MPP_BASS_TRACK(0):
+				if (sm->synthChannelBase > -1)
+					devno = sm->synthDeviceBase;
+				break;
+			default:
+				break;
+			}
+
+			if (devno < -1) {
+
+			} else for (int x = 0; x != MPP_MAX_DEVS; x++) {
+				if (devno != -1 && x != devno)
+					continue;
+				if (((mw->deviceBits >> (2 * x)) & MPP_DEV0_PLAY) == 0)
+					continue;
+				/* check for pedal and control events mute */
+				if (what & UMIDI20_WHAT_CONTROL_VALUE) {
+					if (umidi20_event_get_control_address(event) == 0x40) {
+						if (mw->mutePedal[x])
+							continue;
+					} else {
+						if (mw->muteAllControl[x])
+							continue;
 					}
 				}
-			}
-		}
 
-		if (mw->nonChannelMuted) {
+				/* check for program mute */
+				if (what & UMIDI20_WHAT_PROGRAM_VALUE) {
+					if (mw->muteProgram[x])
+						continue;
+				}
+
+				/* check for channel mute */
+				if (mw->muteMap[x][chan])
+					continue;
+
+				/* duplicate event */
+				p_event = umidi20_event_copy(event, 1);
+				if (p_event != NULL) {
+					p_event->device_no = x;
+					umidi20_event_queue_insert(&root_dev.play[x].queue,
+					    p_event, UMIDI20_CACHE_INPUT);
+				}
+			  }
+
 			do_drop = 1;
-		} else if (device_no < MPP_MAX_DEVS) {
+		} else {
+			do_drop = 1;
+		}
+	} else if (event->cmd[1] != 0xFF) {
+		if (device_no < MPP_MAX_DEVS) {
 			if (mw->muteAllNonChannel[device_no])
 				do_drop = 1;
+		} else if (device_no >= MPP_MAGIC_DEVNO &&
+		    device_no < (MPP_MAGIC_DEVNO + MPP_MAX_TRACKS)) {
+			int index = device_no - MPP_MAGIC_DEVNO;
+			int devno = -2;	/* no device */
+
+			/* check if we should duplicate events for other devices */
+			MppScoreMain *sm = mw->scores_main[index / MPP_TRACKS_PER_VIEW];
+
+			switch (index % MPP_TRACKS_PER_VIEW) {
+			case MPP_DEFAULT_TRACK(0):
+				devno = sm->synthDevice;
+				break;
+			case MPP_TREBLE_TRACK(0):
+				if (sm->synthChannelTreb > -1)
+					devno = sm->synthDeviceTreb;
+				break;
+			case MPP_BASS_TRACK(0):
+				if (sm->synthChannelBase > -1)
+					devno = sm->synthDeviceBase;
+				break;
+			default:
+				break;
+			}
+
+			if (devno < -1) {
+
+			} else for (int x = 0; x != MPP_MAX_DEVS; x++) {
+				if (devno != -1 && x != devno)
+					continue;
+				if (((mw->deviceBits >> (2 * x)) & MPP_DEV0_PLAY) == 0)
+					continue;
+				if (mw->muteAllNonChannel[x])
+					continue;
+
+				/* duplicate event */
+				p_event = umidi20_event_copy(event, 1);
+				if (p_event != NULL) {
+					p_event->device_no = x;
+					umidi20_event_queue_insert(&root_dev.play[x].queue,
+					    p_event, UMIDI20_CACHE_INPUT);
+				}
+			  }
+			do_drop = 1;
+		} else {
+			do_drop = 1;
 		}
 	}
 	*drop = do_drop;
@@ -2059,26 +2117,6 @@ MppMainWindow :: do_instr_check(struct umidi20_event *event, uint8_t *pchan)
 }
 
 void
-MppMainWindow :: handle_volume_changed(int dummy)
-{
-	int play_temp[16];
-	int synth_temp[16];
-	int x;
-
-	for (x = 0; x != 16; x++) {
-		play_temp[x] = spn_volume_play[x]->value();
-		synth_temp[x] = spn_volume_synth[x]->value();
-	}
-
-	atomic_lock();
-	for (x = 0; x != 16; x++) {
-		playVolume[x] = play_temp[x];
-		synthVolume[x] = synth_temp[x];
-	}
-	atomic_unlock();
-}
-
-void
 MppMainWindow :: handle_make_scores_visible(MppScoreMain *sm)
 {
 	if (sm->visual_max == 0)
@@ -2133,25 +2171,6 @@ found:
 		handle_compile();
 }
 
-void 
-MppMainWindow :: handle_volume_reset()
-{
-	uint8_t x;
-
-	for (x = 0; x != 16; x++) {
-		spn_volume_play[x]->blockSignals(1);
-		spn_volume_synth[x]->blockSignals(1);
-
-		spn_volume_play[x]->setValue(MPP_VOLUME_UNIT);
-		spn_volume_synth[x]->setValue(MPP_VOLUME_UNIT);
-
-		spn_volume_play[x]->blockSignals(0);
-		spn_volume_synth[x]->blockSignals(0);
-	}
-
-	handle_volume_changed(0);
-}
-
 int
 MppMainWindow :: convert_midi_duration(struct umidi20_track *im_track, uint32_t thres, uint32_t chan_mask)
 {
@@ -2171,7 +2190,7 @@ MppMainWindow :: convert_midi_duration(struct umidi20_track *im_track, uint32_t 
 	memset(convLineStart, 0, sizeof(convLineStart));
 	memset(convLineEnd, 0, sizeof(convLineEnd));
 
-	UMIDI20_QUEUE_FOREACH(event, &(im_track->queue)) {
+	UMIDI20_QUEUE_FOREACH(event, &im_track->queue) {
 
 		curr_pos = (event->position & 0x3FFFFFFF);
 		duration = event->duration;
@@ -2277,7 +2296,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 
 	atomic_lock();
 
-	UMIDI20_QUEUE_FOREACH(event, &(im_track->queue)) {
+	UMIDI20_QUEUE_FOREACH(event, &im_track->queue) {
 
 		if (!(umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL))
 			continue;
@@ -2319,7 +2338,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 
 	max_index = convert_midi_duration(im_track, thres, chan_mask);
 
-	UMIDI20_QUEUE_FOREACH(event, &(im_track->queue)) {
+	UMIDI20_QUEUE_FOREACH(event, &im_track->queue) {
 
 		if (!(umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL))
 			continue;
@@ -2473,7 +2492,9 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 void
 MppMainWindow :: handle_midi_file_import(int n)
 {
-	import_midi_track(track, MIDI_FLAG_DIALOG |
+	if (track[0] == 0)
+		return;
+	import_midi_track(track[0], MIDI_FLAG_DIALOG |
 	    MIDI_FLAG_MULTI_CHAN | MIDI_FLAG_ERASE_DEST, 0, n);
 }
 
@@ -2610,7 +2631,6 @@ MppMainWindow :: MidiInit(void)
 	int n;
 
 	cbx_config_dev[0][0]->setChecked(1);	/* Play */
-	cbx_config_dev[0][1 + MPP_MAX_VIEWS]->setChecked(1);	/* Synth */
 
 	/* enable record on A-view */
 	for (n = 0; n != MPP_MAX_DEVS; n++)
@@ -2622,7 +2642,6 @@ MppMainWindow :: MidiInit(void)
 	handle_midi_play(0);
 	handle_score_record(0);
 	tab_instrument->handle_instr_reset();
-	handle_volume_reset();
 
 	for (n = 0; n != UMIDI20_N_DEVICES; n++) {
 		umidi20_set_record_event_callback(n, &MidiEventRxCallback, this);
@@ -2630,23 +2649,28 @@ MppMainWindow :: MidiInit(void)
 	}
 
 	atomic_lock();
-
 	song = umidi20_song_alloc(&mtx, UMIDI20_FILE_FORMAT_TYPE_0, 500,
 	    UMIDI20_FILE_DIVISION_TYPE_PPQ);
-
-	track = umidi20_track_alloc();
-
-	if (song == NULL || track == NULL) {
+	if (song == 0) {
 		atomic_unlock();
-		err(1, "Could not allocate new song or track\n");
+		err(1, "Could not allocate new song\n");
 	}
-	umidi20_song_track_add(song, NULL, track, 0);
 
-	umidi20_song_set_record_track(song, track);
+	for (n = 0; n != MPP_MAX_TRACKS; n++) {
+		trackVolume[n] = MPP_VOLUME_UNIT;
+		track[n] = umidi20_track_alloc();
+		if (track[n] == 0) {
+		  	atomic_unlock();
+			err(1, "Could not allocate new song or track\n");
+		}
+		umidi20_song_track_add(song, NULL, track[n], 0);
+	}
+
+	/* disable recording track */
+	umidi20_song_set_record_track(song, 0);
 
 	/* get the MIDI up! */
-
-	mid_init(&mid_data, track);
+	mid_init(&mid_data, 0);
 
 	umidi20_song_start(song, 0x40000000, 0x80000000,
 	    UMIDI20_FLAG_PLAY | UMIDI20_FLAG_RECORD);
@@ -2729,27 +2753,22 @@ MppMainWindow :: handle_config_dev(int n, int automagic)
 }
 
 void
-MppMainWindow :: output_key(int dev, int chan, int key, int vel, int delay, int dur)
+MppMainWindow :: output_key(int index, int chan, int key, int vel, int delay, int dur)
 {
 	struct mid_data *d = &mid_data;
-	int y;
 
 	/* check for time scaling */
 	if (dlg_bpm->period_cur != 0 && dlg_bpm->bpm_other != 0)
 		delay = (dlg_bpm->period_ref * delay) / dlg_bpm->bpm_other;
 
-	/* output note to all synths first */
-	for (y = 0; y != MPP_MAX_DEVS; y++) {
-		if (dev != -1 && dev != y)
-			continue;
-		if (check_synth(y, chan, 0)) {
-			mid_delay(d, delay);
-			do_key_press(key, vel, dur);
-		}
+	/* output key to all playback device(s) */
+	if (check_play(index, chan, 0)) {
+		mid_delay(d, delay);
+		do_key_press(key, vel, dur);
 	}
 
-	/* output note to recording device */
-	if (check_record(chan, 0)) {
+	/* output key to recording device(s) */
+	if (check_record(index, chan, 0)) {
 		mid_delay(d, delay);
 		do_key_press(key, vel, dur);
 	}
@@ -2963,19 +2982,21 @@ MppMainWindow :: send_byte_event_locked(uint8_t which)
 {
 	uint8_t buf[1];
 	uint8_t trig;
-	int n;
 
 	trig = midiTriggered;
 	midiTriggered = 1;
 
 	buf[0] = which;
 
-	for (n = 0; n != MPP_MAX_DEVS; n++) {
-		if (check_synth(n, 0, 0) != 0)
+	for (unsigned int n = 0; n != MPP_MAX_TRACKS; n++) {
+		if (check_mirror(n))
+			continue;
+		if (check_play(n, 0, 0))
+			mid_add_raw(&mid_data, buf, 1, 0);
+		if (check_record(n, 0, 0))
 			mid_add_raw(&mid_data, buf, 1, 0);
 	}
-	if (check_record(0, 0) != 0)
-		mid_add_raw(&mid_data, buf, 1, 0);
+
 	midiTriggered = trig;
 }
 
@@ -2984,7 +3005,6 @@ MppMainWindow :: send_song_select_locked(uint8_t which)
 {
 	uint8_t buf[2];
 	uint8_t trig;
-	int n;
 
 	trig = midiTriggered;
 	midiTriggered = 1;
@@ -2992,12 +3012,15 @@ MppMainWindow :: send_song_select_locked(uint8_t which)
 	buf[0] = 0xF3;
 	buf[1] = which & 0x7F;
 
-	for (n = 0; n != MPP_MAX_DEVS; n++) {
-		if (check_synth(n, 0, 0) != 0)
+	for (unsigned int n = 0; n != MPP_MAX_TRACKS; n++) {
+		if (check_mirror(n))
+			continue;
+		if (check_play(n, 0, 0))
+			mid_add_raw(&mid_data, buf, 2, 0);
+		if (check_record(n, 0, 0))
 			mid_add_raw(&mid_data, buf, 2, 0);
 	}
-	if (check_record(0, 0) != 0)
-		mid_add_raw(&mid_data, buf, 1, 0);
+
 	midiTriggered = trig;
 }
 

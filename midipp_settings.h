@@ -36,7 +36,6 @@ public:
 	MppSettings(MppMainWindow *_parent, const QString & fname);
 	~MppSettings(void);
 
-	int save_volume;
 	int save_instruments;
 	int save_viewmode;
 	int save_devices;
@@ -90,7 +89,6 @@ public:
 	QPushButton *but_reset;
 	QPushButton *but_ok;
 
-	MppCheckBox *cbx_volume;
 	MppCheckBox *cbx_instruments;
 	MppCheckBox *cbx_viewmode;
 	MppCheckBox *cbx_deviceconfig;
