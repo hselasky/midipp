@@ -278,11 +278,11 @@ MppSettings :: doLoad(void)
 				synthDeviceBase = -1;
 			if (synthDeviceTreb < 0 || synthDeviceTreb >= MPP_MAX_DEVS)
 				synthDeviceTreb = -1;
-			if (synthVolume < 0 || synthVolume >= MPP_VOLUME_MAX)
+			if (synthVolume < 0 || synthVolume > MPP_VOLUME_MAX)
 				synthVolume = MPP_VOLUME_UNIT;
-			if (synthVolumeBase < 0 || synthVolumeBase >= MPP_VOLUME_MAX)
+			if (synthVolumeBase < 0 || synthVolumeBase > MPP_VOLUME_MAX)
 				synthVolumeBase = MPP_VOLUME_UNIT;
-			if (synthVolumeTreb < 0 || synthVolumeTreb >= MPP_VOLUME_MAX)
+			if (synthVolumeTreb < 0 || synthVolumeTreb > MPP_VOLUME_MAX)
 				synthVolumeTreb = MPP_VOLUME_UNIT;
 			if (chordContrast < 0 || chordContrast > 255)
 				chordContrast = 128;
