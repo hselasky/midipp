@@ -1632,6 +1632,7 @@ void
 MppMainWindow :: do_key_press(int key, int vel, int dur)
 {
 	struct mid_data *d = &mid_data;
+	uint32_t pos;
 	int rem;
 
 	if (vel > 127)
@@ -1647,7 +1648,9 @@ MppMainWindow :: do_key_press(int key, int vel, int dur)
 		return;
 
 	/* shift channel according to subdivision */
+	pos = d->position[d->channel];
 	d->channel = (d->channel + rem) & 0xF;
+	d->position[d->channel] = pos;
 
 	mid_key_press(d, key, vel, dur);
 
