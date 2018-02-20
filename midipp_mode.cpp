@@ -121,13 +121,13 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	connect(spn_sec_treb_volume, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
 	gl->addWidget(gb_iconfig, 0, 0, 2, 2);
-	gl->addWidget(gb_oconfig, 2, 0, 2, 2);
+	gl->addWidget(gb_oconfig, 2, 2, 2, 2);
 
 	gl->addWidget(gb_delay, 0, 2, 1, 2);
 	gl->addWidget(gb_contrast, 1, 2, 1, 2);
 
-	gl->addWidget(but_song_events, 2, 2, 1, 2);
-	gl->addWidget(but_mode, 3, 2, 1, 2);
+	gl->addWidget(but_song_events, 2, 0, 1, 2);
+	gl->addWidget(but_mode, 3, 0, 1, 2);
 
 	gl->addWidget(but_reset, 4, 0, 1, 2);
 	gl->addWidget(but_done, 4, 2, 1, 2);
