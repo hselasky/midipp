@@ -120,16 +120,19 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	spn_sec_treb_volume->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
 	connect(spn_sec_treb_volume, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
-	gl->addWidget(gb_iconfig, 0, 0, 1, 2);
-	gl->addWidget(gb_oconfig, 1, 0, 1, 2);
-	gl->addWidget(gb_delay, 2, 0, 1, 2);
-	gl->addWidget(gb_contrast, 3, 0, 1, 2);
-	gl->addWidget(but_song_events, 4, 0, 1, 2);
-	gl->addWidget(but_mode, 5, 0, 1, 2);
-	gl->addWidget(but_reset, 7, 0, 1, 1);
-	gl->addWidget(but_done, 7, 1, 1, 1);
-	gl->setRowStretch(6, 1);
-	gl->setColumnStretch(2, 1);
+	gl->addWidget(gb_iconfig, 0, 0, 2, 2);
+	gl->addWidget(gb_oconfig, 2, 0, 2, 2);
+
+	gl->addWidget(gb_delay, 0, 2, 1, 2);
+	gl->addWidget(gb_contrast, 1, 2, 1, 2);
+
+	gl->addWidget(but_song_events, 2, 2, 1, 2);
+	gl->addWidget(but_mode, 3, 2, 1, 2);
+
+	gl->addWidget(but_reset, 4, 0, 1, 2);
+	gl->addWidget(but_done, 4, 2, 1, 2);
+	gl->setRowStretch(4, 1);
+	gl->setColumnStretch(4, 1);
 
 	gb_delay->addWidget(sli_delay, 0, 0, 1, 1);
 
