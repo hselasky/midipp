@@ -280,10 +280,10 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 #error "Please update code above"
 #endif
 	but_insert = new QPushButton(tr("&Insert"));
-	but_rol_up = new QPushButton(tr("&Roll Up"));
-	but_rol_down = new QPushButton(tr("Roll Down"));
-	but_mod_up = new QPushButton(tr("&Mod Up"));
-	but_mod_down = new QPushButton(tr("Mod Down"));
+	but_rol_up = new QPushButton(tr("Rotate\n&up"));
+	but_rol_down = new QPushButton(tr("Rotate\nd&own"));
+	but_mod_up = new QPushButton(tr("&Next\nvariant"));
+	but_mod_down = new QPushButton(tr("Pre&vious\nvariant"));
 
 	but_play = new QPushButton(tr("&Play"));
 
