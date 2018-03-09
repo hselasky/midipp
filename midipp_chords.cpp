@@ -355,8 +355,6 @@ MppRolUpChord(MppChord_t &input, int &delta)
 Q_DECL_EXPORT void
 MppNextChordRoot(MppChord_t &input, int step)
 {
-	uint32_t rots;
-
 	for (int x = 0; x != MPP_MAX_BANDS; x++) {
 		if (x % step)
 			input.clr(x);
@@ -364,14 +362,13 @@ MppNextChordRoot(MppChord_t &input, int step)
 
 	do {
 		input.inc(step);
-	} while (MppFindChordRoot(input, rots) != input);
+	} while (input.test(0) == 0 ||
+		 MppFindChordRoot(input) != input);
 }
 
 Q_DECL_EXPORT void
 MppPrevChordRoot(MppChord_t &input, int step)
 {
-	uint32_t rots;
-
 	for (int x = 0; x != MPP_MAX_BANDS; x++) {
 		if (x % step)
 			input.clr(x);
@@ -379,20 +376,34 @@ MppPrevChordRoot(MppChord_t &input, int step)
 
 	do {
 		input.dec(step);
-	} while (MppFindChordRoot(input, rots) != input);
+	} while (input.test(0) == 0 ||
+		 MppFindChordRoot(input) != input);
 }
 
 Q_DECL_EXPORT MppChord_t
-MppFindChordRoot(MppChord_t input, uint32_t &rots)
+MppFindChordRoot(MppChord_t input, uint32_t *rots, uint32_t *steps)
 {
 	MppChord_t retval = input;
 	uint32_t tmprot = 0;
+	uint32_t tmpsteps = 0;
+	uint32_t sumbits = 0;
 
-	rots = 0;
+	for (uint32_t x = 0; x != MPP_MAX_BANDS; x++) {
+		if (input.test(x))
+			sumbits++;
+	}
+
+	if (rots)
+		*rots = 0;
+	if (steps)
+		*steps = 0;
+
 	for (uint32_t x = 0; x != MPP_MAX_BANDS; x++) {
 		if (input.test(0)) {
 			input.tog(0);
 			input.tog(MPP_MAX_BANDS);
+			tmpsteps++;
+			tmpsteps %= sumbits;
 		}
 		input.shr();
 		tmprot++;
@@ -400,7 +411,10 @@ MppFindChordRoot(MppChord_t input, uint32_t &rots)
 		if (input == retval)
 			break;
 		if (input < retval) {
-			rots = tmprot;
+			if (rots)
+				*rots = tmprot;
+			if (steps)
+				*steps = tmpsteps;
 			retval = input;
 		}
 	}
@@ -689,7 +703,7 @@ MppChordToStringGeneric(MppChord_t mask, uint32_t rem, uint32_t bass, uint32_t s
 		goto error;
 
 	/* get root chord */
-	mask = MppFindChordRoot(mask, rots);
+	mask = MppFindChordRoot(mask, &rots);
 
 	/* adjust for rotations */
 	rem = (rem + rots) % MPP_MAX_BANDS;
@@ -822,7 +836,7 @@ MppScoreVariant :: MppScoreVariant(uint32_t _chord, const char *a,
 		if ((_chord >> x) & 1)
 			footprint.set(x * MPP_BAND_STEP_12);
 	}
-	footprint = MppFindChordRoot(footprint, rots);
+	footprint = MppFindChordRoot(footprint);
 	pattern[0] = a;
 	pattern[1] = b;
 	pattern[2] = c;

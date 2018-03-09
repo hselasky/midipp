@@ -173,7 +173,7 @@ extern void MppRolUpChord(MppChord_t &input, int &delta);
 extern void MppRolDownChord(MppChord_t &input, int &delta);
 extern void MppNextChordRoot(MppChord_t &input, int step = 1);
 extern void MppPrevChordRoot(MppChord_t &input, int step = 1);
-extern MppChord_t MppFindChordRoot(MppChord_t, uint32_t &);
+extern MppChord_t MppFindChordRoot(MppChord_t, uint32_t * = 0, uint32_t * = 0);
 extern int MppIsChord(QString &);
 
 extern void MppChordToStringGeneric(MppChord_t mask, uint32_t rem, uint32_t bass, uint32_t is_chord, uint32_t step, QString &retval);

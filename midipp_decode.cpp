@@ -115,7 +115,6 @@ MppScoreVariantInit(void)
 	const int s = MPP_BAND_STEP_24;
 	MppChord_t mask;
 	QString str;
-	uint32_t rots;
 	uint32_t x;
 	uint32_t y;
 	uint32_t z[2];
@@ -127,7 +126,7 @@ MppScoreVariantInit(void)
 		mask.set(0);
 		mask.set(x);
 
-		if (MppFindChordRoot(mask, rots) != mask)
+		if (MppFindChordRoot(mask) != mask)
 			continue;
 
 		MppChordToStringGeneric(mask, rk, rk, 0, MPP_BAND_STEP_24, str);
@@ -154,7 +153,7 @@ MppScoreVariantInit(void)
 			mask.set(x);
 			mask.set(y);
 
-			if (MppFindChordRoot(mask, rots) != mask)
+			if (MppFindChordRoot(mask) != mask)
 				continue;
 
 			MppChordToStringGeneric(mask, rk, rk, 0, MPP_BAND_STEP_24, str);
@@ -496,7 +495,10 @@ MppDecodeTab :: handle_rol_down()
 void
 MppDecodeTab :: handle_mod_up()
 {
+	uint32_t rols;
 	handle_play_release();
+	chord_mask = MppFindChordRoot(chord_mask, &rols);
+	chord_key += rols;
 	MppNextChordRoot(chord_mask, chord_step);
 	handle_refresh();
 	handle_play_press();
@@ -505,7 +507,10 @@ MppDecodeTab :: handle_mod_up()
 void
 MppDecodeTab :: handle_mod_down()
 {
+  	uint32_t rols;
 	handle_play_release();
+	chord_mask = MppFindChordRoot(chord_mask, &rols);
+	chord_key += rols;
 	MppPrevChordRoot(chord_mask, chord_step);
 	handle_refresh();
 	handle_play_press();
