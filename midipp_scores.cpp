@@ -837,7 +837,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 				if (ptr->value[1] & MPP_FLAG_JUMP_PAGE)
 					index = 0;
 			} else if (ptr->type == MPP_T_SCORE_SUBDIV) {
-				subdiv_map |= (1U << MPP_BAND_REM_BITREV(ptr->value[0]));
+				subdiv_map |= (2U << MPP_BAND_REM_BITREV(ptr->value[0])) - 1U;
 			}
 		}
 		/* compute maximum number of score lines */
