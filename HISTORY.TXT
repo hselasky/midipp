@@ -5,6 +5,10 @@
 MIDI Player Pro allows you to play any kind of MIDI music in seconds
 with your fingertips.
 
+Changes for v2.0.0:
+- Added support for quartertones, octotones, hexatones and so on.
+- Added support for bass offset effect.
+
 Changes for v1.3.4:
 - Added support for importing uncompressed MusicXML files
 

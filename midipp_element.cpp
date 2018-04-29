@@ -951,6 +951,78 @@ MppHead :: autoMelody(int which)
 	sortScore();
 }
 
+void
+MppHead :: bassOffset(int which)
+{
+	MppElement *ptr;
+	MppElement *start;
+	MppElement *stop;
+	int score[24];
+	int base[24];
+	int key[24];
+	uint8_t ns;
+	uint8_t nb;
+	uint8_t nk;
+	uint8_t x;
+
+	start = stop = 0;
+	
+	while (foreachLine(&start, &stop) != 0) {
+
+		ns = 0;
+
+		for (ptr = start; ptr != stop;
+		    ptr = TAILQ_NEXT(ptr, entry)) {
+			if (ptr->type == MPP_T_SCORE_SUBDIV) {
+				if (ns < 24)
+					score[ns++] = ptr->value[0];
+			}
+		}
+
+		if (ns == 0)
+			continue;
+
+		MppSort(score, ns);
+		MppSplitBaseTreble(score, ns, base, &nb, key, &nk);
+
+		if (nb == 0)
+			continue;
+
+		for (ptr = start; ptr != stop;
+		    ptr = TAILQ_NEXT(ptr, entry)) {
+			if (ptr->type != MPP_T_SCORE_SUBDIV)
+				continue;
+			for (x = 0; x != nb; x++) {
+				if (ptr->value[0] != base[x])
+					continue;
+				if ((base[0] % MPP_MAX_BANDS) !=
+				    (base[x] % MPP_MAX_BANDS)) {
+					/* remove all bass scores except first one */
+					ptr->type = MPP_T_UNKNOWN;
+					ptr->txt = "";
+				} else if (which != 0) {
+					MppElement *psa;
+					MppElement *psb;
+
+					psa = new MppElement(MPP_T_SPACE, start->line);
+					psa->txt = QString(" ");
+
+					psb = new MppElement(MPP_T_SCORE_SUBDIV,
+					    start->line, ptr->value[0] + which);
+					psb->txt = MppKeyStr(ptr->value[0] + which);
+
+					TAILQ_INSERT_AFTER(&head, ptr, psb, entry);
+					TAILQ_INSERT_AFTER(&head, ptr, psa, entry);
+
+					ptr = psb;
+				}
+				break;
+			}
+		}
+	}
+	sortScore();
+}
+
 struct MppKeyInfo {
 	int channel;
 	int duration;

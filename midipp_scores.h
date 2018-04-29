@@ -122,6 +122,8 @@ public:
 	QPushButton *butScoreFileSaveAs;
 	QPushButton *butScoreFilePrint;
 	QPushButton *butScoreFileAlign;
+	QSpinBox *spnScoreFileBassOffset;
+	QPushButton *butScoreFileBassOffset;
 	MppSpinBox *spnScoreFileAlign;
 	QPushButton *butScoreFileScale;
 	QSpinBox *spnScoreFileScale;
@@ -190,6 +192,7 @@ public slots:
 	void handleScoreFileSave();
 	void handleScoreFileSaveAs();
 	void handleScorePrint();
+	void handleScoreFileBassOffset(void);
 	void handleScoreFileAlign(void);
 	void handleScoreFileStepUpHalf(void);
 	void handleScoreFileStepDownHalf(void);

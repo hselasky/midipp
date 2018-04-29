@@ -200,7 +200,11 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	butScoreFileSave = new QPushButton(tr("Save"));
 	butScoreFileSaveAs = new QPushButton(tr("Save As"));
 	butScoreFilePrint = new QPushButton(tr("Print"));
-	butScoreFileAlign = new QPushButton(tr("Align"));
+	butScoreFileAlign = new QPushButton(tr("Align\nScores"));
+	spnScoreFileBassOffset = new QSpinBox();
+	spnScoreFileBassOffset->setRange(0,15);
+	spnScoreFileBassOffset->setValue(0);
+	butScoreFileBassOffset = new QPushButton(tr("Bass\nOffset"));
 	spnScoreFileAlign = new MppSpinBox(0,0);
 	spnScoreFileAlign->setValue((MPP_F0 + 12 * 5) * MPP_BAND_STEP_12);
 	butScoreFileScale = new QPushButton(tr("Scale"));
@@ -229,28 +233,31 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	gbScoreFile->addWidget(butScoreFileSave, 2, 0, 1, 2);
 	gbScoreFile->addWidget(butScoreFileSaveAs, 3, 0, 1, 2);
 	gbScoreFile->addWidget(butScoreFilePrint, 4, 0, 1, 2);
-	gbScoreFile->addWidget(butScoreFileAlign, 5, 0, 1, 1);
-	gbScoreFile->addWidget(spnScoreFileAlign, 5, 1, 1, 1);
-	gbScoreFile->addWidget(butScoreFileScale, 6, 0, 1, 1);
-	gbScoreFile->addWidget(spnScoreFileScale, 6, 1, 1, 1);
-	gbScoreFile->addWidget(butScoreFileStepUpHalf, 7, 0, 1, 1);
-	gbScoreFile->addWidget(butScoreFileStepDownHalf, 7, 1, 1, 1);
-	gbScoreFile->addWidget(butScoreFileStepUpSingle, 8, 0, 1, 1);
-	gbScoreFile->addWidget(butScoreFileStepDownSingle, 8, 1, 1, 1);
+	gbScoreFile->addWidget(butScoreFileBassOffset, 5, 0, 1, 1);
+	gbScoreFile->addWidget(spnScoreFileBassOffset, 5, 1, 1, 1);
+	gbScoreFile->addWidget(butScoreFileAlign, 6, 0, 1, 1);
+	gbScoreFile->addWidget(spnScoreFileAlign, 6, 1, 1, 1);
+	gbScoreFile->addWidget(butScoreFileScale, 7, 0, 1, 1);
+	gbScoreFile->addWidget(spnScoreFileScale, 7, 1, 1, 1);
+	gbScoreFile->addWidget(butScoreFileStepUpHalf, 8, 0, 1, 1);
+	gbScoreFile->addWidget(butScoreFileStepDownHalf, 8, 1, 1, 1);
+	gbScoreFile->addWidget(butScoreFileStepUpSingle, 9, 0, 1, 1);
+	gbScoreFile->addWidget(butScoreFileStepDownSingle, 9, 1, 1, 1);
 
-	gbScoreFile->addWidget(butScoreFileSetSharp, 9, 0, 1, 1);
-	gbScoreFile->addWidget(butScoreFileSetFlat, 9, 1, 1, 1);
-	gbScoreFile->addWidget(butScoreFileAutoMel[0], 10, 0, 1, 1);
-	gbScoreFile->addWidget(butScoreFileAutoMel[1], 10, 1, 1, 1);
-	gbScoreFile->addWidget(butScoreFileReplaceAll, 11, 0, 1, 2);
-	gbScoreFile->addWidget(butScoreFileExport, 12, 0, 1, 2);
-	gbScoreFile->addWidget(butScoreFileExportNoChords, 13, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileSetSharp, 10, 0, 1, 1);
+	gbScoreFile->addWidget(butScoreFileSetFlat, 10, 1, 1, 1);
+	gbScoreFile->addWidget(butScoreFileAutoMel[0], 11, 0, 1, 1);
+	gbScoreFile->addWidget(butScoreFileAutoMel[1], 11, 1, 1, 1);
+	gbScoreFile->addWidget(butScoreFileReplaceAll, 12, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileExport, 13, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileExportNoChords, 14, 0, 1, 2);
 
 	connect(butScoreFileNew, SIGNAL(released()), this, SLOT(handleScoreFileNew()));
 	connect(butScoreFileOpen, SIGNAL(released()), this, SLOT(handleScoreFileOpen()));
 	connect(butScoreFileSave, SIGNAL(released()), this, SLOT(handleScoreFileSave()));
 	connect(butScoreFileSaveAs, SIGNAL(released()), this, SLOT(handleScoreFileSaveAs()));
 	connect(butScoreFilePrint, SIGNAL(released()), this, SLOT(handleScorePrint()));
+	connect(butScoreFileBassOffset, SIGNAL(released()), this, SLOT(handleScoreFileBassOffset()));
 	connect(butScoreFileAlign, SIGNAL(released()), this, SLOT(handleScoreFileAlign()));
 	connect(butScoreFileStepUpHalf, SIGNAL(released()), this, SLOT(handleScoreFileStepUpHalf()));
 	connect(butScoreFileStepDownHalf, SIGNAL(released()), this, SLOT(handleScoreFileStepDownHalf()));
@@ -1949,6 +1956,10 @@ MppScoreMain :: handleScoreFileEffect(int which, int parm, int flag)
 		temp.autoMelody(parm);
 		temp.optimise();
 		break;
+	case 4:
+		temp.bassOffset(parm);
+		temp.optimise();
+		break;
 	default:
 		break;
 	}
@@ -1969,6 +1980,16 @@ done:
 	cursor.endEditBlock();
 
 	handleCompile();
+}
+
+void
+MppScoreMain :: handleScoreFileBassOffset(void)
+{
+	int which = spnScoreFileBassOffset->value();
+
+	which = MPP_BAND_REM_BITREV(which);
+
+	handleScoreFileEffect(4, which, 0);
 }
 
 void
