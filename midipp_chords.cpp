@@ -836,7 +836,7 @@ MppScoreVariant :: MppScoreVariant(uint32_t _chord, const char *a,
 		if ((_chord >> x) & 1)
 			footprint.set(x * MPP_BAND_STEP_12);
 	}
-	footprint = MppFindChordRoot(footprint);
+	footprint = MppFindChordRoot(footprint, &rots);
 	pattern[0] = a;
 	pattern[1] = b;
 	pattern[2] = c;
