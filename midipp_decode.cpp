@@ -284,6 +284,8 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	but_rol_down = new QPushButton(tr("Rotate\nd&own"));
 	but_mod_up = new QPushButton(tr("&Next\nvariant"));
 	but_mod_down = new QPushButton(tr("Pre&vious\nvariant"));
+	but_step_up = new QPushButton(tr("Step up\nhalf"));
+	but_step_down = new QPushButton(tr("Step down\nhalf"));
 
 	but_play = new QPushButton(tr("&Play"));
 
@@ -302,7 +304,12 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	connect(but_mod_down, SIGNAL(pressed()), this, SLOT(handle_mod_down()));
 	connect(but_mod_down, SIGNAL(released()), this, SLOT(handle_play_release()));
 
-		connect(lin_edit, SIGNAL(textChanged(const QString &)), this, SLOT(handle_parse()));
+	connect(but_step_up, SIGNAL(pressed()), this, SLOT(handle_step_up()));
+	connect(but_step_up, SIGNAL(released()), this, SLOT(handle_play_release()));
+	connect(but_step_down, SIGNAL(pressed()), this, SLOT(handle_step_down()));
+	connect(but_step_down, SIGNAL(released()), this, SLOT(handle_play_release()));
+	
+	connect(lin_edit, SIGNAL(textChanged(const QString &)), this, SLOT(handle_parse()));
 	connect(but_map_step, SIGNAL(selectionChanged(int)), this, SLOT(handle_stepping()));
 
 	gb->addWidget(
@@ -315,15 +322,18 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	gb->addWidget(but_mod_down, 2,2,1,1);
 	gb->addWidget(but_mod_up, 2,3,1,1);
 
-	gb->addWidget(lin_edit, 3,0,1,4);
-	gb->addWidget(lin_out, 4,0,1,4);
+	gb->addWidget(but_step_down, 3,0,1,2);
+	gb->addWidget(but_step_up, 3,2,1,2);
 
-	gb->addWidget(but_map_step, 5,0,1,4);
-	gb->addWidget(but_map_volume, 6,0,1,4);
-	gb->addWidget(but_map_view, 7,0,1,4);
+	gb->addWidget(lin_edit, 4,0,1,4);
+	gb->addWidget(lin_out, 5,0,1,4);
 
-	gb->addWidget(but_insert, 8, 2, 1, 2);
-	gb->addWidget(but_play, 8, 0, 1, 2);
+	gb->addWidget(but_map_step, 6,0,1,4);
+	gb->addWidget(but_map_volume, 7,0,1,4);
+	gb->addWidget(but_map_view, 8,0,1,4);
+
+	gb->addWidget(but_insert, 9, 2, 1, 2);
+	gb->addWidget(but_play, 9, 0, 1, 2);
 
 	gb_gen = new MppGroupBox(tr("Harmonic Chord Generator"));
 	gl->addWidget(gb_gen, 0,1,2,1);
@@ -523,6 +533,32 @@ MppDecodeTab :: handle_mod_down()
 	chord_key += rols;
 	MppPrevChordRoot(chord_mask, chord_step);
 	handle_refresh();
+	handle_play_press();
+}
+
+void
+MppDecodeTab :: handle_step_up()
+{
+	handle_play_release();
+	if (chord_key < (128 * MPP_BAND_STEP_12)) {
+		chord_key += MPP_BAND_STEP_12;
+		chord_bass += MPP_BAND_STEP_12;
+		chord_bass %= MPP_MAX_BANDS;
+		handle_refresh();
+	}
+	handle_play_press();
+}
+
+void
+MppDecodeTab :: handle_step_down()
+{
+	handle_play_release();
+	if (chord_key >= (25 * MPP_BAND_STEP_12)) {
+		chord_key -= MPP_BAND_STEP_12;
+		chord_bass += 11 * MPP_BAND_STEP_12;
+		chord_bass %= MPP_MAX_BANDS;
+		handle_refresh();
+	}
 	handle_play_press();
 }
 

@@ -64,6 +64,9 @@ public:
 	QPushButton *but_mod_up;
 	QPushButton *but_mod_down;
 
+	QPushButton *but_step_up;
+	QPushButton *but_step_down;
+
 	MppButtonMap *but_map_step;
 	MppButtonMap *but_map_volume;
 	MppButtonMap *but_map_view;
@@ -90,6 +93,8 @@ public slots:
 	void handle_rol_down();
 	void handle_mod_up();
 	void handle_mod_down();
+	void handle_step_up();
+	void handle_step_down();
 	void handle_play_press();
 	void handle_play_release();
 	void handle_insert();
