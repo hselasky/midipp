@@ -338,7 +338,7 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	gb_gen = new MppGroupBox(tr("Harmonic Chord Generator"));
 	gl->addWidget(gb_gen, 0,1,2,1);
 
-	editor = new MppDecodeEditor();
+	editor = new MppDecodeEditor(_mw);
 	gb_gen->addWidget(editor, 1,0,1,5);
 
 	but_generate = new QPushButton(tr("Generate"));
@@ -800,17 +800,23 @@ MppDecodeTab :: handle_generate()
 				}
 			}
 
-			for (x = 0; x != MAX_FREQ(ha); x++) {
-				for (y = x + 1; y != MAX_FREQ(ha); y++) {
-					if (MppTonesFreqCompare(pt->freq[x], pt->freq[y]) > 0) {
-						double temp = pt->freq[x];
-						pt->freq[x] = pt->freq[y];
-						pt->freq[y] = temp;
-					}
+			/* all harmonics must be found */
+			for (y = 0; y != MAX_FREQ(ha); y++) {
+				for (x = 0; x != MPP_MAX_BANDS; x++) {
+					if (foot.test(x) == 0)
+						continue;
+
+					int k = round(pt->freq[y] * (double)MPP_MAX_SUBDIV);
+					k = (MPP_MAX_BANDS - x + k) % MPP_MAX_BANDS;
+
+					if (k == 0 || k == 1 || k == MPP_MAX_BANDS - 1)
+						break;
 				}
+				if (x == MPP_MAX_BANDS)
+					break;
 			}
 
-			if (MppTonesFreqCompare(pt->freq[0], 1.0 / 16.0) > 0)
+			if (y != MAX_FREQ(ha))
 				delete pt;
 			else
 				TAILQ_INSERT_TAIL(&head, pt, entry);
@@ -856,4 +862,31 @@ MppDecodeTab :: handle_generate()
 	::free(ppt);
 
 	editor->setPlainText(output);
+}
+
+void
+MppDecodeEditor :: mouseDoubleClickEvent(QMouseEvent *e)
+{
+	MppHead temp;
+	MppChordElement info;
+	QTextCursor cursor(textCursor());
+	int row;
+
+	cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::MoveAnchor, 1);
+	cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor, 1);
+
+	/* check if the line is empty */
+	if (cursor.selectedText().simplified().size() == 0)
+		return;
+
+	row = cursor.blockNumber();
+
+	temp += toPlainText();
+	temp.flush();
+
+	/* check if the chord is valid */
+	if (temp.getChord(row, &info) != 0)
+		mw->tab_chord_gl->parseScoreChord(&info);
+
+	setTextCursor(cursor);
 }

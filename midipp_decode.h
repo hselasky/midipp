@@ -31,8 +31,11 @@
 class MppDecodeEditor : public QPlainTextEdit
 {
 public:
-	MppDecodeEditor() {};
+	MppDecodeEditor(MppMainWindow *_mw) { mw = _mw; };
 	~MppDecodeEditor() {};
+
+	MppMainWindow *mw;
+	void mouseDoubleClickEvent(QMouseEvent *);
 };
 
 class MppDecodeTab : public QWidget
