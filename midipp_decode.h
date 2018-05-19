@@ -28,6 +28,13 @@
 
 #include "midipp_chords.h"
 
+class MppDecodeEditor : public QPlainTextEdit
+{
+public:
+	MppDecodeEditor() {};
+	~MppDecodeEditor() {};
+};
+
 class MppDecodeTab : public QWidget
 {
 	Q_OBJECT;
@@ -40,11 +47,12 @@ public:
 	void setText(QString);
 	uint8_t parseScoreChord(MppChordElement *);
 	void keyPressEvent(QKeyEvent *);
-	void wheelEvent(QWheelEvent *);
 
 	MppMainWindow *mw;
 
 	QGridLayout *gl;
+
+	/* Chord Selector */
 	MppGroupBox *gb;
 
 	QLineEdit *lin_edit;
@@ -62,6 +70,12 @@ public:
 
 	QPushButton *but_play;
 	QPushButton *but_insert;
+
+	/* Chord Generator */
+	MppGroupBox *gb_gen;
+
+	QPushButton *but_generate;
+	MppDecodeEditor *editor;
 
 	int chord_key;
 	int chord_bass;
@@ -83,6 +97,7 @@ public slots:
 	void handle_refresh();
 	void handle_stepping();
 	void handle_align(int);
+	void handle_generate();
 };
 
 extern const QString MppKeyStr(int key);
