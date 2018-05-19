@@ -335,15 +335,11 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	gb->addWidget(but_insert, 9, 2, 1, 2);
 	gb->addWidget(but_play, 9, 0, 1, 2);
 
-	gb_gen = new MppGroupBox(tr("Harmonic Chord Generator"));
+	gb_gen = new MppGroupBox(tr("Chord Scratch Area"));
 	gl->addWidget(gb_gen, 0,1,2,1);
 
 	editor = new MppDecodeEditor(_mw);
-	gb_gen->addWidget(editor, 1,0,1,5);
-
-	but_generate = new QPushButton(tr("Generate"));
-	gb_gen->addWidget(but_generate, 0,0,1,1);
-	connect(but_generate, SIGNAL(released()), this, SLOT(handle_generate()));
+	gb_gen->addWidget(editor, 0,0,1,1);
 
 	handle_parse();
     
@@ -701,167 +697,6 @@ MppDecodeTab :: keyPressEvent(QKeyEvent *event)
 	default:
 		break;
 	}
-}
-
-#define	MAX_HARMONY 3
-#define	MAX_FREQ(x) (((x) * (x) - (x)) / 2)
-
-struct MppTones {
-	TAILQ_ENTRY(MppTones) entry;
-	double freq[MAX_FREQ(MAX_HARMONY)];
-	MppChord_t footprint;
-	unsigned harmony;
-};
-
-static int
-MppTonesFreqCompare(double fa, double fb)
-{
-	fa = fa - round(fa);
-	fb = fb - round(fb);
-
-	if (fa < 0)
-		fa = -fa;
-	if (fb < 0)
-		fb = -fb;
-
-	if (fa > fb)
-		return (1);
-	else if (fa < fb)
-		return (-1);
-	else
-		return (0);
-}
-
-static int
-MppTonesCompare(const void *_pa, const void *_pb)
-{
-	MppTones *pa = *(MppTones **)_pa;
-	MppTones *pb = *(MppTones **)_pb;
-
-	if (pa->harmony > pb->harmony)
-		return (1);
-	else if (pa->harmony < pb->harmony)
-		return (-1);
-
-	int ya = round(pa->freq[0]);
-	int yb = round(pb->freq[0]);
-
-	ya %= 12;
-	yb %= 12;
-
-	if (ya > yb)
-		return (1);
-	else if (ya < yb)
-		return (-1);
-
-	for (int x = 0; x != MAX_FREQ(pa->harmony); x++) {
-		int ret = MppTonesFreqCompare(pa->freq[x], pb->freq[x]);
-		if (ret)
-			return (ret);
-	}
-	return (0);
-}
-
-void
-MppDecodeTab :: handle_generate()
-{
-	MppTones *pt;
-	MppChord_t foot;
-	MppChord_t start;
-	int x,y,z;
-	TAILQ_HEAD(,MppTones) head;
-
-	TAILQ_INIT(&head);
-
-	for (int ha = 2; ha != (MAX_HARMONY + 1); ha++) {
-		foot.zero();
-		for (x = y = 0; y != ha && x != MPP_MAX_BANDS; x++, y++)
-			foot.set(x);
-
-		start = foot;
-		do {
-			double table[ha];
-			for (x = y = 0; x != MPP_MAX_BANDS; x++) {
-				if (foot.test(x))
-					table[y++] = pow(2, (double)x / (double)MPP_MAX_BANDS);
-			}
-			pt = new MppTones;
-
-			memset(pt, 0, sizeof(*pt));
-
-			pt->footprint = foot;
-			pt->harmony = ha;
-
-			for (z = x = 0; x != ha; x++) {
-				for (y = x + 1; y != ha; y++, z++) {
-					pt->freq[z] = log(table[y] - table[x]) / log(2.0) * (double)12.0;
-					while (pt->freq[z] < 0)
-						pt->freq[z] += (double)12.0;
-				}
-			}
-
-			/* all harmonics must be found */
-			for (y = 0; y != MAX_FREQ(ha); y++) {
-				for (x = 0; x != MPP_MAX_BANDS; x++) {
-					if (foot.test(x) == 0)
-						continue;
-
-					int k = round(pt->freq[y] * (double)MPP_MAX_SUBDIV);
-					k = (MPP_MAX_BANDS - x + k) % MPP_MAX_BANDS;
-
-					if (k == 0 || k == 1 || k == MPP_MAX_BANDS - 1)
-						break;
-				}
-				if (x == MPP_MAX_BANDS)
-					break;
-			}
-
-			if (y != MAX_FREQ(ha))
-				delete pt;
-			else
-				TAILQ_INSERT_TAIL(&head, pt, entry);
-
-			do {
-				foot.inc(1);
-			} while (foot.test(0) == 0);
-		} while (foot != start);
-	}
-
-	z = 0;
-	TAILQ_FOREACH(pt, &head, entry)
-		z++;
-
-	void **ppt = (void **)::malloc(sizeof(void *) * z);
-
-	z = 0;
-	TAILQ_FOREACH(pt, &head, entry)
-		ppt[z++] = pt;
-
-	::mergesort(ppt, z, sizeof(void *), &MppTonesCompare);
-
-	QString output;
-
-	for (x = 0; x != z; x++) {
-		pt = (MppTones *)ppt[x];
-
-		for (y = 0; y != MPP_MAX_BANDS; y++) {
-			if (pt->footprint.test(y)) {
-				output += MppKeyStr(y + MPP_MAX_BANDS * 5);
-				output += " ";
-			}
-		}	
-		output += "/* ";
-		for (y = 0; y != MAX_FREQ(pt->harmony); y++) {
-			double f = pt->freq[y];
-			output += MppKeyStrNoOctave(round(f) * (MPP_MAX_BANDS / 12));
-			output += QString(":%1 ").arg(f - round(f));
-		}
-		output += QString(" #%1 */\n").arg(pt->harmony);
-		delete pt;
-	}
-	::free(ppt);
-
-	editor->setPlainText(output);
 }
 
 void

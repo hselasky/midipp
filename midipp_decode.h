@@ -77,10 +77,8 @@ public:
 	QPushButton *but_play;
 	QPushButton *but_insert;
 
-	/* Chord Generator */
+	/* Chord Scratch Area */
 	MppGroupBox *gb_gen;
-
-	QPushButton *but_generate;
 	MppDecodeEditor *editor;
 
 	int chord_key;
@@ -105,7 +103,6 @@ public slots:
 	void handle_refresh();
 	void handle_stepping();
 	void handle_align(int);
-	void handle_generate();
 };
 
 extern const QString MppKeyStr(int key);
