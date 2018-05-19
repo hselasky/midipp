@@ -169,6 +169,9 @@ public:
 	uint32_t rots;
 };
 
+extern MppChord_t midipp_major;
+extern MppChord_t midipp_major_rectified;
+
 extern void MppRolUpChord(MppChord_t &input, int &delta);
 extern void MppRolDownChord(MppChord_t &input, int &delta);
 extern void MppNextChordRoot(MppChord_t &input, int step = 1);

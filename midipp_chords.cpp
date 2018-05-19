@@ -94,6 +94,9 @@ static const char **score_macros[] = {
 	0
 };
 
+MppChord_t midipp_major;
+MppChord_t midipp_major_rectified;
+
 /*
  * C D E F G A B C D E  F  G  A  B  C
  * 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
@@ -683,6 +686,11 @@ next:
 	}
 	if ((rem % step) || (bass % step))
 		goto error;
+
+	/* rectify the major to be more accurate */
+	if (step <= 2 && mask == midipp_major)
+		mask = midipp_major_rectified;
+
 	return;
 error:
 	mask.zero();
