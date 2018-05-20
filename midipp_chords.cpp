@@ -685,7 +685,9 @@ next:
 		goto error;
 
 	/* rectify the 2nd tone to be more accurate when possible */
-	if (step <= MPP_BAND_STEP_96 && mask.test(MPP_BAND_STEP_12 * 4) != 0) {
+	if (step <= MPP_BAND_STEP_96 &&
+	    mask.test(MPP_BAND_STEP_12 * 4) != 0 &&
+	    mask.test(MPP_BAND_STEP_12 * 7) != 0) {
 		uint32_t bass_rel = (MPP_MAX_BANDS - (rem % MPP_MAX_BANDS) +
 		    (bass % MPP_MAX_BANDS)) % MPP_MAX_BANDS;
 
