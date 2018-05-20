@@ -688,7 +688,7 @@ next:
 		goto error;
 
 	/* rectify the major to be more accurate */
-	if (step <= 2 && mask == midipp_major) {
+	if (step <= MPP_BAND_STEP_96 && mask == midipp_major) {
 		uint32_t bass_rel = (MPP_MAX_BANDS - (rem % MPP_MAX_BANDS) +
 		    (bass % MPP_MAX_BANDS)) % MPP_MAX_BANDS;
 
