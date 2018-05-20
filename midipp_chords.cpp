@@ -94,9 +94,6 @@ static const char **score_macros[] = {
 	0
 };
 
-MppChord_t midipp_major;
-MppChord_t midipp_major_rectified;
-
 /*
  * C D E F G A B C D E  F  G  A  B  C
  * 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
@@ -687,17 +684,18 @@ next:
 	if ((rem % step) || (bass % step))
 		goto error;
 
-	/* rectify the major to be more accurate */
-	if (step <= MPP_BAND_STEP_96 && mask == midipp_major) {
+	/* rectify the 2nd tone to be more accurate when possible */
+	if (step <= MPP_BAND_STEP_96 && mask.test(MPP_BAND_STEP_12 * 4) != 0) {
 		uint32_t bass_rel = (MPP_MAX_BANDS - (rem % MPP_MAX_BANDS) +
 		    (bass % MPP_MAX_BANDS)) % MPP_MAX_BANDS;
+
+		/* adjust treble tone, if any */
+		mask.clr(MPP_BAND_STEP_12 * 4);
+		mask.set(MPP_BAND_STEP_12 * 3 + 7 * MPP_BAND_STEP_96);
 
 		/* adjust bass tone, if any */
 		if (bass_rel == (MPP_BAND_STEP_12 * 4))
 			bass = (bass + MPP_MAX_BANDS - MPP_BAND_STEP_96) % MPP_MAX_BANDS;
-
-		/* adjust treble tones */
-		mask = midipp_major_rectified;
 	}
 	return;
 error:

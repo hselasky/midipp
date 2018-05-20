@@ -119,14 +119,6 @@ MppScoreVariantInit(void)
 	uint32_t y;
 	uint32_t z[2];
 
-	midipp_major.set(0);
-	midipp_major.set(MPP_BAND_STEP_12 * 4);
-	midipp_major.set(MPP_BAND_STEP_12 * 7);
-
-	midipp_major_rectified.set(0);
-	midipp_major_rectified.set(MPP_BAND_STEP_12 * 3 + 7 * MPP_BAND_STEP_96);
-	midipp_major_rectified.set(MPP_BAND_STEP_12 * 7);
-	
 	Mpp.VariantList += QString("\n/* Unique chords with two keys */\n\n");
 
 	for (z[0] = z[1] = 0, x = s; x != MPP_MAX_BANDS; x += s) {
