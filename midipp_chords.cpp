@@ -688,9 +688,17 @@ next:
 		goto error;
 
 	/* rectify the major to be more accurate */
-	if (step <= 2 && mask == midipp_major)
-		mask = midipp_major_rectified;
+	if (step <= 2 && mask == midipp_major) {
+		uint32_t bass_rel = (MPP_MAX_BANDS - (rem % MPP_MAX_BANDS) +
+		    (bass % MPP_MAX_BANDS)) % MPP_MAX_BANDS;
 
+		/* adjust bass tone, if any */
+		if (bass_rel == (MPP_BAND_STEP_12 * 4))
+			bass = (bass + MPP_MAX_BANDS - MPP_BAND_STEP_96) % MPP_MAX_BANDS;
+
+		/* adjust treble tones */
+		mask = midipp_major_rectified;
+	}
 	return;
 error:
 	mask.zero();
