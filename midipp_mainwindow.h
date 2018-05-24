@@ -150,8 +150,6 @@ public:
 
 	/* main <> */
 
-	QPushButton *mwRight;
-	QPushButton *mwLeft;
 	QPushButton *mwRewind;
 	QPushButton *mwPlay;
 	QPushButton *mwReload;

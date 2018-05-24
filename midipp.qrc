@@ -1,10 +1,8 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
 <file>midipp.png</file>
-<file>left_arrow.png</file>
 <file>play.png</file>
 <file>reload.png</file>
-<file>right_arrow.png</file>
 <file>stop.png</file>
 <file>paste.png</file>
 <file>copy.png</file>

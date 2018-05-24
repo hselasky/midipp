@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -129,6 +129,31 @@ MppTabBar :: mouseReleaseEvent(QMouseEvent *event)
 	event->accept();
 }
 
+void
+MppTabBar :: mouseDoubleClickEvent(QMouseEvent *event)
+{
+	int x;
+	QPoint pos = event->pos();
+	QWidget *pw;
+    
+	for (x = 0; x != ntabs; x++) {
+		if (tabs[x].area.contains(pos)) {
+			changeTab(x);
+			if (tabs[x].flags == FLAG_LEFT)
+				moveCurrWidgetRight();
+			else
+				moveCurrWidgetLeft();
+			break;
+		}
+	}
+	for (x = 0; x != nwidgets; x++) {
+		if (widgets[x].pWidget == 0)
+			continue;
+		if (widgets[x].area.contains(pos))
+			QWidget::eventFilter(widgets[x].pWidget, event);
+	}
+	event->accept();
+}
 
 void
 MppTabBar :: mouseMoveEvent(QMouseEvent *event)

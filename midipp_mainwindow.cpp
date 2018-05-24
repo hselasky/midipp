@@ -108,8 +108,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* Main GUI */
 
-	mwRight = new QPushButton();
-	mwLeft = new QPushButton();
 	mwRewind = new QPushButton();
 	mwPlay = new QPushButton();
 	mwReload = new QPushButton();
@@ -120,8 +118,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mwEdit = new QPushButton();
 	mwUpDown = new QPushButton();
 
-	mwRight->setToolTip(tr("Move Left to Right"));
-	mwLeft->setToolTip(tr("Move Right to Left"));
 	mwRewind->setToolTip(tr("Rewind"));
 	mwPlay->setToolTip(tr("Trigger"));
 	mwReload->setToolTip(tr("Recompile"));
@@ -132,8 +128,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mwEdit->setToolTip(tr("Edit or Insert a Chord"));
 	mwUpDown->setToolTip(tr("Move menu Up or Down"));
 
-	mwRight->setIcon(QIcon(QString(":/right_arrow.png")));
-	mwLeft->setIcon(QIcon(QString(":/left_arrow.png")));
 	mwRewind->setIcon(QIcon(QString(":/stop.png")));
 	mwPlay->setIcon(QIcon(QString(":/play.png")));
 	mwReload->setIcon(QIcon(QString(":/reload.png")));
@@ -144,8 +138,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mwEdit->setIcon(QIcon(QString(":/edit.png")));
 	mwUpDown->setIcon(QIcon(QString(":/up_down.png")));
 
-	mwRight->setFocusPolicy(Qt::NoFocus);
-	mwLeft->setFocusPolicy(Qt::NoFocus);
 	mwRewind->setFocusPolicy(Qt::NoFocus);
 	mwPlay->setFocusPolicy(Qt::NoFocus);
 	mwReload->setFocusPolicy(Qt::NoFocus);
@@ -156,8 +148,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mwEdit->setFocusPolicy(Qt::NoFocus);
 	mwUpDown->setFocusPolicy(Qt::NoFocus);
 
-	connect(mwRight, SIGNAL(released()), this, SLOT(handle_move_right()));
-	connect(mwLeft, SIGNAL(released()), this, SLOT(handle_move_left()));
 	connect(mwRewind, SIGNAL(released()), this, SLOT(handle_rewind()));
 	connect(mwPlay, SIGNAL(released()), this, SLOT(handle_midi_trigger()));
 	connect(mwReload, SIGNAL(released()), this, SLOT(handle_compile()));
@@ -198,9 +188,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_tb->addWidget(mwRedo);
 	main_tb->addWidget(0);
 	main_tb->addWidget(mwReload);
-	main_tb->addWidget(0);
-	main_tb->addWidget(mwLeft);
-	main_tb->addWidget(mwRight);
 	main_tb->addWidget(0);
 	main_tb->addWidget(mwUpDown);
 

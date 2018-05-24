@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -79,6 +79,7 @@ public:
 	void mousePressEvent(QMouseEvent *);
 	void mouseMoveEvent(QMouseEvent *);
 	void mouseReleaseEvent(QMouseEvent *);
+	void mouseDoubleClickEvent(QMouseEvent *);
 	void makeWidgetVisible(QWidget *, QWidget * = 0);
 	void moveCurrWidgetLeft();
 	void moveCurrWidgetRight();
