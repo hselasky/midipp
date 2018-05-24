@@ -693,6 +693,7 @@ next:
 			uint32_t pa = y;
 			uint32_t pb = (y + MPP_BAND_STEP_12 * 4) % MPP_MAX_BANDS;
 			uint32_t pc = (y + MPP_BAND_STEP_12 * 7) % MPP_MAX_BANDS;
+			uint32_t pd = (y + MPP_BAND_STEP_12 * 3) % MPP_MAX_BANDS;
 
 			if (mask.test(pa) && mask.test(pb) && mask.test(pc)) {
 				uint32_t rots;
@@ -709,7 +710,21 @@ next:
 				/* adjust bass tone, if any */
 				if (bass_rel == pb)
 					bass = (bass + MPP_MAX_BANDS - MPP_BAND_STEP_96) % MPP_MAX_BANDS;
-				break;
+			} else if (mask.test(pa) && mask.test(pd) && mask.test(pc)) {
+				uint32_t rots;
+
+				/* adjust treble tone, if any */
+				mask.clr(pd);
+				mask.set((pd + MPP_BAND_STEP_96) % MPP_MAX_BANDS);
+
+				mask = MppFindChordRoot(mask, &rots);
+				
+				/* adjust for rotation */
+				rem = (rem + rots) % MPP_MAX_BANDS;
+
+				/* adjust bass tone, if any */
+				if (bass_rel == pd)
+					bass = (bass + MPP_BAND_STEP_96) % MPP_MAX_BANDS;
 			}
 		}
 	}
