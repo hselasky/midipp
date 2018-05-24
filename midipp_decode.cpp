@@ -562,7 +562,7 @@ void
 MppDecodeTab :: handle_stepping()
 {
 	chord_step = (MPP_MAX_SUBDIV >> but_map_step->currSelection);
-	handle_refresh();
+	handle_parse();
 }
 
 void
