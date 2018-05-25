@@ -134,7 +134,6 @@ MppTabBar :: mouseDoubleClickEvent(QMouseEvent *event)
 {
 	int x;
 	QPoint pos = event->pos();
-	QWidget *pw;
     
 	for (x = 0; x != ntabs; x++) {
 		if (tabs[x].area.contains(pos)) {
