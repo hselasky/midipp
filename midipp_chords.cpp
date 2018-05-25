@@ -653,7 +653,7 @@ MppStringToChordGeneric(MppChord_t &mask, uint32_t &rem, uint32_t &bass, uint32_
 			continue;
 		y = nu;
 		/* set mask */
-		mask = MppScoreVariants12[x].footprint;
+		mask = MppScoreVariants12[x].footprint[0];
 		/* check for add */
 		if (add > -1) {
 			if (mask.test(add * MPP_BAND_STEP_12))
@@ -661,7 +661,7 @@ MppStringToChordGeneric(MppChord_t &mask, uint32_t &rem, uint32_t &bass, uint32_
 			mask.set(add * MPP_BAND_STEP_12);
 		}
 		/* adjust for rotation */
-		rem = (rem + MppScoreVariants12[x].rots) % MPP_MAX_BANDS;
+		rem = (rem + MppScoreVariants12[x].rots[0]) % MPP_MAX_BANDS;
 		goto next;
 	    }
 	}
@@ -690,12 +690,11 @@ next:
 		    (bass % MPP_MAX_BANDS)) % MPP_MAX_BANDS;
 
 		for (y = 0; y != MPP_MAX_BANDS; y += MPP_BAND_STEP_12) {
-			uint32_t pa = y;
 			uint32_t pb = (y + MPP_BAND_STEP_12 * 4) % MPP_MAX_BANDS;
 			uint32_t pc = (y + MPP_BAND_STEP_12 * 7) % MPP_MAX_BANDS;
 			uint32_t pd = (y + MPP_BAND_STEP_12 * 3) % MPP_MAX_BANDS;
 
-			if (mask.test(pa) && mask.test(pb) && mask.test(pc)) {
+			if (mask.test(y) && mask.test(pb) && mask.test(pc)) {
 				uint32_t rots;
 
 				/* adjust treble tone, if any */
@@ -710,7 +709,7 @@ next:
 				/* adjust bass tone, if any */
 				if (bass_rel == pb)
 					bass = (bass + MPP_MAX_BANDS - MPP_BAND_STEP_96) % MPP_MAX_BANDS;
-			} else if (mask.test(pa) && mask.test(pd) && mask.test(pc)) {
+			} else if (mask.test(y) && mask.test(pd) && mask.test(pc)) {
 				uint32_t rots;
 
 				/* adjust treble tone, if any */
@@ -755,10 +754,15 @@ MppChordToStringGeneric(MppChord_t mask, uint32_t rem, uint32_t bass, uint32_t s
 	
 	/* look for known chords */
 	for (size_t x = 0; x != (sizeof(MppScoreVariants12) / sizeof(MppScoreVariants12[0])); x++) {
-		if (MppScoreVariants12[x].footprint != mask)
-			continue;
+		uint32_t y;
+		if (MppScoreVariants12[x].footprint[0] != mask) {
+			if (MppScoreVariants12[x].footprint[1] != mask)
+				continue;
+			y = MppScoreVariants12[x].rots[1];
+		} else {
+			y = MppScoreVariants12[x].rots[0];
+		}
 		QString pat = QString::fromUtf8(MppScoreVariants12[x].pattern[0]);
-		uint32_t y = MppScoreVariants12[x].rots;
 
 		/* expand pattern */
 		MppExpandPattern12(pat, retval);
@@ -876,14 +880,42 @@ MppStepChordGeneric(QString &input, int adjust, uint32_t sharp)
 MppScoreVariant :: MppScoreVariant(uint32_t _chord, const char *a,
     const char *b, const char *c, const char *d)
 {
-	footprint.zero();
+	footprint[0].zero();
 	for (int x = 0; x != 12; x++) {
 		if ((_chord >> x) & 1)
-			footprint.set(x * MPP_BAND_STEP_12);
+			footprint[0].set(x * MPP_BAND_STEP_12);
 	}
-	footprint = MppFindChordRoot(footprint, &rots);
+	footprint[0] = MppFindChordRoot(footprint[0], &rots[0]);
 	pattern[0] = a;
 	pattern[1] = b;
 	pattern[2] = c;
 	pattern[3] = d;
+
+	footprint[1] = footprint[0];
+	rots[1] = rots[0];
+
+	for (uint32_t y = 0; y != MPP_MAX_BANDS; y += MPP_BAND_STEP_12) {
+		uint32_t temp;
+		uint32_t pb = (y + MPP_BAND_STEP_12 * 4) % MPP_MAX_BANDS;
+		uint32_t pc = (y + MPP_BAND_STEP_12 * 7) % MPP_MAX_BANDS;
+		uint32_t pd = (y + MPP_BAND_STEP_12 * 3) % MPP_MAX_BANDS;
+
+		if (footprint[1].test(y) && footprint[1].test(pb) && footprint[1].test(pc)) {
+			/* adjust treble tone down */
+			footprint[1].clr(pb);
+			footprint[1].set((pb + MPP_MAX_BANDS - MPP_BAND_STEP_96) % MPP_MAX_BANDS);
+			footprint[1] = MppFindChordRoot(footprint[1], &temp);
+
+			/* adjust for rotation */
+			rots[1] = (rots[1] + temp) % MPP_MAX_BANDS;
+		} else if (footprint[1].test(y) && footprint[1].test(pd) && footprint[1].test(pc)) {
+			/* adjust treble tone up */
+			footprint[1].clr(pd);
+			footprint[1].set((pd + MPP_BAND_STEP_96) % MPP_MAX_BANDS);
+			footprint[1] = MppFindChordRoot(footprint[1], &temp);
+
+			/* adjust for rotation */
+			rots[1] = (rots[1] + temp) % MPP_MAX_BANDS;
+		}
+	}
 }

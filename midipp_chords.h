@@ -165,8 +165,8 @@ public:
 	    const char *c = 0, const char *d = 0);
 	~MppScoreVariant() { };
 	const char * pattern[4];
-	MppChord_t footprint;
-	uint32_t rots;
+	MppChord_t footprint[2];
+	uint32_t rots[2];
 };
 
 extern void MppRolUpChord(MppChord_t &input, int &delta);
