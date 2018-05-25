@@ -486,6 +486,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	but_config_view_fontsel = new QPushButton(tr("Change View Font"));
 	but_config_edit_fontsel = new QPushButton(tr("Change Editor Font"));
+	but_config_print_fontsel = new QPushButton(tr("Change Print Font"));
 
 	gb_config_device = new MppGroupBox(tr("Device configuration"));
 
@@ -562,6 +563,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	x++;
 
 	tab_config_gl->addWidget(mpp_settings->but_config_load, x, 0, 1, 1);
+	tab_config_gl->addWidget(but_config_print_fontsel, x, 1, 1, 1);
 	tab_config_gl->addWidget(mpp_settings->but_config_clean, x, 3, 1, 1);
 	tab_config_gl->setColumnStretch(8, 1);
 
@@ -585,6 +587,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	connect(but_midi_rewind, SIGNAL(pressed()), this, SLOT(handle_rewind()));
 	connect(but_config_view_fontsel, SIGNAL(released()), this, SLOT(handle_config_view_fontsel()));
 	connect(but_config_edit_fontsel, SIGNAL(released()), this, SLOT(handle_config_edit_fontsel()));
+	connect(but_config_print_fontsel, SIGNAL(released()), this, SLOT(handle_config_print_fontsel()));
 
 	connect(but_midi_pause, SIGNAL(pressed()), this, SLOT(handle_midi_pause()));
 
@@ -1541,6 +1544,19 @@ MppMainWindow :: handle_config_edit_fontsel()
 
 		tab_help->setFont(font);
 		tab_import->editWidget->setFont(font);
+	}
+}
+
+void
+MppMainWindow :: handle_config_print_fontsel()
+{
+	bool success;
+
+	QFont font = QFontDialog::getFont(&success, printFont, this);
+
+	if (success) {
+		font.setPixelSize(QFontInfo(font).pixelSize());
+		printFont = font;
 	}
 }
 

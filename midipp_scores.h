@@ -78,7 +78,7 @@ public:
 	void handleParse(const QString &ps);
 	uint8_t handleKeyRemovePast(MppScoreEntry *pn, uint32_t key_delay = 0);
 	void handleScoreFileOpenRaw(char *, uint32_t);
-	void handlePrintSub(QPrinter *pd, QPoint orig, float scale_f);
+	void handlePrintSub(QPrinter *pd, QPoint orig);
 	int handleScoreFileOpenSub(QString fname);
 	uint16_t outputChannelMaskGet(void);
 	uint8_t outputTrackMirror(uint8_t);
@@ -149,8 +149,6 @@ public:
 
 	int visual_max;
 	int visual_p_max;
-	int visual_y_max;
-	int visual_x_max;
 	int unit;
 
 	uint64_t pressedKeys[MPP_PRESSED_MAX];
@@ -181,6 +179,8 @@ public:
 	uint8_t lastPedalValue;
 
 	uint8_t auto_zero_end[0];
+
+	int visual_y_max;
 
 	QString editText;
 

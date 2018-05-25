@@ -49,7 +49,10 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Tue Aug 3 2017 HPS hps@selasky.org 1.3.5-1
+* Tue Aug 3 2017 HPS hps@selasky.org 2.0.0-1
+- Added support for quartertones, octotones, hexatones and so on.
+- Added support for bass offset effect.
+- Improved support for printing.
 * Tue Aug 3 2017 HPS hps@selasky.org 1.3.4-1
 - Added support for importing uncompressed MusicXML files 
 * Tue Dec 6 2016 HPS hps@selasky.org 1.3.3-1

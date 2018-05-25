@@ -175,6 +175,10 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 
 	memset(auto_zero_start, 0, auto_zero_end - auto_zero_start);
 
+	/* set valid non-zero value */
+
+	visual_y_max = 1;
+
 	/* all devices are input */
 
 	baseKey = MPP_DEFAULT_BASE_KEY;
@@ -331,8 +335,14 @@ MppScoreMain :: ~MppScoreMain()
 }
 
 void
-MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
+MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig)
 {
+#ifdef HAVE_PRINTER
+	enum { PAGES_MAX = 128 };
+	int pageStart[PAGES_MAX];
+	int pageNum;
+	int pageLimit;
+#endif
 	MppVisualDot *pdot;
 	MppElement *ptr;
 	MppElement *next;
@@ -340,81 +350,142 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 	QString linebuf;
 	QString chord;
 	QRectF box;
+	QFont fnt_a;
+	QFont fnt_b;
 	qreal chord_x_max;
 	qreal offset;
+	qreal scale_x;
+	qreal scale_y;
+	int cmax_y;
+	int rmax_x;
+	int rmax_y;
+	int margin_x;
+	int margin_y;
+	int vmax_y;
 	int last_dot;
 	int dur;
 	int x;
 	int y;
 	int z;
 
-	QFont fnt_a;
-	QFont fnt_b;
-
-	fnt_a = mainWindow->defaultFont;
-	fnt_a.setPixelSize(mainWindow->defaultFont.pixelSize());
-
-	fnt_b = mainWindow->defaultFont;
-	fnt_b.setPixelSize(mainWindow->defaultFont.pixelSize() + 4);
-
-	QFontMetricsF fm_b(fnt_b);
-
-	if (pd != NULL) {
 #ifdef HAVE_PRINTER
-		/* get biggest number of score lines in a page */
-		x = visual_p_max;
-		if (x != 0) {
-			qreal scale_y_min = ((qreal)(pd->height() - (2 * orig.y()))) / 
-			  (((qreal)x) * (qreal)visual_y_max);
-			qreal scale_x_min = ((qreal)(pd->width() - (2 * orig.x()))) / 
-			  ((qreal)visual_x_max * 0.75);
+	if (pd != NULL) {
+		fnt_a = mainWindow->printFont;
+		fnt_a.setPointSize(mainWindow->printFont.pixelSize());
 
-			if (scale_y_min < 0.0001)
-				scale_y_min = 0.0001;	/* dummy */
-			if (scale_x_min < 0.0001)
-				scale_x_min = 0.0001;	/* dummy */
-			if (scale_y_min < scale_f)
-				scale_f = scale_y_min;
-			if (scale_x_min < scale_f)
-				scale_f = scale_x_min;
-		}
+		fnt_b = mainWindow->printFont;
+		fnt_b.setPointSize(mainWindow->printFont.pixelSize() + 2);
+
+		scale_x = (qreal)pd->logicalDpiX() / (qreal)mainWindow->logicalDpiX();
+		scale_y = (qreal)pd->logicalDpiY() / (qreal)mainWindow->logicalDpiY();
 
 		/* translate printing area */
 		paint.begin(pd);
 		paint.translate(orig);
-		paint.scale(scale_f, scale_f);
-		paint.translate(QPoint(-MPP_VISUAL_MARGIN,-MPP_VISUAL_MARGIN));
+	}
 #endif
+	if (pd == NULL) {
+		fnt_a = mainWindow->defaultFont;
+		fnt_a.setPixelSize(mainWindow->defaultFont.pixelSize());
+
+		fnt_b = mainWindow->defaultFont;
+		fnt_b.setPixelSize(mainWindow->defaultFont.pixelSize() + 4);
+
+		scale_x = 1.0;
+		scale_y = 1.0;
+	}
+		
+	/* extract all text */
+	for (x = 0; x != visual_max; x++) {
+		QString *pstr = pVisual[x].str;
+
+		/* delete old and allocate a new string */
+		delete pstr;
+		pstr = new QString();
+
+		/* parse through the text */
+		for (ptr = pVisual[x].start; ptr != pVisual[x].stop;
+		     ptr = TAILQ_NEXT(ptr, entry)) {
+			switch (ptr->type) {
+			case MPP_T_STRING_DESC:
+				*pstr += ptr->txt;
+				break;
+			default:
+				break;
+			}
+		}
+		/* Trim string */
+		*pstr = pstr->trimmed();
+
+		/* store new string */
+		pVisual[x].str = pstr;
 	}
 
-	if (pd == NULL) {
-		/* extract all text */
+	rmax_x = MPP_VISUAL_R_MAX * scale_x;
+	rmax_y = MPP_VISUAL_R_MAX * scale_y;
+
+	margin_x = MPP_VISUAL_MARGIN * scale_x;
+	margin_y = MPP_VISUAL_MARGIN * scale_y;
+
+#ifdef HAVE_PRINTER
+	if (pd != NULL) {
+		paint.translate(QPoint(-margin_x, -margin_y));
+
+		/* count all pages */
+		pageNum = 0;
+		pageStart[pageNum++] = 0;
 		for (x = 0; x != visual_max; x++) {
-			QString *pstr = pVisual[x].str;
+			QString &str = *pVisual[x].str;
 
-			/* delete old and allocate a new string */
-			delete pstr;
-			pstr = new QString();
+			if (pageNum < PAGES_MAX &&
+			    str.length() > 1 && str[0] == 'L' && str[1].isDigit())
+				pageStart[pageNum++] = x;
+		}
+		if (pageNum < PAGES_MAX)
+			pageStart[pageNum++] = visual_max;
 
-			/* parse through the text */
-			for (ptr = pVisual[x].start; ptr != pVisual[x].stop;
-			    ptr = TAILQ_NEXT(ptr, entry)) {
-				switch (ptr->type) {
-				case MPP_T_STRING_DESC:
-					*pstr += ptr->txt;
-					break;
-				default:
-					break;
+		pageNum = 0;
+	}
+#endif
+	QFontMetricsF fm_b(fnt_b, paint.device());
+
+	vmax_y = MPP_VISUAL_C_MAX * scale_y + 3 * fm_b.height();
+	cmax_y = MPP_VISUAL_C_MAX * scale_y;
+
+	/* sanity check */
+	if (vmax_y < 1)
+		vmax_y = 1;
+
+	/* store copy of maximum Y value */
+	if (pd == NULL)
+		visual_y_max = vmax_y;
+#ifdef HAVE_PRINTER
+	if (pd != NULL) {
+		pageLimit = (pd->height() - 2 * margin_y) / vmax_y;
+		if (pageLimit < 1)
+			pageLimit = 1;
+	}
+#endif
+
+	for (x = y = 0; x != visual_max; x++) {
+#ifdef HAVE_PRINTER
+		if (pd != NULL) {
+			while (pageNum < PAGES_MAX && pageStart[pageNum] == x) {
+				pageNum++;
+				if (pageNum < PAGES_MAX &&
+				    (pageStart[pageNum] - x) >= (pageLimit - y) && y != 0) {
+					pd->newPage();
+					paint.translate(QPoint(0, -vmax_y * y));
+					y = 0;
 				}
 			}
-			/* Trim string */
-			*pstr = pstr->trimmed();
-
-			/* store new string */
-			pVisual[x].str = pstr;
+			if (y != 0 && (y >= pageLimit || pVisual[x].newpage != 0)) {
+				pd->newPage();
+				paint.translate(QPoint(0, -vmax_y * y));
+				y = 0;
+			}
 		}
-	}
-	for (x = y = 0; x != visual_max; x++) {
+#endif
 		if (pd == NULL) {
 			delete (pVisual[x].pic);
 			pVisual[x].pic = new QPicture();
@@ -473,8 +544,8 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 				if (z > pVisual[x].ndot)
 					break;
 
-				pdot->x_off = MPP_VISUAL_MARGIN + box.width();
-				pdot->y_off = MPP_VISUAL_MARGIN + (visual_y_max / 3);
+				pdot->x_off = margin_x + box.width();
+				pdot->y_off = margin_y + (vmax_y / 3);
 
 				for (next = ptr; next != pVisual[x].stop;
 				     next = TAILQ_NEXT(next, entry)) {
@@ -483,12 +554,11 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 						break;
 				}
 				if (next != pVisual[x].stop)
-					pdot->x_off += (fm_b.width(next->txt[1]) - MPP_VISUAL_R_MAX - 2) / 2.0;
+					pdot->x_off += (fm_b.width(next->txt[1]) - rmax_x - 2.0 * scale_x) / 2.0;
 
 				dur = ptr->value[0];
 
-				paint.drawEllipse(QRectF(pdot->x_off, pdot->y_off,
-				    MPP_VISUAL_R_MAX, MPP_VISUAL_R_MAX));
+				paint.drawEllipse(QRectF(pdot->x_off, pdot->y_off, rmax_x, rmax_y));
 
 				if (dur <= 0)
 					break;
@@ -498,22 +568,15 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 				offset = 0;
 
 				paint.drawLine(
-				    pdot->x_off + MPP_VISUAL_R_MAX,
-				    pdot->y_off + (MPP_VISUAL_R_MAX / 2),
-				    pdot->x_off + MPP_VISUAL_R_MAX,
-				    pdot->y_off + (MPP_VISUAL_R_MAX / 2) -
-				    (3 * MPP_VISUAL_R_MAX));
+				    pdot->x_off + rmax_x, pdot->y_off + (rmax_y / 2),
+				    pdot->x_off + rmax_x, pdot->y_off + (rmax_y / 2) - (3 * rmax_y));
 
 				while (dur--) {
 					paint.drawLine(
-					    pdot->x_off + MPP_VISUAL_R_MAX,
-					    pdot->y_off + (MPP_VISUAL_R_MAX / 2) -
-					    (3 * MPP_VISUAL_R_MAX) + offset,
-					    pdot->x_off,
-					    pdot->y_off + MPP_VISUAL_R_MAX -
-					    (3 * MPP_VISUAL_R_MAX) + offset);
+					    pdot->x_off + rmax_x, pdot->y_off + (rmax_y / 2) - (3 * rmax_y) + offset,
+					    pdot->x_off, pdot->y_off + rmax_y - (3 * rmax_y) + offset);
 
-					offset += (MPP_VISUAL_R_MAX / 2.0);
+					offset += (rmax_y / 2);
 				}
 				break;
 
@@ -521,9 +584,8 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 				chord = MppDeQuoteChord(ptr->txt);
 
 				paint.setFont(fnt_b);
-				paint.drawText(QPointF(MPP_VISUAL_MARGIN + box.width(),
-				    MPP_VISUAL_MARGIN + (visual_y_max / 3) - (MPP_VISUAL_C_MAX / 4)),
-				    chord);
+				paint.drawText(QPointF(margin_x + box.width(),
+				    margin_y + (vmax_y / 3) - (cmax_y / 4)), chord);
 
 				chord_x_max = box.width() +
 					paint.boundingRect(QRectF(0,0,0,0), Qt::TextSingleLine | Qt::AlignLeft,
@@ -536,23 +598,16 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig, float scale_f)
 		}
 
 		paint.setFont(fnt_a);
-		paint.drawText(QPointF(MPP_VISUAL_MARGIN, MPP_VISUAL_MARGIN +
-		    visual_y_max - (visual_y_max / 3)), linebuf);
+		paint.drawText(QPointF(margin_x, margin_y + vmax_y - (vmax_y / 3) - (cmax_y / 4)), linebuf);
 
-		if (pd != NULL) {
 #ifdef HAVE_PRINTER
-			if (pVisual[x].newpage != 0) {
-				pd->newPage();
-				paint.translate(QPoint(0, -visual_y_max * y));
-				y = 0;
-			} else {
-				paint.translate(QPoint(0, visual_y_max));
-				y++;
-			}
-#endif
-		} else {
-			paint.end();
+		if (pd != NULL) {
+			paint.translate(QPoint(0, vmax_y));
+			y++;
 		}
+#endif
+		if (pd == NULL)
+			paint.end();
 	}
 
 	if (pd != NULL)
@@ -956,7 +1011,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 	head.syncLast();
 
 	/* create the graphics */
-	handlePrintSub(0, QPoint(0,0), 1.0);
+	handlePrintSub(0, QPoint(0,0));
 
 	/* update scrollbar */
 	viewScroll->setMaximum((visual_max > 0) ? (visual_max - 1) : 0);
@@ -1724,7 +1779,6 @@ MppScoreMain :: handleScorePrint(void)
 	QPrinter printer(QPrinter::HighResolution);
 	QPrintDialog *dlg;
 	QPoint orig;
-	qreal scale_f;
 	QString temp;
 
 	/* make sure everything is up-to-date */
@@ -1759,9 +1813,7 @@ MppScoreMain :: handleScorePrint(void)
 		orig = QPoint(printer.logicalDpiX() * 0.5,
 			      printer.logicalDpiY() * 0.5);
 
-		scale_f = ((qreal)printer.logicalDpiY()) / (qreal)visual_y_max;
-
-		handlePrintSub(&printer, orig, scale_f);
+		handlePrintSub(&printer, orig);
 	}
 
 	delete dlg;
@@ -1822,35 +1874,16 @@ int
 MppScoreMain :: handleCompile(int force)
 {
 	QString temp;
-	int x;
 
 	temp = editWidget->toPlainText();
 
 	if (temp != editText || force != 0) {
 		editText = temp;
 
-		visual_y_max = MPP_VISUAL_C_MAX +
-		  (3 * mainWindow->defaultFont.pixelSize());
-		/* range check */
-		if (visual_y_max < 1)
-			visual_y_max = 1;
-
 		mainWindow->atomic_lock();
 		handleParse(editText);
 		mainWindow->atomic_unlock();
 
-		visual_x_max = 1;
-		for (x = 0; x != visual_max; x++) {
-			if (pVisual[x].str == 0)
-				continue;
-			if (visual_x_max < pVisual[x].str->size())
-				visual_x_max = pVisual[x].str->size();
-		}
-		visual_x_max = MPP_VISUAL_C_MAX +
-		  (visual_x_max * mainWindow->defaultFont.pixelSize());
-		/* range check */
-		if (visual_x_max < 1)
-			visual_x_max = 1;
 		return (1);
 	}
 	return (0);

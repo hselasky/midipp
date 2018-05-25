@@ -195,6 +195,7 @@ MppSettings :: doSave(void)
 		beginGroup("font");
 		setValue("default", mw->defaultFont.toString());
 		setValue("editor", mw->editFont.toString());
+		setValue("print", mw->printFont.toString());
 #ifndef HAVE_NO_SHOW
 		setValue("show", mw->tab_show_control->showFont.toString());
 #endif
@@ -401,6 +402,11 @@ MppSettings :: doLoad(void)
 		}
 		mw->tab_help->setFont(mw->editFont);
 		mw->tab_import->editWidget->setFont(mw->editFont);
+
+		/* print font */
+		mw->printFont.fromString(
+		    stringDefault("font/print",
+		    "Sans Serif,-1,18,5,75,0,0,0,0,0"));
 	}
 	if (save_database_url > 0) {
 		mw->tab_database->location->setText(

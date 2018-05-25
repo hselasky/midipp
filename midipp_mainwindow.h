@@ -91,6 +91,7 @@ public:
 
 	QFont defaultFont;
 	QFont editFont;
+	QFont printFont;
 	QFont showFont;
 
 	uint8_t auto_zero_start[0];
@@ -249,6 +250,7 @@ public:
 	QTimer *tim_config_apply;
 	QPushButton *but_config_view_fontsel;
 	QPushButton *but_config_edit_fontsel;
+	QPushButton *but_config_print_fontsel;
 
 	MppGroupBox *gb_config_insert;
 	QLineEdit *led_config_insert;
@@ -321,6 +323,7 @@ public slots:
 	void handle_config_reload();
 	void handle_config_view_fontsel();
 	void handle_config_edit_fontsel();
+	void handle_config_print_fontsel();
 
 	void handle_midi_file_import(int);
 	void handle_gpro_file_import(int);
