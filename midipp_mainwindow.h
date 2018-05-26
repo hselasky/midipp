@@ -117,6 +117,7 @@ public:
 #define	MPP_DEV0_RECORD	0x0002UL
 
 	uint16_t trackVolume[MPP_MAX_TRACKS];
+	int16_t masterPitchBend;
 
 	uint8_t muteProgram[MPP_MAX_DEVS];
 	uint8_t mutePedal[MPP_MAX_DEVS];
@@ -203,11 +204,14 @@ public:
 	MppGroupBox *gl_time;
 	MppGroupBox *gl_bpm;
 	MppGroupBox *gl_synth_play;
+	MppGroupBox *gl_tuning;
 
 	QLCDNumber *lbl_curr_time_val;
 	QLCDNumber *lbl_bpm_avg_val;
 
 	MppGridLayout *tab_play_gl;
+
+	MppVolume *spn_tuning;
 
 	MppButtonMap *mbm_midi_play;
 	MppButtonMap *mbm_midi_record;
@@ -355,6 +359,7 @@ public slots:
 	void handle_edit();
 	void handle_up_down();
 	void handle_subdivs();
+	void handle_tuning();
 };
 
 #endif		/* _MIDIPP_MAINWINDOW_H_ */

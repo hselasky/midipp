@@ -56,6 +56,7 @@
 #include "midipp_sheet.h"
 #include "midipp_musicxml.h"
 #include "midipp_instrument.h"
+#include "midipp_volume.h"
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -306,6 +307,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	gl_time = new MppGroupBox(tr("Time counter"));
 	gl_bpm = new MppGroupBox(tr("Average Beats Per Minute, BPM, for generator"));
 	gl_synth_play = new MppGroupBox(tr("Synth and Play controls"));
+	gl_tuning = new MppGroupBox(tr("Master tuning"));
 
 	/* Fill up tabbar */
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
@@ -393,6 +395,13 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	but_bpm = new QPushButton(tr("BP&M generator\nsettings"));
 	connect(but_bpm, SIGNAL(released()), this, SLOT(handle_bpm()));
 
+	spn_tuning = new MppVolume();
+	spn_tuning->setRange(-4096,4096,0);
+	spn_tuning->setValue(0);
+	connect(spn_tuning, SIGNAL(valueChanged()), this, SLOT(handle_tuning()));
+
+	gl_tuning->addWidget(spn_tuning,0,0,1,1);
+
 	dlg_bpm = new MppBpm(this);
 
 	lbl_curr_time_val = new QLCDNumber(12);
@@ -467,6 +476,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	/* Third column */
 
 	tab_play_gl->addWidget(mbm_subdivs, 0,4,2,1);
+	tab_play_gl->addWidget(gl_tuning, 2,4,1,1);
 
 	tab_play_gl->setRowStretch(5, 1);
 	tab_play_gl->setColumnStretch(5, 1);
@@ -3125,7 +3135,7 @@ MppMainWindow :: getPitchBendBase(uint8_t chan)
 		chan_rem |= 1;
 	chan_rem >>= (4 - subdivsLog2);
 
-	return (chan_rem * (4096 >> subdivsLog2));
+	return (chan_rem * (4096 >> subdivsLog2) + masterPitchBend);
 }
 
 void
@@ -3138,6 +3148,15 @@ MppMainWindow :: handle_subdivs()
 
 	tab_instrument->setSubdivsLog2(subdivsLog2);
 	tab_chord_gl->setSubdivsLog2(subdivsLog2);
+}
+
+void
+MppMainWindow :: handle_tuning()
+{
+	atomic_lock();
+	masterPitchBend = spn_tuning->value();
+	send_pitch_trigger_locked();
+	atomic_unlock();
 }
 
 #ifdef HAVE_SCREENSHOT
