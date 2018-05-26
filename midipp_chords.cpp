@@ -697,7 +697,7 @@ next:
 			if (mask.test(y) && mask.test(pb) && mask.test(pc)) {
 				uint32_t rots;
 
-				/* adjust treble tone, if any */
+				/* adjust treble tone down */
 				mask.clr(pb);
 				mask.set((pb + MPP_MAX_BANDS - MPP_BAND_STEP_96) % MPP_MAX_BANDS);
 
@@ -712,9 +712,9 @@ next:
 			} else if (mask.test(y) && mask.test(pd) && mask.test(pc)) {
 				uint32_t rots;
 
-				/* adjust treble tone, if any */
+				/* adjust treble tone down */
 				mask.clr(pd);
-				mask.set((pd + MPP_BAND_STEP_96) % MPP_MAX_BANDS);
+				mask.set((pd + MPP_MAX_BANDS - MPP_BAND_STEP_96) % MPP_MAX_BANDS);
 
 				mask = MppFindChordRoot(mask, &rots);
 				
@@ -723,7 +723,7 @@ next:
 
 				/* adjust bass tone, if any */
 				if (bass_rel == pd)
-					bass = (bass + MPP_BAND_STEP_96) % MPP_MAX_BANDS;
+					bass = (bass + MPP_MAX_BANDS - MPP_BAND_STEP_96) % MPP_MAX_BANDS;
 			}
 		}
 	}
@@ -909,9 +909,9 @@ MppScoreVariant :: MppScoreVariant(uint32_t _chord, const char *a,
 			/* adjust for rotation */
 			rots[1] = (rots[1] + temp) % MPP_MAX_BANDS;
 		} else if (footprint[1].test(y) && footprint[1].test(pd) && footprint[1].test(pc)) {
-			/* adjust treble tone up */
+			/* adjust treble tone down */
 			footprint[1].clr(pd);
-			footprint[1].set((pd + MPP_BAND_STEP_96) % MPP_MAX_BANDS);
+			footprint[1].set((pd + MPP_MAX_BANDS - MPP_BAND_STEP_96) % MPP_MAX_BANDS);
 			footprint[1] = MppFindChordRoot(footprint[1], &temp);
 
 			/* adjust for rotation */
