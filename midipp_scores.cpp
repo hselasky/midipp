@@ -2193,7 +2193,7 @@ MppScoreMain :: outputChannelMaskGet(void)
 		break;
 	case MM_PASS_NONE_CHORD_PIANO:
 	case MM_PASS_NONE_CHORD_GUITAR:
-		mask = subdiv_mask = (1 << mainWindow->subdivsLog2) - 1;
+		mask = subdiv_mask = (1U << (1U << mainWindow->subdivsLog2)) - 1U;
 		if (synthChannelBase > -1) {
 			const int y = (synthChannelBase - synthChannel) & 0xF;
 			mask |= subdiv_mask << y;
@@ -2358,7 +2358,7 @@ MppScoreMain :: outputPitch(uint16_t val)
 						temp = 0;
 					else if (temp > 16383)
 						temp = 16383;
-					mid_pitch_bend(d, val);
+					mid_pitch_bend(d, temp);
 				}
 			}
 		}
