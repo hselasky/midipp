@@ -398,7 +398,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	spn_tuning = new MppVolume();
 	spn_tuning->setRange(-4096,4096,0);
 	spn_tuning->setValue(0);
-	connect(spn_tuning, SIGNAL(valueChanged()), this, SLOT(handle_tuning()));
+	connect(spn_tuning, SIGNAL(valueChanged(int)), this, SLOT(handle_tuning()));
 
 	gl_tuning->addWidget(spn_tuning,0,0,1,1);
 
