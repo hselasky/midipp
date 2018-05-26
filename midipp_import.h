@@ -78,6 +78,4 @@ public slots:
 	void handleImportMS(int);
 };
 
-extern uint8_t midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm, int step);
-
 #endif		/* _MIDIPP_IMPORT_H_ */

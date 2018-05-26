@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2014 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2014-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,6 +27,7 @@
 
 #include "midipp_chansel.h"
 #include "midipp_button.h"
+#include "midipp_mainwindow.h"
 
 MppChanSelDiag :: MppChanSelDiag(QWidget *parent, int val, int have_any) :
 	QDialog(parent), QGridLayout(this)
@@ -46,6 +47,7 @@ MppChanSelDiag :: MppChanSelDiag(QWidget *parent, int val, int have_any) :
 		addWidget(pmb, x / 4, x % 4, 1, 1);
 		if (x == val)
 			pmb->setFocus();
+		butChannel[x] = pmb;
 	}
 
 	switch (have_any) {
@@ -77,6 +79,15 @@ MppChanSelDiag :: ~MppChanSelDiag()
 }
 
 void
+MppChanSelDiag :: setSubdivsLog2(uint8_t subdivsLog2)
+{
+	uint8_t s_mask = (1U << subdivsLog2) - 1U;
+
+	for (uint8_t x = 0; x != 16; x++)
+		butChannel[x]->setEnabled((s_mask & x) == 0);
+}
+
+void
 MppChanSelDiagValue :: handle_released(int id)
 {
 	switch (id) {
@@ -90,11 +101,12 @@ MppChanSelDiagValue :: handle_released(int id)
 	}
 }
 
-MppChanSel :: MppChanSel(int val, int have_any) :
+MppChanSel :: MppChanSel(MppMainWindow *_mw, int val, int have_any) :
     QPushButton()
 {
 	channel = val;
 	haveAny = have_any;
+	mw = _mw;
 
 	setText(MppChanName(val, haveAny));
 	connect(this, SIGNAL(released()), this, SLOT(handle_released()));
@@ -130,6 +142,8 @@ void
 MppChanSel :: handle_released()
 {
 	MppChanSelDiag diag(this, channel, haveAny);
+
+	diag.setSubdivsLog2(mw->subdivsLog2);
 
 	if (diag.exec() == QDialog::Accepted)
 		setValue(diag.value.value);

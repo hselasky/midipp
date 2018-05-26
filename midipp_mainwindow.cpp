@@ -440,6 +440,14 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mbm_bpm_generator = new MppButtonMap("BPM generator\0" "OFF\0" "ON\0", 2, 2);
 	connect(mbm_bpm_generator, SIGNAL(selectionChanged(int)), dlg_bpm, SLOT(handle_bpm_enable(int)));
 
+	mbm_subdivs = new MppButtonMap("Subdivision mode\0"
+					"12\0"
+					"24\0"
+					"48\0"
+					"96\0"
+					"192\0", 5, 1);
+	connect(mbm_subdivs, SIGNAL(selectionChanged(int)), this, SLOT(handle_subdivs()));
+
 	/* First column */
 
 	tab_play_gl->addWidget(gl_time,0,0,1,1);
@@ -456,8 +464,12 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_play_gl->addWidget(gl_bpm, 3,1,1,2);
 	tab_play_gl->addWidget(mbm_key_mode_b, 4,1,1,2);
 
+	/* Third column */
+
+	tab_play_gl->addWidget(mbm_subdivs, 0,4,2,1);
+
 	tab_play_gl->setRowStretch(5, 1);
-	tab_play_gl->setColumnStretch(4, 1);
+	tab_play_gl->setColumnStretch(5, 1);
 
 	gl_bpm->addWidget(lbl_bpm_avg_val, 0, 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
@@ -1294,8 +1306,11 @@ MppMainWindow :: handle_midi_trigger()
 			startPosition = umidi20_get_curr_position() - 0x40000000 - pausePosition;
 		}
 
-		/* XXX single recursing point */
+		/* XXX first recursion point */
 		send_song_trigger_locked();
+
+		/* XXX second recursion point */
+		send_pitch_trigger_locked();
 
 		midiTriggered = 1;
 		midiPaused = 0;
@@ -1725,7 +1740,7 @@ MppMainWindow :: handle_stop(int flag)
 	    if (!(flag & 1)) {
 		scores_main[z]->outputControl(0x40, 0);
 		scores_main[z]->outputControl(0x01, 0);
-		scores_main[z]->outputPitch(1U << 13);
+		scores_main[z]->outputPitch(8192);
 	    }
 	}
 
@@ -2983,6 +2998,18 @@ MppMainWindow :: send_song_trigger_locked()
 }
 
 void
+MppMainWindow :: send_pitch_trigger_locked()
+{
+	uint8_t trig;
+
+	trig = midiTriggered;
+	midiTriggered = 1;
+	for (uint8_t x = 0; x != MPP_MAX_VIEWS; x++)
+		scores_main[x]->outputPitch(8192);
+	midiTriggered = trig;
+}
+
+void
 MppMainWindow :: send_byte_event_locked(uint8_t which)
 {
 	uint8_t buf[1];
@@ -3080,6 +3107,37 @@ MppMainWindow :: getCurrTransposeScore(void)
 		return (sm->score_future_base[0].key);
 	}
 	return (-1);
+}
+
+/* must be called locked */
+int
+MppMainWindow :: getPitchBendBase(uint8_t chan)
+{
+	uint8_t chan_rem = 0;
+
+	if (chan & 1)
+		chan_rem |= 8;
+	if (chan & 2)
+		chan_rem |= 4;
+	if (chan & 4)
+		chan_rem |= 2;
+	if (chan & 8)
+		chan_rem |= 1;
+	chan_rem >>= (4 - subdivsLog2);
+
+	return (chan_rem * (4096 >> subdivsLog2));
+}
+
+void
+MppMainWindow :: handle_subdivs()
+{
+	atomic_lock();
+	subdivsLog2 = mbm_subdivs->currSelection;
+	send_pitch_trigger_locked();
+	atomic_unlock();
+
+	tab_instrument->setSubdivsLog2(subdivsLog2);
+	tab_chord_gl->setSubdivsLog2(subdivsLog2);
 }
 
 #ifdef HAVE_SCREENSHOT

@@ -156,7 +156,6 @@ public:
 
 	int picScroll;
 	uint32_t active_channels;
-	uint32_t subdiv_map;
 
 	int baseKey;
 	int whatPlayKeyLocked;

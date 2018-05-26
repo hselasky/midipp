@@ -51,7 +51,7 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 	gl = new QGridLayout(this);
 
 	for (n = 0; n != MPP_LOOP_MAX; n++) {
-		spn_chan[n] = new MppChanSel(0, 0);
+		spn_chan[n] = new MppChanSel(mw, 0, 0);
 
 		spn_key[n] = new MppSpinBox(0,0);
 		spn_key[n]->setValue(MPP_BAND_STEP_12 * n);

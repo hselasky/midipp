@@ -842,7 +842,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 
 	/* set initial mask for active channels */
 	active_channels = 1;
-	subdiv_map = 0;
 
 	/* no automatic melody */
 	auto_melody = 0;
@@ -898,8 +897,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 			} else if (ptr->type == MPP_T_JUMP) {
 				if (ptr->value[1] & MPP_FLAG_JUMP_PAGE)
 					index = 0;
-			} else if (ptr->type == MPP_T_SCORE_SUBDIV) {
-				subdiv_map |= (2U << MPP_BAND_REM_BITREV(ptr->value[0])) - 1U;
 			}
 		}
 		/* compute maximum number of score lines */
@@ -2188,6 +2185,7 @@ uint16_t
 MppScoreMain :: outputChannelMaskGet(void)
 {
 	uint32_t mask;
+	uint32_t subdiv_mask;
 
 	switch (keyMode) {
 	case MM_PASS_ALL:
@@ -2195,14 +2193,14 @@ MppScoreMain :: outputChannelMaskGet(void)
 		break;
 	case MM_PASS_NONE_CHORD_PIANO:
 	case MM_PASS_NONE_CHORD_GUITAR:
-		mask = subdiv_map;
+		mask = subdiv_mask = (1 << mainWindow->subdivsLog2) - 1;
 		if (synthChannelBase > -1) {
 			const int y = (synthChannelBase - synthChannel) & 0xF;
-			mask |= subdiv_map << y;
+			mask |= subdiv_mask << y;
 		}
 		if (synthChannelTreb > -1) {
 			const int y = (synthChannelTreb - synthChannel) & 0xF;
-			mask |= subdiv_map << y;
+			mask |= subdiv_mask << y;
 		}
 		/* check for wrap around */
 		mask |= (mask >> 16);
@@ -2333,15 +2331,40 @@ MppScoreMain :: outputPitch(uint16_t val)
 	MppMainWindow *mw = mainWindow;
 	struct mid_data *d = &mw->mid_data;
 	const unsigned int off = unit * MPP_TRACKS_PER_VIEW;
+	uint16_t ChannelMask;
+	uint8_t chan;
 
-	/* the control event is distributed to all active devices */
-	for (unsigned int x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
-		if (outputTrackMirror(x))
-			continue;
-		if (mw->check_play(off + x, 0, 0))
-			mid_pitch_bend(d, val);
-		if (mw->check_record(off + x, 0, 0))
-			mid_pitch_bend(d, val);
+	chan = synthChannel;
+	ChannelMask = outputChannelMaskGet();
+
+	/* the pitch event is distributed to all active channels */
+	while (ChannelMask) {
+		if (ChannelMask & 1) {
+			/* the control event is distributed to all active devices */
+			for (unsigned int x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
+				if (outputTrackMirror(x))
+					continue;
+				if (mw->check_play(off + x, chan, 0)) {
+					int temp = (int)val + mw->getPitchBendBase(chan);
+					if (temp < 0)
+						temp = 0;
+					else if (temp > 16383)
+						temp = 16383;
+					mid_pitch_bend(d, temp);
+				}
+				if (mw->check_record(off + x, chan, 0)) {
+					int temp = (int)val + mw->getPitchBendBase(chan);
+					if (temp < 0)
+						temp = 0;
+					else if (temp > 16383)
+						temp = 16383;
+					mid_pitch_bend(d, val);
+				}
+			}
+		}
+		ChannelMask /= 2;
+		chan++;
+		chan &= 0xF;
 	}
 }
 

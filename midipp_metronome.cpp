@@ -105,7 +105,7 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 	but_mode->setSelection(mode);
 	connect(but_mode, SIGNAL(selectionChanged(int)), this, SLOT(handleModeChanged(int)));
 
-	spn_chan = new MppChanSel(chan, 0);
+	spn_chan = new MppChanSel(mainWindow, chan, 0);
 	connect(spn_chan, SIGNAL(valueChanged(int)), this, SLOT(handleChanChanged(int)));
 
 	spn_key_bar = new MppSpinBox(0,0);

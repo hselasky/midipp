@@ -74,11 +74,14 @@ public:
 	uint8_t check_record(uint8_t index, uint8_t chan, uint32_t off);
 	uint8_t check_mirror(uint8_t index);
 
+	int getPitchBendBase(uint8_t chan);
+
 	void handle_watchdog_sub(MppScoreMain *, int);
 
 	void send_song_stop_locked();
 	void send_song_trigger_locked();
 	void send_song_select_locked(uint8_t);
+	void send_pitch_trigger_locked();
 
 	void send_byte_event_locked(uint8_t);
 
@@ -128,6 +131,7 @@ public:
 	uint8_t numControlEvents;
 	uint8_t cursorUpdate;
 
+	uint8_t subdivsLog2;
 	uint8_t scoreRecordOff;
 	uint8_t controlRecordOn;
 	uint8_t instrUpdated;
@@ -211,6 +215,7 @@ public:
 	MppButtonMap *mbm_key_mode_a;
 	MppButtonMap *mbm_key_mode_b;
 	MppButtonMap *mbm_bpm_generator;
+	MppButtonMap *mbm_subdivs;
 
 	QPushButton *but_jump[MPP_MAX_LBUTTON];
 	QPushButton *but_compile;
@@ -349,6 +354,7 @@ public slots:
 	void handle_undo();
 	void handle_edit();
 	void handle_up_down();
+	void handle_subdivs();
 };
 
 #endif		/* _MIDIPP_MAINWINDOW_H_ */

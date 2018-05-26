@@ -32,6 +32,7 @@
 #include "midipp_button.h"
 #include "midipp_element.h"
 #include "midipp_groupbox.h"
+#include "midipp_instrument.h"
 
 Q_DECL_EXPORT const QString
 MppKeyStr(int key)
@@ -257,13 +258,6 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	lin_out = new QLineEdit();
 	lin_out->setMaxLength(256);
 
-	but_map_step = new MppButtonMap("Scale size\0"
-					"12\0"
-					"24\0"
-					"48\0"
-					"96\0"
-					"192\0", 5, 5);
-
 	but_map_volume = new MppButtonMap("Key volume\0"
 					  "MAX\0"
 					  "63\0"
@@ -310,7 +304,6 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	connect(but_step_down, SIGNAL(released()), this, SLOT(handle_play_release()));
 	
 	connect(lin_edit, SIGNAL(textChanged(const QString &)), this, SLOT(handle_parse()));
-	connect(but_map_step, SIGNAL(selectionChanged(int)), this, SLOT(handle_stepping()));
 
 	gb->addWidget(
 	    new QLabel(tr("[CDEFGABH][#b][...][/CDEFGABH[#b]]")),
@@ -328,12 +321,11 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	gb->addWidget(lin_edit, 4,0,1,4);
 	gb->addWidget(lin_out, 5,0,1,4);
 
-	gb->addWidget(but_map_step, 6,0,1,4);
-	gb->addWidget(but_map_volume, 7,0,1,4);
-	gb->addWidget(but_map_view, 8,0,1,4);
+	gb->addWidget(but_map_volume, 6,0,1,4);
+	gb->addWidget(but_map_view, 7,0,1,4);
 
-	gb->addWidget(but_insert, 9, 2, 1, 2);
-	gb->addWidget(but_play, 9, 0, 1, 2);
+	gb->addWidget(but_insert, 8, 2, 1, 2);
+	gb->addWidget(but_play, 8, 0, 1, 2);
 
 	gb_gen = new MppGroupBox(tr("Chord Scratch Area"));
 	gl->addWidget(gb_gen, 0,1,2,1);
@@ -559,9 +551,9 @@ MppDecodeTab :: handle_step_down()
 }
 
 void
-MppDecodeTab :: handle_stepping()
+MppDecodeTab :: setSubdivsLog2(uint8_t value)
 {
-	chord_step = (MPP_MAX_SUBDIV >> but_map_step->currSelection);
+	chord_step = (MPP_MAX_SUBDIV >> value);
 	handle_parse();
 }
 
@@ -571,7 +563,6 @@ MppDecodeTab :: handle_refresh()
 	QString out_key;
 	QString str;
 	int key_bass;
-	int log2_step;
 
 	key_bass = chord_key - MPP_BAND_REM(chord_key) + chord_bass;
 	if (key_bass >= chord_key)
@@ -581,10 +572,6 @@ MppDecodeTab :: handle_refresh()
 
 	MppChordToStringGeneric(chord_mask, chord_key, key_bass,
 	    chord_sharp, chord_step, str);
-
-	for (log2_step = 0; ((MPP_MAX_SUBDIV /
-	    chord_step) >> log2_step) != 1; log2_step++)
-		;
 
 	out_key += MppKeyStr(key_bass);
 	out_key += " ";
@@ -610,9 +597,6 @@ MppDecodeTab :: handle_refresh()
 	lin_out->blockSignals(1);
 	lin_out->setText(out_key);
 	lin_out->blockSignals(0);
-	but_map_step->blockSignals(1);
-	but_map_step->setSelection(log2_step);
-	but_map_step->blockSignals(0);
 }
 
 void

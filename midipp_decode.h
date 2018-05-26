@@ -50,6 +50,7 @@ public:
 	void setText(QString);
 	uint8_t parseScoreChord(MppChordElement *);
 	void keyPressEvent(QKeyEvent *);
+	void setSubdivsLog2(uint8_t);
 
 	MppMainWindow *mw;
 
@@ -70,7 +71,6 @@ public:
 	QPushButton *but_step_up;
 	QPushButton *but_step_down;
 
-	MppButtonMap *but_map_step;
 	MppButtonMap *but_map_volume;
 	MppButtonMap *but_map_view;
 
@@ -101,7 +101,6 @@ public slots:
 	void handle_insert();
 	void handle_parse();
 	void handle_refresh();
-	void handle_stepping();
 	void handle_align(int);
 };
 

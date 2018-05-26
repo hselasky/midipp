@@ -45,7 +45,7 @@ MppInstrumentTab :: MppInstrumentTab(MppMainWindow *_mw)
 	but_instr_mute_all = new QPushButton(tr("Mute all"));
 	but_instr_unmute_all = new QPushButton(tr("Unmute all"));
 
-	spn_instr_curr_chan = new MppChanSel(0, 0);
+	spn_instr_curr_chan = new MppChanSel(mw, 0, 0);
 	connect(spn_instr_curr_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_instr_channel_changed(int)));
 
 	spn_instr_curr_bank = new QSpinBox();
@@ -193,16 +193,20 @@ MppInstrumentTab :: handle_instr_changed(int dummy)
 	uint8_t z;
 	uint8_t update_curr;
 	uint8_t trig;
+	uint8_t t;
 
 	curr_chan = spn_instr_curr_chan->value();
 
 	for (x = 0; x != 16; x++) {
 
-		temp[0] = spn_instr_bank[x]->value();
-		temp[1] = spn_instr_prog[x]->value();
-		temp[2] = cbx_instr_mute[x]->isChecked();
-
 		mw->atomic_lock();
+
+		/* get channel number after subdiv mask */
+		t = x & ~((1U << mw->subdivsLog2) - 1U);
+
+		temp[0] = spn_instr_bank[t]->value();
+		temp[1] = spn_instr_prog[t]->value();
+		temp[2] = cbx_instr_mute[t]->isChecked();
 
 		update_curr = 0;
 
@@ -389,4 +393,18 @@ MppInstrumentTab :: handle_instr_rem()
 	}
 
 	mw->atomic_unlock();
+}
+
+void
+MppInstrumentTab :: setSubdivsLog2(uint8_t subdivsLog2)
+{
+	uint8_t s_mask = (1U << subdivsLog2) - 1U;
+
+	for (uint8_t x = 0; x != 16; x++) {
+		bool enabled = (s_mask & x) == 0;
+		spn_instr_bank[x]->setEnabled(enabled);
+		spn_instr_prog[x]->setEnabled(enabled);
+		cbx_instr_mute[x]->setEnabled(enabled);
+	}
+	handle_instr_changed(0);
 }

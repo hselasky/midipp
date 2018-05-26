@@ -31,6 +31,7 @@
 #include "midipp_import.h"
 #include "midipp_button.h"
 #include "midipp_spinbox.h"
+#include "midipp_buttonmap.h"
 
 static bool
 midipp_import_find_chord(const QString &str, int step)
@@ -94,7 +95,6 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 					out += ps->d_word[i_score][ai].name;
 					out += ")";
 
-					ptab->chord_step = ps->step;
 					ptab->setText(*ptr);
 					ptab->handle_align(ps->sm->spnScoreFileAlign->value());
 					ptab->handle_refresh();
@@ -307,7 +307,7 @@ midipp_import_parse(class midipp_import *ps)
 	return (0);
 }
 
-Q_DECL_EXPORT uint8_t
+static uint8_t
 midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm, int step)
 {
 	QChar ch;
@@ -480,8 +480,11 @@ MppImportTab :: handleImport12(int n)
 {
 	class midipp_import ps;
 
+	mainWindow->tab_chord_gl->setSubdivsLog2(0);
+
 	midipp_import(editWidget->toPlainText(), &ps, mainWindow->scores_main[n], MPP_BAND_STEP_12);
 
+	mainWindow->tab_chord_gl->setSubdivsLog2(mainWindow->subdivsLog2);
 	mainWindow->handle_compile();
 	mainWindow->handle_make_scores_visible(mainWindow->scores_main[n]);
 }
@@ -491,8 +494,11 @@ MppImportTab :: handleImportMS(int n)
 {
 	class midipp_import ps;
 
-	midipp_import(editWidget->toPlainText(), &ps, mainWindow->scores_main[n], 1);
+	mainWindow->tab_chord_gl->setSubdivsLog2(4);
 
+	midipp_import(editWidget->toPlainText(), &ps, mainWindow->scores_main[n], MPP_BAND_STEP_192);
+
+	mainWindow->tab_chord_gl->setSubdivsLog2(mainWindow->subdivsLog2);
 	mainWindow->handle_compile();
 	mainWindow->handle_make_scores_visible(mainWindow->scores_main[n]);
 }

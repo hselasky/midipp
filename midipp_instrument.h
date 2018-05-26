@@ -35,6 +35,7 @@ class MppInstrumentTab : public QObject
 public:
 	MppInstrumentTab(MppMainWindow * = 0);
 	~MppInstrumentTab();
+	void setSubdivsLog2(uint8_t);
 
 	MppMainWindow *mw;
 	

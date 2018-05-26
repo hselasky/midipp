@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2014 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2014-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -47,7 +47,9 @@ class MppChanSelDiag : public QDialog, public QGridLayout
 public:
 	MppChanSelDiag(QWidget *, int, int);
 	~MppChanSelDiag();
+	void setSubdivsLog2(uint8_t);
 
+	MppButton *butChannel[16];
 	MppChanSelDiagValue value;
 };
 
@@ -56,7 +58,7 @@ class MppChanSel : public QPushButton
 	Q_OBJECT;
 
 public:
-	MppChanSel(int, int);
+	MppChanSel(MppMainWindow *, int, int);
 	~MppChanSel();
 
 	void setValue(int);
@@ -64,6 +66,7 @@ public:
 private:
 	int channel;
 	int haveAny;
+	MppMainWindow *mw;
 
 public slots:
 	void handle_released();
