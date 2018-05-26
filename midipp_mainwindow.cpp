@@ -1660,6 +1660,7 @@ void
 MppMainWindow :: do_key_press(int key, int vel, int dur)
 {
 	struct mid_data *d = &mid_data;
+	uint8_t mask = (MPP_MAX_SUBDIV >> subdivsLog2) - 1;
 	uint32_t pos;
 	int rem;
 
@@ -1667,6 +1668,9 @@ MppMainWindow :: do_key_press(int key, int vel, int dur)
 		vel = 127;
 	else if (vel < 0)
 		vel = 0;
+
+	/* respect global subdivision setting */
+	key = (key + (mask / 2)) & ~mask;
 
 	rem = MPP_BAND_REM_BITREV(key);
 	key /= MPP_MAX_SUBDIV;
