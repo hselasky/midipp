@@ -48,7 +48,6 @@ public:
 	int n_chords[2];
 	int n_words[2];
 	int max_off;
-	int step;
 
 	uint8_t index;
 	uint8_t load_more;
@@ -67,15 +66,14 @@ public:
 	QPushButton *butImportFileNew;
 	QPushButton *butImportFileOpen;
 	QPushButton *butImportFileSaveAs;
-	MppButton *butImport[MPP_MAX_VIEWS][2];
+	MppButton *butImport[MPP_MAX_VIEWS];
 	MppGroupBox *gbImport;
 
 public slots:
 	void handleImportNew();
 	void handleImportOpen();
 	void handleImportSaveAs();
-	void handleImport12(int);
-	void handleImportMS(int);
+	void handleImport(int);
 };
 
 #endif		/* _MIDIPP_IMPORT_H_ */

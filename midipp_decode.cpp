@@ -209,7 +209,7 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 
 	bass = MPP_BAND_REM(pinfo->key_base);
 	
-	MppChordToStringGeneric(footprint, key, bass, is_sharp, chord_step, out);
+	MppChordToStringGeneric(footprint, key, bass, is_sharp, 1, out);
 
 	if (out.isEmpty())
 		return (1);	/* not found */
@@ -236,7 +236,7 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	chord_key = 5 * 12 * MPP_BAND_STEP_12; /* C5 */
 	chord_bass = 0;	/* C */
 	chord_sharp = 0;
-	chord_step = MPP_MAX_SUBDIV;
+	chord_step = MPP_BAND_STEP_12;
 	chord_mask.zero();
 	chord_mask.set(0);
 	chord_mask.set(MPP_BAND_STEP_12 * 4);
@@ -278,8 +278,17 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	but_rol_down = new QPushButton(tr("Rotate\nd&own"));
 	but_mod_up = new QPushButton(tr("&Next\nvariant"));
 	but_mod_down = new QPushButton(tr("Pre&vious\nvariant"));
-	but_step_up = new QPushButton(tr("Step up\nhalf"));
-	but_step_down = new QPushButton(tr("Step down\nhalf"));
+	but_step_up_half = new QPushButton(tr("Step up\n12 scale"));
+	but_step_down_half = new QPushButton(tr("Step down\n12 scale"));
+	but_step_up_one = new QPushButton(tr("Step up\n192 scale"));
+	but_step_down_one = new QPushButton(tr("Step down\n192 scale"));
+
+	but_round_12 = new QPushButton(tr("Set\n12 scale"));
+	but_round_12->setEnabled(0);
+	but_round_24 = new QPushButton(tr("Set\n24 scale"));
+	but_round_48 = new QPushButton(tr("Set\n48 scale"));
+	but_round_96 = new QPushButton(tr("Set\n96 scale"));
+	but_round_192 = new QPushButton(tr("Set\n192 scale"));
 
 	but_play = new QPushButton(tr("&Play"));
 
@@ -298,11 +307,22 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	connect(but_mod_down, SIGNAL(pressed()), this, SLOT(handle_mod_down()));
 	connect(but_mod_down, SIGNAL(released()), this, SLOT(handle_play_release()));
 
-	connect(but_step_up, SIGNAL(pressed()), this, SLOT(handle_step_up()));
-	connect(but_step_up, SIGNAL(released()), this, SLOT(handle_play_release()));
-	connect(but_step_down, SIGNAL(pressed()), this, SLOT(handle_step_down()));
-	connect(but_step_down, SIGNAL(released()), this, SLOT(handle_play_release()));
-	
+	connect(but_step_up_half, SIGNAL(pressed()), this, SLOT(handle_step_up_half()));
+	connect(but_step_up_half, SIGNAL(released()), this, SLOT(handle_play_release()));
+	connect(but_step_down_half, SIGNAL(pressed()), this, SLOT(handle_step_down_half()));
+	connect(but_step_down_half, SIGNAL(released()), this, SLOT(handle_play_release()));
+
+	connect(but_step_up_one, SIGNAL(pressed()), this, SLOT(handle_step_up_one()));
+	connect(but_step_up_one, SIGNAL(released()), this, SLOT(handle_play_release()));
+	connect(but_step_down_one, SIGNAL(pressed()), this, SLOT(handle_step_down_one()));
+	connect(but_step_down_one, SIGNAL(released()), this, SLOT(handle_play_release()));
+
+	connect(but_round_12, SIGNAL(released()), this, SLOT(handle_round_12()));
+	connect(but_round_24, SIGNAL(released()), this, SLOT(handle_round_24()));
+	connect(but_round_48, SIGNAL(released()), this, SLOT(handle_round_48()));
+	connect(but_round_96, SIGNAL(released()), this, SLOT(handle_round_96()));
+	connect(but_round_192, SIGNAL(released()), this, SLOT(handle_round_192()));
+
 	connect(lin_edit, SIGNAL(textChanged(const QString &)), this, SLOT(handle_parse()));
 
 	gb->addWidget(
@@ -315,17 +335,25 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	gb->addWidget(but_mod_down, 2,2,1,1);
 	gb->addWidget(but_mod_up, 2,3,1,1);
 
-	gb->addWidget(but_step_down, 3,0,1,2);
-	gb->addWidget(but_step_up, 3,2,1,2);
+	gb->addWidget(but_step_down_half, 3,0,1,1);
+	gb->addWidget(but_step_up_half, 3,1,1,1);
+	gb->addWidget(but_step_down_one, 3,2,1,1);
+	gb->addWidget(but_step_up_one, 3,3,1,1);
 
-	gb->addWidget(lin_edit, 4,0,1,4);
-	gb->addWidget(lin_out, 5,0,1,4);
+	gb->addWidget(but_round_12, 4,0,1,1);
+	gb->addWidget(but_round_24, 4,1,1,1);
+	gb->addWidget(but_round_48, 4,2,1,1);
+	gb->addWidget(but_round_96, 4,3,1,1);
+	gb->addWidget(but_round_192, 5,0,1,1);
 
-	gb->addWidget(but_map_volume, 6,0,1,4);
-	gb->addWidget(but_map_view, 7,0,1,4);
+	gb->addWidget(lin_edit, 6,0,1,4);
+	gb->addWidget(lin_out, 7,0,1,4);
 
-	gb->addWidget(but_insert, 8, 2, 1, 2);
-	gb->addWidget(but_play, 8, 0, 1, 2);
+	gb->addWidget(but_map_volume, 8,0,1,4);
+	gb->addWidget(but_map_view, 9,0,1,4);
+
+	gb->addWidget(but_insert, 10, 2, 1, 2);
+	gb->addWidget(but_play, 10, 0, 1, 2);
 
 	gb_gen = new MppGroupBox(tr("Chord Scratch Area"));
 	gl->addWidget(gb_gen, 0,1,2,1);
@@ -525,7 +553,7 @@ MppDecodeTab :: handle_mod_down()
 }
 
 void
-MppDecodeTab :: handle_step_up()
+MppDecodeTab :: handle_step_up_half()
 {
 	handle_play_release();
 	if (chord_key < (128 * MPP_BAND_STEP_12)) {
@@ -538,7 +566,7 @@ MppDecodeTab :: handle_step_up()
 }
 
 void
-MppDecodeTab :: handle_step_down()
+MppDecodeTab :: handle_step_down_half()
 {
 	handle_play_release();
 	if (chord_key >= (25 * MPP_BAND_STEP_12)) {
@@ -551,10 +579,90 @@ MppDecodeTab :: handle_step_down()
 }
 
 void
-MppDecodeTab :: setSubdivsLog2(uint8_t value)
+MppDecodeTab :: handle_step_up_one()
 {
-	chord_step = (MPP_MAX_SUBDIV >> value);
-	handle_parse();
+	handle_play_release();
+	if (chord_key < (128 * MPP_BAND_STEP_12)) {
+		chord_key += 1;
+		chord_bass += 1;
+		chord_bass %= MPP_MAX_BANDS;
+		handle_refresh();
+	}
+	handle_play_press();
+}
+
+void
+MppDecodeTab :: handle_step_down_one()
+{
+	handle_play_release();
+	if (chord_key >= (24 * MPP_BAND_STEP_12 + 1)) {
+		chord_key -= 1;
+		chord_bass += MPP_MAX_BANDS - 1;
+		chord_bass %= MPP_MAX_BANDS;
+		handle_refresh();
+	}
+	handle_play_press();
+}
+
+void
+MppDecodeTab :: handle_round_12()
+{
+	round(MPP_BAND_STEP_12);
+}
+
+void
+MppDecodeTab :: handle_round_24()
+{
+	round(MPP_BAND_STEP_24);
+}
+
+void
+MppDecodeTab :: handle_round_48()
+{
+	round(MPP_BAND_STEP_48);
+}
+
+void
+MppDecodeTab :: handle_round_96()
+{
+	round(MPP_BAND_STEP_96);
+}
+
+void
+MppDecodeTab :: handle_round_192()
+{
+	round(MPP_BAND_STEP_192);
+}
+
+void
+MppDecodeTab :: round(uint8_t value)
+{
+	but_round_12->setEnabled(value != MPP_BAND_STEP_12);
+	but_round_24->setEnabled(value != MPP_BAND_STEP_24);
+	but_round_48->setEnabled(value != MPP_BAND_STEP_48);
+	but_round_96->setEnabled(value != MPP_BAND_STEP_96);
+	but_round_192->setEnabled(value != MPP_BAND_STEP_192);
+
+	chord_step = value;
+
+	chord_key += value / 2;
+	chord_key -= chord_key % value;
+
+	chord_bass += value / 2;
+	chord_bass -= chord_bass % value;
+	chord_bass %= MPP_MAX_BANDS;
+
+	for (uint32_t x = 0; x != MPP_MAX_BANDS; x++) {
+		if (chord_mask.test(x) == 0 || (x % value) == 0)
+			continue;
+
+		uint32_t y = x + (value / 2);
+		y -= (y % value);
+		y %= MPP_MAX_BANDS;
+		chord_mask.clr(x);
+		chord_mask.set(y);
+	}
+	handle_refresh();
 }
 
 void
@@ -571,7 +679,7 @@ MppDecodeTab :: handle_refresh()
 		key_bass -= 1 * MPP_MAX_BANDS;
 
 	MppChordToStringGeneric(chord_mask, chord_key, key_bass,
-	    chord_sharp, chord_step, str);
+	    chord_sharp, 1, str);
 
 	out_key += MppKeyStr(key_bass);
 	out_key += " ";
@@ -612,7 +720,7 @@ MppDecodeTab :: handle_parse()
 	if (chord.isEmpty())
 		goto error;
 
-	MppStringToChordGeneric(mask, rem, bass, chord_step, chord);
+	MppStringToChordGeneric(mask, rem, bass, 1, chord);
 	chord_sharp = (chord.indexOf('#') > -1);
 
 	if (mask.test(0) == 0)
