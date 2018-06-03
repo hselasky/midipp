@@ -284,7 +284,7 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	but_step_down_one = new QPushButton(tr("Step down\n192 scale"));
 
 	but_round_12 = new QPushButton(tr("Set\n12 scale"));
-	but_round_12->setEnabled(0);
+	but_round_12->setFlat(1);
 	but_round_24 = new QPushButton(tr("Set\n24 scale"));
 	but_round_48 = new QPushButton(tr("Set\n48 scale"));
 	but_round_96 = new QPushButton(tr("Set\n96 scale"));
@@ -637,11 +637,11 @@ MppDecodeTab :: handle_round_192()
 void
 MppDecodeTab :: round(uint8_t value)
 {
-	but_round_12->setEnabled(value != MPP_BAND_STEP_12);
-	but_round_24->setEnabled(value != MPP_BAND_STEP_24);
-	but_round_48->setEnabled(value != MPP_BAND_STEP_48);
-	but_round_96->setEnabled(value != MPP_BAND_STEP_96);
-	but_round_192->setEnabled(value != MPP_BAND_STEP_192);
+	but_round_12->setFlat(value == MPP_BAND_STEP_12);
+	but_round_24->setFlat(value == MPP_BAND_STEP_24);
+	but_round_48->setFlat(value == MPP_BAND_STEP_48);
+	but_round_96->setFlat(value == MPP_BAND_STEP_96);
+	but_round_192->setFlat(value == MPP_BAND_STEP_192);
 
 	chord_step = value;
 
