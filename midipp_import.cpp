@@ -395,7 +395,7 @@ MppImportTab :: MppImportTab(MppMainWindow *parent)
 
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
 		butImport[x] = new MppButton(QString("To %1-Scores").arg(QChar('A' + x)), x);
-		connect(butImport[x], SIGNAL(released(int)), this, SLOT(handleImport12(int)));
+		connect(butImport[x], SIGNAL(released(int)), this, SLOT(handleImport(int)));
 	}
 	gbImport = new MppGroupBox(tr("Lyrics"));
 	gbImport->addWidget(butImportFileNew, 0, 0, 1, 1);
