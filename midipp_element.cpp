@@ -1174,7 +1174,7 @@ MppHead :: transposeScore(int adjust, int sharp)
 	}
 
 	/* convert into boolean */
-	sharp = sharp ? 1 : 0;
+	sharp = (sharp > 0) ? 1 : 0;
 
 	TAILQ_FOREACH(ptr, &head, entry) {
 		switch (ptr->type) {
