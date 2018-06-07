@@ -59,21 +59,37 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 	uint8_t any;
 	uint8_t output = 0;
 
-	/* detect Label mark, "LXXX", in input text */
-	if (i_txt > -1 && ps->n_words[i_txt] > 0 &&
-	    ps->d_word[i_txt][0].name.size() > 1 &&
-	    ps->d_word[i_txt][0].name[0] == QChar('L') &&
-	    ps->d_word[i_txt][0].name[1].isDigit()) {
-		scs += QChar('L');
-		for (bi = 1; bi != ps->d_word[i_txt][0].name.size(); bi++) {
-			if (ps->d_word[i_txt][0].name[bi].isDigit() == 0)
-				break;
-			scs += ps->d_word[i_txt][0].name[bi];
-		}
-		scs += QChar(':');
-		scs += QChar('\n');
-	}
+	/* detect label marks like "LXXX" or [intro], in input text */
+	if (i_txt > -1 && ps->n_words[i_txt] > 0) {
+		QString &str = ps->d_word[i_txt][0].name;
+		QString &end = ps->d_word[i_txt][ps->n_words[i_txt] - 1].name;
 
+		if (str.size() > 1 && str[0] == QChar('L') && str[1].isDigit()) {
+			int label = 0;
+			for (bi = 1; bi != str.size(); bi++) {
+				if (str[bi].isDigit() == 0)
+					break;
+				label *= 10;
+				label += str[bi].digitValue();
+			}
+			scs += QString("L%1:\n").arg(label);
+			ps->n_label = label + 1;
+		} else if (str.size() > 0 && str[0] == '[' &&
+			   end.size() > 0 && end[end.size() - 1] == ']') {
+			str = QString("L%1 - ").arg(ps->n_label) + str.right(str.size() - 1);
+			end = end.left(end.size() - 1);
+			scs += QString("L%1:\n").arg(ps->n_label);
+			ps->n_label++;
+
+			/* recompute offsets */
+			for (off = ai = 0; ai != ps->n_words[i_txt]; ai++) {
+				ps->d_word[i_txt][ai].off = off;
+				off += ps->d_word[i_txt][ai].name.size();
+			}
+			if (off > ps->max_off)
+				ps->max_off = off;
+		}
+	}
 	out += "S\"";
 
 	for (ai = bi = x = 0; x != ps->max_off; x++) {
@@ -326,6 +342,7 @@ midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm)
 	ps->n_chords[1] = 0;
 	ps->n_words[0] = 0;
 	ps->n_words[1] = 0;
+	ps->n_label = 0;
 	ps->max_off = 0;
 	ps->index = 0;
 	ps->load_more = 1;
@@ -385,7 +402,9 @@ MppImportTab :: MppImportTab(MppMainWindow *parent)
 	editWidget->setFont(mainWindow->editFont);
 	editWidget->setLineWrapMode(QPlainTextEdit::NoWrap);
 	editWidget->setPlainText(tr(
-	    "L0 - Example verse:" "\n\n"
+	    "L0 - Intro tag" "\n"
+	    "[Intro tag]" "\n\n"
+	    
 	    "C  G  Am" "\n"
 	    "Welcome!" "\n"));
 

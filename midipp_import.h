@@ -47,6 +47,7 @@ public:
 	int n_spaces[2];
 	int n_chords[2];
 	int n_words[2];
+	int n_label;
 	int max_off;
 
 	uint8_t index;
