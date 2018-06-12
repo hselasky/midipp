@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2015 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2015-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,7 +42,6 @@ public:
 	MppVolume *spn_volume;
 	QSpinBox *spn_bpm;
 	MppButtonMap *but_onoff;
-	MppChanSel *spn_chan;
 	MppButtonMap *but_view;
 	MppSpinBox *spn_key_bar;
 	MppSpinBox *spn_key_beat;
@@ -52,7 +51,6 @@ public:
 	int volume;
 	int bpm;
 	int enabled;
-	int chan;
 	int key_bar;
 	int key_beat;
 	int mode;
@@ -62,7 +60,6 @@ public slots:
 	void handleVolumeChanged(int);
 	void handleBPMChanged(int);
 	void handleEnableChanged(int);
-	void handleChanChanged(int);
 	void handleKeyBarChanged(int);
 	void handleKeyBeatChanged(int);
 	void handleModeChanged(int);

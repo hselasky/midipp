@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2015 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2015-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,10 +26,10 @@
 #include "midipp_metronome.h"
 #include "midipp_volume.h"
 #include "midipp_spinbox.h"
-#include "midipp_chansel.h"
 #include "midipp_buttonmap.h"
 #include "midipp_mainwindow.h"
 #include "midipp_groupbox.h"
+#include "midipp_scores.h"
 
 static void
 MppMetronomeOutput(MppMetronome *mm, struct mid_data *d)
@@ -53,10 +53,12 @@ MppMetronomeCallback(void *arg)
 
         mw->atomic_lock();
         if (mm->enabled != 0 && mw->midiTriggered != 0) {
-		unsigned int x = MPP_DEFAULT_TRACK(mm->view);
-		if (mw->check_play(x, mm->chan, 0))
+		MppScoreMain *sm = mw->scores_main[mm->view];
+
+		if (mw->check_play(MPP_DEFAULT_TRACK(sm->unit), sm->synthChannel, 0))
 			MppMetronomeOutput(mm, &mw->mid_data);
-		if (mm->enabled == 2 && mw->check_record(x, mm->chan, 0) != 0)
+		if (mm->enabled == 2 &&
+		    mw->check_record(MPP_DEFAULT_TRACK(sm->unit), sm->synthChannel, 0))
 			MppMetronomeOutput(mm, &mw->mid_data);
 	}
         mw->atomic_unlock();
@@ -71,7 +73,6 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 	volume = 64;
 	bpm = 120;
 	enabled = 0;
-	chan = 9;
 	key_bar = (MPP_C0 + (5 * 12)) * MPP_BAND_STEP_12;
 	key_beat = (MPP_C0 + (4 * 12)) * MPP_BAND_STEP_12;
 	mode = 0;
@@ -103,10 +104,7 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 	but_mode->setSelection(mode);
 	connect(but_mode, SIGNAL(selectionChanged(int)), this, SLOT(handleModeChanged(int)));
 
-	spn_chan = new MppChanSel(mainWindow, chan, 0);
-	connect(spn_chan, SIGNAL(valueChanged(int)), this, SLOT(handleChanChanged(int)));
-
-	but_view = new MppButtonMap("Output view\0" "View-A\nPrimary\0" "View-B\nPrimary\0", 2, 2);
+	but_view = new MppButtonMap("Output view\0" "View-A\nPrimary channel\0" "View-B\nPrimary channel\0", 2, 2);
 	but_view->setSelection(enabled);
 	connect(but_view, SIGNAL(selectionChanged(int)), this, SLOT(handleViewChanged(int)));
 
@@ -130,14 +128,11 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 	gb->addWidget(new QLabel(tr("Rate")),3,0,1,1,Qt::AlignVCenter|Qt::AlignLeft);
 	gb->addWidget(spn_bpm,  3,1,1,1,Qt::AlignCenter);
 
-	gb->addWidget(new QLabel(tr("Channel")),4,0,1,1,Qt::AlignVCenter|Qt::AlignLeft);
-	gb->addWidget(spn_chan, 4,1,1,1,Qt::AlignCenter);
+	gb->addWidget(but_view, 4,0,1,2);
+	gb->addWidget(but_mode, 5,0,1,2);
+	gb->addWidget(but_onoff, 6,0,1,2);
 
-	gb->addWidget(but_view, 5,0,1,2);
-	gb->addWidget(but_mode, 6,0,1,2);
-	gb->addWidget(but_onoff, 7,0,1,2);
-
-	gb->setRowStretch(8,1);
+	gb->setRowStretch(7,1);
 	gb->setColumnStretch(2,1);
 
 	umidi20_set_timer(&MppMetronomeCallback, this, 60000 / bpm);
@@ -187,14 +182,6 @@ MppMetronome :: handleEnableChanged(int val)
 {
   	mainWindow->atomic_lock();
 	enabled = val;
-	mainWindow->atomic_unlock();
-}
-
-void
-MppMetronome :: handleChanChanged(int val)
-{
-	mainWindow->atomic_lock();
-	chan = val;
 	mainWindow->atomic_unlock();
 }
 

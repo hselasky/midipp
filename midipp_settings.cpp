@@ -250,7 +250,7 @@ MppSettings :: doLoad(void)
 			int delayNoise = valueDefault(concat("view%d/delay", x), 25);
 			int keyMode = valueDefault(concat("view%d/keymode", x), 0);
 			int inputChannel = valueDefault(concat("view%d/inputchannel", x), -1);
-			int synthChannel = valueDefault(concat("view%d/synthchannel", x), 0);
+			int synthChannel = valueDefault(concat("view%d/synthchannel", x), (x == 1) ? 9 : 0);
 			int synthChannelBase = valueDefault(concat("view%d/synthchannelbase", x), -1);
 			int synthChannelTreb = valueDefault(concat("view%d/synthchanneltreb", x), -1);
 			int synthDevice = valueDefault(concat("view%d/synthdevice", x), -1);

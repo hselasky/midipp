@@ -186,6 +186,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	chordContrast = 128;
 	chordNormalize = 1;
 	inputChannel = -1;
+	synthChannel = ((_unit == 1) ? 9 : 0);
 	synthChannelBase = -1;
 	synthChannelTreb = -1;
 	synthDevice = -1;
