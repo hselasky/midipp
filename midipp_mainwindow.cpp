@@ -57,6 +57,7 @@
 #include "midipp_musicxml.h"
 #include "midipp_instrument.h"
 #include "midipp_volume.h"
+#include "midipp_devsel.h"
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -512,6 +513,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	gb_config_device = new MppGroupBox(tr("Device configuration"));
 
+	gb_config_device->addWidget(new QLabel(tr("Group")), 0, 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	gb_config_device->addWidget(new QLabel(tr("Device name")), 0, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	pl = new QLabel(tr("Output\nenable"));
@@ -532,6 +534,13 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	gb_config_device->setColumnStretch(1, 1);
 
 	for (n = 0; n != MPP_MAX_DEVS; n++) {
+
+	  	/* set default device selection map */
+		devSelMap[n] = n;
+
+		but_config_sel[n] = new MppDevSel(n, 0);
+		connect(but_config_sel[n], SIGNAL(valueChanged(int)), this, SLOT(handle_config_changed()));
+ 
 		but_config_mm[n] = new MppButton(tr("MM"), n);
 		connect(but_config_mm[n], SIGNAL(released(int)), this, SLOT(handle_mute_map(int)));
 
@@ -548,7 +557,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 			gb_config_device->addWidget(cbx_config_dev[n][x], n + 1, 2 + x, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 		}
 
-		gb_config_device->addWidget(new QLabel(MppDevName(n)), n + 1, 0, 1, 1, Qt::AlignHCenter|Qt::AlignLeft);
+		gb_config_device->addWidget(but_config_sel[n], n + 1, 0, 1, 1, Qt::AlignHCenter|Qt::AlignLeft);
 		gb_config_device->addWidget(led_config_dev[n], n + 1, 1, 1, 1);
 		gb_config_device->addWidget(but_config_mm[n], n + 1, 3 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 		gb_config_device->addWidget(but_config_dev[n], n + 1, 4 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
@@ -1444,10 +1453,11 @@ MppMainWindow :: handle_config_reload()
 }
 
 void
-MppMainWindow :: handle_config_apply(int devno)
+MppMainWindow :: handle_config_apply()
 {
 	struct mid_data *d = &mid_data;
 	uint8_t ScMidiTriggered;
+	uint8_t deviceSelectionMap[MPP_MAX_DEVS];
 	uint32_t devInputMaskCopy[MPP_MAX_DEVS];
 	uint32_t pos;
 	int n;
@@ -1473,6 +1483,8 @@ MppMainWindow :: handle_config_apply(int devno)
 			devInputMaskCopy[n] |= (1U << x);
 			deviceBits |= (MPP_DEV0_RECORD << (2 * n));
 		}
+
+		deviceSelectionMap[n] = but_config_sel[n]->value();
 	}
 
 	handle_config_reload();
@@ -1481,6 +1493,7 @@ MppMainWindow :: handle_config_apply(int devno)
 	MppSleep::msleep(100 /* ms */);
 
 	atomic_lock();
+	memcpy(devSelMap, deviceSelectionMap, sizeof(devSelMap));
 	memcpy(devInputMask, devInputMaskCopy, sizeof(devInputMask));
 	ScMidiTriggered = midiTriggered;
 	midiTriggered = 1;
@@ -2008,7 +2021,7 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			}
 
 			for (int x = 0; x != MPP_MAX_DEVS; x++) {
-				if (devno != -1 && x != devno)
+				if (devno != -1 && mw->devSelMap[x] != devno)
 					continue;
 				if (((mw->deviceBits >> (2 * x)) & MPP_DEV0_PLAY) == 0)
 					continue;
@@ -2074,7 +2087,7 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			}
 
 			for (int x = 0; x != MPP_MAX_DEVS; x++) {
-				if (devno != -1 && x != devno)
+				if (devno != -1 && mw->devSelMap[x] != devno)
 					continue;
 				if (((mw->deviceBits >> (2 * x)) & MPP_DEV0_PLAY) == 0)
 					continue;
@@ -2751,7 +2764,7 @@ MppMainWindow :: handle_mute_map(int n)
 	retval = diag.exec();
 
 	if (retval == QDialog::Accepted)
-		handle_config_apply(n);
+		handle_config_apply();
 
 	return (retval);
 }
@@ -2781,7 +2794,7 @@ MppMainWindow :: handle_config_dev(int n, int automagic)
 		led_config_dev[n]->blockSignals(1);
 		led_config_dev[n]->setText(diag.result_dev);
 		led_config_dev[n]->blockSignals(0);
-		handle_config_apply(n);
+		handle_config_apply();
 	}
 	return (retval);
 }

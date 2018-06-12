@@ -119,6 +119,7 @@ public:
 	uint16_t trackVolume[MPP_MAX_TRACKS];
 	int16_t masterPitchBend;
 
+	uint8_t devSelMap[MPP_MAX_DEVS];
 	uint8_t muteProgram[MPP_MAX_DEVS];
 	uint8_t mutePedal[MPP_MAX_DEVS];
 	uint8_t enableLocalKeys[MPP_MAX_DEVS];
@@ -249,6 +250,7 @@ public:
 
 	MppSettings *mpp_settings;
 
+	MppDevSel *but_config_sel[MPP_MAX_DEVS];
 	MppButton *but_config_dev[MPP_MAX_DEVS];
 	MppButton *but_config_mm[MPP_MAX_DEVS];
 	QLineEdit *led_config_dev[MPP_MAX_DEVS];
@@ -328,7 +330,7 @@ public slots:
 	void handle_rewind();
 	void handle_midi_trigger();
 	void handle_config_changed();
-	void handle_config_apply(int = -1);
+	void handle_config_apply();
 	void handle_config_reload();
 	void handle_config_view_fontsel();
 	void handle_config_edit_fontsel();

@@ -37,6 +37,7 @@
 #include "midipp_show.h"
 #include "midipp_sheet.h"
 #include "midipp_instrument.h"
+#include "midipp_devsel.h"
 
 MppSettings :: MppSettings(MppMainWindow *_parent, const QString & fname)
   : QSettings(fname)
@@ -176,6 +177,7 @@ MppSettings :: doSave(void)
 	if (save_devices) {
 		for (y = 0; y != MPP_MAX_DEVS; y++) {
 			beginGroup(concat("device%d", y));
+			setValue("group", mw->but_config_sel[y]->value());
 			setValue("device", mw->led_config_dev[y]->text());
 			setValue("play", (int)mw->cbx_config_dev[y][0]->isChecked());
 			setValue("muteprog", mw->muteProgram[y]);
@@ -335,6 +337,7 @@ MppSettings :: doLoad(void)
 
 	if (save_devices > 0) {
 		for (y = 0; y != MPP_MAX_DEVS; y++) {
+			mw->but_config_sel[y]->setValue(valueDefault(concat("device%d/group", y), y));
 			mw->led_config_dev[y]->setText(stringDefault(concat("device%d/device", y), ""));
 			mw->cbx_config_dev[y][0]->setChecked(valueDefault(concat("device%d/play", y), 0) ? 1 : 0);
 			for (x = 0; x != MPP_MAX_VIEWS; x++) {

@@ -527,7 +527,7 @@ main(int argc, char **argv)
 		/* show configuration window by default */
 		if (strcmp(pmain->deviceName[0], "X:") == 0) {
 			if (pmain->handle_config_dev(0, 1) == QDialog::Accepted) {
-				pmain->handle_config_apply(0);
+				pmain->handle_config_apply();
 			}
 		}
 		pmain->show();
