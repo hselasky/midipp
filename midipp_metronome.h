@@ -43,6 +43,7 @@ public:
 	QSpinBox *spn_bpm;
 	MppButtonMap *but_onoff;
 	MppChanSel *spn_chan;
+	MppButtonMap *but_view;
 	MppSpinBox *spn_key_bar;
 	MppSpinBox *spn_key_beat;
 	MppButtonMap *but_mode;
@@ -55,6 +56,7 @@ public:
 	int key_bar;
 	int key_beat;
 	int mode;
+	int view;
 	
 public slots:
 	void handleVolumeChanged(int);
@@ -64,6 +66,7 @@ public slots:
 	void handleKeyBarChanged(int);
 	void handleKeyBeatChanged(int);
 	void handleModeChanged(int);
+	void handleViewChanged(int);
 	void handleUpdateLocked();
 	void handleTimeout();
 };

@@ -53,14 +53,11 @@ MppMetronomeCallback(void *arg)
 
         mw->atomic_lock();
         if (mm->enabled != 0 && mw->midiTriggered != 0) {
-		for (unsigned int x = 0; x != MPP_MAX_TRACKS; x++) {
-			if (mw->check_mirror(x))
-				continue;
-			if (mw->check_play(x, mm->chan, 0))
-				MppMetronomeOutput(mm, &mw->mid_data);
-			if (mm->enabled == 2 && mw->check_record(x, mm->chan, 0) != 0)
-				MppMetronomeOutput(mm, &mw->mid_data);
-		}
+		unsigned int x = MPP_DEFAULT_TRACK(mm->view);
+		if (mw->check_play(x, mm->chan, 0))
+			MppMetronomeOutput(mm, &mw->mid_data);
+		if (mm->enabled == 2 && mw->check_record(x, mm->chan, 0) != 0)
+			MppMetronomeOutput(mm, &mw->mid_data);
 	}
         mw->atomic_unlock();
 }
@@ -78,6 +75,7 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 	key_bar = (MPP_C0 + (5 * 12)) * MPP_BAND_STEP_12;
 	key_beat = (MPP_C0 + (4 * 12)) * MPP_BAND_STEP_12;
 	mode = 0;
+	view = 0;
 
 	tim_config = new QTimer();
 	tim_config->setSingleShot(1);
@@ -108,6 +106,10 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 	spn_chan = new MppChanSel(mainWindow, chan, 0);
 	connect(spn_chan, SIGNAL(valueChanged(int)), this, SLOT(handleChanChanged(int)));
 
+	but_view = new MppButtonMap("Output view\0" "View-A\nPrimary\0" "View-B\nPrimary\0", 2, 2);
+	but_view->setSelection(enabled);
+	connect(but_view, SIGNAL(selectionChanged(int)), this, SLOT(handleViewChanged(int)));
+
 	spn_key_bar = new MppSpinBox(0,0);
 	spn_key_bar->setValue(key_bar);
 	connect(spn_key_bar, SIGNAL(valueChanged(int)), this, SLOT(handleKeyBarChanged(int)));
@@ -130,10 +132,12 @@ MppMetronome ::  MppMetronome(MppMainWindow *parent)
 
 	gb->addWidget(new QLabel(tr("Channel")),4,0,1,1,Qt::AlignVCenter|Qt::AlignLeft);
 	gb->addWidget(spn_chan, 4,1,1,1,Qt::AlignCenter);
-	gb->addWidget(but_mode, 5,0,1,2,Qt::AlignCenter);
-	gb->addWidget(but_onoff, 6,0,1,2,Qt::AlignCenter);
 
-	gb->setRowStretch(7,1);
+	gb->addWidget(but_view, 5,0,1,2);
+	gb->addWidget(but_mode, 6,0,1,2);
+	gb->addWidget(but_onoff, 7,0,1,2);
+
+	gb->setRowStretch(8,1);
 	gb->setColumnStretch(2,1);
 
 	umidi20_set_timer(&MppMetronomeCallback, this, 60000 / bpm);
@@ -215,5 +219,13 @@ MppMetronome :: handleModeChanged(int val)
 {
 	mainWindow->atomic_lock();
 	mode = val;
+	mainWindow->atomic_unlock();
+}
+
+void
+MppMetronome :: handleViewChanged(int val)
+{
+	mainWindow->atomic_lock();
+	view = val;
 	mainWindow->atomic_unlock();
 }
