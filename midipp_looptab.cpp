@@ -266,11 +266,9 @@ MppLoopTab :: fill_loop_data(int n, int vel, int key_off)
 
 		key += key_off;
 
-		if (key > 255 || key < 0)
+		if (key > (255 * MPP_BAND_STEP_12) || key < 0)
 			continue;
-#if 0
-		vel = umidi20_event_get_velocity(event);
-#endif
+
 		chan = chan_val[n];
 		pos = event->position;
 
