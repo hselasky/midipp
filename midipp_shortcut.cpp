@@ -79,7 +79,7 @@ MppShortcutTab :: MppShortcutTab(MppMainWindow *_mw)
 	shortcut_desc[MPP_SHORTCUT_ALL] = "ALL";
 	shortcut_desc[MPP_SHORTCUT_TRANS] = "TRANS";
 	shortcut_desc[MPP_SHORTCUT_FIXED] = "FIXED";
-	shortcut_desc[MPP_SHORTCUT_MIXED] = "MIXED";
+	shortcut_desc[MPP_SHORTCUT_ALL_SUBDIV] = "ALL-SUBDIV";
 	shortcut_desc[MPP_SHORTCUT_CHORD_PIANO] = "CHORD-PIANO";
 	shortcut_desc[MPP_SHORTCUT_CHORD_GUITAR] = "CHORD-GUITAR";
 	shortcut_desc[MPP_SHORTCUT_TRIGGER] = "TRIGGER";
@@ -216,8 +216,8 @@ MppShortcutTab :: handle_event_received_locked(MppScoreMain *sm,
 			sm->keyMode = MM_PASS_NONE_FIXED;
 			mw->keyModeUpdated = 1;
 			break;
-		case MPP_SHORTCUT_MIXED:
-			sm->keyMode = MM_PASS_ONE_MIXED;
+		case MPP_SHORTCUT_ALL_SUBDIV:
+			sm->keyMode = MM_PASS_ALL_SUBDIV;
 			mw->keyModeUpdated = 1;
 			break;
 		case MPP_SHORTCUT_CHORD_PIANO:

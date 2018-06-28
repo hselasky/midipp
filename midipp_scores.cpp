@@ -976,7 +976,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 		mainWindow->keyModeUpdated = 1;
 		break;
 	case 1:
-		keyMode = MM_PASS_ONE_MIXED;
+		keyMode = MM_PASS_ALL_SUBDIV;
 		mainWindow->keyModeUpdated = 1;
 		break;
 	case 2:
@@ -1137,19 +1137,6 @@ MppScoreMain :: checkLabelJump(int pos)
 		return (0);
 
 	return (1);
-}
-
-int
-MppScoreMain :: checkHalfPassThru(int key)
-{
-	static const uint8_t is_black[12] = {0,1,0,1,0,0,1,0,1,0,1,0};
-	int bk = baseKey / MPP_BAND_STEP_12;
-	int ck = key / MPP_BAND_STEP_12;
-
-	return ((ck >= mid_next_key(bk, -1)) &&
-	    (ck <= mid_next_key(bk, +1)) &&
-	    (is_black[((uint8_t)ck) % 12U] ==
-	     is_black[((uint8_t)bk) % 12U]));
 }
 
 /* must be called locked */
@@ -2421,13 +2408,10 @@ MppScoreMain :: handleMidiKeyPressLocked(int key, int vel)
 		if (setPressedKey(chan, key, 255, 0) == 0)
 			mainWindow->output_key(MPP_DEFAULT_TRACK(unit), chan, key, vel, 0, 0);
 		break;
-	case MM_PASS_ONE_MIXED:
-		if (checkHalfPassThru(key) != 0) {
-			if (key == baseKey)
-				handleKeyPress(key, vel);
-		} else if (setPressedKey(chan, key, 255, 0) == 0) {
+	case MM_PASS_ALL_SUBDIV:
+		key >>= mainWindow->subdivsLog2;
+		if (setPressedKey(chan, key, 255, 0) == 0)
 			mainWindow->output_key(MPP_DEFAULT_TRACK(unit), chan, key, vel, 0, 0);
-		}
 		break;
 	default:
 		break;
@@ -2450,13 +2434,10 @@ MppScoreMain :: handleMidiKeyReleaseLocked(int key)
 	case MM_PASS_NONE_CHORD_GUITAR:
 		handleKeyReleaseChord(key);
 		break;
-	case MM_PASS_ONE_MIXED:
-		if (checkHalfPassThru(key) != 0) {
-			if (key == baseKey)
-				handleKeyRelease(key);
-		} else if (setPressedKey(chan, key, 0, 0) == 0) {
+	case MM_PASS_ALL_SUBDIV:
+		key >>= mainWindow->subdivsLog2;
+		if (setPressedKey(chan, key, 0, 0) == 0)
 			mainWindow->output_key(MPP_DEFAULT_TRACK(unit), chan, key, 0, 0, 0);
-		}
 		break;
 	case MM_PASS_ALL:
 		if (setPressedKey(chan, key, 0, 0) == 0)

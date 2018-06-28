@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2018 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,7 +50,7 @@ enum {
 	MPP_SHORTCUT_ALL = MPP_SHORTCUT_LABEL_MAX,
 	MPP_SHORTCUT_TRANS,
 	MPP_SHORTCUT_FIXED,
-	MPP_SHORTCUT_MIXED,
+	MPP_SHORTCUT_ALL_SUBDIV,
 	MPP_SHORTCUT_CHORD_PIANO,
 	MPP_SHORTCUT_CHORD_GUITAR,
 	MPP_SHORTCUT_MODE_MAX,
