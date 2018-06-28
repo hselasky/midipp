@@ -238,7 +238,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " * K5.<number> - set number of base scores for chord mode. Default value is 2.\n"
 	    " * K6 - no operation.\n"
 	    " * K6.0 - select ALL key mode. (default)\n"
-	    " * K6.1 - select MIXED key mode.\n"
+	    " * K6.1 - select ALL subdivision key mode.\n"
 	    " * K6.2 - select FIXED key mode.\n"
 	    " * K6.3 - select TRANS key mode.\n"
 	    " * K6.4 - select CHORD-PIANO key mode.\n"
@@ -441,10 +441,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mbm_score_record = new MppButtonMap("Score recording\0" "OFF\0" "ON\0", 2, 2);
 	connect(mbm_score_record, SIGNAL(selectionChanged(int)), this, SLOT(handle_score_record(int)));
 
-	mbm_key_mode_a = new MppButtonMap("Key Mode for view A\0" "ALL\0" "MIXED\0" "FIXED\0" "TRANSP\0" "CHORD-PIANO\0" "CHORD-GUITAR\0", 6, 3);
+	mbm_key_mode_a = new MppButtonMap("Key Mode for view A\0" "ALL\0" "ALL-SUBDIV\0" "FIXED\0" "TRANSP\0" "CHORD-PIANO\0" "CHORD-GUITAR\0", 6, 3);
 	connect(mbm_key_mode_a, SIGNAL(selectionChanged(int)), this, SLOT(handle_key_mode_a(int)));
 
-	mbm_key_mode_b = new MppButtonMap("Key Mode for view B\0" "ALL\0" "MIXED\0" "FIXED\0" "TRANSP\0" "CHORD-PIANO\0" "CHORD-GUITAR\0", 6, 3);
+	mbm_key_mode_b = new MppButtonMap("Key Mode for view B\0" "ALL\0" "ALL-SUBDIV\0" "FIXED\0" "TRANSP\0" "CHORD-PIANO\0" "CHORD-GUITAR\0", 6, 3);
 	connect(mbm_key_mode_b, SIGNAL(selectionChanged(int)), this, SLOT(handle_key_mode_b(int)));
 
 	mbm_bpm_generator = new MppButtonMap("BPM generator\0" "OFF\0" "ON\0", 2, 2);
