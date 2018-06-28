@@ -1178,6 +1178,8 @@ MppMainWindow :: handle_midi_file_instr_prepend()
 			mid_set_bank_program(d, x,
 			    instr[x].bank,
 			    instr[x].prog);
+			mid_set_position(d, 1);
+			mid_pitch_bend(d, getPitchBendBase(x));
 		}
 	}
 }
