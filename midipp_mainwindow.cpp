@@ -1705,6 +1705,46 @@ MppMainWindow :: do_key_press(int key, int vel, int dur)
 	d->channel = (d->channel - rem) & 0xF;
 }
 
+void
+MppMainWindow :: do_key_pressure(int key, int pressure)
+{
+	struct mid_data *d = &mid_data;
+	uint8_t bit = (MPP_MAX_SUBDIV >> subdivsLog2);
+	uint32_t pos;
+	uint8_t buf[4];
+	int rem;
+
+	if (pressure > 127)
+		pressure = 127;
+	else if (pressure < 0)
+		pressure = 0;
+
+	/* respect global subdivision setting */
+	key = (key + (bit / 2)) & ~(bit - 1);
+
+	rem = MPP_BAND_REM_BITREV(key);
+	key /= MPP_MAX_SUBDIV;
+
+	/* range check */
+	if (key > 127 || key < 0)
+		return;
+
+	/* shift channel according to subdivision */
+	pos = d->position[d->channel];
+	d->channel = (d->channel + rem) & 0xF;
+	d->position[d->channel] = pos;
+
+	buf[0] = 0xA0;
+	buf[1] = key & 0x7F;
+	buf[2] = pressure & 0x7F;
+	buf[3] = 0;
+
+	mid_add_raw(d, buf, 3, 0);
+
+	/* restore */
+	d->channel = (d->channel - rem) & 0xF;
+}
+
 /* must be called locked */
 void
 MppMainWindow :: handle_stop(int flag)
@@ -1892,7 +1932,12 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 			switch (sm->keyMode) {
 			case MM_PASS_ALL:
-				sm->outputKeyPressure(sm->synthChannel, key, vel);
+				mw->output_key_pressure(MPP_DEFAULT_TRACK(sm->unit),
+				    sm->synthChannel, key, vel);
+				break;
+			case MM_PASS_ALL_SUBDIV:
+				mw->output_key_pressure(MPP_DEFAULT_TRACK(sm->unit),
+				    sm->synthChannel, key >> mw->subdivsLog2, vel);
 				break;
 			case MM_PASS_NONE_CHORD_PIANO:
 			case MM_PASS_NONE_CHORD_GUITAR:
@@ -1908,6 +1953,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 			switch (sm->keyMode) {
 			case MM_PASS_ALL:
+			case MM_PASS_ALL_SUBDIV:
 			case MM_PASS_NONE_CHORD_PIANO:
 			case MM_PASS_NONE_CHORD_GUITAR:
 				sm->outputChanPressure(vel);
@@ -2823,6 +2869,16 @@ MppMainWindow :: output_key(int index, int chan, int key, int vel, int delay, in
 	}
 
 	tab_loop->add_key(key, vel);
+}
+
+/* must be called locked */
+void
+MppMainWindow :: output_key_pressure(int index, int chan, int key, int pressure)
+{
+	if (check_play(index, chan, 0))
+		do_key_pressure(key, pressure);
+	if (check_record(index, chan, 0))
+		do_key_pressure(key, pressure);
 }
 
 void

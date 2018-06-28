@@ -169,6 +169,7 @@ MppShortcutTab :: handle_event_received_locked(MppScoreMain *sm,
 		/* if passing all keys, magic commands don't work */
 		switch (sm->keyMode) {
 		case MM_PASS_ALL:
+		case MM_PASS_ALL_SUBDIV:
 			return (0);
 		default:
 			break;
@@ -189,6 +190,7 @@ MppShortcutTab :: handle_event_received_locked(MppScoreMain *sm,
 		/* if passing all keys, magic commands don't work */
 		switch (sm->keyMode) {
 		case MM_PASS_ALL:
+		case MM_PASS_ALL_SUBDIV:
 			return (0);
 		default:
 			break;

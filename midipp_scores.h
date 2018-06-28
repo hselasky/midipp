@@ -83,7 +83,6 @@ public:
 	uint16_t outputChannelMaskGet(void);
 	uint8_t outputTrackMirror(uint8_t);
 	void outputControl(uint8_t ctrl, uint8_t val);
-	void outputKeyPressure(uint8_t chan, uint8_t key, uint8_t pressure);
 	void outputChanPressure(uint8_t pressure);
 	void outputPitch(uint16_t val);
 	int getCurrLabel(void);

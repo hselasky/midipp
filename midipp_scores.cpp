@@ -1462,11 +1462,13 @@ MppScoreMain :: handleKeyPressureChord(int in_key, int vel, uint32_t key_delay)
 	pn = &score_pressure[off];
 
 	if (pn->dur != 0) {
-		outputKeyPressure(pn->channel, pn->key, vel);
+		mainWindow->output_key_pressure(pn->track, pn->channel, pn->key, vel);
 
 		/* check for secondary event */
-		if (pn->channelSec != 0)
-			outputKeyPressure(pn->channelSec - 1, pn->key, vel);
+		if (pn->channelSec != 0) {
+			mainWindow->output_key_pressure(
+			    pn->trackSec, pn->channelSec - 1, pn->key, vel);
+		}
 	}
 }
 
@@ -2179,6 +2181,9 @@ MppScoreMain :: outputChannelMaskGet(void)
 	case MM_PASS_ALL:
 		mask = 1U;
 		break;
+	case MM_PASS_ALL_SUBDIV:
+		mask = (1U << (1U << mainWindow->subdivsLog2)) - 1U;
+		break;
 	case MM_PASS_NONE_CHORD_PIANO:
 	case MM_PASS_NONE_CHORD_GUITAR:
 		mask = subdiv_mask = (1U << (1U << mainWindow->subdivsLog2)) - 1U;
@@ -2248,30 +2253,6 @@ MppScoreMain :: outputControl(uint8_t ctrl, uint8_t val)
 	if (ctrl == 0x40) {
 		mw->tab_loop->add_pedal(val);
 		lastPedalValue = val;
-	}
-}
-
-/* must be called locked */
-void
-MppScoreMain :: outputKeyPressure(uint8_t chan, uint8_t key, uint8_t pressure)
-{
-	MppMainWindow *mw = mainWindow;
-	struct mid_data *d = &mw->mid_data;
-	uint8_t buf[4];
-
-	buf[0] = 0xA0;
-	buf[1] = key & 0x7F;
-	buf[2] = pressure & 0x7F;
-	buf[3] = 0;
-
-	/* the pressure event is distributed to the specified channel */
-	for (unsigned int x = 0; x != MPP_MAX_TRACKS; x++) {
-		if (mw->check_mirror(x))
-			continue;
-		if (mw->check_play(x, chan, 0))
-			mid_add_raw(d, buf, 3, 0);
-		if (mw->check_record(x, chan, 0))
-			mid_add_raw(d, buf, 3, 0);
 	}
 }
 
