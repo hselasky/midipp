@@ -283,12 +283,12 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	but_step_up_one = new QPushButton(tr("Step up\n192 scale"));
 	but_step_down_one = new QPushButton(tr("Step down\n192 scale"));
 
-	but_round_12 = new QPushButton(tr("Set\n12 scale"));
+	but_round_12 = new QPushButton(tr("Set 12s"));
 	but_round_12->setFlat(1);
-	but_round_24 = new QPushButton(tr("Set\n24 scale"));
-	but_round_48 = new QPushButton(tr("Set\n48 scale"));
-	but_round_96 = new QPushButton(tr("Set\n96 scale"));
-	but_round_192 = new QPushButton(tr("Set\n192 scale"));
+	but_round_24 = new QPushButton(tr("Set 24s"));
+	but_round_48 = new QPushButton(tr("Set 48s"));
+	but_round_96 = new QPushButton(tr("Set 96s"));
+	but_round_192 = new QPushButton(tr("Set 192s"));
 
 	but_play = new QPushButton(tr("&Play"));
 
