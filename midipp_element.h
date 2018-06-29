@@ -64,7 +64,7 @@ enum MppCommandType {
 	MPP_CMD_UNLOCK,
 	MPP_CMD_BPM_REF,
 	MPP_CMD_AUTO_MELODY,
-	MPP_CMD_RESERVED,
+	MPP_CMD_MICRO_TUNE,
 	MPP_CMD_KEY_MODE,
 	MPP_CMD_IMAGE_PROPS,
 	MPP_CMD_IMAGE_BG_COLOR,
@@ -231,6 +231,7 @@ public:
 	void bassOffset(int);
 	void transposeScore(int, int = 0);
 	void limitScore(int);
+	void microTune(int);
 	void scaleTime(int);
 	void alignTime(int);
 	void dotReorder();

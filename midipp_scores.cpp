@@ -225,6 +225,8 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	butScoreFileSetFlat = new QPushButton(tr("Set b"));
 	butScoreFileAutoMel[0] = new MppButton(tr("AutoMel 1"), 0);
 	butScoreFileAutoMel[1] = new MppButton(tr("AutoMel 2"), 1);
+	butScoreFileMicroTune = new MppButton(tr("u-Tune"), 1);
+	butScoreFileMicroDeTune = new MppButton(tr("n-Tune"), 0);
 	butScoreFileReplaceAll = new QPushButton(tr("Replace all"));
 	butScoreFileExport = new QPushButton(tr("To Lyrics with chords"));
 	butScoreFileExportNoChords = new QPushButton(tr("To Lyrics no chords"));
@@ -253,9 +255,11 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	gbScoreFile->addWidget(butScoreFileSetFlat, 10, 1, 1, 1);
 	gbScoreFile->addWidget(butScoreFileAutoMel[0], 11, 0, 1, 1);
 	gbScoreFile->addWidget(butScoreFileAutoMel[1], 11, 1, 1, 1);
-	gbScoreFile->addWidget(butScoreFileReplaceAll, 12, 0, 1, 2);
-	gbScoreFile->addWidget(butScoreFileExport, 13, 0, 1, 2);
-	gbScoreFile->addWidget(butScoreFileExportNoChords, 14, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileMicroTune, 12, 0, 1, 1);
+	gbScoreFile->addWidget(butScoreFileMicroDeTune, 12, 1, 1, 1);
+	gbScoreFile->addWidget(butScoreFileReplaceAll, 13, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileExport, 14, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileExportNoChords, 15, 0, 1, 2);
 
 	connect(butScoreFileNew, SIGNAL(released()), this, SLOT(handleScoreFileNew()));
 	connect(butScoreFileOpen, SIGNAL(released()), this, SLOT(handleScoreFileOpen()));
@@ -273,6 +277,8 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	connect(butScoreFileScale, SIGNAL(released()), this, SLOT(handleScoreFileScale()));
 	connect(butScoreFileAutoMel[0], SIGNAL(released(int)), this, SLOT(handleScoreFileAutoMelody(int)));
 	connect(butScoreFileAutoMel[1], SIGNAL(released(int)), this, SLOT(handleScoreFileAutoMelody(int)));
+	connect(butScoreFileMicroTune, SIGNAL(released(int)), this, SLOT(handleScoreFileMicroTune(int)));
+	connect(butScoreFileMicroDeTune, SIGNAL(released(int)), this, SLOT(handleScoreFileMicroTune(int)));
 	connect(butScoreFileReplaceAll, SIGNAL(released()), this, SLOT(handleScoreFileReplaceAll()));
 	connect(butScoreFileExport, SIGNAL(released()), this, SLOT(handleScoreFileExport()));
 	connect(butScoreFileExportNoChords, SIGNAL(released()), this, SLOT(handleScoreFileExportNoChords()));
@@ -827,6 +833,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 	MppElement *ptr;
 	int key_mode;
 	int auto_melody;
+	int auto_utune;
 	int has_string;
 	int index;
 	int x;
@@ -847,6 +854,9 @@ MppScoreMain :: handleParse(const QString &pstr)
 	/* no automatic melody */
 	auto_melody = 0;
 
+	/* no automatic micro tuning */
+	auto_utune = -1;
+	
 	/* no key mode selection */
 	key_mode = -1;
 
@@ -884,6 +894,9 @@ MppScoreMain :: handleParse(const QString &pstr)
 					break;
 				case MPP_CMD_KEY_MODE:
 					key_mode = ptr->value[1];
+					break;
+				case MPP_CMD_MICRO_TUNE:
+					auto_utune = ptr->value[1];
 					break;
 				default:
 					break;
@@ -969,6 +982,10 @@ MppScoreMain :: handleParse(const QString &pstr)
 	if (auto_melody > 0)
 		head.autoMelody(auto_melody - 1);
 
+	/* check if micro tuning should be applied */
+	if (auto_utune > -1)
+		head.microTune(auto_utune ? 1 : 0);
+	
 	/* check if key-mode should be applied */
 	switch (key_mode) {
 	case 0:
@@ -1980,6 +1997,9 @@ MppScoreMain :: handleScoreFileEffect(int which, int parm, int flag)
 		temp.bassOffset(parm);
 		temp.optimise();
 		break;
+	case 5:
+		temp.microTune(parm);
+		break;
 	default:
 		break;
 	}
@@ -2000,6 +2020,12 @@ done:
 	cursor.endEditBlock();
 
 	handleCompile();
+}
+
+void
+MppScoreMain :: handleScoreFileMicroTune(int parm)
+{
+	handleScoreFileEffect(5, parm, 0);
 }
 
 void
