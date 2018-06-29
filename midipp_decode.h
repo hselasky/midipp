@@ -75,10 +75,6 @@ public:
 	QPushButton *but_step_down_one;
 
 	QPushButton *but_round_12;
-	QPushButton *but_round_24;
-	QPushButton *but_round_48;
-	QPushButton *but_round_96;
-	QPushButton *but_round_192;
 	
 	MppButtonMap *but_map_volume;
 	MppButtonMap *but_map_view;
@@ -108,10 +104,6 @@ public slots:
 	void handle_step_up_one();
 	void handle_step_down_one();
 	void handle_round_12();
-	void handle_round_24();
-	void handle_round_48();
-	void handle_round_96();
-	void handle_round_192();
 	void handle_play_press();
 	void handle_play_release();
 	void handle_insert();

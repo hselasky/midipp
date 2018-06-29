@@ -113,16 +113,15 @@ void
 MppScoreVariantInit(void)
 {
 	const int rk = 0;
-	const int s = MPP_BAND_STEP_24;
 	MppChord_t mask;
 	QString str;
 	uint32_t x;
 	uint32_t y;
-	uint32_t z[2];
+	uint32_t z;
 
-	Mpp.VariantList += QString("\n/* Unique chords with two keys */\n\n");
+	Mpp.VariantList += QString("\n/* Unique chords having two keys */\n\n");
 
-	for (z[0] = z[1] = 0, x = s; x != MPP_MAX_BANDS; x += s) {
+	for (z = 0, x = MPP_BAND_STEP_12; x != MPP_MAX_BANDS; x += MPP_BAND_STEP_12) {
 		mask.zero();
 		mask.set(0);
 		mask.set(x);
@@ -130,25 +129,23 @@ MppScoreVariantInit(void)
 		if (MppFindChordRoot(mask) != mask)
 			continue;
 
-		MppChordToStringGeneric(mask, rk, rk, 0, MPP_BAND_STEP_24, str);
+		MppChordToStringGeneric(mask, rk, rk, 0, MPP_BAND_STEP_12, str);
 		if (str.isEmpty())
 			str = "  ";
-		else {
-			if ((x % MPP_BAND_STEP_12) == 0)
-				z[0]++;
-			z[1]++;
-		}
+		else
+			z++;
+
 		Mpp.VariantList += str;
 		Mpp.VariantList += " = ";
 		Mpp.VariantList += MppBitsToString(mask, rk);
 		Mpp.VariantList += "\n";
 	}
 
-	Mpp.VariantList += QString("\n/* Total number of variants is %1 and %2 */\n\n").arg(z[0]).arg(z[1]);
-	Mpp.VariantList += QString("/* Unique chords with three keys */\n\n");
+	Mpp.VariantList += QString("\n/* Total number of variants is %1 */\n\n").arg(z);
+	Mpp.VariantList += QString("/* Unique chords having three keys */\n\n");
 
-	for (z[0] = z[1] = 0, x =  s; x != MPP_MAX_BANDS; x += s) {
-		for (y = x +  s; y != MPP_MAX_BANDS; y += s) {
+	for (z = 0, x = MPP_BAND_STEP_12; x != MPP_MAX_BANDS; x += MPP_BAND_STEP_12) {
+		for (y = x + MPP_BAND_STEP_12; y != MPP_MAX_BANDS; y += MPP_BAND_STEP_12) {
 			mask.zero();
 			mask.set(0);
 			mask.set(x);
@@ -157,15 +154,11 @@ MppScoreVariantInit(void)
 			if (MppFindChordRoot(mask) != mask)
 				continue;
 
-			MppChordToStringGeneric(mask, rk, rk, 0, MPP_BAND_STEP_24, str);
+			MppChordToStringGeneric(mask, rk, rk, 0, MPP_BAND_STEP_12, str);
 			if (str.isEmpty())
 				str = "   ";
-			else {
-				if ((x % MPP_BAND_STEP_12) == 0 &&
-				    (y % MPP_BAND_STEP_12) == 0)
-					z[0]++;
-				z[1]++;
-			}
+			else
+				z++;
 			Mpp.VariantList += str;
 			Mpp.VariantList += " = ";
 			Mpp.VariantList += MppBitsToString(mask, rk);
@@ -173,7 +166,14 @@ MppScoreVariantInit(void)
 		}
 	}
 
-	Mpp.VariantList += QString("\n/* Total number of variants is %1 and %2 */\n\n").arg(z[0]).arg(z[1]);
+	Mpp.VariantList += QString("\n/* Total number of variants is %1 */\n\n").arg(z);
+
+	Mpp.VariantList += QString("/* List of supported keys */\n\n");
+	
+	for (x = 0; x != MPP_MAX_BANDS; x++) {
+		Mpp.VariantList += MppKeyStr(x);
+		Mpp.VariantList += QString(" /* %1 of %2 */\n").arg(x).arg(MPP_MAX_BANDS);
+	}
 }
 
 uint8_t
@@ -282,14 +282,7 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	but_step_down_half = new QPushButton(tr("Step down\n12 scale"));
 	but_step_up_one = new QPushButton(tr("Step up\n192 scale"));
 	but_step_down_one = new QPushButton(tr("Step down\n192 scale"));
-
-	but_round_12 = new QPushButton(tr("Set 12s"));
-	but_round_12->setFlat(1);
-	but_round_24 = new QPushButton(tr("Set 24s"));
-	but_round_48 = new QPushButton(tr("Set 48s"));
-	but_round_96 = new QPushButton(tr("Set 96s"));
-	but_round_192 = new QPushButton(tr("Set 192s"));
-
+	but_round_12 = new QPushButton(tr("Round to 12 scale"));
 	but_play = new QPushButton(tr("&Play"));
 
 	connect(but_play, SIGNAL(pressed()), this, SLOT(handle_play_press()));
@@ -316,12 +309,7 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	connect(but_step_up_one, SIGNAL(released()), this, SLOT(handle_play_release()));
 	connect(but_step_down_one, SIGNAL(pressed()), this, SLOT(handle_step_down_one()));
 	connect(but_step_down_one, SIGNAL(released()), this, SLOT(handle_play_release()));
-
 	connect(but_round_12, SIGNAL(released()), this, SLOT(handle_round_12()));
-	connect(but_round_24, SIGNAL(released()), this, SLOT(handle_round_24()));
-	connect(but_round_48, SIGNAL(released()), this, SLOT(handle_round_48()));
-	connect(but_round_96, SIGNAL(released()), this, SLOT(handle_round_96()));
-	connect(but_round_192, SIGNAL(released()), this, SLOT(handle_round_192()));
 
 	connect(lin_edit, SIGNAL(textChanged(const QString &)), this, SLOT(handle_parse()));
 
@@ -340,20 +328,16 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	gb->addWidget(but_step_down_one, 3,2,1,1);
 	gb->addWidget(but_step_up_one, 3,3,1,1);
 
-	gb->addWidget(but_round_12, 4,0,1,1);
-	gb->addWidget(but_round_24, 4,1,1,1);
-	gb->addWidget(but_round_48, 4,2,1,1);
-	gb->addWidget(but_round_96, 4,3,1,1);
-	gb->addWidget(but_round_192, 5,0,1,1);
+	gb->addWidget(but_round_12, 4,0,1,2);
 
-	gb->addWidget(lin_edit, 6,0,1,4);
-	gb->addWidget(lin_out, 7,0,1,4);
+	gb->addWidget(lin_edit, 5,0,1,4);
+	gb->addWidget(lin_out, 6,0,1,4);
 
-	gb->addWidget(but_map_volume, 8,0,1,4);
-	gb->addWidget(but_map_view, 9,0,1,4);
+	gb->addWidget(but_map_volume, 7,0,1,4);
+	gb->addWidget(but_map_view, 8,0,1,4);
 
-	gb->addWidget(but_insert, 10, 2, 1, 2);
-	gb->addWidget(but_play, 10, 0, 1, 2);
+	gb->addWidget(but_insert, 9, 2, 1, 2);
+	gb->addWidget(but_play, 9, 0, 1, 2);
 
 	gb_gen = new MppGroupBox(tr("Chord Scratch Area"));
 	gl->addWidget(gb_gen, 0,1,2,1);
@@ -611,38 +595,8 @@ MppDecodeTab :: handle_round_12()
 }
 
 void
-MppDecodeTab :: handle_round_24()
-{
-	round(MPP_BAND_STEP_24);
-}
-
-void
-MppDecodeTab :: handle_round_48()
-{
-	round(MPP_BAND_STEP_48);
-}
-
-void
-MppDecodeTab :: handle_round_96()
-{
-	round(MPP_BAND_STEP_96);
-}
-
-void
-MppDecodeTab :: handle_round_192()
-{
-	round(MPP_BAND_STEP_192);
-}
-
-void
 MppDecodeTab :: round(uint8_t value)
 {
-	but_round_12->setFlat(value == MPP_BAND_STEP_12);
-	but_round_24->setFlat(value == MPP_BAND_STEP_24);
-	but_round_48->setFlat(value == MPP_BAND_STEP_48);
-	but_round_96->setFlat(value == MPP_BAND_STEP_96);
-	but_round_192->setFlat(value == MPP_BAND_STEP_192);
-
 	chord_step = value;
 
 	chord_key += value / 2;
