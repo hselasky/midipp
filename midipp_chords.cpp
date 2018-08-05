@@ -695,6 +695,8 @@ Q_DECL_EXPORT void
 MppChordToStringGeneric(MppChord_t mask, uint32_t rem, uint32_t bass, uint32_t sharp, uint32_t step, QString &retval)
 {
 	uint32_t rots;
+	uint32_t rots_min = MPP_MAX_BANDS;
+	size_t z;
 
 	rem = rem % MPP_MAX_BANDS;
 	bass = bass % MPP_MAX_BANDS;
@@ -709,8 +711,8 @@ MppChordToStringGeneric(MppChord_t mask, uint32_t rem, uint32_t bass, uint32_t s
 	/* adjust for rotations */
 	rem = (rem + rots) % MPP_MAX_BANDS;
 	
-	/* look for known chords */
-	for (size_t x = 0; x != (sizeof(MppScoreVariants12) / sizeof(MppScoreVariants12[0])); x++) {
+	/* look for known chords, with least rotation */
+	for (size_t x = z = 0; x != (sizeof(MppScoreVariants12) / sizeof(MppScoreVariants12[0])); x++) {
 		uint32_t y;
 		if (MppScoreVariants12[x].footprint[0] != mask) {
 			if (MppScoreVariants12[x].footprint[1] != mask)
@@ -719,13 +721,21 @@ MppChordToStringGeneric(MppChord_t mask, uint32_t rem, uint32_t bass, uint32_t s
 		} else {
 			y = MppScoreVariants12[x].rots[0];
 		}
-		QString pat = QString::fromUtf8(MppScoreVariants12[x].pattern[0]);
+		if (y < rots_min) {
+			rots_min = y;
+			z = x;
+		}
+	}
+
+	/* check if there was a match */
+	if (rots_min != MPP_MAX_BANDS) {
+		QString pat = QString::fromUtf8(MppScoreVariants12[z].pattern[0]);
 
 		/* expand pattern */
 		MppExpandPattern12(pat, retval);
 
 		/* adjust for rotations, again */
-		rem = (rem + MPP_MAX_BANDS - y) % MPP_MAX_BANDS;
+		rem = (rem + MPP_MAX_BANDS - rots_min) % MPP_MAX_BANDS;
 
 		retval = MppKeyToStringGeneric(rem, sharp) + retval;
 		if (rem != bass)

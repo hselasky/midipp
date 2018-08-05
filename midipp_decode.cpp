@@ -208,7 +208,7 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 	}
 
 	bass = MPP_BAND_REM(pinfo->key_base);
-	
+
 	MppChordToStringGeneric(footprint, key, bass, is_sharp, 1, out);
 
 	if (out.isEmpty())
