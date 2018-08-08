@@ -355,9 +355,9 @@ midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm)
 
 		/* remove formatting characters */
 		if (ch == '(')
-			ch = '[';
+			ch = '{';
 		if (ch == ')')
-			ch = ']';
+			ch = '}';
 		if (ch == '"')
 			ch = '\'';
 		if (ch == '.')
