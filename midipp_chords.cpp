@@ -143,6 +143,8 @@ static const class MppScoreVariant MppScoreVariants12[] = {
 
 	/* seventh */
 	INIT(MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) | MASK(MPP_H0B), "$7", 0),
+	INIT(MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_E0) | MASK(MPP_A0B) | MASK(MPP_H0B), "$7$S5$S9", 0),
+	INIT(MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_D0B) | MASK(MPP_A0B) | MASK(MPP_H0B), "$7$S5$f9", 0),
 	INIT(MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_A0B) | MASK(MPP_H0B), "$a7", "$7$S5", "$7$S", 0),
 	INIT(MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0B) | MASK(MPP_H0B), "$h", "$h7", "$m7$f5", 0),
 	INIT(MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0B) | MASK(MPP_H0B), "$7$f5", 0),
