@@ -1113,8 +1113,11 @@ MppHead :: sortScore()
 			}
 		}
 
+#ifdef __ANDROID__
+		qsort(mk, num, sizeof(*mk), MppCompareKeyInfo);
+#else
 		mergesort(mk, num, sizeof(*mk), MppCompareKeyInfo);
-
+#endif
 		/* output */
 
 		channel = 0;
@@ -1267,8 +1270,11 @@ MppHead :: limitScore(int limit)
 				mk[i].key -= MPP_MAX_BANDS;
 		}
 
+#ifdef __ANDROID__
+		qsort(mk, num, sizeof(*mk), MppCompareKeyInfo);
+#else
 		mergesort(mk, num, sizeof(*mk), MppCompareKeyInfo);
-
+#endif
 		/* figure out the duplicates and move them down */
 		for (i = num; i--; ) {
 			for (j = i; j--; ) {
@@ -1279,8 +1285,11 @@ MppHead :: limitScore(int limit)
 			}
 		}
 
+#ifdef __ANDROID__
+		qsort(mk, num, sizeof(*mk), MppCompareKeyInfo);
+#else
 		mergesort(mk, num, sizeof(*mk), MppCompareKeyInfo);
-
+#endif
 		/* output */
 
 		channel = 0;

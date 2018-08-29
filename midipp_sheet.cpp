@@ -390,7 +390,11 @@ MppSheet::compile(MppHead & head)
 			num_cols++;
 	}
 
+#ifdef __ANDROID__
+	qsort(ptemp, n, sizeof(ptemp[0]), &MppSheetRowCompare);
+#else
 	mergesort(ptemp, n, sizeof(ptemp[0]), &MppSheetRowCompare);
+#endif
 
 	num_rows = 0;
 	for (x = 0; x != n; x++) {
