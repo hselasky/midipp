@@ -24,6 +24,7 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "midipp_element.h"
 #include "midipp_chords.h"

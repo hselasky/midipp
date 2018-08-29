@@ -23,6 +23,8 @@
  * SUCH DAMAGE.
  */
 
+#include <stdlib.h>
+
 #include "midipp_sheet.h"
 #include "midipp_element.h"
 #include "midipp_scores.h"
@@ -388,7 +390,7 @@ MppSheet::compile(MppHead & head)
 			num_cols++;
 	}
 
-	qsort(ptemp, n, sizeof(ptemp[0]), &MppSheetRowCompare);
+	mergesort(ptemp, n, sizeof(ptemp[0]), &MppSheetRowCompare);
 
 	num_rows = 0;
 	for (x = 0; x != n; x++) {
