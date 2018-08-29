@@ -56,6 +56,8 @@ icons.path	= $${PREFIX}
 icons.files	= midipp_ios.png midipp_ios_retina.png midipp_76x76.png midipp_152x152.png
 QMAKE_BUNDLE_DATA += icons
 QMAKE_INFO_PLIST= midipp_ios.plist
+QMAKE_APPLE_DEVICE_ARCHS= armv7 arm64
+QMAKE_IOS_DEPLOYMENT_TARGET= 9.2
 }
 
 !isEmpty(HAVE_MACOSX) {
