@@ -176,6 +176,183 @@ MppScoreVariantInit(void)
 	}
 }
 
+static void
+MppInitArray(const uint8_t *src, MppChord_t *dst, uint8_t n)
+{
+	while (n--) {
+		dst[n].zero();
+		for (uint8_t x = 0; x != 12; x++) {
+			if ((src[n] >> x) & 1)
+				dst[n].set(MPP_MAX_SUBDIV * x);
+		}
+	}
+}
+
+MppDecodeCircle :: MppDecodeCircle(MppDecodeTab *_ptab)
+{
+	static const uint8_t fourth[NFOURTH] = { 0x23, 0x25, 0x29, 0x31 };
+	static const uint8_t fifth[NFIFTH] = { 0x85, 0x89, 0x91 };
+	ptab = _ptab;
+
+	MppInitArray(fourth, fourth_mask, NFOURTH);
+	MppInitArray(fifth, fifth_mask, NFIFTH);
+
+	memset(r_press, 0, sizeof(r_press));
+	memset(r_key, 0, sizeof(r_key));
+	memset(r_mask, 0, sizeof(r_mask));
+
+	setMinimumSize(128,128);
+}
+
+MppDecodeCircle :: ~MppDecodeCircle()
+{
+
+}
+
+void
+MppDecodeCircle :: mousePressEvent(QMouseEvent *event)
+{
+	QPoint p = event->pos();
+
+	for (uint8_t x = 0; x != NMAX; x++) {
+		for (uint8_t y = 0; y != 12; y++) {
+			if (r_press[x][y].contains(p) == 0)
+				continue;
+			ptab->chord_key -= ptab->chord_key % MPP_MAX_BANDS;
+			ptab->chord_key += MPP_MAX_SUBDIV * r_key[x][y];
+			ptab->chord_bass = ptab->chord_key % MPP_MAX_BANDS;
+			ptab->chord_mask = r_mask[x][y];
+			ptab->chord_step = MPP_BAND_STEP_12;
+			ptab->handle_refresh();
+			ptab->handle_play_press();
+			return;
+		}
+	}
+}
+
+void
+MppDecodeCircle :: mouseReleaseEvent(QMouseEvent *event)
+{
+	QPoint p = event->pos();
+
+	for (uint8_t x = 0; x != NMAX; x++) {
+		for (uint8_t y = 0; y != 12; y++) {
+			if (r_press[x][y].contains(p) == 0)
+				continue;
+			ptab->handle_play_release();
+		}
+	}
+}
+
+void
+MppDecodeCircle :: paintEvent(QPaintEvent *event)
+{
+	QPainter paint(this);
+	int w = width();	
+	int h = height();
+	int r;
+	qreal step;
+	uint8_t x;
+	uint8_t y;
+	uint8_t z;
+	uint8_t n;
+	uint8_t found_x;
+	uint8_t found_y;
+	int key_step;
+	uint32_t rols;
+	MppChord_t rootmask;
+	MppChord_t footprint;
+	MppChord_t *pmask;
+
+	paint.fillRect(QRectF(0,0,w,h), Mpp.ColorWhite);
+	paint.setRenderHints(QPainter::Antialiasing, 1);
+
+	memset(r_press, 0, sizeof(r_press));
+	memset(r_key, 0, sizeof(r_key));
+	memset(r_mask, 0, sizeof(r_mask));
+
+	rootmask = MppFindChordRoot(ptab->chord_mask, &rols);
+	
+	for (x = 0; x != NFOURTH; x++) {
+		footprint = rootmask;
+		footprint &= fourth_mask[x];
+		if (footprint == fourth_mask[x]) {
+			n = NFOURTH;
+			found_x = x;
+			found_y = 0;
+			key_step = 5;
+			pmask = fourth_mask;
+			goto found;
+		}
+	}
+
+	for (x = 0; x != NFIFTH; x++) {
+		footprint = rootmask;
+		footprint &= fifth_mask[x];
+		if (footprint == fifth_mask[x]) {
+			n = NFIFTH;
+			found_x = x;
+			found_y = 0;
+			key_step = 7;
+			pmask = fifth_mask;
+			goto found;
+		}
+	}
+	return;
+found:
+	r = (w > h) ? h : w;
+	step = r / (4 * n + 4);
+
+	for (x = 0; x != n; x++) {
+		qreal radius = 2.5 * (n - x) * step - step / 2.0;
+
+		paint.setPen(QPen(Mpp.ColorBlack, 2));
+		paint.setBrush(QBrush());
+
+		paint.drawEllipse(QRectF(w / 2.0 - radius,
+					 h / 2.0 - radius,
+					 2.0*radius, 2.0*radius));
+
+		for (y = z = 0; y != 12; y++) {
+			double phase = 2.0 * M_PI * (double)y / 12.0;
+			qreal xp = radius * cos(phase) + w / 2.0;
+			qreal yp = radius * sin(phase) + h / 2.0;
+
+			r_press[x][y] = QRect(xp - step / 2.0,
+					      yp - step / 2.0,
+					      step, step);
+
+			r_key[x][y] = z;
+
+			r_mask[x][y] = pmask[x];
+
+			if ((r_key[x][y] * MPP_MAX_SUBDIV) ==
+			    ((ptab->chord_key + rols) % MPP_MAX_BANDS) &&
+			    found_x == x)
+				found_y = y;
+
+			z += key_step;
+			z %= 12;
+		}
+	}
+
+	for (x = 0; x != n; x++) {
+		for (y = 0; y != 12; y++) {
+			if (found_y != y) {
+				paint.setPen(QPen(Mpp.ColorBlack, 0));
+				paint.setBrush(Mpp.ColorBlack);
+			} else if (x == found_x) {
+				paint.setPen(QPen(Mpp.ColorGreen, 0));
+				paint.setBrush(Mpp.ColorGreen);
+			} else {
+				paint.setPen(QPen(Mpp.ColorLight, 0));
+				paint.setBrush(Mpp.ColorLight);
+			}
+			paint.drawEllipse(r_press[x][y]);
+		}
+	}
+}
+
 uint8_t
 MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 {
@@ -249,7 +426,7 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 
 	gb = new MppGroupBox(tr("Chord Selector"));
 	gl->addWidget(gb, 0,0,1,1);
-	gl->setRowStretch(1,1);
+	gl->setRowStretch(2,1);
 	gl->setColumnStretch(1,1);
 
 	lin_edit = new QLineEdit(QString("C"));
@@ -340,11 +517,17 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	gb->addWidget(but_play, 9, 0, 1, 2);
 
 	gb_gen = new MppGroupBox(tr("Chord Scratch Area"));
-	gl->addWidget(gb_gen, 0,1,2,1);
+	gl->addWidget(gb_gen, 1,0,1,2);
 
 	editor = new MppDecodeEditor(_mw);
 	gb_gen->addWidget(editor, 0,0,1,1);
 
+	gb_dc = new MppGroupBox(tr("Circle diagram"));
+	wi_dc = new MppDecodeCircle(this);
+	gb_dc->addWidget(wi_dc, 0,0,1,1);
+
+	gl->addWidget(gb_dc, 0,1,1,1);
+	
 	handle_parse();
     
 	but_insert->setFocus();
@@ -659,6 +842,8 @@ MppDecodeTab :: handle_refresh()
 	lin_out->blockSignals(1);
 	lin_out->setText(out_key);
 	lin_out->blockSignals(0);
+
+	wi_dc->update();
 }
 
 void
@@ -707,11 +892,14 @@ MppDecodeTab :: handle_parse()
 	out_key += " */";
 
 	lin_out->setText(out_key);
-	return;
+
+	goto done;
 error:
 	chord_mask.zero();
 	chord_mask.set(0);
 	lin_out->setText("/* ERROR */");
+done:
+	wi_dc->update();
 }
 
 QString

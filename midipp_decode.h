@@ -38,6 +38,25 @@ public:
 	void mouseDoubleClickEvent(QMouseEvent *);
 };
 
+class MppDecodeCircle : public QWidget
+{
+	Q_OBJECT;
+	enum { NFOURTH = 4, NFIFTH = 3, NMAX = 4 };
+public:
+	MppDecodeCircle(MppDecodeTab *);
+	~MppDecodeCircle();
+
+	MppDecodeTab *ptab;
+	MppChord_t fourth_mask[NFOURTH];
+	MppChord_t fifth_mask[NFIFTH];
+	QRect r_press[NMAX][12];
+	int r_key[NMAX][12];
+	MppChord_t r_mask[NMAX][12];
+	void mousePressEvent(QMouseEvent *);
+	void mouseReleaseEvent(QMouseEvent *);
+	void paintEvent(QPaintEvent *);
+};
+
 class MppDecodeTab : public QWidget
 {
 	Q_OBJECT;
@@ -82,6 +101,10 @@ public:
 	QPushButton *but_play;
 	QPushButton *but_insert;
 
+	/* Chord Circle */
+	MppGroupBox *gb_dc;
+	MppDecodeCircle *wi_dc;
+  
 	/* Chord Scratch Area */
 	MppGroupBox *gb_gen;
 	MppDecodeEditor *editor;
