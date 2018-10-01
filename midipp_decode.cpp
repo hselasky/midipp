@@ -204,7 +204,7 @@ MppCommonKeys(const MppChord_t & pa, const MppChord_t & pb, int a_key, int b_key
 	}
 
 	temp &= pa;
-	return (temp.order() == 2);
+	return (temp.order());
 }
 
 MppDecodeCircle :: MppDecodeCircle(MppDecodeTab *_ptab)
@@ -361,21 +361,24 @@ found:
 
 	for (x = 0; x != n; x++) {
 		for (y = 0; y != 12; y++) {
-			if (found_y != y) {
-				if (MppCommonKeys(r_mask[x][y], r_mask[found_x][found_y],
-						  r_key[x][y], r_key[found_x][found_y])) {
-					paint.setPen(QPen(Mpp.ColorLight, 0));
-					paint.setBrush(Mpp.ColorLight);
-				} else {
-					paint.setPen(QPen(Mpp.ColorBlack, 0));
-					paint.setBrush(Mpp.ColorBlack);
-				}
-			} else if (x == found_x) {
+			switch (MppCommonKeys(r_mask[x][y], r_mask[found_x][found_y],
+					      r_key[x][y], r_key[found_x][found_y])) {
+			case 3:
 				paint.setPen(QPen(Mpp.ColorGreen, 0));
 				paint.setBrush(Mpp.ColorGreen);
-			} else {
+				break;
+			case 2:
 				paint.setPen(QPen(Mpp.ColorLight, 0));
 				paint.setBrush(Mpp.ColorLight);
+				break;
+			case 1:
+				paint.setPen(QPen(Mpp.ColorGrey, 0));
+				paint.setBrush(Mpp.ColorGrey);
+				break;
+			default:
+				paint.setPen(QPen(Mpp.ColorBlack, 0));
+				paint.setBrush(Mpp.ColorBlack);
+				break;
 			}
 			paint.drawEllipse(r_press[x][y]);
 
