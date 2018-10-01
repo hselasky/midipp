@@ -303,6 +303,10 @@ found:
 	r = (w > h) ? h : w;
 	step = r / (4 * n + 4);
 
+	QFont fnt;
+	fnt.setPixelSize(step / 1.5);
+	paint.setFont(fnt);
+
 	for (x = 0; x != n; x++) {
 		qreal radius = 2.5 * (n - x) * step - step / 2.0;
 
@@ -349,6 +353,13 @@ found:
 				paint.setBrush(Mpp.ColorLight);
 			}
 			paint.drawEllipse(r_press[x][y]);
+
+			paint.setPen(QPen(Mpp.ColorWhite, 0));
+			paint.setBrush(Mpp.ColorWhite);
+
+			paint.drawText(r_press[x][y],
+			    Qt::AlignCenter | Qt::TextSingleLine,
+			    MppKeyStrNoOctave(r_key[x][y] * MPP_MAX_SUBDIV));
 		}
 	}
 }
