@@ -209,9 +209,7 @@ MppCommonKeys(const MppChord_t & pa, const MppChord_t & pb, int a_key, int b_key
 
 MppDecodeCircle :: MppDecodeCircle(MppDecodeTab *_ptab)
 {
-	static const uint8_t circle[NMAX] = { 0x23, 0x25, 0x29,
-					      0x31, 0x43, 0x61,
-					      0x85, 0x89, 0x91 };
+	static const uint8_t circle[NMAX] = { 0x91, 0x89 };
 	ptab = _ptab;
 
 	MppInitArray(circle, mask, NMAX);
@@ -523,7 +521,7 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	editor = new MppDecodeEditor(_mw);
 	gb_gen->addWidget(editor, 0,0,1,1);
 
-	gb_dc = new MppGroupBox(tr("Circle diagram"));
+	gb_dc = new MppGroupBox(tr("Circle of fifths"));
 	wi_dc = new MppDecodeCircle(this);
 	gb_dc->addWidget(wi_dc, 0,0,1,1);
 

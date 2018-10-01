@@ -41,7 +41,7 @@ public:
 class MppDecodeCircle : public QWidget
 {
 	Q_OBJECT;
-	enum { NMAX = 9 };
+	enum { NMAX = 2 };
 public:
 	MppDecodeCircle(MppDecodeTab *);
 	~MppDecodeCircle();
