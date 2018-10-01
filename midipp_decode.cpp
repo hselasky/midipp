@@ -188,6 +188,25 @@ MppInitArray(const uint8_t *src, MppChord_t *dst, uint8_t n)
 	}
 }
 
+static int
+MppCommonKeys(const MppChord_t & pa, const MppChord_t & pb, int a_key, int b_key)
+{
+	MppChord_t temp = pb;
+	int key = (MPP_MAX_BANDS + a_key * MPP_MAX_SUBDIV -
+	    b_key * MPP_MAX_SUBDIV) % MPP_MAX_BANDS;
+
+	while (key--) {
+		if (temp.test(0)) {
+			temp.tog(0);
+			temp.tog(MPP_MAX_BANDS);
+		}
+		temp.shr();
+	}
+
+	temp &= pa;
+	return (temp.order() == 2);
+}
+
 MppDecodeCircle :: MppDecodeCircle(MppDecodeTab *_ptab)
 {
 	static const uint8_t fourth[NFOURTH] = { 0x23, 0x25, 0x29, 0x31 };
@@ -343,8 +362,14 @@ found:
 	for (x = 0; x != n; x++) {
 		for (y = 0; y != 12; y++) {
 			if (found_y != y) {
-				paint.setPen(QPen(Mpp.ColorBlack, 0));
-				paint.setBrush(Mpp.ColorBlack);
+				if (MppCommonKeys(r_mask[x][y], r_mask[found_x][found_y],
+						  r_key[x][y], r_key[found_x][found_y])) {
+					paint.setPen(QPen(Mpp.ColorLight, 0));
+					paint.setBrush(Mpp.ColorLight);
+				} else {
+					paint.setPen(QPen(Mpp.ColorBlack, 0));
+					paint.setBrush(Mpp.ColorBlack);
+				}
 			} else if (x == found_x) {
 				paint.setPen(QPen(Mpp.ColorGreen, 0));
 				paint.setBrush(Mpp.ColorGreen);
