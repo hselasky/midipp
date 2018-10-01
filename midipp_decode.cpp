@@ -209,12 +209,12 @@ MppCommonKeys(const MppChord_t & pa, const MppChord_t & pb, int a_key, int b_key
 
 MppDecodeCircle :: MppDecodeCircle(MppDecodeTab *_ptab)
 {
-	static const uint8_t fourth[NFOURTH] = { 0x23, 0x25, 0x29, 0x31 };
-	static const uint8_t fifth[NFIFTH] = { 0x85, 0x89, 0x91 };
+	static const uint8_t circle[NMAX] = { 0x23, 0x25, 0x29,
+					      0x31, 0x43, 0x61,
+					      0x85, 0x89, 0x91 };
 	ptab = _ptab;
 
-	MppInitArray(fourth, fourth_mask, NFOURTH);
-	MppInitArray(fifth, fifth_mask, NFIFTH);
+	MppInitArray(circle, mask, NMAX);
 
 	memset(r_press, 0, sizeof(r_press));
 	memset(r_key, 0, sizeof(r_key));
@@ -274,14 +274,9 @@ MppDecodeCircle :: paintEvent(QPaintEvent *event)
 	uint8_t x;
 	uint8_t y;
 	uint8_t z;
-	uint8_t n;
-	uint8_t found_x;
-	uint8_t found_y;
-	int key_step;
+	uint8_t found_key;
 	uint32_t rols;
-	MppChord_t rootmask;
 	MppChord_t footprint;
-	MppChord_t *pmask;
 
 	paint.fillRect(QRectF(0,0,w,h), Mpp.ColorWhite);
 	paint.setRenderHints(QPainter::Antialiasing, 1);
@@ -290,44 +285,18 @@ MppDecodeCircle :: paintEvent(QPaintEvent *event)
 	memset(r_key, 0, sizeof(r_key));
 	memset(r_mask, 0, sizeof(r_mask));
 
-	rootmask = MppFindChordRoot(ptab->chord_mask, &rols);
-	
-	for (x = 0; x != NFOURTH; x++) {
-		footprint = rootmask;
-		footprint &= fourth_mask[x];
-		if (footprint == fourth_mask[x]) {
-			n = NFOURTH;
-			found_x = x;
-			found_y = 0;
-			key_step = 5;
-			pmask = fourth_mask;
-			goto found;
-		}
-	}
+	footprint = MppFindChordRoot(ptab->chord_mask, &rols);
+	found_key = (MPP_MAX_BANDS + ptab->chord_key - rols) % MPP_MAX_BANDS;
 
-	for (x = 0; x != NFIFTH; x++) {
-		footprint = rootmask;
-		footprint &= fifth_mask[x];
-		if (footprint == fifth_mask[x]) {
-			n = NFIFTH;
-			found_x = x;
-			found_y = 0;
-			key_step = 7;
-			pmask = fifth_mask;
-			goto found;
-		}
-	}
-	return;
-found:
 	r = (w > h) ? h : w;
-	step = r / (4 * n + 4);
+	step = r / (2 * (NMAX + 2));
 
 	QFont fnt;
 	fnt.setPixelSize(step / 1.5);
 	paint.setFont(fnt);
 
-	for (x = 0; x != n; x++) {
-		qreal radius = 2.5 * (n - x) * step - step / 2.0;
+	for (x = 0; x != NMAX; x++) {
+		qreal radius = (NMAX + 2 - x) * step - step / 2.0;
 
 		paint.setPen(QPen(Mpp.ColorBlack, 2));
 		paint.setBrush(QBrush());
@@ -344,36 +313,29 @@ found:
 			r_press[x][y] = QRect(xp - step / 2.0,
 					      yp - step / 2.0,
 					      step, step);
-
 			r_key[x][y] = z;
+			r_mask[x][y] = mask[x];
 
-			r_mask[x][y] = pmask[x];
-
-			if ((r_key[x][y] * MPP_MAX_SUBDIV) ==
-			    ((ptab->chord_key + rols) % MPP_MAX_BANDS) &&
-			    found_x == x)
-				found_y = y;
-
-			z += key_step;
+			z += 7;
 			z %= 12;
 		}
 	}
 
-	for (x = 0; x != n; x++) {
+	for (x = 0; x != NMAX; x++) {
 		for (y = 0; y != 12; y++) {
-			switch (MppCommonKeys(r_mask[x][y], r_mask[found_x][found_y],
-					      r_key[x][y], r_key[found_x][found_y])) {
+			switch (MppCommonKeys(r_mask[x][y], footprint,
+					      r_key[x][y], (found_key / MPP_MAX_SUBDIV))) {
 			case 3:
 				paint.setPen(QPen(Mpp.ColorGreen, 0));
 				paint.setBrush(Mpp.ColorGreen);
 				break;
 			case 2:
-				paint.setPen(QPen(Mpp.ColorLight, 0));
-				paint.setBrush(Mpp.ColorLight);
-				break;
-			case 1:
 				paint.setPen(QPen(Mpp.ColorGrey, 0));
 				paint.setBrush(Mpp.ColorGrey);
+				break;
+			case 1:
+				paint.setPen(QPen(Mpp.ColorLight, 0));
+				paint.setBrush(Mpp.ColorLight);
 				break;
 			default:
 				paint.setPen(QPen(Mpp.ColorBlack, 0));

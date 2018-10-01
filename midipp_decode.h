@@ -41,14 +41,13 @@ public:
 class MppDecodeCircle : public QWidget
 {
 	Q_OBJECT;
-	enum { NFOURTH = 4, NFIFTH = 3, NMAX = 4 };
+	enum { NMAX = 9 };
 public:
 	MppDecodeCircle(MppDecodeTab *);
 	~MppDecodeCircle();
 
 	MppDecodeTab *ptab;
-	MppChord_t fourth_mask[NFOURTH];
-	MppChord_t fifth_mask[NFIFTH];
+	MppChord_t mask[NMAX];
 	QRect r_press[NMAX][12];
 	int r_key[NMAX][12];
 	MppChord_t r_mask[NMAX][12];
