@@ -289,9 +289,10 @@ MppDecodeCircle :: paintEvent(QPaintEvent *event)
 	r = (w > h) ? h : w;
 	step = r / (2 * (NMAX + 2));
 
-	QFont fnt;
-	fnt.setPixelSize(step / 1.5);
-	paint.setFont(fnt);
+	QFont fnt[2];
+
+	fnt[0].setPixelSize(step / 1.5);
+	fnt[1].setPixelSize(step / 2.5);
 
 	for (x = 0; x != NMAX; x++) {
 		qreal radius = (NMAX + 2 - x) * step - step / 2.0;
@@ -311,7 +312,7 @@ MppDecodeCircle :: paintEvent(QPaintEvent *event)
 			r_press[x][y] = QRect(xp - step / 2.0,
 					      yp - step / 2.0,
 					      step, step);
-			r_key[x][y] = z;
+			r_key[x][y] = (x == 1) ? (z + 9) % 12 : z;
 			r_mask[x][y] = mask[x];
 
 			z += 7;
@@ -320,34 +321,43 @@ MppDecodeCircle :: paintEvent(QPaintEvent *event)
 	}
 
 	for (x = 0; x != NMAX; x++) {
+		paint.setFont(fnt[x == 1]);
+
 		for (y = 0; y != 12; y++) {
+			QColor bg;
+			QColor fg;
+
 			switch (MppCommonKeys(r_mask[x][y], footprint,
 					      r_key[x][y], (found_key / MPP_MAX_SUBDIV))) {
 			case 3:
-				paint.setPen(QPen(Mpp.ColorGreen, 0));
-				paint.setBrush(Mpp.ColorGreen);
+				bg = Mpp.ColorWhite;
+				fg = Mpp.ColorBlack;
 				break;
 			case 2:
-				paint.setPen(QPen(Mpp.ColorGrey, 0));
-				paint.setBrush(Mpp.ColorGrey);
+				bg = Mpp.ColorGrey;
+				fg = Mpp.ColorWhite;
 				break;
 			case 1:
-				paint.setPen(QPen(Mpp.ColorLight, 0));
-				paint.setBrush(Mpp.ColorLight);
+				bg = Mpp.ColorLight;
+				fg = Mpp.ColorWhite;
 				break;
 			default:
-				paint.setPen(QPen(Mpp.ColorBlack, 0));
-				paint.setBrush(Mpp.ColorBlack);
+				bg = Mpp.ColorBlack;
+				fg = Mpp.ColorWhite;
 				break;
 			}
+			paint.setPen(QPen(bg, 0));
+			paint.setBrush(bg);
+
 			paint.drawEllipse(r_press[x][y]);
 
-			paint.setPen(QPen(Mpp.ColorWhite, 0));
-			paint.setBrush(Mpp.ColorWhite);
+			paint.setPen(QPen(fg, 0));
+			paint.setBrush(fg);
 
 			paint.drawText(r_press[x][y],
 			    Qt::AlignCenter | Qt::TextSingleLine,
-			    MppKeyStrNoOctave(r_key[x][y] * MPP_MAX_SUBDIV));
+			    MppKeyStrNoOctave(r_key[x][y] * MPP_MAX_SUBDIV) +
+			    ((x == 1) ? "m" : ""));
 		}
 	}
 }
