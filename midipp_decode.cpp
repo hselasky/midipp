@@ -284,7 +284,7 @@ MppDecodeCircle :: paintEvent(QPaintEvent *event)
 	memset(r_mask, 0, sizeof(r_mask));
 
 	footprint = MppFindChordRoot(ptab->chord_mask, &rols);
-	found_key = (MPP_MAX_BANDS + ptab->chord_key - rols) % MPP_MAX_BANDS;
+	found_key = (ptab->chord_key + rols) % MPP_MAX_BANDS;
 
 	r = (w > h) ? h : w;
 	step = r / (2 * (NMAX + 2));
