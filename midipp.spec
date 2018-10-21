@@ -49,6 +49,7 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
+* Sun Oct 21 2018 HPS hps@selasky.org 2.0.1-1
 * Wed Oct 3 2018 HPS hps@selasky.org 2.0.0-1
 - Added support for quartertones, octotones, hexatones and so on.
 - Added support for bass offset effect.
