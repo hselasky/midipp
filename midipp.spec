@@ -1,5 +1,5 @@
 Name:           midipp
-Version:        1.3.5
+Version:        2.0.0
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
