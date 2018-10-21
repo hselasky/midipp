@@ -193,6 +193,7 @@ INCLUDEPATH	+= $${LIBUMIDIPATH}
  SOURCES	+= $${LIBUMIDIPATH}/umidi20_coremidi_dummy.c
  } else {
  LIBS		+= -framework CoreMIDI
+ LIBS		+= -framework CoreFoundation
  SOURCES	+= $${LIBUMIDIPATH}/umidi20_coremidi.c
  }
  isEmpty(HAVE_ANDROID) {
