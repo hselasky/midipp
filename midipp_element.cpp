@@ -1113,7 +1113,7 @@ MppHead :: sortScore()
 			}
 		}
 
-#ifdef __ANDROID__
+#if defined(__linux__) || defined(__ANDROID__)
 		qsort(mk, num, sizeof(*mk), MppCompareKeyInfo);
 #else
 		mergesort(mk, num, sizeof(*mk), MppCompareKeyInfo);
@@ -1270,7 +1270,7 @@ MppHead :: limitScore(int limit)
 				mk[i].key -= MPP_MAX_BANDS;
 		}
 
-#ifdef __ANDROID__
+#if defined(__linux__) || defined(__ANDROID__)
 		qsort(mk, num, sizeof(*mk), MppCompareKeyInfo);
 #else
 		mergesort(mk, num, sizeof(*mk), MppCompareKeyInfo);
@@ -1285,7 +1285,7 @@ MppHead :: limitScore(int limit)
 			}
 		}
 
-#ifdef __ANDROID__
+#if defined(__linux__) || defined(__ANDROID__)
 		qsort(mk, num, sizeof(*mk), MppCompareKeyInfo);
 #else
 		mergesort(mk, num, sizeof(*mk), MppCompareKeyInfo);
