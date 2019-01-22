@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2014-2017 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2014-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -51,23 +51,23 @@ MppPianoTab :: mousePressEvent(QMouseEvent *event)
 	QPoint p = event->pos();
 	unsigned x;
 
-	for (x = 0; x != 2 * MPP_MAX_BANDS; x++) {
+	for (x = 0; x != (2 * 12); x++) {
 		if (r_pressed[x].contains(p) == 0)
 			continue;
 		if (state.pressed[x] != 0) {
 			state.pressed[x] = 0;
-			unsigned key = getBaseKey() + x;
+			int key = getBaseKey(x);
 			mw->handle_play_release(key, state.view_index);
 			update();
 			continue;
 		}
-		uint8_t curr_octave = (x >= MPP_MAX_BANDS);
+		uint8_t curr_octave = (x >= 12);
 		if (state.last_octave != curr_octave) {
 			state.last_octave = curr_octave;
 			releaseAll();
 		}
 		state.pressed[x] = 1;
-		unsigned key = getBaseKey() + x;
+		int key = getBaseKey(x);
 		mw->handle_play_press(key, state.view_index);
 		update();
 	}
@@ -108,20 +108,20 @@ MppPianoTab :: mouseReleaseEvent(QMouseEvent *event)
 	QPoint p = event->pos();
 	unsigned x;
 
-	for (x = 0; x != 2 * MPP_MAX_BANDS; x++) {
+	for (x = 0; x != (2 * 12); x++) {
 		if (r_pressed[x].contains(p) == 0)
 			continue;
 		if (state.pressed[x] == 0)
 			continue;
 		state.pressed[x] = 0;
-		unsigned key = getBaseKey() + x;
+		int key = getBaseKey(x);
 		mw->handle_play_release(key, state.view_index);
 		update();
 	}
 }
 
 int
-MppPianoTab :: getBaseKey()
+MppPianoTab :: getBaseKey(int index)
 {
 	int baseKey;
 
@@ -130,7 +130,7 @@ MppPianoTab :: getBaseKey()
 	baseKey -= MPP_BAND_REM(baseKey);
 	mw->atomic_unlock();
 
-	return (baseKey);
+	return (baseKey + (MPP_BAND_STEP_12 * index));
 }
 
 void
@@ -139,11 +139,11 @@ MppPianoTab :: releaseAll()
 	unsigned y;
 
 	/* release keys, when shifting octave */
-	for (y = 0; y != 2 * MPP_MAX_BANDS; y++) {
+	for (y = 0; y != (2 * 12); y++) {
 		if (state.pressed[y] == 0)
 			continue;
 		state.pressed[y] = 0;
-		unsigned key = getBaseKey() + y;
+		int key = getBaseKey(y);
 		mw->handle_play_release(key, state.view_index);
 	}
 	if (state.sustain != 0) {
@@ -155,8 +155,8 @@ MppPianoTab :: releaseAll()
 void
 MppPianoTab :: processKey(uint8_t release, char which)
 {
-	unsigned keyMode;
-	unsigned key;
+	int keyMode;
+	int index;
 
 	mw->atomic_lock();
 	keyMode = mw->scores_main[state.view_index]->keyMode;
@@ -166,34 +166,33 @@ MppPianoTab :: processKey(uint8_t release, char which)
 	case MM_PASS_NONE_CHORD_PIANO:
 		switch (which) {
 		case ' ':
-			key = MPP_D0;
+			index = MPP_D0;
 			break;
 		case 'g':
-			key = MPP_F0;
+			index = MPP_F0;
 			break;
 		case 'h':
-			key = MPP_G0;
+			index = MPP_G0;
 			break;
 		case 'j':
-			key = MPP_A0;
+			index = MPP_A0;
 			break;
 		case 'k':
-			key = MPP_H0;
+			index = MPP_H0;
 			break;
 		case 'l':
-			key = MPP_G0B;
+			index = MPP_G0B;
 			break;
 		default:
 			return;
 		}
-		key *= MPP_BAND_STEP_12;
 		if (state.last_key)
-			key += MPP_MAX_BANDS;
+			index += 12;
 		break;
 
 	case MM_PASS_NONE_FIXED:
 	case MM_PASS_NONE_TRANS:
-		key = 0;
+		index = 0;
 		break;
 
 	default:
@@ -201,20 +200,20 @@ MppPianoTab :: processKey(uint8_t release, char which)
 	}
 
 	if (release) {
-		if (state.pressed[key] == 0)
+		if (state.pressed[index] == 0)
 			return;
-		state.pressed[key] = 0;
-		mw->handle_play_release(getBaseKey() + key, state.view_index);
+		state.pressed[index] = 0;
+		mw->handle_play_release(getBaseKey(index), state.view_index);
 	} else {
-		uint8_t curr_octave = (key >= MPP_MAX_BANDS);
+		uint8_t curr_octave = (index >= 12);
 		if (state.last_octave != curr_octave) {
 			state.last_octave = curr_octave;
 			releaseAll();
 		}
-		if (state.pressed[key] != 0)
+		if (state.pressed[index] != 0)
 			return;
-		state.pressed[key] = 1;
-		mw->handle_play_press(getBaseKey() + key, state.view_index);
+		state.pressed[index] = 1;
+		mw->handle_play_press(getBaseKey(index), state.view_index);
 	}
 	update();
 }
@@ -309,7 +308,7 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 	int len;
 	qreal xpos;
 	qreal ypos;
-	int base = getBaseKey() / MPP_MAX_BANDS;
+	int base = getBaseKey(0) / MPP_MAX_BANDS;
 	int w = width();
 	int h = height();
 	int z;
@@ -339,50 +338,50 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 	paint.setFont(fnt);
 
 	ypos = h - 2 * unit + uh;
-	drawTextBox(paint, MPP_D0B * MPP_BAND_STEP_12, unit, unit, unit / 2.0 + uq + dx * 0.5 - unit / 2.0, ypos, "#");
-	drawTextBox(paint, MPP_E0B * MPP_BAND_STEP_12, unit, unit, unit / 2.0 + uq + dx * 1.5 - unit / 2.0, ypos, "#");
-	drawTextBox(paint, MPP_G0B * MPP_BAND_STEP_12, unit, unit, unit / 2.0 + uq + dx * 3.5 - unit / 2.0, ypos, "#");
-	drawTextBox(paint, MPP_A0B * MPP_BAND_STEP_12, unit, unit, unit / 2.0 + uq + dx * 4.5 - unit / 2.0, ypos, "#");
-	drawTextBox(paint, MPP_H0B * MPP_BAND_STEP_12, unit, unit, unit / 2.0 + uq + dx * 5.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_D0B, unit, unit, unit / 2.0 + uq + dx * 0.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_E0B, unit, unit, unit / 2.0 + uq + dx * 1.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_G0B, unit, unit, unit / 2.0 + uq + dx * 3.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_A0B, unit, unit, unit / 2.0 + uq + dx * 4.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_H0B, unit, unit, unit / 2.0 + uq + dx * 5.5 - unit / 2.0, ypos, "#");
 
 	ypos = h - unit + uh;
 	snprintf(buffer, sizeof(buffer), "C%d", base);
-	drawTextBox(paint, MPP_C0 * MPP_BAND_STEP_12, unit, unit, uq + dx * 0.0, ypos, buffer);
+	drawTextBox(paint, MPP_C0, unit, unit, uq + dx * 0.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "D%d", base);
-	drawTextBox(paint, MPP_D0 * MPP_BAND_STEP_12, unit, unit, uq + dx * 1.0, ypos, buffer);
+	drawTextBox(paint, MPP_D0, unit, unit, uq + dx * 1.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "E%d", base);
-	drawTextBox(paint, MPP_E0 * MPP_BAND_STEP_12, unit, unit, uq + dx * 2.0, ypos, buffer);
+	drawTextBox(paint, MPP_E0, unit, unit, uq + dx * 2.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "F%d", base);
-	drawTextBox(paint, MPP_F0 * MPP_BAND_STEP_12, unit, unit, uq + dx * 3.0, ypos, buffer);
+	drawTextBox(paint, MPP_F0, unit, unit, uq + dx * 3.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "G%d", base);
-	drawTextBox(paint, MPP_G0 * MPP_BAND_STEP_12, unit, unit, uq + dx * 4.0, ypos, buffer);
+	drawTextBox(paint, MPP_G0, unit, unit, uq + dx * 4.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "A%d", base);
-	drawTextBox(paint, MPP_A0 * MPP_BAND_STEP_12, unit, unit, uq + dx * 5.0, ypos, buffer);
+	drawTextBox(paint, MPP_A0, unit, unit, uq + dx * 5.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "H%d", base);
-	drawTextBox(paint, MPP_H0 * MPP_BAND_STEP_12, unit, unit, uq + dx * 6.0, ypos, buffer);
+	drawTextBox(paint, MPP_H0, unit, unit, uq + dx * 6.0, ypos, buffer);
 
 	ypos = h + unit;
-	drawTextBox(paint, MPP_D0B * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, unit / 2.0 + uq + dx * 0.5 - unit / 2.0, ypos, "#");
-	drawTextBox(paint, MPP_E0B * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, unit / 2.0 + uq + dx * 1.5 - unit / 2.0, ypos, "#");
-	drawTextBox(paint, MPP_G0B * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, unit / 2.0 + uq + dx * 3.5 - unit / 2.0, ypos, "#");
-	drawTextBox(paint, MPP_A0B * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, unit / 2.0 + uq + dx * 4.5 - unit / 2.0, ypos, "#");
-	drawTextBox(paint, MPP_H0B * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, unit / 2.0 + uq + dx * 5.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_D0B + 12, unit, unit, unit / 2.0 + uq + dx * 0.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_E0B + 12, unit, unit, unit / 2.0 + uq + dx * 1.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_G0B + 12, unit, unit, unit / 2.0 + uq + dx * 3.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_A0B + 12, unit, unit, unit / 2.0 + uq + dx * 4.5 - unit / 2.0, ypos, "#");
+	drawTextBox(paint, MPP_H0B + 12, unit, unit, unit / 2.0 + uq + dx * 5.5 - unit / 2.0, ypos, "#");
 
 	ypos = h + 2*unit;
 	snprintf(buffer, sizeof(buffer), "C%d", base + 1);
-	drawTextBox(paint, MPP_C0 * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, uq + dx * 0.0, ypos, buffer);
+	drawTextBox(paint, MPP_C0 + 12, unit, unit, uq + dx * 0.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "D%d", base + 1);
-	drawTextBox(paint, MPP_D0 * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, uq + dx * 1.0, ypos, buffer);
+	drawTextBox(paint, MPP_D0 + 12, unit, unit, uq + dx * 1.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "E%d", base + 1);
-	drawTextBox(paint, MPP_E0 * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, uq + dx * 2.0, ypos, buffer);
+	drawTextBox(paint, MPP_E0 + 12, unit, unit, uq + dx * 2.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "F%d", base + 1);
-	drawTextBox(paint, MPP_F0 * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, uq + dx * 3.0, ypos, buffer);
+	drawTextBox(paint, MPP_F0 + 12, unit, unit, uq + dx * 3.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "G%d", base + 1);
-	drawTextBox(paint, MPP_G0 * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, uq + dx * 4.0, ypos, buffer);
+	drawTextBox(paint, MPP_G0 + 12, unit, unit, uq + dx * 4.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "A%d", base + 1);
-	drawTextBox(paint, MPP_A0 * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, uq + dx * 5.0, ypos, buffer);
+	drawTextBox(paint, MPP_A0 + 12, unit, unit, uq + dx * 5.0, ypos, buffer);
 	snprintf(buffer, sizeof(buffer), "H%d", base + 1);
-	drawTextBox(paint, MPP_H0 * MPP_BAND_STEP_12 + MPP_MAX_BANDS, unit, unit, uq + dx * 6.0, ypos, buffer);
+	drawTextBox(paint, MPP_H0 + 12, unit, unit, uq + dx * 6.0, ypos, buffer);
 
 	uf /= 3.0;
 	fnt.setPixelSize(uf);

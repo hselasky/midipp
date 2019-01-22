@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2014 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2014-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,12 +41,12 @@ public:
 
 	void processKey(uint8_t, char);
 	void releaseAll();
-	int getBaseKey();
+	int getBaseKey(int);
 
 	MppMainWindow *mw;
 
 	struct {
-		uint8_t pressed[2 * MPP_MAX_BANDS];
+		uint8_t pressed[2 * 12];
 		uint8_t sustain;
 		uint8_t view_index;
 		uint8_t last_jump;
@@ -54,7 +54,7 @@ public:
 		uint8_t last_key;
 	} state;
 
-	QRect r_pressed[2 * MPP_MAX_BANDS];
+	QRect r_pressed[2 * 12];
 	QRect r_view_a;
 	QRect r_view_b;
 	QRect r_sustain_on;
