@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2018 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -235,8 +235,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " * K2 - unlock play key.\n"
 	    " * K3.<bpm>.<period_ms> - set reference BPM and period in ms.\n"
 	    " * K4.<number> - enable automatic melody effect on the N-th note, if non-zero.\n"
-	    " * K5.0 - Disable micro tuning (n-tune)\n"
-	    " * K5.1 - Enable micro tuning (u-tune)\n"
+	    " * K5.0 - Disable micro tuning\n"
+	    " * K5.1 - Enable micro tuning\n"
 	    " * K6 - no operation.\n"
 	    " * K6.0 - select ALL key mode. (default)\n"
 	    " * K6.1 - select ALL subdivision key mode.\n"

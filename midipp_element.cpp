@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013-2018 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -1328,67 +1328,6 @@ MppHead :: limitScore(int limit)
 			TAILQ_INSERT_BEFORE(start, ptr, entry);
 		}
 		free(mk);
-	}
-}
-
-void
-MppHead :: microTune(int enable)
-{
-	MppElement *start = 0;
-	MppElement *stop = 0;
-	MppElement *ptr;
-	
-	while (foreachLine(&start, &stop)) {
-		uint8_t hits[MPP_MAX_BANDS] = {};
-		uint32_t x;
-		size_t num;
-
-		for (num = 0, ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
-			if (ptr->type != MPP_T_SCORE_SUBDIV)
-				continue;
-			x = (MPP_MAX_BANDS + (ptr->value[0] % MPP_MAX_BANDS)) % MPP_MAX_BANDS;
-			hits[x] = 1;
-			num++;
-		}
-
-		if (num == 0)
-			continue;
-
-		for (num = 0, x = 0; x != MPP_MAX_BANDS; x++) {
-			uint32_t pb;
-			uint32_t pc;
-
-			if (enable)
-				pb = (x + MPP_BAND_STEP_12 * 4) % MPP_MAX_BANDS;
-			else
-				pb = (x + MPP_BAND_STEP_12 * 4 - MPP_BAND_STEP_96) % MPP_MAX_BANDS;
-
-			pc = (x + MPP_BAND_STEP_12 * 7) % MPP_MAX_BANDS;
-
-			if (hits[x] && hits[pb] && hits[pc]) {
-				hits[pb] = 0;
-				num++;
-			}
-		}
-
-		if (num == 0)
-			continue;
-
-		for (num = 0, ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
-			if (ptr->type != MPP_T_SCORE_SUBDIV)
-				continue;
-
-			x = (MPP_MAX_BANDS + (ptr->value[0] % MPP_MAX_BANDS)) % MPP_MAX_BANDS;
-			if (hits[x])
-				continue;
-			if (enable)
-				ptr->value[0] -= MPP_BAND_STEP_96;
-			else
-				ptr->value[0] += MPP_BAND_STEP_96;
-
-			/* update text */
-			ptr->txt = MppKeyStr(ptr->value[0]);
-		}
 	}
 }
 
