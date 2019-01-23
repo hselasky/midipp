@@ -255,6 +255,7 @@ MppSheet::outputColumn(ssize_t col)
 				ret += MppTransToString(trans_number, trans_mode);
 			}
 			ret += MppKeyStr(entries_rows[x].u.score.num);
+			ret += " ";
 			break;
 		default:
 			break;
