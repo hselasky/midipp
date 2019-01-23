@@ -966,6 +966,9 @@ MppScoreMain :: handleParse(const QString &pstr)
 	/* compile before auto-melody */
 	sheet->compile(head);
 	
+	if (auto_utune > 0)
+		head.tuneScore();
+
 	/* check if key-mode should be applied */
 	switch (key_mode) {
 	case 0:

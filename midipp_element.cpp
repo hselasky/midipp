@@ -1161,6 +1161,114 @@ MppHead :: limitScore(int limit)
 	}
 }
 
+static int
+MppFreqAdjust(double mid, double top)
+{
+	const double p0 = 1.0;
+	const double p1 = pow(2.0, mid);
+	const double p2 = pow(2.0, top);
+
+	const double f1 = log(p1 - p0) / log(2.0);
+	const double f2 = log(p2 - p1) / log(2.0);
+	const double f3 = log(p2 - p0) / log(2.0);
+
+	const double ff1 = f1 - floor(f1);
+	const double ff2 = f2 - floor(f2);
+	const double ff3 = f3 - floor(f3);
+
+	double adjust_lo;
+	double harmony_lo;
+	double adjust_hi;
+	double harmony_hi;
+	double delta;
+
+	delta = ff3 - ff1;
+	if (delta > 0.5)
+		delta -= 1.0;
+	else if (delta < -0.5)
+		delta += 1.0;
+
+	adjust_lo = log(pow(2.0, f1 + delta) + p0) / log(2.0) - mid;
+	harmony_lo = round(f3 - f1 + delta);
+
+	delta = ff3 - ff2;
+	if (delta > 0.5)
+		delta -= 1.0;
+	else if (delta < -0.5)
+		delta += 1.0;
+	adjust_hi = log(p2 - pow(2.0, f2 + delta)) / log(2.0) - mid;
+	harmony_hi = round(f3 - f2 + delta);
+
+	double adjust = (fabs(adjust_lo) > fabs(adjust_hi)) ? adjust_lo : adjust_hi;
+
+	if (fabs(adjust) < (1.0 / 24.0))
+		return ((mid + adjust) * MPP_MAX_BANDS);
+	else
+		return (mid * MPP_MAX_BANDS);
+}
+
+void
+MppHead :: tuneScore()
+{
+	MppElement *start = 0;
+	MppElement *stop = 0;
+	MppElement *ptr;
+
+	while (foreachLine(&start, &stop)) {
+		MppChord_t mask;
+		uint32_t rots;
+		int adjust[MPP_MAX_CHORD_BANDS] = {};
+
+		mask.zero();
+
+		/* extract all keys */
+		for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
+			switch (ptr->type) {
+			case MPP_T_SCORE_SUBDIV:
+				mask.set(MPP_BAND_REM(ptr->value[0], MPP_MAX_CHORD_BANDS));
+				break;
+			default:
+				break;
+			}
+		}
+		if (mask.order() == 0)
+			continue;
+
+		mask = MppFindChordRoot(mask, &rots);
+
+		int last = mask.last_set();
+		if (last < 1)
+			continue;
+
+		adjust[last] = last * MPP_BAND_STEP_CHORD;
+
+		for (int x = 1; x != last; x++) {
+			if (mask.test(x) == 0)
+				continue;
+			adjust[x] = MppFreqAdjust((double)x / (double)MPP_MAX_CHORD_BANDS,
+			    (double)last / (double)MPP_MAX_CHORD_BANDS);
+		}
+		
+		/* update all keys */
+		for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
+			switch (ptr->type) {
+			int x;
+			case MPP_T_SCORE_SUBDIV:
+				x = MPP_BAND_REM(ptr->value[0] -
+				    (rots * MPP_BAND_STEP_CHORD), MPP_MAX_CHORD_BANDS);
+
+				ptr->value[0] -= MPP_BAND_REM(ptr->value[0], MPP_MAX_BANDS);
+				ptr->value[0] += MPP_BAND_REM(adjust[x] +
+				    (rots * MPP_BAND_STEP_CHORD), MPP_MAX_BANDS);
+				ptr->txt = MppKeyStr(ptr->value[0]);
+				break;
+			default:
+				break;
+			}
+		}
+	}
+}
+
 void
 MppHead :: alignTime(int align)
 {

@@ -230,6 +230,7 @@ public:
 	void bassOffset(int);
 	void transposeScore(int, int = 0);
 	void limitScore(int);
+	void tuneScore();
 	void scaleTime(int);
 	void alignTime(int);
 	void dotReorder();
