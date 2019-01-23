@@ -2874,12 +2874,21 @@ MppMainWindow :: output_key(int index, int chan, int key, int vel, int delay, in
 
 /* must be called locked */
 void
-MppMainWindow :: output_key_pressure(int index, int chan, int key, int pressure)
+MppMainWindow :: output_key_pressure(int index, int chan, int key, int pressure, int delay)
 {
-	if (check_play(index, chan, 0))
+	struct mid_data *d = &mid_data;
+
+	/* output key to all playback device(s) */
+	if (check_play(index, chan, 0)) {
+		mid_delay(d, delay);
 		do_key_pressure(key, pressure);
-	if (check_record(index, chan, 0))
+	}
+
+	/* output key to recording device(s) */
+	if (check_record(index, chan, 0)) {
+		mid_delay(d, delay);
 		do_key_pressure(key, pressure);
+	}
 }
 
 void

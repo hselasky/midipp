@@ -1459,12 +1459,12 @@ MppScoreMain :: handleKeyPressureChord(int in_key, int vel, uint32_t key_delay)
 	pn = &score_pressure[off];
 
 	if (pn->dur != 0) {
-		mainWindow->output_key_pressure(pn->track, pn->channel, pn->key, vel);
+		mainWindow->output_key_pressure(pn->track, pn->channel, pn->key, vel, key_delay);
 
 		/* check for secondary event */
 		if (pn->channelSec != 0) {
 			mainWindow->output_key_pressure(
-			    pn->trackSec, pn->channelSec - 1, pn->key, vel);
+			    pn->trackSec, pn->channelSec - 1, pn->key, vel, key_delay);
 		}
 	}
 }

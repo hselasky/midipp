@@ -66,7 +66,7 @@ public:
 	void do_key_press(int key, int vel, int dur);
 	void do_key_pressure(int key, int pressure);
 	void output_key(int index, int chan, int key, int vel, int delay, int dur);
-	void output_key_pressure(int index, int chan, int key, int pressure);
+	void output_key_pressure(int index, int chan, int key, int pressure, int delay = 0);
 
 	uint32_t get_time_offset(void);
 
