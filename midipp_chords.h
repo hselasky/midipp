@@ -103,6 +103,14 @@ struct MppChord {
 			rem = next;
 		}
 	};
+	int last_set() {
+		int rem = MPP_MAX_CHORD_BANDS;
+		while (rem--) {
+			if (test(rem))
+				return (rem);
+		}
+		return (-1);
+	};
 	void operator &=(const MppChord &other) {
 		int x = sizeof(data) / sizeof(data[0]);
 		while (x--)
