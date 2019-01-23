@@ -1199,10 +1199,9 @@ MppFreqAdjust(double mid, double top)
 	adjust_hi = log(p2 - pow(2.0, f2 + delta)) / log(2.0) - mid;
 	harmony_hi = round(f3 - f2 + delta);
 
-	double adjust = (fabs(adjust_lo) > fabs(adjust_hi)) ? adjust_lo : adjust_hi;
-
-	if (fabs(adjust) < (1.0 / 24.0))
-		return ((mid + adjust) * MPP_MAX_BANDS);
+	if ((float)adjust_lo == (float)adjust_hi &&
+	    adjust_lo < 0.0 && adjust_lo > (-1.0 / 24.0))
+		return ((mid + adjust_lo) * MPP_MAX_BANDS);
 	else
 		return (mid * MPP_MAX_BANDS);
 }
