@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2018 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -68,7 +68,7 @@ public:
 	void setText(QString);
 	uint8_t parseScoreChord(MppChordElement *);
 	void keyPressEvent(QKeyEvent *);
-	void round(uint8_t);
+	void round(int);
 
 	MppMainWindow *mw;
 

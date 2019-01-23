@@ -475,11 +475,12 @@ MppReadMusicXML(const QByteArray &data, uint32_t flags, uint32_t ipart, uint32_t
 									output_scores += MppKeyStr((4 * 12 + (bass % 12)) * MPP_BAND_STEP_12);
 									output_scores += " ";
 
-									for (x = 0; x != MPP_MAX_BANDS; x++) {
+									for (x = 0; x != MPP_MAX_CHORD_BANDS; x++) {
 										if (mask.test(x) == 0)
 											continue;
 										output_scores += MppKeyStr(
-										    (5 * 12 + (root % 12)) * MPP_BAND_STEP_12);
+										    ((5 * 12 + (root % 12)) * MPP_BAND_STEP_12) +
+										    (x * MPP_BAND_STEP_CHORD));
 										output_scores += " ";
 									}
 									output_scores += QString("/* ") + harmony[which] + QString(" */\n");

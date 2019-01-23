@@ -357,21 +357,21 @@ MppHead :: operator += (MppElement *elem)
 			elem->value[0] -= 1;
 			ch = elem->getChar(&off);
 		}
-		elem->value[0] *= MPP_MAX_SUBDIV;
+		elem->value[0] *= MPP_BAND_STEP_12;
 		if (ch == '.') {
 			int rem = elem->getIntValue(&off);
-			rem = MPP_BAND_REM_BITREV(rem);
+			rem = MPP_SUBDIV_REM_BITREV(rem);
 			elem->value[0] += rem;
 		}
 		break;
 
 	case MPP_T_TRANSPOSE:
 		elem->value[0] = elem->getIntValue(&off);
-		elem->value[0] *= MPP_MAX_SUBDIV;
+		elem->value[0] *= MPP_BAND_STEP_12;
 		ch = elem->getChar(&off);
 		if (ch == '.') {
 			int rem = elem->getIntValue(&off);
-			rem = MPP_BAND_REM_BITREV(rem);
+			rem = MPP_SUBDIV_REM_BITREV(rem);
 			elem->value[0] += rem;
 			ch = elem->getChar(&off);
 		}
@@ -687,11 +687,11 @@ MppHead :: getChord(int line, MppChordElement *pinfo)
 					int key = ptr->value[0];
 					if (key > pinfo->key_max)
 						pinfo->key_max = key;
-					pinfo->stats[MPP_BAND_REM(key)]++;
+					pinfo->stats[MPP_BAND_REM(key, MPP_MAX_CHORD_BANDS)]++;
 				}
 			}
 
-			for (x = y = 0; x != MPP_MAX_BANDS; x++) {
+			for (x = y = 0; x != MPP_MAX_CHORD_BANDS; x++) {
 				if (pinfo->stats[x] > pinfo->stats[y])
 					y = x;
 			}
@@ -700,7 +700,7 @@ MppHead :: getChord(int line, MppChordElement *pinfo)
 			 * The key having the most hits typically is
 			 * the base:
 			 */
-			pinfo->key_base = y;
+			pinfo->key_base = y * MPP_BAND_STEP_CHORD;
 
 			/* valid chord/score found */
 			return (1);
@@ -826,8 +826,8 @@ MppHead :: bassOffset(int which)
 			for (x = 0; x != nb; x++) {
 				if (ptr->value[0] != base[x])
 					continue;
-				if ((base[0] % MPP_MAX_BANDS) !=
-				    (base[x] % MPP_MAX_BANDS)) {
+				if ((base[0] % MPP_MAX_CHORD_BANDS) !=
+				    (base[x] % MPP_MAX_CHORD_BANDS)) {
 					/* remove all bass scores except first one */
 					ptr->type = MPP_T_UNKNOWN;
 					ptr->txt = "";
@@ -1094,7 +1094,8 @@ MppHead :: limitScore(int limit)
 
 		/* import scores */
 		for (i = 0; i != num; i++) {
-			mk[i].key = MPP_BAND_REM(mk[i].key) + limit - MPP_BAND_REM(limit);
+			mk[i].key = MPP_BAND_REM(mk[i].key, MPP_MAX_BANDS) +
+			    limit - MPP_BAND_REM(limit, MPP_MAX_BANDS);
 			if (mk[i].key >= limit)
 				mk[i].key -= MPP_MAX_BANDS;
 		}

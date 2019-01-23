@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2018 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -54,9 +54,9 @@ MppSpinBox :: MppSpinBox(QWidget *parent, int allow_neg)
   : QSpinBox(parent)
 {
 	if (allow_neg)
-		setRange(-0x8000, 0x7fff);
+		setRange(-0x7fffffff, 0x7fffffff);
 	else
-		setRange(0, 0x7fff);
+		setRange(0, 0x7fffffff);
 	setSingleStep(MPP_BAND_STEP_12);
 }
 

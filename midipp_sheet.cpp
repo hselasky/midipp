@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2016-2018 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2016-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -98,12 +98,12 @@ MppSheet::sizeInit()
 static const QString
 MppTransToString(int trans_number, int trans_mode)
 {
-	int rem = MPP_BAND_REM_BITREV(trans_number);
+	int rem = MPP_SUBDIV_REM_BITREV(trans_number);
 
 	trans_number -= rem;
 
 	if (trans_mode != 0) {
-		return QString("X%1.%2.%3 ").arg(trans_number / MPP_MAX_SUBDIV).arg(rem).arg(trans_mode);
+		return QString("X%1.%2.%3 ").arg(trans_number / MPP_BAND_STEP_12).arg(rem).arg(trans_mode);
 	} else if (rem != 0) {
 		return QString("X%1.%2 ").arg(trans_number).arg(rem);
 	} else {
@@ -585,7 +585,7 @@ MppSheet :: getTranspose(int trans_mode)
 	case 5:
 		temp = mw->getCurrTransposeScore();
 		if (temp >= 0)
-			return (MPP_BAND_REM(temp));
+			return (MPP_BAND_REM(temp, MPP_MAX_BANDS));
 		else
 			return (MPP_KEY_MIN);
 	default:

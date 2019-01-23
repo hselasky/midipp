@@ -217,10 +217,10 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	spnScoreFileScale->setRange(0, 60000);
 	spnScoreFileScale->setSuffix(" ms");
 	spnScoreFileScale->setValue(1000);
-	butScoreFileStepUpHalf = new QPushButton(tr("Step Up H"));
-	butScoreFileStepDownHalf = new QPushButton(tr("Step Down H"));
-	butScoreFileStepUpSingle = new QPushButton(tr("Step Up 1"));
-	butScoreFileStepDownSingle = new QPushButton(tr("Step Down 1"));
+	butScoreFileStepUpHalf = new QPushButton(tr("Step Up\n12 scale"));
+	butScoreFileStepDownHalf = new QPushButton(tr("Step Down\n12 scale"));
+	butScoreFileStepUpSingle = new QPushButton(tr("Step Up\n192 scale"));
+	butScoreFileStepDownSingle = new QPushButton(tr("Step Down\n192 scale"));
 	butScoreFileSetSharp = new QPushButton(tr("Set #"));
 	butScoreFileSetFlat = new QPushButton(tr("Set b"));
 	butScoreFileReplaceAll = new QPushButton(tr("Replace all"));
@@ -249,9 +249,9 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 
 	gbScoreFile->addWidget(butScoreFileSetSharp, 10, 0, 1, 1);
 	gbScoreFile->addWidget(butScoreFileSetFlat, 10, 1, 1, 1);
-	gbScoreFile->addWidget(butScoreFileReplaceAll, 12, 0, 1, 2);
-	gbScoreFile->addWidget(butScoreFileExport, 13, 0, 1, 2);
-	gbScoreFile->addWidget(butScoreFileExportNoChords, 14, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileReplaceAll, 11, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileExport, 12, 0, 1, 2);
+	gbScoreFile->addWidget(butScoreFileExportNoChords, 13, 0, 1, 2);
 
 	connect(butScoreFileNew, SIGNAL(released()), this, SLOT(handleScoreFileNew()));
 	connect(butScoreFileOpen, SIGNAL(released()), this, SLOT(handleScoreFileOpen()));
@@ -1511,10 +1511,8 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 	int channel;
 	int duration;
 	int nscore;
-	int nfoot;
 	int vel_other;
 	int transpose;
-	uint8_t footprint[MPP_MAX_BANDS];
 
 	head.currLine(&start, &stop);
 	head.state.did_jump = 0;
@@ -1524,26 +1522,18 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 		t_post = 0;
 		channel = 0;
 		duration = 1;
-		nfoot = 0;
 		nscore = 0;
 		transpose = key_trans;
-		memset(footprint, 0, sizeof(footprint));
 
 		decrementDuration();
 
 		for (ptr = start; ptr != stop;
 		    ptr = TAILQ_NEXT(ptr, entry)) {
 			switch (ptr->type) {
-			int temp;
 			case MPP_T_SCORE_SUBDIV:
 				if (duration <= 0)
 					break;
 				nscore++;
-				temp = MPP_BAND_REM(ptr->value[0]);
-				if (footprint[temp] == 0) {
-					footprint[temp] = 1;
-					nfoot++;
-				}
 				break;
 			case MPP_T_DURATION:
 				duration = ptr->value[0];
@@ -1553,15 +1543,15 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 			}
 		}
 
-		if (nfoot == 0) {
+		if (nscore == 0) {
 			vel_other = 0;
 		} else {
 			if (chordNormalize == 0) {
 				vel_other = vel;
 			} else {
 				vel_other = vel +
-				  ((vel * (nfoot - 1) * (128 - chordContrast)) /
-				    (nfoot * 128));
+				  ((vel * (nscore - 1) * (128 - chordContrast)) /
+				    (nscore * 128));
 				if (vel_other > 127)
 					vel_other = 127;
 				else if (vel_other < 0)
@@ -2000,7 +1990,7 @@ MppScoreMain :: handleScoreFileBassOffset(void)
 {
 	int which = spnScoreFileBassOffset->value();
 
-	which = MPP_BAND_REM_BITREV(which);
+	which = MPP_SUBDIV_REM_BITREV(which);
 
 	handleScoreFileEffect(4, which, 0);
 }
@@ -2032,13 +2022,13 @@ MppScoreMain :: handleScoreFileStepDownHalf(void)
 void
 MppScoreMain :: handleScoreFileStepUpSingle(void)
 {
-	handleScoreFileEffect(1, 1, 0);
+	handleScoreFileEffect(1, MPP_BAND_STEP_192, 0);
 }
 
 void
 MppScoreMain :: handleScoreFileStepDownSingle(void)
 {
-	handleScoreFileEffect(1, -1, 0);
+	handleScoreFileEffect(1, -MPP_BAND_STEP_192, 0);
 }
 
 void
@@ -2162,25 +2152,22 @@ uint16_t
 MppScoreMain :: outputChannelMaskGet(void)
 {
 	uint32_t mask;
-	uint32_t subdiv_mask;
 
 	switch (keyMode) {
 	case MM_PASS_ALL:
-		mask = 1U;
-		break;
 	case MM_PASS_ALL_SUBDIV:
-		mask = (1U << (1U << mainWindow->subdivsLog2)) - 1U;
+		mask = 1U;
 		break;
 	case MM_PASS_NONE_CHORD_PIANO:
 	case MM_PASS_NONE_CHORD_GUITAR:
-		mask = subdiv_mask = (1U << (1U << mainWindow->subdivsLog2)) - 1U;
+		mask = 1U;
 		if (synthChannelBase > -1) {
 			const int y = (synthChannelBase - synthChannel) & 0xF;
-			mask |= subdiv_mask << y;
+			mask |= 1U << y;
 		}
 		if (synthChannelTreb > -1) {
 			const int y = (synthChannelTreb - synthChannel) & 0xF;
-			mask |= subdiv_mask << y;
+			mask |= 1U << y;
 		}
 		/* check for wrap around */
 		mask |= (mask >> 16);
@@ -2373,11 +2360,7 @@ MppScoreMain :: handleMidiKeyPressLocked(int key, int vel)
 		handleKeyPressChord(key, vel);
 		break;
 	case MM_PASS_ALL:
-		if (setPressedKey(chan, key, 255, 0) == 0)
-			mainWindow->output_key(MPP_DEFAULT_TRACK(unit), chan, key, vel, 0, 0);
-		break;
 	case MM_PASS_ALL_SUBDIV:
-		key >>= mainWindow->subdivsLog2;
 		if (setPressedKey(chan, key, 255, 0) == 0)
 			mainWindow->output_key(MPP_DEFAULT_TRACK(unit), chan, key, vel, 0, 0);
 		break;
@@ -2402,12 +2385,8 @@ MppScoreMain :: handleMidiKeyReleaseLocked(int key)
 	case MM_PASS_NONE_CHORD_GUITAR:
 		handleKeyReleaseChord(key);
 		break;
-	case MM_PASS_ALL_SUBDIV:
-		key >>= mainWindow->subdivsLog2;
-		if (setPressedKey(chan, key, 0, 0) == 0)
-			mainWindow->output_key(MPP_DEFAULT_TRACK(unit), chan, key, 0, 0, 0);
-		break;
 	case MM_PASS_ALL:
+	case MM_PASS_ALL_SUBDIV:
 		if (setPressedKey(chan, key, 0, 0) == 0)
 			mainWindow->output_key(MPP_DEFAULT_TRACK(unit), chan, key, 0, 0, 0);
 		break;

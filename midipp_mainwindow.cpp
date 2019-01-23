@@ -451,13 +451,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mbm_bpm_generator = new MppButtonMap("BPM generator\0" "OFF\0" "ON\0", 2, 2);
 	connect(mbm_bpm_generator, SIGNAL(selectionChanged(int)), dlg_bpm, SLOT(handle_bpm_enable(int)));
 
-	mbm_subdivs = new MppButtonMap("Subdivision mode\0"
-					"12\0"
-					"24\0"
-					"48\0"
-					"96\0"
-					"192\0", 5, 1);
-	connect(mbm_subdivs, SIGNAL(selectionChanged(int)), this, SLOT(handle_subdivs()));
+	mbm_notemode = new MppButtonMap("Note mode\0"
+				       "Normal\0"
+				       "SysEx\0", 2, 1);
+	connect(mbm_notemode, SIGNAL(selectionChanged(int)), this, SLOT(handle_notemode()));
 
 	/* First column */
 
@@ -477,7 +474,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* Third column */
 
-	tab_play_gl->addWidget(mbm_subdivs, 0,4,2,1);
+	tab_play_gl->addWidget(mbm_notemode, 4,4,1,1);
 	tab_play_gl->addWidget(gl_tuning, 2,4,1,1);
 
 	tab_play_gl->setRowStretch(5, 1);
@@ -1672,78 +1669,134 @@ MppMainWindow :: check_mirror(uint8_t index)
 	return (0);
 }
 
+int
+MppMainWindow :: do_extended_alloc(int key, int refcount)
+{
+	for (int x = 0; x != 128; x++) {
+		if (extended_keys[x][1] == 0)
+			continue;
+		if (extended_keys[x][0] == key) {
+			extended_keys[x][1] += refcount;
+			return (x);
+		}
+	}
+	if (refcount > 0) {
+		for (int x = 0; x != 128; x++) {
+			if (extended_keys[x][1] != 0)
+				continue;
+			extended_keys[x][0] = key;
+			extended_keys[x][1] = refcount;
+			return (x);
+		}
+	}
+	return (-1);
+}
+
+void
+MppMainWindow :: do_extended_key_press(int key, int freq, int vel, int dur)
+{
+	struct mid_data *d = &mid_data;
+
+	if (vel == 0) {
+		mid_key_press(d, key, 0, 0);
+	} else {
+	  	uint8_t sysex_data[11];
+		uint8_t key_data[4];
+
+		sysex_data[0] = 0xF0;
+		sysex_data[1] = 0x0A;
+		sysex_data[2] = 0x55;	/* XXX */
+		sysex_data[3] = d->channel;
+		sysex_data[4] = key & 0x7F;
+		sysex_data[5] = vel & 0x7F;
+
+		sysex_data[10] = 0xF7;
+
+		sysex_data[9] = freq & 0x7F;
+		freq >>= 7;
+		sysex_data[8] = freq & 0x7F;
+		freq >>= 7;
+		sysex_data[7] = freq & 0x7F;
+		freq >>= 7;
+		sysex_data[6] = freq & 0x7F;
+
+		d->channel = 0;
+		mid_add_raw(d, sysex_data, sizeof(sysex_data), 0);
+		d->channel = sysex_data[3];
+
+		if (dur != 0) {
+			key_data[0] = 0x90;
+			key_data[1] = key & 0x7F;
+			key_data[2] = 0;
+			mid_add_raw(d, key_data, 3, dur);
+		}
+	}
+}
+
 void
 MppMainWindow :: do_key_press(int key, int vel, int dur)
 {
 	struct mid_data *d = &mid_data;
-	uint8_t bit = (MPP_MAX_SUBDIV >> subdivsLog2);
-	uint32_t pos;
-	int rem;
+	int index;
 
 	if (vel > 127)
 		vel = 127;
 	else if (vel < 0)
 		vel = 0;
 
-	/* respect global subdivision setting */
-	key = (key + (bit / 2)) & ~(bit - 1);
-
-	rem = MPP_BAND_REM_BITREV(key);
-	key /= MPP_MAX_SUBDIV;
-
-	/* range check */
-	if (key > 127 || key < 0 || dur < 0)
+	/* range check(s) */
+	if (key >= MPP_MAX_KEYS || key < 0 || dur < 0)
 		return;
 
-	/* shift channel according to subdivision */
-	pos = d->position[d->channel];
-	d->channel = (d->channel + rem) & 0xF;
-	d->position[d->channel] = pos;
-
-	mid_key_press(d, key, vel, dur);
-
-	/* restore */
-	d->channel = (d->channel - rem) & 0xF;
+	switch (noteMode) {
+	case MPP_NOTEMODE_SYSEX:
+		index = do_extended_alloc(key, (vel == 0) ? -1 : 1);
+		if (index < 0)
+			return;
+		do_extended_key_press(index, key, vel, dur);
+		break;
+	default:
+		key = (key + MPP_BAND_STEP_24) / MPP_BAND_STEP_12;
+		if (key >= 128 || key < 0)
+			return;
+		mid_key_press(d, key, vel, dur);
+		break;
+	}
 }
 
 void
 MppMainWindow :: do_key_pressure(int key, int pressure)
 {
 	struct mid_data *d = &mid_data;
-	uint8_t bit = (MPP_MAX_SUBDIV >> subdivsLog2);
-	uint32_t pos;
 	uint8_t buf[4];
-	int rem;
 
 	if (pressure > 127)
 		pressure = 127;
 	else if (pressure < 0)
 		pressure = 0;
 
-	/* respect global subdivision setting */
-	key = (key + (bit / 2)) & ~(bit - 1);
-
-	rem = MPP_BAND_REM_BITREV(key);
-	key /= MPP_MAX_SUBDIV;
-
-	/* range check */
-	if (key > 127 || key < 0)
+	/* range check(s) */
+	if (key >= MPP_MAX_KEYS || key < 0)
 		return;
 
-	/* shift channel according to subdivision */
-	pos = d->position[d->channel];
-	d->channel = (d->channel + rem) & 0xF;
-	d->position[d->channel] = pos;
+	switch (noteMode) {
+	case MPP_NOTEMODE_SYSEX:
+		key = do_extended_alloc(key, 0);
+		if (key < 0)
+			return;
+		break;
+	default:
+		key = (key + MPP_BAND_STEP_24) / MPP_BAND_STEP_12;
+		if (key >= 128 || key < 0)
+			return;
+		break;
+	}
 
 	buf[0] = 0xA0;
 	buf[1] = key & 0x7F;
 	buf[2] = pressure & 0x7F;
-	buf[3] = 0;
 
 	mid_add_raw(d, buf, 3, 0);
-
-	/* restore */
-	d->channel = (d->channel - rem) & 0xF;
 }
 
 /* must be called locked */
@@ -1805,6 +1858,9 @@ MppMainWindow :: handle_stop(int flag)
 		if (ps->channelSec != 0)
 			output_key(ps->trackSec, ps->channelSec - 1, ps->key, 0, 0, 0);
 	    }
+
+	    /* SYSEX mode cleanup */
+	    memset(extended_keys, 0, sizeof(extended_keys));
 
 	    /* check if we should kill the pedal, modulation and pitch */
 	    if (!(flag & 1)) {
@@ -1933,12 +1989,9 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 			switch (sm->keyMode) {
 			case MM_PASS_ALL:
-				mw->output_key_pressure(MPP_DEFAULT_TRACK(sm->unit),
-				    sm->synthChannel, key, vel);
-				break;
 			case MM_PASS_ALL_SUBDIV:
 				mw->output_key_pressure(MPP_DEFAULT_TRACK(sm->unit),
-				    sm->synthChannel, key >> mw->subdivsLog2, vel);
+				    sm->synthChannel, key, vel);
 				break;
 			case MM_PASS_NONE_CHORD_PIANO:
 			case MM_PASS_NONE_CHORD_GUITAR:
@@ -3208,30 +3261,15 @@ MppMainWindow :: getCurrTransposeScore(void)
 int
 MppMainWindow :: getPitchBendBase(uint8_t chan)
 {
-	uint8_t chan_rem = 0;
-
-	if (chan & 1)
-		chan_rem |= 8;
-	if (chan & 2)
-		chan_rem |= 4;
-	if (chan & 4)
-		chan_rem |= 2;
-	if (chan & 8)
-		chan_rem |= 1;
-	chan_rem >>= (4 - subdivsLog2);
-
-	return (chan_rem * (4096 >> subdivsLog2) + masterPitchBend);
+	return (masterPitchBend);
 }
 
 void
-MppMainWindow :: handle_subdivs()
+MppMainWindow :: handle_notemode()
 {
-	atomic_lock();
-	subdivsLog2 = mbm_subdivs->currSelection;
-	send_pitch_trigger_locked();
+  	atomic_lock();
+	noteMode = mbm_notemode->currSelection;
 	atomic_unlock();
-
-	tab_instrument->setSubdivsLog2(subdivsLog2);
 }
 
 void

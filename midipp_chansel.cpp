@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2014-2018 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2014-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -79,15 +79,6 @@ MppChanSelDiag :: ~MppChanSelDiag()
 }
 
 void
-MppChanSelDiag :: setSubdivsLog2(uint8_t subdivsLog2)
-{
-	uint8_t s_mask = (1U << subdivsLog2) - 1U;
-
-	for (uint8_t x = 0; x != 16; x++)
-		butChannel[x]->setEnabled((s_mask & x) == 0);
-}
-
-void
 MppChanSelDiagValue :: handle_released(int id)
 {
 	switch (id) {
@@ -142,8 +133,6 @@ void
 MppChanSel :: handle_released()
 {
 	MppChanSelDiag diag(this, channel, haveAny);
-
-	diag.setSubdivsLog2(mw->subdivsLog2);
 
 	if (diag.exec() == QDialog::Accepted)
 		setValue(diag.value.value);

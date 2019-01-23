@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2018 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -128,15 +128,15 @@ Q_DECL_EXPORT void
 MppSplitBaseTreble(const int *score, uint8_t num, int *base, uint8_t *nbase,
     int *treble, uint8_t *ntreble)
 {
-	uint8_t stats[MPP_MAX_BANDS] = {};
-	uint8_t count[MPP_MAX_BANDS] = {};
+	uint8_t stats[MPP_MAX_CHORD_BANDS] = {};
+	uint8_t count[MPP_MAX_CHORD_BANDS] = {};
 	uint8_t x;
 	int key;
 	uint8_t nb = 0;
 	uint8_t nt = 0;
 
 	for (x = 0; x != num; x++)
-		stats[MPP_BAND_REM(score[x])]++;
+		stats[MPP_BAND_REM(score[x], MPP_MAX_CHORD_BANDS)]++;
 
 	/*
 	 * Treble only: C0
@@ -147,7 +147,7 @@ MppSplitBaseTreble(const int *score, uint8_t num, int *base, uint8_t *nbase,
 		uint32_t rem;
 
 		key = score[x];
-		rem = MPP_BAND_REM(key);
+		rem = MPP_BAND_REM(key, MPP_MAX_CHORD_BANDS);
 
 		if (stats[rem] == 1) {
 			treble[nt++] = key;

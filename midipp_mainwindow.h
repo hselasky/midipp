@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2018 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -63,6 +63,8 @@ public:
 	void update_play_device_no(void);
 
 	void do_clock_stats(void);
+	int do_extended_alloc(int key, int refcount);
+	void do_extended_key_press(int key, int freq, int vel, int dur);
 	void do_key_press(int key, int vel, int dur);
 	void do_key_pressure(int key, int pressure);
 	void output_key(int index, int chan, int key, int vel, int delay, int dur);
@@ -103,6 +105,8 @@ public:
 
 	struct MppInstr instr[16];
 
+	int extended_keys[128][2];
+  
 	uint32_t convLineStart[MPP_MAX_LINES];
 	uint32_t convLineEnd[MPP_MAX_LINES];
 	uint32_t convIndex;
@@ -135,7 +139,6 @@ public:
 	uint8_t numControlEvents;
 	uint8_t cursorUpdate;
 
-	uint8_t subdivsLog2;
 	uint8_t scoreRecordOff;
 	uint8_t controlRecordOn;
 	uint8_t instrUpdated;
@@ -149,6 +152,10 @@ public:
 #define	MPP_OPERATION_PAUSE 0x01
 #define	MPP_OPERATION_REWIND 0x02
 #define	MPP_OPERATION_BPM 0x04
+
+	uint8_t noteMode;
+#define	MPP_NOTEMODE_NORMAL 0
+#define	MPP_NOTEMODE_SYSEX 1
 
 	char *deviceName[MPP_MAX_DEVS];
 
@@ -222,7 +229,7 @@ public:
 	MppButtonMap *mbm_key_mode_a;
 	MppButtonMap *mbm_key_mode_b;
 	MppButtonMap *mbm_bpm_generator;
-	MppButtonMap *mbm_subdivs;
+	MppButtonMap *mbm_notemode;
 
 	QPushButton *but_jump[MPP_MAX_LBUTTON];
 	QPushButton *but_compile;
@@ -362,7 +369,7 @@ public slots:
 	void handle_undo();
 	void handle_edit();
 	void handle_up_down();
-	void handle_subdivs();
+	void handle_notemode();
 	void handle_tuning();
 };
 

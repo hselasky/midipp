@@ -127,7 +127,7 @@ MppPianoTab :: getBaseKey(int index)
 
 	mw->atomic_lock();
   	baseKey = mw->scores_main[state.view_index]->baseKey;
-	baseKey -= MPP_BAND_REM(baseKey);
+	baseKey -= MPP_BAND_REM(baseKey, MPP_MAX_BANDS);
 	mw->atomic_unlock();
 
 	return (baseKey + (MPP_BAND_STEP_12 * index));

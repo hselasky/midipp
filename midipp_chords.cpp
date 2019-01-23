@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2018 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2018-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -333,7 +333,7 @@ MppRolDownChord(MppChord_t &input, int &delta)
 	if (input.test(0) == 0)
 		return;
 	input.tog(0);
-	input.tog(MPP_MAX_BANDS);
+	input.tog(MPP_MAX_CHORD_BANDS);
 
 	while (input.test(0) == 0) {
 		input.shr();
@@ -346,18 +346,18 @@ MppRolUpChord(MppChord_t &input, int &delta)
 {
 	if (input.test(0) == 0)
 		return;
-	while (input.test(MPP_MAX_BANDS) == 0) {
+	while (input.test(MPP_MAX_CHORD_BANDS) == 0) {
 		input.shl();
 		delta++;
 	}
 	input.tog(0);
-	input.tog(MPP_MAX_BANDS);
+	input.tog(MPP_MAX_CHORD_BANDS);
 }
 
 Q_DECL_EXPORT void
 MppNextChordRoot(MppChord_t &input, int step)
 {
-	for (int x = 0; x != MPP_MAX_BANDS; x++) {
+	for (int x = 0; x != MPP_MAX_CHORD_BANDS; x++) {
 		if (x % step)
 			input.clr(x);
 	}
@@ -371,7 +371,7 @@ MppNextChordRoot(MppChord_t &input, int step)
 Q_DECL_EXPORT void
 MppPrevChordRoot(MppChord_t &input, int step)
 {
-	for (int x = 0; x != MPP_MAX_BANDS; x++) {
+	for (int x = 0; x != MPP_MAX_CHORD_BANDS; x++) {
 		if (x % step)
 			input.clr(x);
 	}
@@ -390,7 +390,7 @@ MppFindChordRoot(MppChord_t input, uint32_t *rots, uint32_t *steps)
 	uint32_t tmpsteps = 0;
 	uint32_t sumbits = 0;
 
-	for (uint32_t x = 0; x != MPP_MAX_BANDS; x++) {
+	for (uint32_t x = 0; x != MPP_MAX_CHORD_BANDS; x++) {
 		if (input.test(x))
 			sumbits++;
 	}
@@ -400,16 +400,16 @@ MppFindChordRoot(MppChord_t input, uint32_t *rots, uint32_t *steps)
 	if (steps)
 		*steps = 0;
 
-	for (uint32_t x = 0; x != MPP_MAX_BANDS; x++) {
+	for (uint32_t x = 0; x != MPP_MAX_CHORD_BANDS; x++) {
 		if (input.test(0)) {
 			input.tog(0);
-			input.tog(MPP_MAX_BANDS);
+			input.tog(MPP_MAX_CHORD_BANDS);
 			tmpsteps++;
 			tmpsteps %= sumbits;
 		}
 		input.shr();
 		tmprot++;
-		tmprot %= MPP_MAX_BANDS;
+		tmprot %= MPP_MAX_CHORD_BANDS;
 		if (input == retval)
 			break;
 		if (input < retval) {
@@ -601,7 +601,7 @@ MppStringDecodeKey(const QString &str, int &off)
 		z = y;
 		rem = MppGetValue(str, z);
 		if (rem > 0 && z != str.length() && str[z] == '.') {
-			x += MPP_BAND_REM_BITREV(rem);
+			x += MPP_SUBDIV_REM_BITREV(rem);
 			/* advance */
 			y = z + 1;
 		}
@@ -623,7 +623,7 @@ MppStringDecodeNumeric(const QString &str, int &off)
 	if (x < 1)
 		goto error;
 	off = y;
-	return (MPP_KEY_TO_BAND(x));
+	return (MPP_KEY_TO_BAND_REM(x));
 error:
 	return (-1);
 }
@@ -658,12 +658,13 @@ MppStringToChordGeneric(MppChord_t &mask, uint32_t &rem, uint32_t &bass, uint32_
 		mask = MppScoreVariants12[x].footprint[0];
 		/* check for add */
 		if (add > -1) {
-			if (mask.test(add * MPP_BAND_STEP_12))
+			if (mask.test(add * (MPP_BAND_STEP_12 / MPP_BAND_STEP_CHORD)))
 				goto error;
-			mask.set(add * MPP_BAND_STEP_12);
+			mask.set(add * (MPP_BAND_STEP_12 / MPP_BAND_STEP_CHORD));
 		}
 		/* adjust for rotation */
-		rem = (rem + MppScoreVariants12[x].rots[0]) % MPP_MAX_BANDS;
+		rem = (rem +
+		    (MppScoreVariants12[x].rots[0] * MPP_BAND_STEP_CHORD)) % MPP_MAX_BANDS;
 		goto next;
 	    }
 	}
@@ -671,9 +672,12 @@ next:
 	while (y != str.length() && str[y] == '%') {
 		y++;
 		diff = MppStringDecodeNumeric(str, y);
-		if (diff == -1U || (diff % step) || mask.test(diff))
+		if (diff == -1U || (diff % step))
 			goto error;
-		mask.set(diff);
+		uint32_t bit = diff / MPP_BAND_STEP_CHORD;
+		if (mask.test(bit))
+			goto error;
+		mask.set(bit);
 	}
 	if (y != str.length()) {
 		if (str[y] != '/')
@@ -697,7 +701,7 @@ Q_DECL_EXPORT void
 MppChordToStringGeneric(MppChord_t mask, uint32_t rem, uint32_t bass, uint32_t sharp, uint32_t step, QString &retval)
 {
 	uint32_t rots;
-	uint32_t rots_min = MPP_MAX_BANDS;
+	uint32_t rots_min = MPP_MAX_CHORD_BANDS;
 	size_t z;
 
 	rem = rem % MPP_MAX_BANDS;
@@ -711,18 +715,14 @@ MppChordToStringGeneric(MppChord_t mask, uint32_t rem, uint32_t bass, uint32_t s
 	mask = MppFindChordRoot(mask, &rots);
 
 	/* adjust for rotations */
-	rem = (rem + rots) % MPP_MAX_BANDS;
-	
+	rem = (rem + rots * MPP_BAND_STEP_CHORD) % MPP_MAX_BANDS;
+
 	/* look for known chords, with least rotation */
 	for (size_t x = z = 0; x != (sizeof(MppScoreVariants12) / sizeof(MppScoreVariants12[0])); x++) {
 		uint32_t y;
-		if (MppScoreVariants12[x].footprint[0] != mask) {
-			if (MppScoreVariants12[x].footprint[1] != mask)
-				continue;
-			y = MppScoreVariants12[x].rots[1];
-		} else {
-			y = MppScoreVariants12[x].rots[0];
-		}
+		if (MppScoreVariants12[x].footprint[0] != mask)
+			continue;
+		y = MppScoreVariants12[x].rots[0];
 		if (y < rots_min) {
 			rots_min = y;
 			z = x;
@@ -737,7 +737,7 @@ MppChordToStringGeneric(MppChord_t mask, uint32_t rem, uint32_t bass, uint32_t s
 		MppExpandPattern12(pat, retval);
 
 		/* adjust for rotations, again */
-		rem = (rem + MPP_MAX_BANDS - rots_min) % MPP_MAX_BANDS;
+		rem = (rem + MPP_MAX_BANDS - rots_min * MPP_BAND_STEP_CHORD) % MPP_MAX_BANDS;
 
 		retval = MppKeyToStringGeneric(rem, sharp) + retval;
 		if (rem != bass)
@@ -748,11 +748,12 @@ MppChordToStringGeneric(MppChord_t mask, uint32_t rem, uint32_t bass, uint32_t s
 	retval = MppKeyToStringGeneric(rem, sharp) + QString("1");
 
 	/* use the generic way */
-	for (int x = 1; x != MPP_MAX_BANDS; x++) {
+	for (int x = 1; x != MPP_MAX_CHORD_BANDS; x++) {
 		if (mask.test(x)) {
-			if (x % step)
+			if ((x * MPP_BAND_STEP_CHORD) % step)
 				goto error;
-			retval += QString("%%1").arg(MPP_BAND_TO_KEY(x));
+			retval += QString("%%1").arg(
+			    MPP_BAND_REM_TO_KEY(x * MPP_BAND_STEP_CHORD));
 		}
 	}
 	if (rem != bass) {
@@ -800,8 +801,10 @@ MppKeyToStringGeneric(int key, int sharp)
 	QString retval;
 	int rem;
 
-	key = MPP_BAND_REM(key);
-	rem = MPP_BAND_REM_BITREV(key);
+	key = MPP_BAND_REM(key, MPP_MAX_BANDS);
+
+	/* extract remainder and key */
+	rem = MPP_SUBDIV_REM_BITREV(key);
 	key /= MPP_BAND_STEP_12;
 
 	if (rem != 0) {
@@ -831,12 +834,11 @@ MppStepChordGeneric(QString &input, int adjust, uint32_t sharp)
 	if (mask.test(0) == 0)
 		return;
 
-	adjust = MPP_BAND_REM(adjust);
-
 	rem += adjust;
 	bass += adjust;
-	rem = MPP_BAND_REM(rem);
-	bass = MPP_BAND_REM(bass);
+
+	rem = MPP_BAND_REM(rem, MPP_MAX_BANDS);
+	bass = MPP_BAND_REM(bass, MPP_MAX_BANDS);
 
 	MppChordToStringGeneric(mask, rem, bass, sharp, 1, str);
 
@@ -852,30 +854,11 @@ MppScoreVariant :: MppScoreVariant(uint32_t _chord, const char *a,
 	footprint[0].zero();
 	for (int x = 0; x != 12; x++) {
 		if ((_chord >> x) & 1)
-			footprint[0].set(x * MPP_BAND_STEP_12);
+			footprint[0].set(x * (MPP_BAND_STEP_12 / MPP_BAND_STEP_CHORD));
 	}
 	footprint[0] = MppFindChordRoot(footprint[0], &rots[0]);
 	pattern[0] = a;
 	pattern[1] = b;
 	pattern[2] = c;
 	pattern[3] = d;
-
-	footprint[1] = footprint[0];
-	rots[1] = rots[0];
-
-	for (uint32_t y = 0; y != MPP_MAX_BANDS; y += MPP_BAND_STEP_12) {
-		uint32_t temp;
-		uint32_t pb = (y + MPP_BAND_STEP_12 * 4) % MPP_MAX_BANDS;
-		uint32_t pc = (y + MPP_BAND_STEP_12 * 7) % MPP_MAX_BANDS;
-
-		if (footprint[1].test(y) && footprint[1].test(pb) && footprint[1].test(pc)) {
-			/* adjust treble tone down */
-			footprint[1].clr(pb);
-			footprint[1].set((pb + MPP_MAX_BANDS - MPP_BAND_STEP_96) % MPP_MAX_BANDS);
-			footprint[1] = MppFindChordRoot(footprint[1], &temp);
-
-			/* adjust for rotation */
-			rots[1] = (rots[1] + temp) % MPP_MAX_BANDS;
-		}
-	}
 }

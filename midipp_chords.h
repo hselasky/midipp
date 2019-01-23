@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2018 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2018-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,7 +29,7 @@
 #include "midipp.h"
 
 struct MppChord {
-	uint32_t data[(MPP_MAX_BANDS + 1 + 31) / 32];
+	uint32_t data[(MPP_MAX_CHORD_BANDS + 1 + 31) / 32];
 	void zero() { memset(data, 0, sizeof(data)); };
 	void set(size_t x) { data[x / 32] |= 1U << (x % 32); }
 	void clr(size_t x) { data[x / 32] &= ~(1U << (x % 32)); };
@@ -37,7 +37,7 @@ struct MppChord {
 	bool test(size_t x) const { return ((data[x / 32] >> (x % 32)) & 1); };
 	uint32_t order() {
 		uint32_t retval = 0;
-		for (int x = 0; x != MPP_MAX_BANDS; x++) {
+		for (int x = 0; x != MPP_MAX_CHORD_BANDS; x++) {
 			if (test(x))
 				retval++;
 		}
@@ -46,15 +46,15 @@ struct MppChord {
 	void inc(int step) {
 		int x;
 		int y = 0;
-		for (x = y = 0; x != MPP_MAX_BANDS; x += step) {
+		for (x = y = 0; x != MPP_MAX_CHORD_BANDS; x += step) {
 			if (test(x))
 				break;
 		}
-		for (; x != MPP_MAX_BANDS && test(x); x += step) {
+		for (; x != MPP_MAX_CHORD_BANDS && test(x); x += step) {
 			tog(x);
 			y += step;
 		}
-		if (x != MPP_MAX_BANDS) {
+		if (x != MPP_MAX_CHORD_BANDS) {
 			tog(x);
 			y -= step;
 		}
@@ -65,15 +65,15 @@ struct MppChord {
 	void dec(int step) {
 		int x;
 		int y = 0;
-		for (x = y = 0; x != MPP_MAX_BANDS; x += step) {
+		for (x = y = 0; x != MPP_MAX_CHORD_BANDS; x += step) {
 			if (test(x) == 0)
 				break;
 		}
-		for (; x != MPP_MAX_BANDS && test(x) == 0; x += step) {
+		for (; x != MPP_MAX_CHORD_BANDS && test(x) == 0; x += step) {
 			tog(x);
 			y += step;
 		}
-		if (x != MPP_MAX_BANDS) {
+		if (x != MPP_MAX_CHORD_BANDS) {
 			tog(x);
 			y -= step;
 		}
@@ -165,8 +165,8 @@ public:
 	    const char *c = 0, const char *d = 0);
 	~MppScoreVariant() { };
 	const char * pattern[4];
-	MppChord_t footprint[2];
-	uint32_t rots[2];
+	MppChord_t footprint[1];
+	uint32_t rots[1];
 };
 
 extern void MppRolUpChord(MppChord_t &input, int &delta);

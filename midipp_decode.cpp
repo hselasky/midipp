@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2018 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,13 +37,13 @@
 Q_DECL_EXPORT const QString
 MppKeyStr(int key)
 {
-	int rem = MPP_BAND_REM(key);
+	int rem = MPP_BAND_REM(key, MPP_MAX_BANDS);
 	int off;
 	int sub;
 	int oct;
 
-	off = rem / MPP_MAX_SUBDIV;
-	sub = rem % MPP_MAX_SUBDIV;
+	off = rem / MPP_BAND_STEP_12;
+	sub = rem % MPP_BAND_STEP_12;
 	oct = (key - rem) / MPP_MAX_BANDS;
 
 	if (sub != 0) {
@@ -52,7 +52,7 @@ MppKeyStr(int key)
 			"E%1.%2", "F%1.%2", "G%1B.%2", "G%1.%2",
 			"A%1B.%2", "A%1.%2", "H%1B.%2", "H%1.%2"
 		};
-		sub = MPP_BAND_REM_BITREV(sub);
+		sub = MPP_SUBDIV_REM_BITREV(sub);
 		return (QString(off_map[off]).arg(oct).arg(sub));
 	} else {
 	  	const char *off_map[12] = {
@@ -67,13 +67,13 @@ MppKeyStr(int key)
 Q_DECL_EXPORT const QString
 MppKeyStrNoOctave(int key)
 {
-	int rem = MPP_BAND_REM(key);
+	int rem = MPP_BAND_REM(key, MPP_MAX_BANDS);
 	int off;
 	int sub;
 	int oct;
 
-	off = rem / MPP_MAX_SUBDIV;
-	sub = rem % MPP_MAX_SUBDIV;
+	off = rem / MPP_BAND_STEP_12;
+	sub = rem % MPP_BAND_STEP_12;
 	oct = (key - rem) / MPP_MAX_BANDS;
 
 	if (sub != 0) {
@@ -82,7 +82,7 @@ MppKeyStrNoOctave(int key)
 			"E.%1", "F.%1", "Gb.%1", "G.%1",
 			"Ab.%1", "A.%1", "Hb.%1", "H.%1"
 		};
-		sub = MPP_BAND_REM_BITREV(sub);
+		sub = MPP_SUBDIV_REM_BITREV(sub);
 		return (QString(off_map[off]).arg(sub));
 	} else {
 	  	const char *off_map[12] = {
@@ -100,10 +100,10 @@ MppBitsToString(const MppChord_t &mask, int off)
 	QString temp;
 	int x;
 
-	for (x = 0; x != MPP_MAX_BANDS; x++) {
+	for (x = 0; x != MPP_MAX_CHORD_BANDS; x++) {
 		if (mask.test(x) == 0)
 			continue;
-		temp += MppKeyStrNoOctave(x + off);
+		temp += MppKeyStrNoOctave((x * MPP_BAND_STEP_CHORD) + off);
 		temp += " ";
 	}
 	return (temp);
@@ -124,7 +124,7 @@ MppScoreVariantInit(void)
 	for (z = 0, x = MPP_BAND_STEP_12; x != MPP_MAX_BANDS; x += MPP_BAND_STEP_12) {
 		mask.zero();
 		mask.set(0);
-		mask.set(x);
+		mask.set(x / MPP_BAND_STEP_CHORD);
 
 		if (MppFindChordRoot(mask) != mask)
 			continue;
@@ -148,8 +148,8 @@ MppScoreVariantInit(void)
 		for (y = x + MPP_BAND_STEP_12; y != MPP_MAX_BANDS; y += MPP_BAND_STEP_12) {
 			mask.zero();
 			mask.set(0);
-			mask.set(x);
-			mask.set(y);
+			mask.set(x / MPP_BAND_STEP_CHORD);
+			mask.set(y / MPP_BAND_STEP_CHORD);
 
 			if (MppFindChordRoot(mask) != mask)
 				continue;
@@ -170,9 +170,10 @@ MppScoreVariantInit(void)
 
 	Mpp.VariantList += QString("/* List of supported keys */\n\n");
 	
-	for (x = 0; x != MPP_MAX_BANDS; x++) {
-		Mpp.VariantList += MppKeyStr(x);
-		Mpp.VariantList += QString(" /* %1 of %2 */\n").arg(x).arg(MPP_MAX_BANDS);
+	for (x = 0; x != MPP_MAX_CHORD_BANDS; x++) {
+		Mpp.VariantList += MppKeyStr(x * MPP_BAND_STEP_CHORD);
+		Mpp.VariantList += QString(" /* %1 of %2 */\n").arg(x)
+		    .arg(MPP_MAX_CHORD_BANDS);
 	}
 }
 
@@ -183,7 +184,7 @@ MppInitArray(const uint8_t *src, MppChord_t *dst, uint8_t n)
 		dst[n].zero();
 		for (uint8_t x = 0; x != 12; x++) {
 			if ((src[n] >> x) & 1)
-				dst[n].set(MPP_MAX_SUBDIV * x);
+				dst[n].set((MPP_BAND_STEP_12 / MPP_BAND_STEP_CHORD) * x);
 		}
 	}
 }
@@ -192,13 +193,13 @@ static int
 MppCommonKeys(const MppChord_t & pa, const MppChord_t & pb, int a_key, int b_key)
 {
 	MppChord_t temp = pb;
-	int key = (MPP_MAX_BANDS + a_key * MPP_MAX_SUBDIV -
-	    b_key * MPP_MAX_SUBDIV) % MPP_MAX_BANDS;
+	int key = ((12 + a_key - b_key) % 12) *
+	    (MPP_BAND_STEP_12 / MPP_BAND_STEP_CHORD);
 
 	while (key--) {
 		if (temp.test(0)) {
 			temp.tog(0);
-			temp.tog(MPP_MAX_BANDS);
+			temp.tog(MPP_MAX_CHORD_BANDS);
 		}
 		temp.shr();
 	}
@@ -223,7 +224,6 @@ MppDecodeCircle :: MppDecodeCircle(MppDecodeTab *_ptab)
 
 MppDecodeCircle :: ~MppDecodeCircle()
 {
-
 }
 
 void
@@ -236,7 +236,7 @@ MppDecodeCircle :: mousePressEvent(QMouseEvent *event)
 			if (r_press[x][y].contains(p) == 0)
 				continue;
 			ptab->chord_key -= ptab->chord_key % MPP_MAX_BANDS;
-			ptab->chord_key += MPP_MAX_SUBDIV * r_key[x][y];
+			ptab->chord_key += MPP_BAND_STEP_12 * r_key[x][y];
 			ptab->chord_bass = ptab->chord_key % MPP_MAX_BANDS;
 			ptab->chord_mask = r_mask[x][y];
 			ptab->chord_step = MPP_BAND_STEP_12;
@@ -272,7 +272,7 @@ MppDecodeCircle :: paintEvent(QPaintEvent *event)
 	uint8_t x;
 	uint8_t y;
 	uint8_t z;
-	uint8_t found_key;
+	int found_key;
 	uint32_t rols;
 	MppChord_t footprint;
 
@@ -284,7 +284,9 @@ MppDecodeCircle :: paintEvent(QPaintEvent *event)
 	memset(r_mask, 0, sizeof(r_mask));
 
 	footprint = MppFindChordRoot(ptab->chord_mask, &rols);
-	found_key = (ptab->chord_key + rols) % MPP_MAX_BANDS;
+	found_key = (ptab->chord_key +
+	    (rols * MPP_BAND_STEP_CHORD)) % MPP_MAX_BANDS;
+	found_key /= MPP_BAND_STEP_12;
 
 	r = (w > h) ? h : w;
 	step = r / (2 * (NMAX + 2));
@@ -328,7 +330,7 @@ MppDecodeCircle :: paintEvent(QPaintEvent *event)
 			QColor fg;
 
 			switch (MppCommonKeys(r_mask[x][y], footprint,
-					      r_key[x][y], (found_key / MPP_MAX_SUBDIV))) {
+					      r_key[x][y], found_key)) {
 			case 3:
 				bg = Mpp.ColorWhite;
 				fg = Mpp.ColorBlack;
@@ -356,7 +358,7 @@ MppDecodeCircle :: paintEvent(QPaintEvent *event)
 
 			paint.drawText(r_press[x][y],
 			    Qt::AlignCenter | Qt::TextSingleLine,
-			    MppKeyStrNoOctave(r_key[x][y] * MPP_MAX_SUBDIV) +
+			    MppKeyStrNoOctave(r_key[x][y] * MPP_BAND_STEP_12) +
 			    ((x == 1) ? "m" : ""));
 		}
 	}
@@ -379,7 +381,7 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 
 	footprint.zero();
 
-	for (int x = 0; x != MPP_MAX_BANDS; x++) {
+	for (int x = 0; x != MPP_MAX_CHORD_BANDS; x++) {
 		if (pinfo->stats[x] == 0)
 			continue;
 		footprint.set(x);
@@ -390,10 +392,10 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 
 	while (footprint.test(0) == 0) {
 		footprint.shr();
-		key++;
+		key += MPP_BAND_STEP_CHORD;
 	}
 
-	bass = MPP_BAND_REM(pinfo->key_base);
+	bass = MPP_BAND_REM(pinfo->key_base, MPP_MAX_BANDS);
 
 	MppChordToStringGeneric(footprint, key, bass, is_sharp, 1, out);
 
@@ -425,8 +427,8 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	chord_step = MPP_BAND_STEP_12;
 	chord_mask.zero();
 	chord_mask.set(0);
-	chord_mask.set(MPP_BAND_STEP_12 * 4);
-	chord_mask.set(MPP_BAND_STEP_12 * 7);
+	chord_mask.set((MPP_BAND_STEP_12 / MPP_BAND_STEP_CHORD) * 4);
+	chord_mask.set((MPP_BAND_STEP_12 / MPP_BAND_STEP_CHORD) * 7);
 	delta_v = 0;
 
 	mw = _mw;
@@ -555,7 +557,7 @@ MppDecodeTab :: handle_play_press()
 	int key_bass;
 
 	mw->atomic_lock();
-	key_bass = chord_key - MPP_BAND_REM(chord_key) + chord_bass;
+	key_bass = chord_key - MPP_BAND_REM(chord_key, MPP_MAX_BANDS) + chord_bass;
 	if (key_bass >= chord_key)
 		key_bass -= 2 * MPP_MAX_BANDS;
 	else
@@ -564,9 +566,11 @@ MppDecodeTab :: handle_play_press()
 	mw->output_key(MPP_DEFAULT_TRACK(sm->unit), sm->synthChannel, key_bass, vel, 0, 0);
 	mw->output_key(MPP_DEFAULT_TRACK(sm->unit), sm->synthChannel, key_bass + MPP_MAX_BANDS, vel, 0, 0);
 
-	for (int x = 0; x != MPP_MAX_BANDS; x++) {
-		if (chord_mask.test(x))
-			mw->output_key(MPP_DEFAULT_TRACK(sm->unit), sm->synthChannel, chord_key + x, vel, 0, 0);
+	for (int x = 0; x != MPP_MAX_CHORD_BANDS; x++) {
+		if (chord_mask.test(x)) {
+			mw->output_key(MPP_DEFAULT_TRACK(sm->unit),
+			sm->synthChannel, chord_key + (x * MPP_BAND_STEP_CHORD), vel, 0, 0);
+		}
 	}
 	mw->atomic_unlock();
 }
@@ -578,7 +582,7 @@ MppDecodeTab :: handle_play_release()
 	int key_bass;
 
 	mw->atomic_lock();
-	key_bass = chord_key - MPP_BAND_REM(chord_key) + chord_bass;
+	key_bass = chord_key - MPP_BAND_REM(chord_key, MPP_MAX_BANDS) + chord_bass;
 	if (key_bass >= chord_key)
 		key_bass -= 2 * MPP_MAX_BANDS;
 	else
@@ -587,9 +591,11 @@ MppDecodeTab :: handle_play_release()
 	mw->output_key(MPP_DEFAULT_TRACK(sm->unit), sm->synthChannel, key_bass, 0, 0, 0);
 	mw->output_key(MPP_DEFAULT_TRACK(sm->unit), sm->synthChannel, key_bass + MPP_MAX_BANDS, 0, 0, 0);
 
-	for (int x = 0; x != MPP_MAX_BANDS; x++) {
-		if (chord_mask.test(x))
-			mw->output_key(MPP_DEFAULT_TRACK(sm->unit), sm->synthChannel, chord_key + x, 0, 0, 0);
+	for (int x = 0; x != MPP_MAX_CHORD_BANDS; x++) {
+		if (chord_mask.test(x)) {
+			mw->output_key(MPP_DEFAULT_TRACK(sm->unit),
+			    sm->synthChannel, chord_key + (x * MPP_BAND_STEP_CHORD), 0, 0, 0);
+		}
 	}
 	mw->atomic_unlock();
 }
@@ -656,21 +662,21 @@ void
 MppDecodeTab :: handle_align(int key)
 {
 	if (key < (2 * MPP_MAX_BANDS) ||
-	    key > (128 * MPP_MAX_SUBDIV - MPP_MAX_BANDS))
+	    key > (128 * MPP_BAND_STEP_12 - MPP_MAX_BANDS))
 		return;
 
-	chord_key = key - MPP_BAND_REM(key) +
-	    MPP_MAX_BANDS + MPP_BAND_REM(chord_key);
+	chord_key = key - MPP_BAND_REM(key, MPP_MAX_BANDS) +
+	    MPP_MAX_BANDS + MPP_BAND_REM(chord_key, MPP_MAX_BANDS);
 
-	for (int x = MPP_MAX_BANDS; x--; ) {
+	for (int x = MPP_MAX_CHORD_BANDS; x--; ) {
 		if (chord_mask.test(x) == 0)
 			continue;
-		if ((chord_key + x) < key)
+		if ((chord_key + (x * MPP_BAND_STEP_CHORD)) < key)
 			break;
 		int rols = 0;
 		MppRolUpChord(chord_mask, rols);
-		chord_key -= rols;
-		x = MPP_MAX_BANDS;
+		chord_key -= rols * MPP_BAND_STEP_CHORD;
+		x = MPP_MAX_CHORD_BANDS;
 	}
 }
 
@@ -679,12 +685,12 @@ MppDecodeTab :: handle_rol_up()
 {
 	int rols;
 
-	if (chord_key > (128 * MPP_MAX_SUBDIV - MPP_MAX_BANDS))
+	if (chord_key > (128 * MPP_BAND_STEP_12 - MPP_MAX_BANDS))
 		return;
 	handle_play_release();
 	rols = 0;
 	MppRolDownChord(chord_mask, rols);
-	chord_key += rols;
+	chord_key += rols * MPP_BAND_STEP_CHORD;
 	handle_refresh();
 	handle_play_press();
 }
@@ -699,7 +705,7 @@ MppDecodeTab :: handle_rol_down()
 	handle_play_release();
 	rols = 0;
 	MppRolUpChord(chord_mask, rols);
-	chord_key -= rols;
+	chord_key -= rols * MPP_BAND_STEP_CHORD;
 	handle_refresh();
 	handle_play_press();
 }
@@ -710,8 +716,9 @@ MppDecodeTab :: handle_mod_up()
 	uint32_t rols;
 	handle_play_release();
 	chord_mask = MppFindChordRoot(chord_mask, &rols);
-	chord_key += rols;
-	MppNextChordRoot(chord_mask, chord_step);
+	chord_key += rols * MPP_BAND_STEP_CHORD;
+	MppNextChordRoot(chord_mask,
+	    chord_step / MPP_BAND_STEP_CHORD);
 	handle_refresh();
 	handle_play_press();
 }
@@ -722,8 +729,9 @@ MppDecodeTab :: handle_mod_down()
   	uint32_t rols;
 	handle_play_release();
 	chord_mask = MppFindChordRoot(chord_mask, &rols);
-	chord_key += rols;
-	MppPrevChordRoot(chord_mask, chord_step);
+	chord_key += rols * MPP_BAND_STEP_CHORD;
+	MppPrevChordRoot(chord_mask,
+	    chord_step / MPP_BAND_STEP_CHORD);
 	handle_refresh();
 	handle_play_press();
 }
@@ -759,8 +767,8 @@ MppDecodeTab :: handle_step_up_one()
 {
 	handle_play_release();
 	if (chord_key < (128 * MPP_BAND_STEP_12)) {
-		chord_key += 1;
-		chord_bass += 1;
+		chord_key += MPP_BAND_STEP_CHORD;
+		chord_bass += MPP_BAND_STEP_CHORD;
 		chord_bass %= MPP_MAX_BANDS;
 		handle_refresh();
 	}
@@ -772,8 +780,8 @@ MppDecodeTab :: handle_step_down_one()
 {
 	handle_play_release();
 	if (chord_key >= (24 * MPP_BAND_STEP_12 + 1)) {
-		chord_key -= 1;
-		chord_bass += MPP_MAX_BANDS - 1;
+		chord_key -= MPP_BAND_STEP_CHORD;
+		chord_bass += MPP_MAX_BANDS - MPP_BAND_STEP_CHORD;
 		chord_bass %= MPP_MAX_BANDS;
 		handle_refresh();
 	}
@@ -787,8 +795,15 @@ MppDecodeTab :: handle_round_12()
 }
 
 void
-MppDecodeTab :: round(uint8_t value)
+MppDecodeTab :: round(int value)
 {
+	int x,y,mod;
+
+	if (value < 0)
+		return;
+
+	mod = (value / MPP_BAND_STEP_CHORD);
+
 	chord_step = value;
 
 	chord_key += value / 2;
@@ -798,15 +813,18 @@ MppDecodeTab :: round(uint8_t value)
 	chord_bass -= chord_bass % value;
 	chord_bass %= MPP_MAX_BANDS;
 
-	for (uint32_t x = 0; x != MPP_MAX_BANDS; x++) {
-		if (chord_mask.test(x) == 0 || (x % value) == 0)
-			continue;
+	if (mod > 0) {
+		for (x = 0; x != MPP_MAX_CHORD_BANDS; x++) {
+			if (chord_mask.test(x) == 0 || (x % mod) == 0)
+				continue;
 
-		uint32_t y = x + (value / 2);
-		y -= (y % value);
-		y %= MPP_MAX_BANDS;
-		chord_mask.clr(x);
-		chord_mask.set(y);
+			y = x + (mod / 2);
+			y -= (y % mod);
+			y %= MPP_MAX_CHORD_BANDS;
+
+			chord_mask.clr(x);
+			chord_mask.set(y);
+		}
 	}
 	handle_refresh();
 }
@@ -818,7 +836,10 @@ MppDecodeTab :: handle_refresh()
 	QString str;
 	int key_bass;
 
-	key_bass = chord_key - MPP_BAND_REM(chord_key) + chord_bass;
+	key_bass = chord_key -
+	    MPP_BAND_REM(chord_key, MPP_MAX_BANDS) +
+	    chord_bass;
+
 	if (key_bass >= chord_key)
 		key_bass -= 2 * MPP_MAX_BANDS;
 	else
@@ -832,10 +853,10 @@ MppDecodeTab :: handle_refresh()
 	out_key += MppKeyStr(key_bass + MPP_MAX_BANDS);
 	out_key += " ";
 	
-	for (int x = 0; x != MPP_MAX_BANDS; x++) {
+	for (int x = 0; x != MPP_MAX_CHORD_BANDS; x++) {
 		if (chord_mask.test(x) == 0)
 			continue;
-		out_key += MppKeyStr(x + chord_key);
+		out_key += MppKeyStr((x * MPP_BAND_STEP_CHORD) + chord_key);
 		out_key += " ";
 	}
 
@@ -874,11 +895,16 @@ MppDecodeTab :: handle_parse()
 	if (mask.test(0) == 0)
 		goto error;
 
-	chord_bass = MPP_BAND_REM(bass);
-	chord_key = chord_key - MPP_BAND_REM(chord_key) + rem;
+	chord_bass = MPP_BAND_REM(bass, MPP_MAX_BANDS);
+	chord_key = chord_key -
+	    MPP_BAND_REM(chord_key, MPP_MAX_BANDS) +
+	    rem;
 	chord_mask = mask;
 
-	key_bass = chord_key - MPP_BAND_REM(chord_key) + chord_bass;
+	key_bass = chord_key -
+	    MPP_BAND_REM(chord_key, MPP_MAX_BANDS) +
+	    chord_bass;
+
 	if (key_bass >= chord_key)
 		key_bass -= 2 * MPP_MAX_BANDS;
 	else
@@ -889,10 +915,10 @@ MppDecodeTab :: handle_parse()
 	out_key += MppKeyStr(key_bass + MPP_MAX_BANDS);
 	out_key += " ";
 	
-	for (int x = 0; x != MPP_MAX_BANDS; x++) {
+	for (int x = 0; x != MPP_MAX_CHORD_BANDS; x++) {
 		if (chord_mask.test(x) == 0)
 			continue;
-		out_key += MppKeyStr(x + chord_key);
+		out_key += MppKeyStr((x * MPP_BAND_STEP_CHORD) + chord_key);
 		out_key += " ";
 	}
 

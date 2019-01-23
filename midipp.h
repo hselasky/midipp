@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2018 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -95,8 +95,9 @@
 #include "TargetConditionals.h"
 #endif
 
-#define	MPP_MAX_SUBDIV	16			/* limited by number of MIDI channels */
-#define	MPP_MAX_BANDS	(12 * MPP_MAX_SUBDIV)	/* number of divisions per octave */
+#define	MPP_MAX_KEYS (128 * 128 * 128 * 128)	/* maximum number of keys */
+#define	MPP_MAX_BANDS (12 * 128 * 128 * 128)	/* number of divisions per octave */
+#define	MPP_MAX_CHORD_BANDS	192
 #define	MPP_MAX_CHORD_MAP	30
 #define	MPP_MAX_BUTTON_MAP	16
 #define	MPP_MAX_VIEWS	2
@@ -149,64 +150,70 @@
 #define	MPP_BAND_STEP_48 (MPP_MAX_BANDS / 48)
 #define	MPP_BAND_STEP_96 (MPP_MAX_BANDS / 96)
 #define	MPP_BAND_STEP_192 (MPP_MAX_BANDS / 192)
+#define	MPP_BAND_STEP_CHORD (MPP_MAX_BANDS / MPP_MAX_CHORD_BANDS)
 
-#define	MPP_BAND_REM(x) \
-    ((MPP_MAX_BANDS + ((x) % MPP_MAX_BANDS)) % MPP_MAX_BANDS)
+#define	MPP_BAND_REM(x,y)				\
+    (((y) + (((x) / (MPP_MAX_BANDS / (y))) % (y))) % (y))
 
-#define	MPP_BAND_REM_BITREV(x) ({		\
-	int __retval = 0;			\
-	if (x & 1)				\
-		__retval |= 8;			\
-	if (x & 2)				\
-		__retval |= 4;			\
-	if (x & 4)				\
-		__retval |= 2;			\
-	if (x & 8)				\
-		__retval |= 1;			\
-	__retval;				\
-})
+static inline int
+MPP_SUBDIV_REM_BITREV(int x)
+{
+	int x_mask = MPP_BAND_STEP_12 / 2;
+	int r_mask = 1;
+	int retval = 0;
 
-#define	MPP_BAND_TO_KEY(x) ({			\
-	int __retval = 0;			\
-	int __x = MPP_BAND_REM(x);		\
-	if (__x & 1)				\
-		__retval += 32 * 3;		\
-	if (__x & 2)				\
-		__retval += 16 * 3;		\
-	if (__x & 4)				\
-		__retval += 8 * 3;		\
-	if (__x & 8)				\
-		__retval += 4 * 3;		\
-	if (__x & 16)				\
-		__retval += 2 * 3;		\
-	if (__x & 32)				\
-		__retval += 1 * 3;		\
-	if (__x & 64)				\
-		__retval += 1;			\
-	if (__x & 128)				\
-		__retval += 2;			\
-	__retval;				\
-})
+	while (r_mask != MPP_BAND_STEP_12) {
+		if (x & x_mask)
+			retval |= r_mask;
+		r_mask <<= 1;
+		x_mask >>= 1;
+	}
+	return (retval);
+}
 
-#define	MPP_KEY_TO_BAND(x) ({			\
-	int __rem = MPP_BAND_REM(x);		\
-	int __retval = (__rem % 3) *		\
-	    (MPP_MAX_BANDS / 3);		\
-	int __x = __rem / 3;			\
-	if (__x & 1)				\
-		__retval += 32;			\
-	if (__x & 2)				\
-		__retval += 16;			\
-	if (__x & 4)				\
-		__retval += 8;			\
-	if (__x & 8)				\
-		__retval += 4;			\
-	if (__x & 16)				\
-		__retval += 2;			\
-	if (__x & 32)				\
-		__retval += 1;			\
-	__retval;				\
-})
+static inline int
+MPP_BAND_REM_TO_KEY(int x)
+{
+	int x_mask = 4 * MPP_BAND_STEP_12 / 2;
+	int r_mask = 1;
+	int retval = 0;
+
+	while (r_mask != (4 * MPP_BAND_STEP_12)) {
+		if (x & x_mask)
+			retval |= r_mask;
+		r_mask <<= 1;
+		x_mask >>= 1;
+	}
+
+	retval *= 3;
+
+	if (x & (4 * MPP_BAND_STEP_12))
+		retval += 1;
+	if (x & (8 * MPP_BAND_STEP_12))
+		retval += 2;
+
+	return (retval);
+}
+
+static inline int
+MPP_KEY_TO_BAND_REM(int x)
+{
+	int x_mask = 4 * MPP_BAND_STEP_12 / 2;
+	int r_mask = 1;
+	int retval;
+
+	retval = (x % 3) * (MPP_MAX_BANDS / 3);
+
+	x /= 3;
+
+	while (r_mask != (4 * MPP_BAND_STEP_12)) {
+		if (x & x_mask)
+			retval += r_mask;
+		r_mask <<= 1;
+		x_mask >>= 1;
+	}
+	return (retval);
+}
 
 #define	MPP_KEY_MIN (1 << 31)
 
