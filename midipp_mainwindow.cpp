@@ -234,7 +234,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " * K1 - lock play key until next label jump.\n"
 	    " * K2 - unlock play key.\n"
 	    " * K3.<bpm>.<period_ms> - set reference BPM and period in ms.\n"
-	    " * K4.<number> - enable automatic melody effect on the N-th note, if non-zero.\n"
+	    " * K4 - no operation.\n"
 	    " * K5.0 - Disable micro tuning\n"
 	    " * K5.1 - Enable micro tuning\n"
 	    " * K6 - no operation.\n"

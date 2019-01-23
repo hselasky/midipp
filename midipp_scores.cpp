@@ -223,8 +223,6 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	butScoreFileStepDownSingle = new QPushButton(tr("Step Down 1"));
 	butScoreFileSetSharp = new QPushButton(tr("Set #"));
 	butScoreFileSetFlat = new QPushButton(tr("Set b"));
-	butScoreFileAutoMel[0] = new MppButton(tr("AutoMel 1"), 0);
-	butScoreFileAutoMel[1] = new MppButton(tr("AutoMel 2"), 1);
 	butScoreFileReplaceAll = new QPushButton(tr("Replace all"));
 	butScoreFileExport = new QPushButton(tr("To Lyrics with chords"));
 	butScoreFileExportNoChords = new QPushButton(tr("To Lyrics no chords"));
@@ -251,8 +249,6 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 
 	gbScoreFile->addWidget(butScoreFileSetSharp, 10, 0, 1, 1);
 	gbScoreFile->addWidget(butScoreFileSetFlat, 10, 1, 1, 1);
-	gbScoreFile->addWidget(butScoreFileAutoMel[0], 11, 0, 1, 1);
-	gbScoreFile->addWidget(butScoreFileAutoMel[1], 11, 1, 1, 1);
 	gbScoreFile->addWidget(butScoreFileReplaceAll, 12, 0, 1, 2);
 	gbScoreFile->addWidget(butScoreFileExport, 13, 0, 1, 2);
 	gbScoreFile->addWidget(butScoreFileExportNoChords, 14, 0, 1, 2);
@@ -271,8 +267,6 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	connect(butScoreFileSetSharp, SIGNAL(released()), this, SLOT(handleScoreFileSetSharp()));
 	connect(butScoreFileSetFlat, SIGNAL(released()), this, SLOT(handleScoreFileSetFlat()));
 	connect(butScoreFileScale, SIGNAL(released()), this, SLOT(handleScoreFileScale()));
-	connect(butScoreFileAutoMel[0], SIGNAL(released(int)), this, SLOT(handleScoreFileAutoMelody(int)));
-	connect(butScoreFileAutoMel[1], SIGNAL(released(int)), this, SLOT(handleScoreFileAutoMelody(int)));
 	connect(butScoreFileReplaceAll, SIGNAL(released()), this, SLOT(handleScoreFileReplaceAll()));
 	connect(butScoreFileExport, SIGNAL(released()), this, SLOT(handleScoreFileExport()));
 	connect(butScoreFileExportNoChords, SIGNAL(released()), this, SLOT(handleScoreFileExportNoChords()));
@@ -972,10 +966,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 	/* compile before auto-melody */
 	sheet->compile(head);
 	
-	/* check if auto-melody should be applied */
-	if (auto_melody > 0)
-		head.autoMelody(auto_melody - 1);
-
 	/* check if key-mode should be applied */
 	switch (key_mode) {
 	case 0:
@@ -1979,10 +1969,6 @@ MppScoreMain :: handleScoreFileEffect(int which, int parm, int flag)
 	case 2:
 		temp.scaleTime(parm);
 		break;
-	case 3:
-		temp.autoMelody(parm);
-		temp.optimise();
-		break;
 	case 4:
 		temp.bassOffset(parm);
 		temp.optimise();
@@ -2065,12 +2051,6 @@ void
 MppScoreMain :: handleScoreFileSetFlat(void)
 {
 	handleScoreFileEffect(1, 0, -1);
-}
-
-void
-MppScoreMain :: handleScoreFileAutoMelody(int which)
-{
-	handleScoreFileEffect(3, which, 0);
 }
 
 void

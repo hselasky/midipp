@@ -227,7 +227,6 @@ public:
 	void clear();
 	void sortScore();
 	void optimise();
-	void autoMelody(int);
 	void bassOffset(int);
 	void transposeScore(int, int = 0);
 	void limitScore(int);
