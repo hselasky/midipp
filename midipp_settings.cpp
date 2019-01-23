@@ -144,7 +144,7 @@ MppSettings :: doSave(void)
 	if (save_viewmode) {
 		for (x = 0; x != MPP_MAX_VIEWS; x++) {
 			beginGroup(concat("view%d", x));
-			setValue("basekey192", mw->scores_main[x]->baseKey);
+			setValue("basekey192", mw->scores_main[x]->baseKey / MPP_BAND_STEP_192);
 			setValue("delay", mw->scores_main[x]->delayNoise);
 			setValue("keymode", mw->scores_main[x]->keyMode);
 			setValue("inputchannel", mw->scores_main[x]->inputChannel);
@@ -246,7 +246,7 @@ MppSettings :: doLoad(void)
 
 	if (save_viewmode > 0) {
 		for (x = 0; x != MPP_MAX_VIEWS; x++) {
-			int baseKey = valueDefault(concat("view%d/basekey192", x), MPP_DEFAULT_BASE_KEY);
+			int baseKey = valueDefault(concat("view%d/basekey192", x), MPP_DEFAULT_BASE_KEY / MPP_BAND_STEP_192);
 			int delayNoise = valueDefault(concat("view%d/delay", x), 25);
 			int keyMode = valueDefault(concat("view%d/keymode", x), 0);
 			int inputChannel = valueDefault(concat("view%d/inputchannel", x), -1);
@@ -295,7 +295,7 @@ MppSettings :: doLoad(void)
 				songEvents = 0;
 
 			mw->atomic_lock();
-			mw->scores_main[x]->baseKey = baseKey;
+			mw->scores_main[x]->baseKey = baseKey * MPP_BAND_STEP_192;
 			mw->scores_main[x]->delayNoise = delayNoise;
 			mw->scores_main[x]->keyMode = keyMode;
 			mw->scores_main[x]->inputChannel = inputChannel;
