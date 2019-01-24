@@ -840,7 +840,7 @@ MppStepChordGeneric(QString &input, int adjust, uint32_t sharp)
 	rem = MPP_BAND_REM(rem, MPP_MAX_BANDS);
 	bass = MPP_BAND_REM(bass, MPP_MAX_BANDS);
 
-	MppChordToStringGeneric(mask, rem, bass, sharp, 1, str);
+	MppChordToStringGeneric(mask, rem, bass, sharp, MPP_BAND_STEP_CHORD, str);
 
 	if (str.isEmpty())
 		return;

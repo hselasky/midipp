@@ -438,7 +438,7 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 
 	bass = MPP_BAND_REM(pinfo->key_base, MPP_MAX_BANDS);
 
-	MppChordToStringGeneric(footprint, key, bass, is_sharp, 1, out);
+	MppChordToStringGeneric(footprint, key, bass, is_sharp, MPP_BAND_STEP_CHORD, out);
 
 	if (out.isEmpty())
 		return (1);	/* not found */
@@ -887,7 +887,7 @@ MppDecodeTab :: handle_refresh()
 		key_bass -= 1 * MPP_MAX_BANDS;
 
 	MppChordToStringGeneric(chord_mask, chord_key, key_bass,
-	    chord_sharp, 1, str);
+	    chord_sharp, MPP_BAND_STEP_CHORD, str);
 
 	out_key += MppKeyStr(key_bass);
 	out_key += " ";
