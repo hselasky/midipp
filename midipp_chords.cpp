@@ -730,7 +730,7 @@ MppChordToStringGeneric(MppChord_t mask, uint32_t rem, uint32_t bass, uint32_t s
 	}
 
 	/* check if there was a match */
-	if (rots_min != MPP_MAX_BANDS) {
+	if (rots_min != MPP_MAX_CHORD_BANDS) {
 		QString pat = QString::fromUtf8(MppScoreVariants12[z].pattern[0]);
 
 		/* expand pattern */
