@@ -1161,8 +1161,8 @@ MppHead :: limitScore(int limit)
 	}
 }
 
-static int
-MppFreqAdjust(double mid, double top)
+Q_DECL_EXPORT int
+MppFreqAdjust(double mid, double top, int *p_phase)
 {
 	const double p0 = 1.0;
 	const double p1 = pow(2.0, mid);
@@ -1177,9 +1177,7 @@ MppFreqAdjust(double mid, double top)
 	const double ff3 = f3 - floor(f3);
 
 	double adjust_lo;
-	double harmony_lo;
 	double adjust_hi;
-	double harmony_hi;
 	double delta;
 
 	delta = ff3 - ff1;
@@ -1187,23 +1185,28 @@ MppFreqAdjust(double mid, double top)
 		delta -= 1.0;
 	else if (delta < -0.5)
 		delta += 1.0;
-
-	adjust_lo = log(pow(2.0, f1 + delta) + p0) / log(2.0) - mid;
-	harmony_lo = round(f3 - f1 + delta);
+	adjust_lo = log(pow(2.0, f1 + delta) + p0) / log(2.0);
 
 	delta = ff3 - ff2;
 	if (delta > 0.5)
 		delta -= 1.0;
 	else if (delta < -0.5)
 		delta += 1.0;
-	adjust_hi = log(p2 - pow(2.0, f2 + delta)) / log(2.0) - mid;
-	harmony_hi = round(f3 - f2 + delta);
+	adjust_hi = log(p2 - pow(2.0, f2 + delta)) / log(2.0);
 
-	if ((float)adjust_lo == (float)adjust_hi &&
-	    adjust_lo < 0.0 && adjust_lo > (-1.0 / 24.0))
-		return ((mid + adjust_lo) * MPP_MAX_BANDS);
-	else
+	/* check for phase convergence */
+	if ((float)adjust_lo == (float)adjust_hi && adjust_lo < mid) {
+		if (p_phase) {
+			double p = (f2 + delta);
+			p = p - floor(p);
+			*p_phase = p * (double)MPP_MAX_BANDS;
+		}
+		return (adjust_lo * (double)MPP_MAX_BANDS);
+	} else {
+		if (p_phase)
+			*p_phase = 0;
 		return (mid * MPP_MAX_BANDS);
+	}
 }
 
 void
