@@ -176,7 +176,8 @@ MppScoreVariantInit(void)
 		    .arg(MPP_MAX_CHORD_BANDS);
 	}
 
-	Mpp.VariantList += QString("\n/* List of triads subject to micro tuning */\n\n");
+	Mpp.VariantList += "\n/* List of triads subject to micro tuning */\n\n";
+	Mpp.VariantList += "K5.1\n\n";
 
 	for (x = 2; x != MPP_MAX_CHORD_BANDS; x++) {
 		for (y = 1; y != x; y++) {
@@ -189,7 +190,7 @@ MppScoreVariantInit(void)
 				    MPP_MAX_BANDS * 5 + 0 * MPP_BAND_STEP_CHORD);
 				Mpp.VariantList += " ";
 				Mpp.VariantList += MppKeyStr(
-				    MPP_MAX_BANDS * 5 + y * MPP_BAND_STEP_CHORD);
+				    MPP_MAX_BANDS * 5 + u - (u % MPP_BAND_STEP_CHORD));
 				Mpp.VariantList += " ";
 				Mpp.VariantList += MppKeyStr(
 				    MPP_MAX_BANDS * 5 + x * MPP_BAND_STEP_CHORD);
@@ -197,16 +198,22 @@ MppScoreVariantInit(void)
 				Mpp.VariantList += MppKeyStr(
 				    MPP_MAX_BANDS * 5 + y * MPP_BAND_STEP_CHORD);
 				Mpp.VariantList += " ";
+
+				int any = 0;
 				for (y++; y != x; y++) {
 					int q = MppFreqAdjust((double)y / (double)MPP_MAX_CHORD_BANDS,
 							      (double)x / (double)MPP_MAX_CHORD_BANDS);
 					if (q != u)
 						break;
+					any = 1;
+				}
+				y--;
+				if (any) {
+					Mpp.VariantList += "... ";
 					Mpp.VariantList += MppKeyStr(
 					    MPP_MAX_BANDS * 5 + y * MPP_BAND_STEP_CHORD);
 					Mpp.VariantList += " ";
 				}
-				y--;
 				Mpp.VariantList += "=> ";
 				Mpp.VariantList += MppKeyStr(MPP_MAX_BANDS * 5 + u);
 				Mpp.VariantList += " || ";
