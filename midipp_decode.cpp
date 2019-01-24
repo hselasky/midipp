@@ -185,12 +185,15 @@ MppScoreVariantInit(void)
 			int phase = 0;
 			int u = MppFreqAdjust((double)y / (double)MPP_MAX_CHORD_BANDS,
 					      (double)x / (double)MPP_MAX_CHORD_BANDS, &phase);
+			int v = u + (MPP_BAND_STEP_CHORD / 2);
+			v -= (v % MPP_BAND_STEP_CHORD);
+
 			if (t != u) {
 				Mpp.VariantList += MppKeyStr(
 				    MPP_MAX_BANDS * 5 + 0 * MPP_BAND_STEP_CHORD);
 				Mpp.VariantList += " ";
 				Mpp.VariantList += MppKeyStr(
-				    MPP_MAX_BANDS * 5 + u - (u % MPP_BAND_STEP_CHORD));
+				    MPP_MAX_BANDS * 5 + v);
 				Mpp.VariantList += " ";
 				Mpp.VariantList += MppKeyStr(
 				    MPP_MAX_BANDS * 5 + x * MPP_BAND_STEP_CHORD);

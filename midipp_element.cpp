@@ -1195,7 +1195,7 @@ MppFreqAdjust(double mid, double top, int *p_phase)
 	adjust_hi = log(p2 - pow(2.0, f2 + delta)) / log(2.0);
 
 	/* check for phase convergence */
-	if ((float)adjust_lo == (float)adjust_hi && adjust_lo < mid) {
+	if ((float)adjust_lo == (float)adjust_hi) {
 		if (p_phase) {
 			double p = (f2 + delta);
 			p = p - floor(p);
