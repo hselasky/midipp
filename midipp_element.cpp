@@ -1162,22 +1162,21 @@ MppHead :: limitScore(int limit)
 }
 
 Q_DECL_EXPORT int
-MppFreqAdjust(double mid, double top, int *p_phase)
+MppFreqAdjust(double top, int *p_phase)
 {
+	const double mid = top / 2.0;
+
 	const double p0 = 1.0;
 	const double p1 = pow(2.0, mid);
 	const double p2 = pow(2.0, top);
 
 	const double f1 = log(p1 - p0) / log(2.0);
-	const double f2 = log(p2 - p1) / log(2.0);
 	const double f3 = log(p2 - p0) / log(2.0);
 
 	const double ff1 = f1 - floor(f1);
-	const double ff2 = f2 - floor(f2);
 	const double ff3 = f3 - floor(f3);
 
 	double adjust_lo;
-	double adjust_hi;
 	double delta;
 
 	delta = ff3 - ff1;
@@ -1187,31 +1186,18 @@ MppFreqAdjust(double mid, double top, int *p_phase)
 		delta += 1.0;
 	adjust_lo = log(pow(2.0, f1 + delta) + p0) / log(2.0);
 
-	delta = ff3 - ff2;
-	if (delta > 0.5)
-		delta -= 1.0;
-	else if (delta < -0.5)
-		delta += 1.0;
-	adjust_hi = log(p2 - pow(2.0, f2 + delta)) / log(2.0);
-
-	/* check for phase convergence */
-	if ((float)adjust_lo == (float)adjust_hi) {
-		if (p_phase) {
-			double p = (f2 + delta);
-			p = p - floor(p);
-			*p_phase = p * (double)MPP_MAX_BANDS;
-		}
-		return (adjust_lo * (double)MPP_MAX_BANDS);
-	} else {
-		if (p_phase)
-			*p_phase = 0;
-		return (mid * MPP_MAX_BANDS);
+	if (p_phase) {
+		double p = (f1 + delta);
+		p = p - floor(p);
+		*p_phase = round(p * (double)MPP_MAX_BANDS);
 	}
+	return (round(adjust_lo * (double)MPP_MAX_BANDS));
 }
 
 void
 MppHead :: tuneScore()
 {
+#if 0
 	MppElement *start = 0;
 	MppElement *stop = 0;
 	MppElement *ptr;
@@ -1247,8 +1233,7 @@ MppHead :: tuneScore()
 		for (int x = 1; x != last; x++) {
 			if (mask.test(x) == 0)
 				continue;
-			adjust[x] = MppFreqAdjust((double)x / (double)MPP_MAX_CHORD_BANDS,
-			    (double)last / (double)MPP_MAX_CHORD_BANDS);
+			adjust[x] = x * MPP_BAND_STEP_CHORD;
 		}
 		
 		/* update all keys */
@@ -1269,6 +1254,7 @@ MppHead :: tuneScore()
 			}
 		}
 	}
+#endif
 }
 
 void

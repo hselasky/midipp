@@ -176,56 +176,32 @@ MppScoreVariantInit(void)
 		    .arg(MPP_MAX_CHORD_BANDS);
 	}
 
-	Mpp.VariantList += "\n/* List of triads subject to micro tuning */\n\n";
-	Mpp.VariantList += "K5.1\n\n";
+	Mpp.VariantList += "\n/* List of harmonic triads with phase key */\n\n";
 
 	for (x = 2; x != MPP_MAX_CHORD_BANDS; x++) {
-		for (y = 1; y != x; y++) {
-			int t = y * MPP_BAND_STEP_CHORD;
-			int phase = 0;
-			int u = MppFreqAdjust((double)y / (double)MPP_MAX_CHORD_BANDS,
-					      (double)x / (double)MPP_MAX_CHORD_BANDS, &phase);
-			int v = u + (MPP_BAND_STEP_CHORD / 2);
-			v -= (v % MPP_BAND_STEP_CHORD);
+		int phase;
+		int u = MppFreqAdjust((double)x / (double)MPP_MAX_CHORD_BANDS, &phase);
+		int v = u;
 
-			if (t != u) {
-				Mpp.VariantList += MppKeyStr(
-				    MPP_MAX_BANDS * 5 + 0 * MPP_BAND_STEP_CHORD);
-				Mpp.VariantList += " ";
-				Mpp.VariantList += MppKeyStr(
-				    MPP_MAX_BANDS * 5 + v);
-				Mpp.VariantList += " ";
-				Mpp.VariantList += MppKeyStr(
-				    MPP_MAX_BANDS * 5 + x * MPP_BAND_STEP_CHORD);
-				Mpp.VariantList += " /* ";
-				Mpp.VariantList += MppKeyStr(
-				    MPP_MAX_BANDS * 5 + y * MPP_BAND_STEP_CHORD);
-				Mpp.VariantList += " ";
+		v += MPP_BAND_STEP_CHORD / 2;
+		v -= v % MPP_BAND_STEP_CHORD;
 
-				int any = 0;
-				for (y++; y != x; y++) {
-					int q = MppFreqAdjust((double)y / (double)MPP_MAX_CHORD_BANDS,
-							      (double)x / (double)MPP_MAX_CHORD_BANDS);
-					if (q != u)
-						break;
-					any = 1;
-				}
-				y--;
-				if (any) {
-					Mpp.VariantList += "... ";
-					Mpp.VariantList += MppKeyStr(
-					    MPP_MAX_BANDS * 5 + y * MPP_BAND_STEP_CHORD);
-					Mpp.VariantList += " ";
-				}
-				Mpp.VariantList += "=> ";
-				Mpp.VariantList += MppKeyStr(MPP_MAX_BANDS * 5 + u);
-				Mpp.VariantList += " || ";
-				Mpp.VariantList += MppKeyStr(phase);
-				Mpp.VariantList += " */\n";
-			}
-		}
+		phase += MPP_BAND_STEP_CHORD / 2;
+		phase -= phase % MPP_BAND_STEP_CHORD;
+
+		Mpp.VariantList += MppKeyStr(
+		    MPP_MAX_BANDS * 5 + 0 * MPP_BAND_STEP_CHORD);
+		Mpp.VariantList += " ";
+		Mpp.VariantList += MppKeyStr(
+		    MPP_MAX_BANDS * 5 + v);
+		Mpp.VariantList += " ";
+		Mpp.VariantList += MppKeyStr(
+		    MPP_MAX_BANDS * 5 + x * MPP_BAND_STEP_CHORD);
+		Mpp.VariantList += " ";
+		Mpp.VariantList += MppKeyStr(
+		    MPP_MAX_BANDS * 5 + phase);
+		Mpp.VariantList += "\n";
 	}
-
 }
 
 static void

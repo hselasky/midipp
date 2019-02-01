@@ -258,6 +258,6 @@ public:
 
 extern QString MppDeQuoteChord(QString &);
 extern QString MppDeQuoteString(QString &);
-extern int MppFreqAdjust(double, double, int * = 0);
+extern int MppFreqAdjust(double, int * = 0);
 
 #endif			/* _MIDIPP_ELEMENT_H_ */
