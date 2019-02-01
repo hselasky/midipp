@@ -1720,9 +1720,7 @@ MppMainWindow :: do_extended_key_press(int key, int freq, int vel, int dur)
 		freq >>= 7;
 		sysex_data[6] = freq & 0x7F;
 
-		d->channel = 0;
 		mid_add_raw(d, sysex_data, sizeof(sysex_data), 0);
-		d->channel = sysex_data[3];
 
 		if (dur != 0) {
 			key_data[0] = 0x90;
