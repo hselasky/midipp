@@ -1586,18 +1586,20 @@ MppHead :: dotReorder()
 int
 MppElement :: compare(const MppElement *other) const
 {
+	const MppElement * const ne = 0;
+
 	/* handle special case */
-	if (this == 0 && other == 0)
+	if (this == ne && other == ne)
 		return (0);
-	if (other == 0)
+	if (other == ne)
 		return (-1);
-	if (this == 0)
+	if (this == ne)
 		return (1);
 
 	/* compare sequence number */
-	if (this->sequence > other->sequence)
+	if (sequence > other->sequence)
 		return (1);
-	if (this->sequence < other->sequence)
+	if (sequence < other->sequence)
 		return (-1);
 	return (0);
 }
