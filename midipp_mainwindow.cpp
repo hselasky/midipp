@@ -2053,16 +2053,31 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 	struct umidi20_event *p_event;
 	uint32_t what;
 	int do_drop = 0;
+	uint8_t chan;
+	int vel;
 
 	mw->atomic_lock();
 
 	what = umidi20_event_get_what(event);
 
-	if (what & UMIDI20_WHAT_CHANNEL) {
-		uint8_t chan;
-
+	if (umidi20_event_is_sysex(event) &&
+	    umidi20_event_get_length_first(event) >= 5 &&
+	    event->cmd[2] == 0x0A &&
+	    event->cmd[3] == 0x55) {
+		/* handle extended key press */
+		what |= UMIDI20_WHAT_CHANNEL;
+		chan = event->cmd[4] & 0xF;
+		vel = event->cmd[5] & 0x7F;
+	} else if (what & UMIDI20_WHAT_CHANNEL) {
+		/* handle regular key press */
 		chan = umidi20_event_get_channel(event) & 0xF;
+		vel = umidi20_event_get_velocity(event);
+	} else {
+		chan = 0;
+		vel = 0;
+	}
 
+	if (what & UMIDI20_WHAT_CHANNEL) {
 		if (mw->instr[chan].muted) {
 			do_drop = 1;
 		} else if (device_no < MPP_MAX_DEVS) {
@@ -2087,7 +2102,6 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			}
 		} else if (device_no >= MPP_MAGIC_DEVNO &&
 		    device_no < (MPP_MAGIC_DEVNO + MPP_MAX_TRACKS)) {
-			int vel = umidi20_event_get_velocity(event);
 			int index = device_no - MPP_MAGIC_DEVNO;
 			int devno = -2;	/* no device */
 
@@ -2100,7 +2114,14 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 				else if (vel < 1)
 					vel = 1;
 
-				umidi20_event_set_velocity(event, vel);
+				if (umidi20_event_is_sysex(event) &&
+				    umidi20_event_get_length_first(event) >= 5 &&
+				    event->cmd[2] == 0x0A &&
+				    event->cmd[3] == 0x55) {
+					event->cmd[5] = vel;
+				} else {
+					umidi20_event_set_velocity(event, vel);
+				}
 			}
 
 			/* check if we should duplicate events for other devices */
