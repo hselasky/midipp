@@ -2045,6 +2045,21 @@ done:
 	mw->atomic_unlock();
 }
 
+static uint8_t *
+MidiEventPtr(struct umidi20_event *event, uint32_t offset)
+{
+
+	while (1) {
+		uint32_t len = umidi20_event_get_length_first(event);
+		if (offset >= len) {
+			offset -= len;
+			event = event->p_next;
+		} else {
+			return (&event->cmd[1 + offset]);
+		}
+	}
+}
+
 /* NOTE: Is called unlocked */
 static void
 MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uint8_t *drop)
@@ -2061,13 +2076,13 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 	what = umidi20_event_get_what(event);
 
 	if (umidi20_event_is_sysex(event) &&
-	    umidi20_event_get_length_first(event) >= 5 &&
-	    event->cmd[2] == 0x0A &&
-	    event->cmd[3] == 0x55) {
+	    umidi20_event_get_length(event) >= 11 &&
+	    *MidiEventPtr(event, 1) == 0x0A &&
+	    *MidiEventPtr(event, 2) == 0x55) {
 		/* handle extended key press */
 		what |= UMIDI20_WHAT_CHANNEL;
-		chan = event->cmd[4] & 0xF;
-		vel = event->cmd[5] & 0x7F;
+		chan = *MidiEventPtr(event, 3) & 0xF;
+		vel = *MidiEventPtr(event, 4) & 0x7F;
 	} else if (what & UMIDI20_WHAT_CHANNEL) {
 		/* handle regular key press */
 		chan = umidi20_event_get_channel(event) & 0xF;
@@ -2115,10 +2130,10 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 					vel = 1;
 
 				if (umidi20_event_is_sysex(event) &&
-				    umidi20_event_get_length_first(event) >= 5 &&
-				    event->cmd[2] == 0x0A &&
-				    event->cmd[3] == 0x55) {
-					event->cmd[5] = vel;
+				    umidi20_event_get_length(event) >= 11 &&
+				    *MidiEventPtr(event, 1) == 0x0A &&
+				    *MidiEventPtr(event, 2) == 0x55) {
+					*MidiEventPtr(event, 4) = vel;
 				} else {
 					umidi20_event_set_velocity(event, vel);
 				}
