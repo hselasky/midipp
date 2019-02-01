@@ -2082,7 +2082,7 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 		/* handle extended key press */
 		what |= UMIDI20_WHAT_CHANNEL;
 		chan = *MidiEventPtr(event, 3) & 0xF;
-		vel = *MidiEventPtr(event, 4) & 0x7F;
+		vel = *MidiEventPtr(event, 5) & 0x7F;
 	} else if (what & UMIDI20_WHAT_CHANNEL) {
 		/* handle regular key press */
 		chan = umidi20_event_get_channel(event) & 0xF;
@@ -2133,7 +2133,7 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 				    umidi20_event_get_length(event) >= 11 &&
 				    *MidiEventPtr(event, 1) == 0x0A &&
 				    *MidiEventPtr(event, 2) == 0x55) {
-					*MidiEventPtr(event, 4) = vel;
+					*MidiEventPtr(event, 5) = vel;
 				} else {
 					umidi20_event_set_velocity(event, vel);
 				}
