@@ -1197,14 +1197,13 @@ MppFreqAdjust(double top, int *p_phase)
 void
 MppHead :: tuneScore()
 {
-#if 0
 	MppElement *start = 0;
 	MppElement *stop = 0;
 	MppElement *ptr;
 
 	while (foreachLine(&start, &stop)) {
 		MppChord_t mask;
-		uint32_t rots;
+		int rem;
 		int adjust[MPP_MAX_CHORD_BANDS] = {};
 
 		mask.zero();
@@ -1213,7 +1212,9 @@ MppHead :: tuneScore()
 		for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
 			switch (ptr->type) {
 			case MPP_T_SCORE_SUBDIV:
-				mask.set(MPP_BAND_REM(ptr->value[0], MPP_MAX_CHORD_BANDS));
+				rem = MPP_BAND_REM(ptr->value[0], MPP_MAX_CHORD_BANDS);
+				mask.set(rem);
+				adjust[rem] = rem * MPP_BAND_STEP_CHORD;
 				break;
 			default:
 				break;
@@ -1222,31 +1223,26 @@ MppHead :: tuneScore()
 		if (mask.order() == 0)
 			continue;
 
-		mask = MppFindChordRoot(mask, &rots);
-
-		int last = mask.last_set();
-		if (last < 1)
-			continue;
-
-		adjust[last] = last * MPP_BAND_STEP_CHORD;
-
-		for (int x = 1; x != last; x++) {
-			if (mask.test(x) == 0)
+		for (int x = 0; x != MPP_MAX_CHORD_BANDS; x++) {
+			int y = (x + 4 * (MPP_BAND_STEP_12 / MPP_BAND_STEP_CHORD)) % MPP_MAX_CHORD_BANDS;
+			int z = (x + 7 * (MPP_BAND_STEP_12 / MPP_BAND_STEP_CHORD)) % MPP_MAX_CHORD_BANDS;
+			if (mask.test(x) == 0 ||
+			    mask.test(y) == 0 ||
+			    mask.test(z) == 0)
 				continue;
-			adjust[x] = x * MPP_BAND_STEP_CHORD;
+			adjust[y] = y * MPP_BAND_STEP_CHORD - MPP_BAND_STEP_96;
+			adjust[z] = z * MPP_BAND_STEP_CHORD + MPP_BAND_STEP_192;
 		}
-		
+
 		/* update all keys */
 		for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
 			switch (ptr->type) {
 			int x;
 			case MPP_T_SCORE_SUBDIV:
-				x = MPP_BAND_REM(ptr->value[0] -
-				    (rots * MPP_BAND_STEP_CHORD), MPP_MAX_CHORD_BANDS);
+				x = MPP_BAND_REM(ptr->value[0], MPP_MAX_CHORD_BANDS);
 
 				ptr->value[0] -= MPP_BAND_REM(ptr->value[0], MPP_MAX_BANDS);
-				ptr->value[0] += MPP_BAND_REM(adjust[x] +
-				    (rots * MPP_BAND_STEP_CHORD), MPP_MAX_BANDS);
+				ptr->value[0] += adjust[x];
 				ptr->txt = MppKeyStr(ptr->value[0]);
 				break;
 			default:
@@ -1254,7 +1250,6 @@ MppHead :: tuneScore()
 			}
 		}
 	}
-#endif
 }
 
 void
