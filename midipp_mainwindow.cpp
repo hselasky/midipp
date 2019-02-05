@@ -1700,34 +1700,7 @@ MppMainWindow :: do_extended_key_press(int key, int freq, int vel, int dur)
 	if (vel == 0) {
 		mid_key_press(d, key, 0, 0);
 	} else {
-	  	uint8_t sysex_data[11];
-		uint8_t key_data[4];
-
-		sysex_data[0] = 0xF0;
-		sysex_data[1] = 0x0A;
-		sysex_data[2] = 0x55;	/* XXX */
-		sysex_data[3] = d->channel;
-		sysex_data[4] = key & 0x7F;
-		sysex_data[5] = vel & 0x7F;
-
-		sysex_data[10] = 0xF7;
-
-		sysex_data[9] = freq & 0x7F;
-		freq >>= 7;
-		sysex_data[8] = freq & 0x7F;
-		freq >>= 7;
-		sysex_data[7] = freq & 0x7F;
-		freq >>= 7;
-		sysex_data[6] = freq & 0x7F;
-
-		mid_add_raw(d, sysex_data, sizeof(sysex_data), 0);
-
-		if (dur != 0) {
-			key_data[0] = 0x90;
-			key_data[1] = key & 0x7F;
-			key_data[2] = 0;
-			mid_add_raw(d, key_data, 3, dur);
-		}
+		mid_extended_key_press(d, key, freq, vel, dur);
 	}
 }
 
@@ -2043,21 +2016,6 @@ done:
 	mw->atomic_unlock();
 }
 
-static uint8_t *
-MidiEventPtr(struct umidi20_event *event, uint32_t offset)
-{
-
-	while (1) {
-		uint32_t len = umidi20_event_get_length_first(event);
-		if (offset >= len) {
-			offset -= len;
-			event = event->p_next;
-		} else {
-			return (&event->cmd[1 + offset]);
-		}
-	}
-}
-
 /* NOTE: Is called unlocked */
 static void
 MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, uint8_t *drop)
@@ -2066,31 +2024,15 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 	struct umidi20_event *p_event;
 	uint32_t what;
 	int do_drop = 0;
-	uint8_t chan;
-	int vel;
 
 	mw->atomic_lock();
 
 	what = umidi20_event_get_what(event);
 
-	if (umidi20_event_is_sysex(event) &&
-	    umidi20_event_get_length(event) >= 11 &&
-	    *MidiEventPtr(event, 1) == 0x0A &&
-	    *MidiEventPtr(event, 2) == 0x55) {
-		/* handle extended key press */
-		what |= UMIDI20_WHAT_CHANNEL;
-		chan = *MidiEventPtr(event, 3) & 0xF;
-		vel = *MidiEventPtr(event, 5) & 0x7F;
-	} else if (what & UMIDI20_WHAT_CHANNEL) {
-		/* handle regular key press */
-		chan = umidi20_event_get_channel(event) & 0xF;
-		vel = umidi20_event_get_velocity(event);
-	} else {
-		chan = 0;
-		vel = 0;
-	}
-
 	if (what & UMIDI20_WHAT_CHANNEL) {
+		uint8_t chan = umidi20_event_get_channel(event) & 0xF;
+		int vel = umidi20_event_get_velocity(event);
+
 		if (mw->instr[chan].muted) {
 			do_drop = 1;
 		} else if (device_no < MPP_MAX_DEVS) {
@@ -2127,14 +2069,7 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 				else if (vel < 1)
 					vel = 1;
 
-				if (umidi20_event_is_sysex(event) &&
-				    umidi20_event_get_length(event) >= 11 &&
-				    *MidiEventPtr(event, 1) == 0x0A &&
-				    *MidiEventPtr(event, 2) == 0x55) {
-					*MidiEventPtr(event, 5) = vel;
-				} else {
-					umidi20_event_set_velocity(event, vel);
-				}
+				umidi20_event_set_velocity(event, vel);
 			}
 
 			/* check if we should duplicate events for other devices */
@@ -2588,6 +2523,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 		end = (event->position & 0x3FFFFFFFU) + event->duration;
 
 		if (umidi20_event_is_key_start(event)) {
+			uint32_t ext_key;
 
 			x = convIndex;
 			while (x < max_index) {
@@ -2629,7 +2565,11 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 				out_block += buf;
 			}
 
-			out_block += mid_key_str[umidi20_event_get_key(event) & 0x7F];
+			ext_key = umidi20_event_get_extended_key(event);
+			if (ext_key != -1U)
+				out_block += MppKeyStr(ext_key);
+			else
+				out_block += mid_key_str[umidi20_event_get_key(event) & 0x7F];
 			out_block += " ";
 		}
 	}
