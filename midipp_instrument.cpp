@@ -125,7 +125,9 @@ MppInstrumentTab :: ~MppInstrumentTab()
 void
 MppInstrumentTab :: handle_instr_channel_changed(int chan)
 {
-  	if (this == 0)
+	MppInstrumentTab * const ni = 0;
+
+  	if (this == ni)
 		return;
 
 	int temp[2];
@@ -182,7 +184,9 @@ MppInstrumentTab :: handle_instr_program_all()
 void 
 MppInstrumentTab :: handle_instr_changed(int dummy)
 {
-	if (this == 0)
+  	MppInstrumentTab * const ni = 0;
+
+	if (this == ni)
 		return;
 
 	struct mid_data *d = &mw->mid_data;
@@ -301,7 +305,9 @@ MppInstrumentTab :: handle_instr_changed(int dummy)
 void 
 MppInstrumentTab :: handle_instr_reset()
 {
-	if (this == 0)
+  	MppInstrumentTab * const ni = 0;
+
+	if (this == ni)
 		return;
 
 	for (unsigned int x = 0; x != 16; x++) {
