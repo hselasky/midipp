@@ -58,7 +58,7 @@ MppTimerCallback(void *arg)
 
 				sm = mw->scores_main[n];
 				sm->handleKeyPress(mb->key, mb->amp, 0);
-				sm->handleKeyRelease(mb->key, mb->duty_ticks);
+				sm->handleKeyRelease(mb->key, mb->amp, mb->duty_ticks);
 
 				/* restore sync */
 				mb->view_sync[n] = temp;

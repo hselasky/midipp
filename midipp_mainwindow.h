@@ -64,7 +64,6 @@ public:
 
 	void do_clock_stats(void);
 	int do_extended_alloc(int key, int refcount);
-	void do_extended_key_press(int key, int freq, int vel, int dur);
 	void do_key_press(int key, int vel, int dur);
 	void do_key_pressure(int key, int pressure);
 	void output_key(int index, int chan, int key, int vel, int delay, int dur);

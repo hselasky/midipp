@@ -42,7 +42,7 @@ public:
 	MppLoopTab(QWidget *parent, MppMainWindow *);
 	~MppLoopTab();
 
-	void add_key(int key, uint8_t vel);
+	void add_key(int key, int vel);
 	void add_pedal(uint8_t val);
 	int handle_trigN(int key, int amp);
 	void handle_clearN(int n);

@@ -1329,7 +1329,7 @@ MppScoreMain :: handleChordsLoad(void)
 
 /* must be called locked */
 uint8_t
-MppScoreMain :: handleKeyRemovePast(MppScoreEntry *pn, uint32_t key_delay)
+MppScoreMain :: handleKeyRemovePast(MppScoreEntry *pn, int vel, uint32_t key_delay)
 {
 	uint8_t retval = 0;
 	unsigned x;
@@ -1341,13 +1341,13 @@ MppScoreMain :: handleKeyRemovePast(MppScoreEntry *pn, uint32_t key_delay)
 
 			mainWindow->output_key(score_past[x].track,
 			    score_past[x].channel, score_past[x].key,
-			    0, key_delay, 0);
+			    -vel, key_delay, 0);
 
 			/* check for secondary event */
 			if (score_past[x].channelSec != 0) {
 				mainWindow->output_key(score_past[x].trackSec,
 				    score_past[x].channelSec - 1, score_past[x].key,
-				    0, key_delay, 0);
+				    -vel, key_delay, 0);
 			}
 
 			/* kill past score */
@@ -1413,7 +1413,7 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 	mse.track = MPP_DEFAULT_TRACK(unit);
 
 	/* remove key if already pressed */
-	if (handleKeyRemovePast(&mse, key_delay))
+	if (handleKeyRemovePast(&mse, vel, key_delay))
 		key_delay++;
 
 	if (map & MPP_CHORD_MAP_BASE) {
@@ -1474,7 +1474,7 @@ MppScoreMain :: handleKeyPressureChord(int in_key, int vel, uint32_t key_delay)
 
 /* must be called locked */
 void
-MppScoreMain :: handleKeyReleaseChord(int in_key, uint32_t key_delay)
+MppScoreMain :: handleKeyReleaseChord(int in_key, int vel, uint32_t key_delay)
 {
 	int bk = baseKey / MPP_BAND_STEP_12;
 	int ck = in_key / MPP_BAND_STEP_12;
@@ -1490,12 +1490,12 @@ MppScoreMain :: handleKeyReleaseChord(int in_key, uint32_t key_delay)
 	/* release key once, if any */
 	if (pn->dur != 0) {
 		mainWindow->output_key(pn->track, pn->channel,
-		    pn->key, 0, key_delay, 0);
+		    pn->key, -vel, key_delay, 0);
 
 		/* check for secondary event */
 		if (pn->channelSec != 0) {
 			mainWindow->output_key(pn->trackSec, pn->channelSec - 1,
-			    pn->key, 0, key_delay, 0);
+			    pn->key, -vel, key_delay, 0);
 		}
 		pn->dur = 0;
 	}
@@ -1528,7 +1528,7 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 		nscore = 0;
 		transpose = key_trans;
 
-		decrementDuration();
+		decrementDuration(vel, 0);
 
 		for (ptr = start; ptr != stop;
 		    ptr = TAILQ_NEXT(ptr, entry)) {
@@ -1671,7 +1671,7 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 			break;
 
 		key_delay += t_pre;
-		decrementDuration(key_delay);
+		decrementDuration(vel, key_delay);
 		key_delay += t_post;
 	}
 }
@@ -1706,7 +1706,7 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 
 /* must be called locked */
 void
-MppScoreMain :: decrementDuration(uint32_t timeout)
+MppScoreMain :: decrementDuration(int vel, uint32_t timeout)
 {
 	int out_key;
 	uint8_t chan;
@@ -1726,7 +1726,7 @@ MppScoreMain :: decrementDuration(uint32_t timeout)
 			pressedKeys[x] = 0;
 
 			mainWindow->output_key(MPP_DEFAULT_TRACK(unit), chan,
-			    out_key, 0, timeout + delay, 0);
+			    out_key, -vel, timeout + delay, 0);
 		}
 
 		if (pressedKeys[x] != 0)
@@ -1736,7 +1736,7 @@ MppScoreMain :: decrementDuration(uint32_t timeout)
 
 /* must be called locked */
 void
-MppScoreMain :: handleKeyRelease(int in_key, uint32_t key_delay)
+MppScoreMain :: handleKeyRelease(int in_key, int vel, uint32_t key_delay)
 {
 	if (head.state.key_lock > 0) {
 		if (in_key != (int)whatPlayKeyLocked) {
@@ -1744,7 +1744,7 @@ MppScoreMain :: handleKeyRelease(int in_key, uint32_t key_delay)
 		}
 	}
 
-	decrementDuration(key_delay);
+	decrementDuration(vel, key_delay);
 
 	head.syncLast();
 }
@@ -2353,14 +2353,14 @@ MppScoreMain :: handleMidiKeyPressLocked(int key, int vel)
 
 	switch (keyMode) {
 	case MM_PASS_NONE_FIXED:
-		handleKeyPress(baseKey, vel);
+		handleKeyPress(baseKey, vel, 0);
 		break;
 	case MM_PASS_NONE_TRANS:
-		handleKeyPress(key, vel);
+		handleKeyPress(key, vel, 0);
 		break;
 	case MM_PASS_NONE_CHORD_PIANO:
 	case MM_PASS_NONE_CHORD_GUITAR:
-		handleKeyPressChord(key, vel);
+		handleKeyPressChord(key, vel, 0);
 		break;
 	case MM_PASS_ALL:
 	case MM_PASS_ALL_SUBDIV:
@@ -2373,25 +2373,25 @@ MppScoreMain :: handleMidiKeyPressLocked(int key, int vel)
 }
 
 void
-MppScoreMain :: handleMidiKeyReleaseLocked(int key)
+MppScoreMain :: handleMidiKeyReleaseLocked(int key, int vel)
 {
 	uint8_t chan = synthChannel;
 
 	switch (keyMode) {
 	case MM_PASS_NONE_FIXED:
-		handleKeyRelease(baseKey);
+		handleKeyRelease(baseKey, vel, 0);
 		break;
 	case MM_PASS_NONE_TRANS:
-		handleKeyRelease(key);
+		handleKeyRelease(key, vel, 0);
 		break;
 	case MM_PASS_NONE_CHORD_PIANO:
 	case MM_PASS_NONE_CHORD_GUITAR:
-		handleKeyReleaseChord(key);
+		handleKeyReleaseChord(key, vel, 0);
 		break;
 	case MM_PASS_ALL:
 	case MM_PASS_ALL_SUBDIV:
 		if (setPressedKey(chan, key, 0, 0) == 0)
-			mainWindow->output_key(MPP_DEFAULT_TRACK(unit), chan, key, 0, 0, 0);
+			mainWindow->output_key(MPP_DEFAULT_TRACK(unit), chan, key, -vel, 0, 0);
 		break;
 	default:
 		break;

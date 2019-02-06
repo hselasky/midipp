@@ -64,19 +64,19 @@ public:
 	MppScoreMain(MppMainWindow *parent, int unit);
 	~MppScoreMain();
 
-	void decrementDuration(uint32_t timeout = 0);
+	void decrementDuration(int vel, uint32_t timeout);
 	void handleLabelJump(int label);
 	void handleChordsLoad(void);
 	void handleMidiKeyPressLocked(int key, int vel);
-	void handleMidiKeyReleaseLocked(int key);
-	void handleKeyPressChord(int key, int vel, uint32_t key_delay = 0);
-	void handleKeyPressureChord(int key, int vel, uint32_t key_delay = 0);
-	void handleKeyReleaseChord(int key, uint32_t key_delay = 0);
+	void handleMidiKeyReleaseLocked(int key, int vel);
+	void handleKeyPressChord(int key, int vel, uint32_t key_delay);
+	void handleKeyPressureChord(int key, int vel, uint32_t key_delay);
+	void handleKeyReleaseChord(int key, int vel, uint32_t key_delay);
 	void handleKeyPressSub(int, int, uint32_t, int, int);
-	void handleKeyPress(int key, int vel, uint32_t key_delay = 0);
-	void handleKeyRelease(int key, uint32_t key_delay = 0);
+	void handleKeyPress(int key, int vel, uint32_t key_delay);
+	void handleKeyRelease(int key, int vel, uint32_t key_delay);
 	void handleParse(const QString &ps);
-	uint8_t handleKeyRemovePast(MppScoreEntry *pn, uint32_t key_delay = 0);
+	uint8_t handleKeyRemovePast(MppScoreEntry *pn, int vel, uint32_t key_delay);
 	void handleScoreFileOpenRaw(char *, uint32_t);
 	void handlePrintSub(QPrinter *pd, QPoint orig);
 	int handleScoreFileOpenSub(QString fname);

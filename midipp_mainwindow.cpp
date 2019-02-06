@@ -778,7 +778,7 @@ MppMainWindow :: handle_play_release(int key, int which)
 	MppScoreMain *sm = scores_main[which];
 
 	atomic_lock();
-	sm->handleMidiKeyReleaseLocked(key);
+	sm->handleMidiKeyReleaseLocked(key, 90);
 	atomic_unlock();
 }
 
@@ -1693,27 +1693,16 @@ MppMainWindow :: do_extended_alloc(int key, int refcount)
 }
 
 void
-MppMainWindow :: do_extended_key_press(int key, int freq, int vel, int dur)
-{
-	struct mid_data *d = &mid_data;
-
-	if (vel == 0) {
-		mid_key_press(d, key, 0, 0);
-	} else {
-		mid_extended_key_press(d, key, freq, vel, dur);
-	}
-}
-
-void
 MppMainWindow :: do_key_press(int key, int vel, int dur)
 {
 	struct mid_data *d = &mid_data;
 	int index;
 
+	/* range check(s) */
 	if (vel > 127)
 		vel = 127;
-	else if (vel < 0)
-		vel = 0;
+	else if (vel < -127)
+		vel = -127;
 
 	/* range check(s) */
 	if (key >= MPP_MAX_KEYS || key < 0 || dur < 0)
@@ -1721,14 +1710,15 @@ MppMainWindow :: do_key_press(int key, int vel, int dur)
 
 	switch (noteMode) {
 	case MPP_NOTEMODE_SYSEX:
-		index = do_extended_alloc(key, (vel == 0) ? -1 : 1);
+		index = do_extended_alloc(key, (vel <= 0) ? -1 : 1);
 		if (index < 0)
 			return;
-		do_extended_key_press(index, key, vel, dur);
+		mid_extended_key_press(d, index, key, vel, dur);
 		break;
 	default:
 		key = (key + MPP_BAND_STEP_24) / MPP_BAND_STEP_12;
-		if (key >= 128 || key < 0)
+		/* range check(s) */
+		if (key > 127 || key < 0)
 			return;
 		mid_key_press(d, key, vel, dur);
 		break;
@@ -1966,7 +1956,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 				break;
 			case MM_PASS_NONE_CHORD_PIANO:
 			case MM_PASS_NONE_CHORD_GUITAR:
-				sm->handleKeyPressureChord(key, vel);
+				sm->handleKeyPressureChord(key, vel, 0);
 				break;
 			default:
 				break;
@@ -1997,8 +1987,9 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 		} else if (umidi20_event_is_key_end(event)) {
 
 			key = (umidi20_event_get_key(event) & 0x7F) * MPP_BAND_STEP_12;
+			vel = umidi20_event_get_velocity(event);
 
-			sm->handleMidiKeyReleaseLocked(key);
+			sm->handleMidiKeyReleaseLocked(key, vel);
 
 		} else if (mw->do_instr_check(event, &chan)) {
 

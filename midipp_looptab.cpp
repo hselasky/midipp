@@ -145,13 +145,13 @@ MppLoopTab :: ~MppLoopTab()
 
 /* This function must be called locked */
 void
-MppLoopTab :: add_key(int in_key, uint8_t vel)
+MppLoopTab :: add_key(int in_key, int vel)
 {
 	struct mid_data *d = &mid_data;
 	uint32_t pos;
 	uint8_t n;
 
-	/* ignore quarter keys for now */
+	/* ignore non-12-scale keys for now */
 	if (in_key % MPP_BAND_STEP_12)
 		return;
 	in_key /= MPP_BAND_STEP_12;
