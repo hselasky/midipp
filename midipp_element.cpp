@@ -1230,8 +1230,8 @@ MppHead :: tuneScore()
 			    mask.test(y) == 0 ||
 			    mask.test(z) == 0)
 				continue;
-			adjust[y] = y * MPP_BAND_STEP_CHORD - MPP_BAND_STEP_96;
-			adjust[z] = z * MPP_BAND_STEP_CHORD + MPP_BAND_STEP_192;
+			adjust[y] = y * MPP_BAND_STEP_CHORD + Mpp.MajorAdjust[0];
+			adjust[z] = z * MPP_BAND_STEP_CHORD + Mpp.MajorAdjust[1];
 		}
 
 		/* update all keys */

@@ -332,6 +332,8 @@ public:
 	QString HomeDirGp3;
 	QString HomeDirMXML;
 	QString HomeDirBackground;
+
+	int MajorAdjust[2];
 };
 
 class MppSleep : public QThread

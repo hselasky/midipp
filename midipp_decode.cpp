@@ -109,6 +109,68 @@ MppBitsToString(const MppChord_t &mask, int off)
 	return (temp);
 }
 
+static void
+MppFindOptimalMajorViaBinarySearch(int &adjust0, int &adjust1)
+{
+	int step = MPP_BAND_STEP_12;
+	int freq = 7 * MPP_BAND_STEP_12;
+
+	while (step != 0) {
+		int p_nor;
+		int p_add;
+		int p_sub;
+
+		(void) MppFreqAdjust(freq / (double)MPP_MAX_BANDS, &p_nor);
+		(void) MppFreqAdjust((freq + step) / (double)MPP_MAX_BANDS, &p_add);
+		(void) MppFreqAdjust((freq - step) / (double)MPP_MAX_BANDS, &p_sub);
+
+		int d_nor = p_nor % MPP_MAX_BANDS;
+		int d_add = p_add % MPP_MAX_BANDS;
+		int d_sub = p_sub % MPP_MAX_BANDS;
+
+		int adjust;
+
+		if (d_add < -(MPP_MAX_BANDS / 2))
+			d_add += MPP_MAX_BANDS;
+		else if (d_add > (MPP_MAX_BANDS / 2))
+			d_add -= MPP_MAX_BANDS;
+
+		if (d_add < 0)
+			d_add = -d_add;
+
+		if (d_sub < -(MPP_MAX_BANDS / 2))
+			d_sub += MPP_MAX_BANDS;
+		else if (d_sub > (MPP_MAX_BANDS / 2))
+			d_sub -= MPP_MAX_BANDS;
+
+		if (d_sub < 0)
+			d_sub = -d_sub;
+	  
+		if (d_nor < -(MPP_MAX_BANDS / 2))
+			d_nor += MPP_MAX_BANDS;
+		else if (d_nor > (MPP_MAX_BANDS / 2))
+			d_nor -= MPP_MAX_BANDS;
+
+		if (d_nor < 0)
+			d_nor = -d_nor;
+
+		adjust = 0;
+		if (d_add < d_nor) {
+			adjust = step;
+			d_nor = d_add;
+		}
+		if (d_sub < d_nor) {
+			adjust = -step;
+			d_nor = d_sub;
+		}
+		freq += adjust;
+		step /= 2;
+	}
+
+	adjust0 = MppFreqAdjust(freq / (double)MPP_MAX_BANDS, 0) - 4 * MPP_BAND_STEP_12;
+	adjust1 = freq - 7 * MPP_BAND_STEP_12;
+}
+
 void
 MppScoreVariantInit(void)
 {
@@ -202,6 +264,17 @@ MppScoreVariantInit(void)
 		    MPP_MAX_BANDS * 5 + phase);
 		Mpp.VariantList += "\n";
 	}
+
+	Mpp.VariantList += "\n/* Harmonic major with key C */\n\n";
+
+	MppFindOptimalMajorViaBinarySearch(Mpp.MajorAdjust[0], Mpp.MajorAdjust[1]);
+
+	Mpp.VariantList += MppKeyStr(MPP_MAX_BANDS * 5);
+	Mpp.VariantList += " ";
+	Mpp.VariantList += MppKeyStr(MPP_MAX_BANDS * 5 + Mpp.MajorAdjust[0] + MPP_BAND_STEP_12 * 4);
+	Mpp.VariantList += " ";
+	Mpp.VariantList += MppKeyStr(MPP_MAX_BANDS * 5 + Mpp.MajorAdjust[1] + MPP_BAND_STEP_12 * 7);
+	Mpp.VariantList += "\n";
 }
 
 static void
