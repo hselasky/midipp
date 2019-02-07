@@ -156,6 +156,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 
 	if (_unit == 0) {
 	  defaultText = tr(
+	    "K5.1 /* Micro tune the chords */\n\n"
 	    "S\"L0 - verse: \"\n"
 	    "\n"
 	    "S\".(C)Welcome .(C)to .(D)MIDI .(E)Player .(C)Pro! \"\n"
