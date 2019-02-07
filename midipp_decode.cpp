@@ -110,64 +110,106 @@ MppBitsToString(const MppChord_t &mask, int off)
 }
 
 static void
+MppFreqAdjust(double top, double &phase, double &freq)
+{
+	const double mid = top / 2.0;
+
+	const double p0 = 1.0;
+	const double p1 = pow(2.0, mid);
+	const double p2 = pow(2.0, top);
+
+	const double f1 = log(p1 - p0) / log(2.0);
+	const double f3 = log(p2 - p0) / log(2.0);
+
+	const double ff1 = f1 - floor(f1);
+	const double ff3 = f3 - floor(f3);
+
+	double delta;
+
+	delta = ff3 - ff1;
+	if (delta > 0.5)
+		delta -= 1.0;
+	else if (delta < -0.5)
+		delta += 1.0;
+
+	freq = log(pow(2.0, f1 + delta) + p0) / log(2.0);
+
+	phase = (f1 + delta);
+	phase = phase - floor(phase);
+}
+
+static void
+MppFreqAdjustInt(double top, int &phase, int &freq)
+{
+	double d_phase;
+	double d_freq;
+
+	MppFreqAdjust(top, d_phase, d_freq);
+
+	phase = round(d_phase * (double)MPP_MAX_BANDS);
+	freq = round(d_freq * (double)MPP_MAX_BANDS);
+}
+
+static void
 MppFindOptimalMajorViaBinarySearch(int &adjust0, int &adjust1)
 {
-	int step = MPP_BAND_STEP_12;
-	int freq = 7 * MPP_BAND_STEP_12;
+	double step = MPP_BAND_STEP_12;
+	double freq = 7 * MPP_BAND_STEP_12;
 
-	while (step != 0) {
-		int p_nor;
-		int p_add;
-		int p_sub;
+	while (step >= 0.5) {
+		double p_nor;
+		double p_add;
+		double p_sub;
 
-		(void) MppFreqAdjust(freq / (double)MPP_MAX_BANDS, &p_nor);
-		(void) MppFreqAdjust((freq + step) / (double)MPP_MAX_BANDS, &p_add);
-		(void) MppFreqAdjust((freq - step) / (double)MPP_MAX_BANDS, &p_sub);
+		double temp;
+		double adjust;
 
-		int d_nor = p_nor % MPP_MAX_BANDS;
-		int d_add = p_add % MPP_MAX_BANDS;
-		int d_sub = p_sub % MPP_MAX_BANDS;
+		MppFreqAdjust(freq / (double)MPP_MAX_BANDS, p_nor, temp);
+		MppFreqAdjust((freq + step) / (double)MPP_MAX_BANDS, p_add, temp);
+		MppFreqAdjust((freq - step) / (double)MPP_MAX_BANDS, p_sub, temp);
 
-		int adjust;
+		if (p_add < -0.5)
+			p_add += 1.0;
+		else if (p_add > 0.5)
+			p_add -= 1.0;
 
-		if (d_add < -(MPP_MAX_BANDS / 2))
-			d_add += MPP_MAX_BANDS;
-		else if (d_add > (MPP_MAX_BANDS / 2))
-			d_add -= MPP_MAX_BANDS;
+		if (p_add < 0)
+			p_add = -p_add;
 
-		if (d_add < 0)
-			d_add = -d_add;
+		if (p_sub < -0.5)
+			p_sub += 1.0;
+		else if (p_sub > 0.5)
+			p_sub -= 1.0;
 
-		if (d_sub < -(MPP_MAX_BANDS / 2))
-			d_sub += MPP_MAX_BANDS;
-		else if (d_sub > (MPP_MAX_BANDS / 2))
-			d_sub -= MPP_MAX_BANDS;
-
-		if (d_sub < 0)
-			d_sub = -d_sub;
+		if (p_sub < 0)
+			p_sub = -p_sub;
 	  
-		if (d_nor < -(MPP_MAX_BANDS / 2))
-			d_nor += MPP_MAX_BANDS;
-		else if (d_nor > (MPP_MAX_BANDS / 2))
-			d_nor -= MPP_MAX_BANDS;
+		if (p_nor < -0.5)
+			p_nor += 1.0;
+		else if (p_nor > 0.5)
+			p_nor -= 1.0;
 
-		if (d_nor < 0)
-			d_nor = -d_nor;
+		if (p_nor < 0)
+			p_nor = -p_nor;
 
 		adjust = 0;
-		if (d_add < d_nor) {
+		if (p_add < p_nor) {
 			adjust = step;
-			d_nor = d_add;
+			p_nor = p_add;
 		}
-		if (d_sub < d_nor) {
+		if (p_sub < p_nor) {
 			adjust = -step;
-			d_nor = d_sub;
+			p_nor = p_sub;
 		}
 		freq += adjust;
-		step /= 2;
+		step /= 2.0;
 	}
 
-	adjust0 = MppFreqAdjust(freq / (double)MPP_MAX_BANDS, 0) - 4 * MPP_BAND_STEP_12;
+	freq = round(freq);
+
+	MppFreqAdjustInt(freq / (double)MPP_MAX_BANDS, adjust1, adjust0);
+
+	adjust0 -= 4 * MPP_BAND_STEP_12;
 	adjust1 = freq - 7 * MPP_BAND_STEP_12;
 }
 
@@ -242,11 +284,12 @@ MppScoreVariantInit(void)
 
 	for (x = 2; x != MPP_MAX_CHORD_BANDS; x++) {
 		int phase;
-		int u = MppFreqAdjust((double)x / (double)MPP_MAX_CHORD_BANDS, &phase);
-		int v = u;
+		int freq;
 
-		v += MPP_BAND_STEP_CHORD / 2;
-		v -= v % MPP_BAND_STEP_CHORD;
+		MppFreqAdjustInt((double)x / (double)MPP_MAX_CHORD_BANDS, phase, freq);
+
+		freq += MPP_BAND_STEP_CHORD / 2;
+		freq -= freq % MPP_BAND_STEP_CHORD;
 
 		phase += MPP_BAND_STEP_CHORD / 2;
 		phase -= phase % MPP_BAND_STEP_CHORD;
@@ -255,7 +298,7 @@ MppScoreVariantInit(void)
 		    MPP_MAX_BANDS * 5 + 0 * MPP_BAND_STEP_CHORD);
 		Mpp.VariantList += " ";
 		Mpp.VariantList += MppKeyStr(
-		    MPP_MAX_BANDS * 5 + v);
+		    MPP_MAX_BANDS * 5 + freq);
 		Mpp.VariantList += " ";
 		Mpp.VariantList += MppKeyStr(
 		    MPP_MAX_BANDS * 5 + x * MPP_BAND_STEP_CHORD);

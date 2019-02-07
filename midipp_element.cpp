@@ -1161,39 +1161,6 @@ MppHead :: limitScore(int limit)
 	}
 }
 
-Q_DECL_EXPORT int
-MppFreqAdjust(double top, int *p_phase)
-{
-	const double mid = top / 2.0;
-
-	const double p0 = 1.0;
-	const double p1 = pow(2.0, mid);
-	const double p2 = pow(2.0, top);
-
-	const double f1 = log(p1 - p0) / log(2.0);
-	const double f3 = log(p2 - p0) / log(2.0);
-
-	const double ff1 = f1 - floor(f1);
-	const double ff3 = f3 - floor(f3);
-
-	double adjust_lo;
-	double delta;
-
-	delta = ff3 - ff1;
-	if (delta > 0.5)
-		delta -= 1.0;
-	else if (delta < -0.5)
-		delta += 1.0;
-	adjust_lo = log(pow(2.0, f1 + delta) + p0) / log(2.0);
-
-	if (p_phase) {
-		double p = (f1 + delta);
-		p = p - floor(p);
-		*p_phase = round(p * (double)MPP_MAX_BANDS);
-	}
-	return (round(adjust_lo * (double)MPP_MAX_BANDS));
-}
-
 void
 MppHead :: tuneScore()
 {
