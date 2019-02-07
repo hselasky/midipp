@@ -146,7 +146,23 @@ MppSettings :: doSave(void)
 			beginGroup(concat("view%d", x));
 			setValue("basekey192", mw->scores_main[x]->baseKey / MPP_BAND_STEP_192);
 			setValue("delay", mw->scores_main[x]->delayNoise);
-			setValue("keymode", mw->scores_main[x]->keyMode);
+			switch (mw->scores_main[x]->keyMode) {
+			case MM_PASS_NONE_FIXED:
+				setValue("keymode", 2);
+				break;
+			case MM_PASS_NONE_TRANS:
+				setValue("keymode", 3);
+				break;
+			case MM_PASS_NONE_CHORD_PIANO:
+				setValue("keymode", 4);
+				break;
+			case MM_PASS_NONE_CHORD_GUITAR:
+				setValue("keymode", 5);
+				break;
+			default:
+				setValue("keymode", 0);
+				break;
+			}
 			setValue("inputchannel", mw->scores_main[x]->inputChannel);
 			setValue("synthchannel", mw->scores_main[x]->synthChannel);
 			setValue("synthchannelbase", mw->scores_main[x]->synthChannelBase);
@@ -265,8 +281,6 @@ MppSettings :: doLoad(void)
 
 			if (delayNoise < 0 || delayNoise > 255)
 				delayNoise = 0;
-			if (keyMode < 0 || keyMode >= MM_PASS_MAX)
-				keyMode = 0;
 			if (inputChannel < 0 || inputChannel > 15)
 				inputChannel = -1;
 			if (synthChannel < 0 || synthChannel > 15)
@@ -297,7 +311,23 @@ MppSettings :: doLoad(void)
 			mw->atomic_lock();
 			mw->scores_main[x]->baseKey = baseKey * MPP_BAND_STEP_192;
 			mw->scores_main[x]->delayNoise = delayNoise;
-			mw->scores_main[x]->keyMode = keyMode;
+			switch (keyMode) {
+			case 2:
+				mw->scores_main[x]->keyMode = MM_PASS_NONE_FIXED;
+				break;
+			case 3:
+				mw->scores_main[x]->keyMode = MM_PASS_NONE_TRANS;
+				break;
+			case 4:
+				mw->scores_main[x]->keyMode = MM_PASS_NONE_CHORD_PIANO;
+				break;
+			case 5:
+				mw->scores_main[x]->keyMode = MM_PASS_NONE_CHORD_GUITAR;
+				break;
+			default:
+				mw->scores_main[x]->keyMode = MM_PASS_ALL;
+				break;
+			}
 			mw->scores_main[x]->inputChannel = inputChannel;
 			mw->scores_main[x]->synthChannel = synthChannel;
 			mw->scores_main[x]->synthChannelBase = synthChannelBase;
