@@ -453,29 +453,27 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	mbm_notemode = new MppButtonMap("Note mode\0"
 				       "Normal\0"
-				       "SysEx\0", 2, 1);
+				       "SysEx\0", 2, 2);
 	connect(mbm_notemode, SIGNAL(selectionChanged(int)), this, SLOT(handle_notemode()));
 
 	/* First column */
 
-	tab_play_gl->addWidget(gl_time,0,0,1,1);
-	tab_play_gl->addWidget(gl_ctrl,1,0,1,1);
+	tab_play_gl->addWidget(gl_time,0,0,1,2);
+	tab_play_gl->addWidget(gl_ctrl,1,0,1,2);
 	tab_play_gl->addWidget(mbm_midi_play, 2,0,1,1);
-	tab_play_gl->addWidget(mbm_midi_record, 3,0,1,1);
-	tab_play_gl->addWidget(mbm_key_mode_a, 4,0,1,1);
+	tab_play_gl->addWidget(mbm_midi_record, 2,1,1,1);
+	tab_play_gl->addWidget(mbm_key_mode_a, 3,0,1,2);
+	tab_play_gl->addWidget(mbm_key_mode_b, 4,0,1,2);
 
 	/* Second column */
 
-	tab_play_gl->addWidget(gl_synth_play, 0,1,2,2);
-	tab_play_gl->addWidget(mbm_score_record, 2,2,1,1);
-	tab_play_gl->addWidget(mbm_bpm_generator, 2,1,1,1);
-	tab_play_gl->addWidget(gl_bpm, 3,1,1,2);
-	tab_play_gl->addWidget(mbm_key_mode_b, 4,1,1,2);
+	tab_play_gl->addWidget(gl_synth_play, 0,2,2,2);
+	tab_play_gl->addWidget(mbm_score_record, 2,3,1,1);
+	tab_play_gl->addWidget(mbm_bpm_generator, 2,2,1,1);
+	tab_play_gl->addWidget(gl_bpm, 3,2,1,2);
 
-	/* Third column */
-
-	tab_play_gl->addWidget(mbm_notemode, 4,4,1,1);
-	tab_play_gl->addWidget(gl_tuning, 2,4,1,1);
+	tab_play_gl->addWidget(mbm_notemode, 4,2,1,1);
+	tab_play_gl->addWidget(gl_tuning, 4,3,1,1);
 
 	tab_play_gl->setRowStretch(5, 1);
 	tab_play_gl->setColumnStretch(5, 1);
