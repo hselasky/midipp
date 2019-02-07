@@ -138,7 +138,7 @@ public:
 	uint8_t numControlEvents;
 	uint8_t cursorUpdate;
 
-	uint8_t scoreRecordOff;
+	uint8_t scoreRecordOn;
 	uint8_t controlRecordOn;
 	uint8_t instrUpdated;
 	uint8_t midiRecordOff;

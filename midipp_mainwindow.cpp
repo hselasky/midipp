@@ -439,7 +439,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mbm_midi_record = new MppButtonMap("MIDI recording\0" "OFF\0" "ON\0", 2, 2);
 	connect(mbm_midi_record, SIGNAL(selectionChanged(int)), this, SLOT(handle_midi_record(int)));
 
-	mbm_score_record = new MppButtonMap("Score recording\0" "OFF\0" "ON\0", 2, 2);
+	mbm_score_record = new MppButtonMap("Score recording\0" "OFF\0" "ON\0" "ONE\0", 3, 3);
 	connect(mbm_score_record, SIGNAL(selectionChanged(int)), this, SLOT(handle_score_record(int)));
 
 	mbm_key_mode_a = new MppButtonMap("Key Mode for view A\0" "ALL\0" "FIXED\0" "TRANSP\0" "CHORD-PIANO\0" "CHORD-GUITAR\0", 5, 3);
@@ -687,7 +687,7 @@ void
 MppMainWindow :: handle_score_record(int value)
 {
 	atomic_lock();
-	scoreRecordOff = value ? 0 : 1;
+	scoreRecordOn = value;
 	atomic_unlock();
 }
 
@@ -917,6 +917,9 @@ MppMainWindow :: handle_watchdog()
 			cursor.endEditBlock();
 			ped->setTextCursor(cursor);
 		}
+
+		if (scoreRecordOn == 2)
+			mbm_score_record->setSelection(0);
 
 		atomic_lock();
 	}
@@ -1903,12 +1906,17 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 		key = (umidi20_event_get_key(event) & 0x7F) * MPP_BAND_STEP_12;
 		vel = umidi20_event_get_velocity(event);
 
-		if (mw->scoreRecordOff == 0) {
+		switch (mw->scoreRecordOn) {
+		case 1:
+		case 2:
 			if (mw->numInputEvents < MPP_MAX_QUEUE) {
 				mw->inputEvents[mw->numInputEvents] = key / MPP_BAND_STEP_12;
 				mw->numInputEvents++;
 				mw->lastInputEvent = umidi20_get_curr_position();
 			}
+			break;
+		default:
+			break;
 		}
 
 		if (mw->tab_loop->handle_trigN(key, vel))
