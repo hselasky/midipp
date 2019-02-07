@@ -976,10 +976,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 		keyMode = MM_PASS_ALL;
 		mainWindow->keyModeUpdated = 1;
 		break;
-	case 1:
-		keyMode = MM_PASS_ALL_SUBDIV;
-		mainWindow->keyModeUpdated = 1;
-		break;
 	case 2:
 		keyMode = MM_PASS_NONE_FIXED;
 		mainWindow->keyModeUpdated = 1;
@@ -2159,7 +2155,6 @@ MppScoreMain :: outputChannelMaskGet(void)
 
 	switch (keyMode) {
 	case MM_PASS_ALL:
-	case MM_PASS_ALL_SUBDIV:
 		mask = 1U;
 		break;
 	case MM_PASS_NONE_CHORD_PIANO:
@@ -2364,7 +2359,6 @@ MppScoreMain :: handleMidiKeyPressLocked(int key, int vel)
 		handleKeyPressChord(key, vel, 0);
 		break;
 	case MM_PASS_ALL:
-	case MM_PASS_ALL_SUBDIV:
 		if (setPressedKey(chan, key, 255, 0) == 0)
 			mainWindow->output_key(MPP_DEFAULT_TRACK(unit), chan, key, vel, 0, 0);
 		break;
@@ -2390,7 +2384,6 @@ MppScoreMain :: handleMidiKeyReleaseLocked(int key, int vel)
 		handleKeyReleaseChord(key, vel, 0);
 		break;
 	case MM_PASS_ALL:
-	case MM_PASS_ALL_SUBDIV:
 		if (setPressedKey(chan, key, 0, 0) == 0)
 			mainWindow->output_key(MPP_DEFAULT_TRACK(unit), chan, key, -vel, 0, 0);
 		break;

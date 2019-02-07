@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -79,7 +79,6 @@ MppShortcutTab :: MppShortcutTab(MppMainWindow *_mw)
 	shortcut_desc[MPP_SHORTCUT_ALL] = "ALL";
 	shortcut_desc[MPP_SHORTCUT_TRANS] = "TRANS";
 	shortcut_desc[MPP_SHORTCUT_FIXED] = "FIXED";
-	shortcut_desc[MPP_SHORTCUT_ALL_SUBDIV] = "ALL-SUBDIV";
 	shortcut_desc[MPP_SHORTCUT_CHORD_PIANO] = "CHORD-PIANO";
 	shortcut_desc[MPP_SHORTCUT_CHORD_GUITAR] = "CHORD-GUITAR";
 	shortcut_desc[MPP_SHORTCUT_TRIGGER] = "TRIGGER";
@@ -169,7 +168,6 @@ MppShortcutTab :: handle_event_received_locked(MppScoreMain *sm,
 		/* if passing all keys, magic commands don't work */
 		switch (sm->keyMode) {
 		case MM_PASS_ALL:
-		case MM_PASS_ALL_SUBDIV:
 			return (0);
 		default:
 			break;
@@ -190,7 +188,6 @@ MppShortcutTab :: handle_event_received_locked(MppScoreMain *sm,
 		/* if passing all keys, magic commands don't work */
 		switch (sm->keyMode) {
 		case MM_PASS_ALL:
-		case MM_PASS_ALL_SUBDIV:
 			return (0);
 		default:
 			break;
@@ -216,10 +213,6 @@ MppShortcutTab :: handle_event_received_locked(MppScoreMain *sm,
 			break;
 		case MPP_SHORTCUT_FIXED:
 			sm->keyMode = MM_PASS_NONE_FIXED;
-			mw->keyModeUpdated = 1;
-			break;
-		case MPP_SHORTCUT_ALL_SUBDIV:
-			sm->keyMode = MM_PASS_ALL_SUBDIV;
 			mw->keyModeUpdated = 1;
 			break;
 		case MPP_SHORTCUT_CHORD_PIANO:
