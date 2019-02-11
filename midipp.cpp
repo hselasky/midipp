@@ -281,7 +281,7 @@ MppSortIndex(size_t t)
 }
 
 static int
-MppSortXform(void **ptr, size_t n, size_t lim, MppCmp_t *fn, void *arg)
+MppSortXform(void *ptr, size_t n, size_t lim, size_t size, MppCmp_t *fn, void *arg)
 {
 #define	MPP_XSORT_TABLE_MAX (1 << 4)
 	size_t x, y, z;
@@ -317,14 +317,14 @@ MppSortXform(void **ptr, size_t n, size_t lim, MppCmp_t *fn, void *arg)
 					if ((w ^ p[t]) >= lim)
 						break;
 					for (u = t; u != 0; u--) {
-						void **pa = ptr + (w ^ p[u - 1]);
-						void **pb = ptr + (w ^ p[u]);
+						void *pa = ((uint8_t *)ptr) + (w ^ p[u - 1]) * size;
+						void *pb = ((uint8_t *)ptr) + (w ^ p[u]) * size;
 
 						if (fn(arg, pa, pb) > 0) {
-							void *temp;
-							temp = *pa;
-							*pa = *pb;
-							*pb = temp;
+							uint8_t temp[size];
+							memcpy(temp, pa, sizeof(temp));
+							memcpy(pa, pb, sizeof(temp));
+							memcpy(pb, temp, sizeof(temp));
 							retval = 1;
 						} else {
 							break;
@@ -338,7 +338,7 @@ MppSortXform(void **ptr, size_t n, size_t lim, MppCmp_t *fn, void *arg)
 }
 
 Q_DECL_EXPORT void
-MppSort(void **ptr, size_t n, MppCmp_t *fn, void *arg)
+MppSort(void *ptr, size_t n, size_t size, MppCmp_t *fn, void *arg)
 {
 	size_t max;
 
@@ -348,7 +348,7 @@ MppSort(void **ptr, size_t n, MppCmp_t *fn, void *arg)
 	for (max = 1; max < n; max <<= 1)
 		;
 
-	while (MppSortXform(ptr, max, n, fn, arg))
+	while (MppSortXform(ptr, max, n, size, fn, arg))
 		;
 }
 

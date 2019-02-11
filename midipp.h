@@ -363,7 +363,7 @@ extern const QString MppVersion;
 extern const QString MppIconFile;
 
 typedef int (MppCmp_t)(void *, const void *, const void *);
-extern void MppSort(void **, size_t, MppCmp_t *, void *);
+extern void MppSort(void *, size_t, size_t, MppCmp_t *, void *);
 extern void MppSort(int *, size_t);
 extern void MppTrans(int *ptr, size_t num, int ntrans);
 

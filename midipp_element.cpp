@@ -861,7 +861,7 @@ struct MppKeyInfo {
 };
 
 static int
-MppCompareKeyInfo(const void *pa, const void *pb)
+MppCompareKeyInfo(void *arg, const void *pa, const void *pb)
 {
 	MppKeyInfo *ma = (MppKeyInfo *)pa;
 	MppKeyInfo *mb = (MppKeyInfo *)pb;
@@ -942,18 +942,15 @@ MppHead :: sortScore()
 			}
 		}
 
-#if defined(__linux__) || defined(__ANDROID__)
-		qsort(mk, num, sizeof(*mk), MppCompareKeyInfo);
-#else
-		mergesort(mk, num, sizeof(*mk), MppCompareKeyInfo);
-#endif
+		MppSort(mk, num, sizeof(*mk), MppCompareKeyInfo, 0);
+
 		/* output */
 
 		channel = 0;
 		duration = 1;
 
 		for (i = 0; i != num; i++) {
-			if (i != 0 && MppCompareKeyInfo(mk + i, mk + i - 1) == 0)
+			if (i != 0 && MppCompareKeyInfo(0, mk + i, mk + i - 1) == 0)
 				continue;
 			if (channel != mk[i].channel) {
 				channel = mk[i].channel;
@@ -1100,11 +1097,8 @@ MppHead :: limitScore(int limit)
 				mk[i].key -= MPP_MAX_BANDS;
 		}
 
-#if defined(__linux__) || defined(__ANDROID__)
-		qsort(mk, num, sizeof(*mk), MppCompareKeyInfo);
-#else
-		mergesort(mk, num, sizeof(*mk), MppCompareKeyInfo);
-#endif
+		MppSort(mk, num, sizeof(*mk), MppCompareKeyInfo, 0);
+
 		/* figure out the duplicates and move them down */
 		for (i = num; i--; ) {
 			for (j = i; j--; ) {
@@ -1115,18 +1109,15 @@ MppHead :: limitScore(int limit)
 			}
 		}
 
-#if defined(__linux__) || defined(__ANDROID__)
-		qsort(mk, num, sizeof(*mk), MppCompareKeyInfo);
-#else
-		mergesort(mk, num, sizeof(*mk), MppCompareKeyInfo);
-#endif
+		MppSort(mk, num, sizeof(*mk), MppCompareKeyInfo, 0);
+
 		/* output */
 
 		channel = 0;
 		duration = 1;
 
 		for (i = 0; i != num; i++) {
-			if (i != 0 && MppCompareKeyInfo(mk + i, mk + i - 1) == 0)
+			if (i != 0 && MppCompareKeyInfo(0, mk + i, mk + i - 1) == 0)
 				continue;
 			if (channel != mk[i].channel) {
 				channel = mk[i].channel;

@@ -142,7 +142,7 @@ MppSheetRowToString(MppSheetRow * ptr)
 }
 
 static int
-MppSheetRowCompareType(const void *_pa, const void *_pb)
+MppSheetRowCompareType(void *arg, const void *_pa, const void *_pb)
 {
 	MppSheetRow *pa = (MppSheetRow *) _pa;
 	MppSheetRow *pb = (MppSheetRow *) _pb;
@@ -193,13 +193,13 @@ done:
 }
 
 static int
-MppSheetRowCompare(const void *_pa, const void *_pb)
+MppSheetRowCompare(void *arg, const void *_pa, const void *_pb)
 {
 	MppSheetRow *pa = (MppSheetRow *) _pa;
 	MppSheetRow *pb = (MppSheetRow *) _pb;
 	int ret;
 
-	ret = MppSheetRowCompareType(_pa, _pb);
+	ret = MppSheetRowCompareType(arg, _pa, _pb);
 	if (ret != 0)
 		return (ret);
 
@@ -391,17 +391,12 @@ MppSheet::compile(MppHead & head)
 			num_cols++;
 	}
 
-#if defined(__linux__) || defined(__ANDROID__)
-	qsort(ptemp, n, sizeof(ptemp[0]), &MppSheetRowCompare);
-#else
-	mergesort(ptemp, n, sizeof(ptemp[0]), &MppSheetRowCompare);
-#endif
+	MppSort(ptemp, n, sizeof(ptemp[0]), &MppSheetRowCompare, 0);
 
 	num_rows = 0;
 	for (x = 0; x != n; x++) {
 		if (x == 0 ||
-		    MppSheetRowCompareType(ptemp + x - 1,
-					     ptemp + x))
+		    MppSheetRowCompareType(0, ptemp + x - 1, ptemp + x))
 			num_rows++;
 	}
 	
@@ -416,8 +411,7 @@ MppSheet::compile(MppHead & head)
 	num_rows = 0;
 	for (x = 0; x != n; x++) {
 		if (x == 0 ||
-		    MppSheetRowCompareType(ptemp + x - 1,
-					     ptemp + x)) {
+		    MppSheetRowCompareType(0, ptemp + x - 1, ptemp + x)) {
 			entries_rows[num_rows] = ptemp[x];
 			num_rows++;
 		}

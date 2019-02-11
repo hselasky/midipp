@@ -336,8 +336,8 @@ MppDataBase :: update_list_view()
 	}
 
 	if (record_count != 0) {
-		MppSort((void **)record_ptr, record_count,
-		    &tar_compare_r, (void *)&filter);
+		MppSort(record_ptr, record_count, sizeof(record_ptr[0]),
+		    &tar_compare_r, &filter);
 	}
 
 	result->clear();
