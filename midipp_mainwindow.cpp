@@ -239,7 +239,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " * K5.1 - Enable micro tuning\n"
 	    " * K6 - no operation.\n"
 	    " * K6.0 - select ALL key mode. (default)\n"
-	    " * K6.1 - select ALL subdivision key mode.\n"
+	    " * K6.1 - no operation.\n"
 	    " * K6.2 - select FIXED key mode.\n"
 	    " * K6.3 - select TRANS key mode.\n"
 	    " * K6.4 - select CHORD-PIANO key mode.\n"
