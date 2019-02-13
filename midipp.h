@@ -152,8 +152,12 @@
 #define	MPP_BAND_STEP_192 (MPP_MAX_BANDS / 192)
 #define	MPP_BAND_STEP_CHORD (MPP_MAX_BANDS / MPP_MAX_CHORD_BANDS)
 
-#define	MPP_BAND_REM(x,y)				\
-    (((y) + (((x) / (MPP_MAX_BANDS / (y))) % (y))) % (y))
+static inline int
+MPP_BAND_REM(int x, int y)
+{
+	x = (MPP_MAX_BANDS + (x % MPP_MAX_BANDS)) % MPP_MAX_BANDS;
+	return (x / (MPP_MAX_BANDS / y));
+}
 
 static inline int
 MPP_SUBDIV_REM_BITREV(int x)
