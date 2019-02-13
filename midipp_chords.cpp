@@ -834,6 +834,8 @@ MppStepChordGeneric(QString &input, int adjust, uint32_t sharp)
 	if (mask.test(0) == 0)
 		return;
 
+	adjust = (MPP_MAX_BANDS + (adjust % MPP_MAX_BANDS)) % MPP_MAX_BANDS;
+
 	rem += adjust;
 	bass += adjust;
 
