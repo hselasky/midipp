@@ -40,7 +40,7 @@ midipp_import_find_chord(const QString &str)
 	uint32_t bass;
 	MppChord_t mask;
 
-	MppStringToChordGeneric(mask, rem, bass, 1, str);
+	MppStringToChordGeneric(mask, rem, bass, MPP_BAND_STEP_CHORD, str);
 
 	return (mask.test(0) == 0);
 }

@@ -1032,7 +1032,7 @@ MppDecodeTab :: handle_parse()
 	if (chord.isEmpty())
 		goto error;
 
-	MppStringToChordGeneric(mask, rem, bass, 1, chord);
+	MppStringToChordGeneric(mask, rem, bass, MPP_BAND_STEP_CHORD, chord);
 	chord_sharp = (chord.indexOf('#') > -1);
 
 	if (mask.test(0) == 0)

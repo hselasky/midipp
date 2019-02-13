@@ -828,7 +828,7 @@ MppStepChordGeneric(QString &input, int adjust, uint32_t sharp)
 	uint32_t rem;
 	uint32_t bass;
 
-	MppStringToChordGeneric(mask, rem, bass, 1, input);
+	MppStringToChordGeneric(mask, rem, bass, MPP_BAND_STEP_CHORD, input);
 
 	/* only step chords we understand */
 	if (mask.test(0) == 0)
