@@ -701,7 +701,7 @@ MppChordToStringGeneric(MppChord_t mask, uint32_t rem, uint32_t bass, uint32_t s
 {
 	uint32_t rots;
 	uint32_t rots_min = MPP_MAX_CHORD_BANDS;
-	size_t z;
+	size_t z = 0;
 
 	rem = rem % MPP_MAX_BANDS;
 	bass = bass % MPP_MAX_BANDS;
@@ -718,12 +718,12 @@ MppChordToStringGeneric(MppChord_t mask, uint32_t rem, uint32_t bass, uint32_t s
 
 	/* look for known chords, with least rotation */
 	for (size_t x = z = 0; x != (sizeof(MppScoreVariants12) / sizeof(MppScoreVariants12[0])); x++) {
-		uint32_t y;
 		if (MppScoreVariants12[x].footprint[0] != mask)
 			continue;
-		y = MppScoreVariants12[x].rots[0];
-		if (y < rots_min) {
-			rots_min = y;
+		if ((rots_min == MPP_MAX_CHORD_BANDS) ||
+		    (strlen(MppScoreVariants12[x].pattern[0]) <
+		     strlen(MppScoreVariants12[z].pattern[0]))) {
+			rots_min = MppScoreVariants12[x].rots[0];
 			z = x;
 		}
 	}
