@@ -716,7 +716,7 @@ MppChordToStringGeneric(MppChord_t mask, uint32_t rem, uint32_t bass, uint32_t s
 	/* adjust for rotations */
 	rem = (rem + rots * MPP_BAND_STEP_CHORD) % MPP_MAX_BANDS;
 
-	/* look for known chords, with least rotation */
+	/* look for known chords, with shortest suffix */
 	for (size_t x = z = 0; x != (sizeof(MppScoreVariants12) / sizeof(MppScoreVariants12[0])); x++) {
 		if (MppScoreVariants12[x].footprint[0] != mask)
 			continue;
