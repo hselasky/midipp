@@ -1164,7 +1164,7 @@ MppMainWindow :: handle_midi_file_instr_prepend()
 		if (check_mirror(n))
 			continue;
 		for (x = 0; x != 16; x++) {
-			int temp = 8192 + mw->getPitchBendBase(x);
+			int temp = 8192 + getPitchBendBase(x);
 			if (temp < 0)
 				temp = 0;
 			else if (temp > 16383)
