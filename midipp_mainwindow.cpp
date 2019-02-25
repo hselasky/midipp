@@ -1164,6 +1164,12 @@ MppMainWindow :: handle_midi_file_instr_prepend()
 		if (check_mirror(n))
 			continue;
 		for (x = 0; x != 16; x++) {
+			int temp = 8192 + mw->getPitchBendBase(x);
+			if (temp < 0)
+				temp = 0;
+			else if (temp > 16383)
+				temp = 16383;
+
 			d->track = track[n];
 			mid_set_channel(d, x);
 			mid_set_position(d, 0);
@@ -1172,7 +1178,7 @@ MppMainWindow :: handle_midi_file_instr_prepend()
 			    instr[x].bank,
 			    instr[x].prog);
 			mid_set_position(d, 1);
-			mid_pitch_bend(d, getPitchBendBase(x));
+			mid_pitch_bend(d, temp);
 		}
 	}
 }
