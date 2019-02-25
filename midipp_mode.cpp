@@ -120,18 +120,22 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	spn_sec_treb_volume->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
 	connect(spn_sec_treb_volume, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
+	but_note_mode = new MppButtonMap("Note mode\0" "Normal\0" "SysEx\0", 2, 2);
+	connect(but_note_mode, SIGNAL(selectionChanged(int)), this, SLOT(handle_changed()));
+
 	gl->addWidget(gb_iconfig, 0, 0, 2, 2);
-	gl->addWidget(gb_oconfig, 2, 2, 2, 2);
+	gl->addWidget(gb_oconfig, 2, 2, 3, 2);
 
 	gl->addWidget(gb_delay, 0, 2, 1, 2);
 	gl->addWidget(gb_contrast, 1, 2, 1, 2);
 
 	gl->addWidget(but_song_events, 2, 0, 1, 2);
-	gl->addWidget(but_mode, 3, 0, 1, 2);
+	gl->addWidget(but_note_mode, 3, 0, 1, 2);
+	gl->addWidget(but_mode, 4, 0, 1, 2);
 
-	gl->addWidget(but_reset, 4, 0, 1, 2);
-	gl->addWidget(but_done, 4, 2, 1, 2);
-	gl->setRowStretch(4, 1);
+	gl->addWidget(but_reset, 5, 0, 1, 2);
+	gl->addWidget(but_done, 5, 2, 1, 2);
+	gl->setRowStretch(6, 1);
 	gl->setColumnStretch(4, 1);
 
 	gb_delay->addWidget(sli_delay, 0, 0, 1, 1);
@@ -186,6 +190,7 @@ MppMode :: update_all(void)
 	int volumeBase;
 	int volumeTreb;
 	int key_mode;
+	int note_mode;
 	int chord_contrast;
 	int chord_norm;
 	int song_events;
@@ -207,6 +212,7 @@ MppMode :: update_all(void)
 	chord_contrast = sm->chordContrast;
 	chord_norm = sm->chordNormalize;
 	song_events = sm->songEventsOn;
+	note_mode = sm->noteMode;
 	sm->mainWindow->atomic_unlock();
 
 	spn_base->setValue(base_key);
@@ -225,6 +231,7 @@ MppMode :: update_all(void)
 	but_mode->setSelection(key_mode);
 	cbx_norm->setChecked(chord_norm);
 	but_song_events->setSelection(song_events);
+	but_note_mode->setSelection(note_mode);
 }
 
 void
@@ -288,6 +295,7 @@ MppMode :: handle_changed()
 	int volumeBase;
 	int volumeTreb;
 	int key_mode;
+	int note_mode;
 	int chord_contrast;
 	int chord_norm;
 	int song_events;
@@ -308,6 +316,7 @@ MppMode :: handle_changed()
 	chord_norm = cbx_norm->isChecked();
 	key_mode = but_mode->currSelection;
 	song_events = but_song_events->currSelection;
+	note_mode = but_note_mode->currSelection;
 
 	if (key_mode < 0 || key_mode >= MM_PASS_MAX)
 		key_mode = 0;
@@ -329,5 +338,6 @@ MppMode :: handle_changed()
 	sm->chordContrast = chord_contrast;
 	sm->chordNormalize = chord_norm;
 	sm->songEventsOn = song_events;
+	sm->noteMode = note_mode;
 	sm->mainWindow->atomic_unlock();
 }

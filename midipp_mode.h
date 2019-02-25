@@ -29,6 +29,12 @@
 #include "midipp.h"
 
 enum {
+	MM_NOTEMODE_NORMAL,
+	MM_NOTEMODE_SYSEX,
+	MM_NOTEMODE_MAX,
+};
+
+enum {
 	MM_PASS_ALL,
 	MM_PASS_NONE_FIXED,
 	MM_PASS_NONE_TRANS,
@@ -62,6 +68,7 @@ public:
 
 	MppCheckBox *cbx_norm;
 
+	MppButtonMap *but_note_mode;
 	MppButtonMap *but_song_events;
 	MppButtonMap *but_mode;
 	QPushButton *but_done;

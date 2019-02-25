@@ -153,8 +153,6 @@ public:
 #define	MPP_OPERATION_BPM 0x04
 
 	uint8_t noteMode;
-#define	MPP_NOTEMODE_NORMAL 0
-#define	MPP_NOTEMODE_SYSEX 1
 
 	char *deviceName[MPP_MAX_DEVS];
 
@@ -228,7 +226,6 @@ public:
 	MppButtonMap *mbm_key_mode_a;
 	MppButtonMap *mbm_key_mode_b;
 	MppButtonMap *mbm_bpm_generator;
-	MppButtonMap *mbm_notemode;
 
 	QPushButton *but_jump[MPP_MAX_LBUTTON];
 	QPushButton *but_compile;
@@ -368,7 +365,6 @@ public slots:
 	void handle_undo();
 	void handle_edit();
 	void handle_up_down();
-	void handle_notemode();
 	void handle_tuning();
 };
 

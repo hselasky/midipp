@@ -163,6 +163,14 @@ MppSettings :: doSave(void)
 				setValue("keymode", 0);
 				break;
 			}
+			switch (mw->scores_main[x]->noteMode) {
+			case MM_NOTEMODE_SYSEX:
+				setValue("notemode", 1);
+				break;
+			default:
+				setValue("notemode", 0);
+				break;
+			}
 			setValue("inputchannel", mw->scores_main[x]->inputChannel);
 			setValue("synthchannel", mw->scores_main[x]->synthChannel);
 			setValue("synthchannelbase", mw->scores_main[x]->synthChannelBase);
@@ -265,6 +273,7 @@ MppSettings :: doLoad(void)
 			int baseKey = valueDefault(concat("view%d/basekey192", x), MPP_DEFAULT_BASE_KEY / MPP_BAND_STEP_192);
 			int delayNoise = valueDefault(concat("view%d/delay", x), 25);
 			int keyMode = valueDefault(concat("view%d/keymode", x), 0);
+			int noteMode = valueDefault(concat("view%d/notemode", x), 0);
 			int inputChannel = valueDefault(concat("view%d/inputchannel", x), -1);
 			int synthChannel = valueDefault(concat("view%d/synthchannel", x), (x == 1) ? 9 : 0);
 			int synthChannelBase = valueDefault(concat("view%d/synthchannelbase", x), -1);
@@ -328,6 +337,15 @@ MppSettings :: doLoad(void)
 				mw->scores_main[x]->keyMode = MM_PASS_ALL;
 				break;
 			}
+			switch (noteMode) {
+			case 1:
+				mw->scores_main[x]->noteMode = MM_NOTEMODE_SYSEX;
+				break;
+			default:
+				mw->scores_main[x]->noteMode = MM_NOTEMODE_NORMAL;
+				break;
+			}
+
 			mw->scores_main[x]->inputChannel = inputChannel;
 			mw->scores_main[x]->synthChannel = synthChannel;
 			mw->scores_main[x]->synthChannelBase = synthChannelBase;

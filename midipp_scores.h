@@ -168,6 +168,7 @@ public:
 	uint8_t last_key;
 	uint8_t last_vel;
 	uint8_t keyMode;
+	uint8_t noteMode;
 	uint8_t pressed_future;
 	uint8_t chordContrast;
 	uint8_t chordNormalize;

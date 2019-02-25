@@ -451,11 +451,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mbm_bpm_generator = new MppButtonMap("BPM generator\0" "OFF\0" "ON\0", 2, 2);
 	connect(mbm_bpm_generator, SIGNAL(selectionChanged(int)), dlg_bpm, SLOT(handle_bpm_enable(int)));
 
-	mbm_notemode = new MppButtonMap("Note mode\0"
-				       "Normal\0"
-				       "SysEx\0", 2, 2);
-	connect(mbm_notemode, SIGNAL(selectionChanged(int)), this, SLOT(handle_notemode()));
-
 	/* First column */
 
 	tab_play_gl->addWidget(gl_time,0,0,1,2);
@@ -472,7 +467,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_play_gl->addWidget(mbm_bpm_generator, 2,2,1,1);
 	tab_play_gl->addWidget(gl_bpm, 3,2,1,2);
 
-	tab_play_gl->addWidget(mbm_notemode, 4,2,1,1);
 	tab_play_gl->addWidget(gl_tuning, 4,3,1,1);
 
 	tab_play_gl->setRowStretch(5, 1);
@@ -1618,6 +1612,7 @@ MppMainWindow :: check_play(uint8_t index, uint8_t chan, uint32_t off)
 		pos--;
 
 	d->track = track[index];
+	noteMode = scores_main[index / MPP_TRACKS_PER_VIEW]->noteMode;
 	mid_set_channel(d, chan);
 	mid_set_position(d, pos);
 	mid_set_device_no(d, MPP_MAGIC_DEVNO + index);
@@ -1641,6 +1636,7 @@ MppMainWindow :: check_record(uint8_t index, uint8_t chan, uint32_t off)
 		pos = MPP_MIN_POS;
 
 	d->track = track[index];
+	noteMode = scores_main[index / MPP_TRACKS_PER_VIEW]->noteMode;
 	mid_set_channel(d, chan);
 	mid_set_position(d, pos);
 	mid_set_device_no(d, 0xFF);
@@ -1710,7 +1706,7 @@ MppMainWindow :: do_key_press(int key, int vel, int dur)
 		return;
 
 	switch (noteMode) {
-	case MPP_NOTEMODE_SYSEX:
+	case MM_NOTEMODE_SYSEX:
 		index = do_extended_alloc(key, (vel <= 0) ? -1 : 1);
 		if (index < 0)
 			return;
@@ -1742,7 +1738,7 @@ MppMainWindow :: do_key_pressure(int key, int pressure)
 		return;
 
 	switch (noteMode) {
-	case MPP_NOTEMODE_SYSEX:
+	case MM_NOTEMODE_SYSEX:
 		key = do_extended_alloc(key, 0);
 		if (key < 0)
 			return;
@@ -3231,14 +3227,6 @@ int
 MppMainWindow :: getPitchBendBase(uint8_t chan)
 {
 	return (masterPitchBend);
-}
-
-void
-MppMainWindow :: handle_notemode()
-{
-  	atomic_lock();
-	noteMode = mbm_notemode->currSelection;
-	atomic_unlock();
 }
 
 void
