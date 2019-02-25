@@ -1143,11 +1143,11 @@ load_file:
 
 	atomic_unlock();
 
-	if (how == 2)
+	if (how & 4)
 		handle_midi_file_import(0);
 done:
 	/* make sure we save into a new file */
-	if (how != 0)
+	if (how & (4 | 1))
 		handle_midi_file_clear_name();
 
 	delete diag;
