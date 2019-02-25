@@ -77,14 +77,11 @@ public:
 	uint8_t check_record(uint8_t index, uint8_t chan, uint32_t off);
 	uint8_t check_mirror(uint8_t index);
 
-	int getPitchBendBase(uint8_t chan);
-
 	void handle_watchdog_sub(MppScoreMain *, int);
 
 	void send_song_stop_locked();
 	void send_song_trigger_locked();
 	void send_song_select_locked(uint8_t);
-	void send_pitch_trigger_locked();
 
 	void send_byte_event_locked(uint8_t);
 

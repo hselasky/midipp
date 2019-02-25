@@ -2286,22 +2286,10 @@ MppScoreMain :: outputPitch(uint16_t val)
 			for (unsigned int x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
 				if (outputTrackMirror(x))
 					continue;
-				if (mw->check_play(off + x, chan, 0)) {
-					int temp = (int)val + mw->getPitchBendBase(chan);
-					if (temp < 0)
-						temp = 0;
-					else if (temp > 16383)
-						temp = 16383;
-					mid_pitch_bend(d, temp);
-				}
-				if (mw->check_record(off + x, chan, 0)) {
-					int temp = (int)val + mw->getPitchBendBase(chan);
-					if (temp < 0)
-						temp = 0;
-					else if (temp > 16383)
-						temp = 16383;
-					mid_pitch_bend(d, temp);
-				}
+				if (mw->check_play(off + x, chan, 0))
+					mid_pitch_bend(d, val);
+				if (mw->check_record(off + x, chan, 0))
+					mid_pitch_bend(d, val);
 			}
 		}
 		ChannelMask /= 2;

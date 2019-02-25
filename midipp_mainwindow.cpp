@@ -309,7 +309,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	gl_time = new MppGroupBox(tr("Time counter"));
 	gl_bpm = new MppGroupBox(tr("Average Beats Per Minute, BPM, for generator"));
 	gl_synth_play = new MppGroupBox(tr("Synth and Play controls"));
-	gl_tuning = new MppGroupBox(tr("Master tuning"));
+	gl_tuning = new MppGroupBox(tr("Master SysEx note tuning"));
 
 	/* Fill up tabbar */
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
@@ -1164,12 +1164,6 @@ MppMainWindow :: handle_midi_file_instr_prepend()
 		if (check_mirror(n))
 			continue;
 		for (x = 0; x != 16; x++) {
-			int temp = 8192 + getPitchBendBase(x);
-			if (temp < 0)
-				temp = 0;
-			else if (temp > 16383)
-				temp = 16383;
-
 			d->track = track[n];
 			mid_set_channel(d, x);
 			mid_set_position(d, 0);
@@ -1177,8 +1171,6 @@ MppMainWindow :: handle_midi_file_instr_prepend()
 			mid_set_bank_program(d, x,
 			    instr[x].bank,
 			    instr[x].prog);
-			mid_set_position(d, 1);
-			mid_pitch_bend(d, temp);
 		}
 	}
 }
@@ -1328,9 +1320,6 @@ MppMainWindow :: handle_midi_trigger()
 
 		/* XXX first recursion point */
 		send_song_trigger_locked();
-
-		/* XXX second recursion point */
-		send_pitch_trigger_locked();
 
 		midiTriggered = 1;
 		midiPaused = 0;
@@ -1706,6 +1695,9 @@ MppMainWindow :: do_key_press(int key, int vel, int dur)
 		vel = 127;
 	else if (vel < -127)
 		vel = -127;
+
+	/* master tuning */
+	key += (int)masterPitchBend * (MPP_BAND_STEP_12 / 4096);
 
 	/* range check(s) */
 	if (key >= MPP_MAX_KEYS || key < 0 || dur < 0)
@@ -3117,18 +3109,6 @@ MppMainWindow :: send_song_trigger_locked()
 }
 
 void
-MppMainWindow :: send_pitch_trigger_locked()
-{
-	uint8_t trig;
-
-	trig = midiTriggered;
-	midiTriggered = 1;
-	for (uint8_t x = 0; x != MPP_MAX_VIEWS; x++)
-		scores_main[x]->outputPitch(8192);
-	midiTriggered = trig;
-}
-
-void
 MppMainWindow :: send_byte_event_locked(uint8_t which)
 {
 	uint8_t buf[1];
@@ -3229,18 +3209,11 @@ MppMainWindow :: getCurrTransposeScore(void)
 }
 
 /* must be called locked */
-int
-MppMainWindow :: getPitchBendBase(uint8_t chan)
-{
-	return (masterPitchBend);
-}
-
 void
 MppMainWindow :: handle_tuning()
 {
 	atomic_lock();
 	masterPitchBend = spn_tuning->value();
-	send_pitch_trigger_locked();
 	atomic_unlock();
 }
 
