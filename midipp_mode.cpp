@@ -66,7 +66,7 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	but_song_events = new MppButtonMap("Send MIDI song events\0OFF\0ON\0", 2, 2);
 	connect(but_song_events, SIGNAL(selectionChanged(int)), this, SLOT(handle_changed()));
 
-	but_mode = new MppButtonMap("Key mode\0" "ALL\0" "FIXED\0" "TRANSP\0" "CHORD-PIANO\0" "CHORD-GUITAR\0", 5, 3);
+	but_mode = new MppButtonMap("Input key mode\0" "ALL\0" "FIXED\0" "TRANSP\0" "CHORD-PIANO\0" "CHORD-GUITAR\0", 5, 3);
 	connect(but_mode, SIGNAL(selectionChanged(int)), this, SLOT(handle_changed()));
 
 	but_reset = new QPushButton(tr("Reset"));
@@ -120,7 +120,7 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	spn_sec_treb_volume->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
 	connect(spn_sec_treb_volume, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
-	but_note_mode = new MppButtonMap("Note mode\0" "Normal\0" "SysEx\0", 2, 2);
+	but_note_mode = new MppButtonMap("Output note mode\0" "Normal\0" "SysEx\0", 2, 2);
 	connect(but_note_mode, SIGNAL(selectionChanged(int)), this, SLOT(handle_changed()));
 
 	gl->addWidget(gb_iconfig, 0, 0, 2, 2);

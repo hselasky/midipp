@@ -442,10 +442,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mbm_score_record = new MppButtonMap("Score recording\0" "OFF\0" "ON\0" "ONE\0", 3, 3);
 	connect(mbm_score_record, SIGNAL(selectionChanged(int)), this, SLOT(handle_score_record(int)));
 
-	mbm_key_mode_a = new MppButtonMap("Key Mode for view A\0" "ALL\0" "FIXED\0" "TRANSP\0" "CHORD-PIANO\0" "CHORD-GUITAR\0", 5, 3);
+	mbm_key_mode_a = new MppButtonMap("Input key mode for view A\0" "ALL\0" "FIXED\0" "TRANSP\0" "CHORD-PIANO\0" "CHORD-GUITAR\0", 5, 3);
 	connect(mbm_key_mode_a, SIGNAL(selectionChanged(int)), this, SLOT(handle_key_mode_a(int)));
 
-	mbm_key_mode_b = new MppButtonMap("Key Mode for view B\0" "ALL\0" "FIXED\0" "TRANSP\0" "CHORD-PIANO\0" "CHORD-GUITAR\0", 5, 3);
+	mbm_key_mode_b = new MppButtonMap("Input key mode for view B\0" "ALL\0" "FIXED\0" "TRANSP\0" "CHORD-PIANO\0" "CHORD-GUITAR\0", 5, 3);
 	connect(mbm_key_mode_b, SIGNAL(selectionChanged(int)), this, SLOT(handle_key_mode_b(int)));
 
 	mbm_bpm_generator = new MppButtonMap("BPM generator\0" "OFF\0" "ON\0", 2, 2);
