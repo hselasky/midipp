@@ -98,8 +98,8 @@
 #define	MPP_MAX_KEYS (128 * 128 * 128 * 128)	/* maximum number of keys */
 #define	MPP_MAX_BANDS (12 * 128 * 128 * 128)	/* number of divisions per octave */
 #define	MPP_MAX_CHORD_BANDS	192
-#define	MPP_MAX_CHORD_MAP	(4 * 12)
-#define	MPP_MAX_CHORD_FUTURE	24
+#define	MPP_MAX_CHORD_MAP	(3 * 12)
+#define	MPP_MAX_CHORD_FUTURE	12
 #define	MPP_MAX_BUTTON_MAP	16
 #define	MPP_MAX_VIEWS	2
 #define	MPP_MAX_TRACKS  (MPP_TRACKS_PER_VIEW * MPP_MAX_VIEWS)

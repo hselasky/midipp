@@ -159,7 +159,7 @@ MppSettings :: doSave(void)
 			case MM_PASS_NONE_CHORD_GUITAR:
 				setValue("keymode", 5);
 				break;
-			case MM_PASS_NONE_CHORD_ALL:
+			case MM_PASS_NONE_CHORD_TRANS:
 				setValue("keymode", 6);
 				break;
 			default:
@@ -337,7 +337,7 @@ MppSettings :: doLoad(void)
 				mw->scores_main[x]->keyMode = MM_PASS_NONE_CHORD_GUITAR;
 				break;
 			case 6:
-				mw->scores_main[x]->keyMode = MM_PASS_NONE_CHORD_ALL;
+				mw->scores_main[x]->keyMode = MM_PASS_NONE_CHORD_TRANS;
 				break;
 			default:
 				mw->scores_main[x]->keyMode = MM_PASS_ALL;

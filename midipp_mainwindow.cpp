@@ -244,7 +244,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " * K6.3 - select TRANS key mode.\n"
 	    " * K6.4 - select CHORD-PIANO key mode.\n"
 	    " * K6.5 - select CHORD-GUITAR key mode.\n"
-	    " * K6.6 - select CHORD-ALL key mode.\n"
+	    " * K6.6 - select CHORD-TRANS key mode.\n"
 	    " * K7.<number>.<how>.<align> - select show background.\n"
 	    " * K7.<number>.0.<align> - select zoomed background. (default)\n"
 	    " * K7.<number>.1.<align> - select best fit background.\n"
@@ -443,10 +443,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mbm_score_record = new MppButtonMap("Score recording\0" "OFF\0" "ON\0" "ONE\0", 3, 3);
 	connect(mbm_score_record, SIGNAL(selectionChanged(int)), this, SLOT(handle_score_record(int)));
 
-	mbm_key_mode_a = new MppButtonMap("Input key mode for view A\0" "ALL\0" "FIXED\0" "TRANSP\0" "CHORD-PIANO\0" "CHORD-GUITAR\0" "CHORD-ALL\0", 6, 3);
+	mbm_key_mode_a = new MppKeyModeButtonMap("Input key mode for view A");
 	connect(mbm_key_mode_a, SIGNAL(selectionChanged(int)), this, SLOT(handle_key_mode_a(int)));
 
-	mbm_key_mode_b = new MppButtonMap("Input key mode for view B\0" "ALL\0" "FIXED\0" "TRANSP\0" "CHORD-PIANO\0" "CHORD-GUITAR\0" "CHORD-ALL\0", 6, 3);
+	mbm_key_mode_b = new MppKeyModeButtonMap("Input key mode for view B");
 	connect(mbm_key_mode_b, SIGNAL(selectionChanged(int)), this, SLOT(handle_key_mode_b(int)));
 
 	mbm_bpm_generator = new MppButtonMap("BPM generator\0" "OFF\0" "ON\0", 2, 2);
@@ -1956,7 +1956,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 				break;
 			case MM_PASS_NONE_CHORD_PIANO:
 			case MM_PASS_NONE_CHORD_GUITAR:
-			case MM_PASS_NONE_CHORD_ALL:
+			case MM_PASS_NONE_CHORD_TRANS:
 				sm->handleKeyPressureChord(key, vel, 0);
 				break;
 			default:
@@ -1971,7 +1971,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			case MM_PASS_ALL:
 			case MM_PASS_NONE_CHORD_PIANO:
 			case MM_PASS_NONE_CHORD_GUITAR:
-			case MM_PASS_NONE_CHORD_ALL:
+			case MM_PASS_NONE_CHORD_TRANS:
 				sm->outputChanPressure(vel);
 				break;
 			default:
@@ -3197,7 +3197,7 @@ MppMainWindow :: getCurrTransposeScore(void)
 
 		if (sm->keyMode != MM_PASS_NONE_CHORD_PIANO &&
 		    sm->keyMode != MM_PASS_NONE_CHORD_GUITAR &&
-		    sm->keyMode != MM_PASS_NONE_CHORD_ALL)
+		    sm->keyMode != MM_PASS_NONE_CHORD_TRANS)
 			continue;
 		for (y = 0; y != MPP_MAX_CHORD_MAP; y++) {
 			if (sm->score_past[y].dur != 0)

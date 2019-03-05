@@ -155,6 +155,7 @@ public:
 
 	int baseKey;
 	int whatPlayKeyLocked;
+	int chordTranspose;
 
 	int8_t inputChannel;
 	uint8_t synthChannel;

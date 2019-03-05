@@ -993,7 +993,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 		mainWindow->keyModeUpdated = 1;
 		break;
 	case 6:
-		keyMode = MM_PASS_NONE_CHORD_ALL;
+		keyMode = MM_PASS_NONE_CHORD_TRANS;
 		mainWindow->keyModeUpdated = 1;
 		break;
 	default:
@@ -1165,7 +1165,7 @@ MppScoreMain :: handleLabelJump(int pos)
 #define	MPP_CHORD_MAP_A	0x200
 #define	MPP_CHORD_MAP_B	0x400
 #define	MPP_CHORD_MAP_BASE 0x800
-#define	MPP_CHORD_MAP_RELOAD 0x1000
+#define	MPP_CHORD_MAP_TRANS 0x1000
 
 #if C0 != 0
 #error "C is not starting the scale"
@@ -1249,6 +1249,21 @@ static const uint16_t mpp_guitar_chord_map[MPP_MAX_CHORD_MAP] = {
 
 static const uint16_t mpp_piano_chord_all_map[MPP_MAX_CHORD_MAP] = {
   /* 1st octave */
+  /* [C0] = */ MPP_CHORD_MAP_TRANS + 0,
+  /* [D0B] = */ MPP_CHORD_MAP_TRANS + 1,
+  /* [D0] = */ MPP_CHORD_MAP_TRANS + 2,
+  /* [E0B] = */ MPP_CHORD_MAP_TRANS + 3,
+  /* [E0] = */ MPP_CHORD_MAP_TRANS + 4,
+
+  /* [F0] = */ MPP_CHORD_MAP_TRANS + 5,
+  /* [G0B] = */ MPP_CHORD_MAP_TRANS + 6,
+  /* [G0] = */ MPP_CHORD_MAP_TRANS + 7,
+  /* [A0B] = */ MPP_CHORD_MAP_TRANS + 8,
+  /* [A0] = */ MPP_CHORD_MAP_TRANS + 9,
+  /* [H0B] = */ MPP_CHORD_MAP_TRANS + 10,
+  /* [H0] = */ MPP_CHORD_MAP_TRANS + 11,
+
+  /* 2nd octave */
   /* [C0] = */ 0,	/* dead */
   /* [D0B] = */ MPP_CHORD_MAP_A + 2 + MPP_CHORD_MAP_BASE,
   /* [D0] = */ MPP_CHORD_MAP_A + 0 + MPP_CHORD_MAP_BASE,
@@ -1263,22 +1278,7 @@ static const uint16_t mpp_piano_chord_all_map[MPP_MAX_CHORD_MAP] = {
   /* [H0B] = */ MPP_CHORD_MAP_A + 6,
   /* [H0] = */ MPP_CHORD_MAP_A + 3,
 
-  /* 2nd octave */
-  /* [C0] = */ MPP_CHORD_MAP_A + 7,
-  /* [D0B] = */ MPP_CHORD_MAP_A + 10,
-  /* [D0] = */ MPP_CHORD_MAP_A + 8,
-  /* [E0B] = */ MPP_CHORD_MAP_A + 11,
-  /* [E0] = */ MPP_CHORD_MAP_A + 9,
-
-  /* [F0] = */ MPP_CHORD_MAP_A + 12,
-  /* [G0B] = */ MPP_CHORD_MAP_A + 16,
-  /* [G0] = */ MPP_CHORD_MAP_A + 13,
-  /* [A0B] = */ MPP_CHORD_MAP_A + 17,
-  /* [A0] = */ MPP_CHORD_MAP_A + 14,
-  /* [H0B] = */ MPP_CHORD_MAP_A + 18,
-  /* [H0] = */ MPP_CHORD_MAP_A + 15,
-
-  /* 4th octave */
+  /* 3rd octave */
   /* [C0] = */ 0,	/* dead */
   /* [D0B] = */ MPP_CHORD_MAP_B + 2 + MPP_CHORD_MAP_BASE,
   /* [D0] = */ MPP_CHORD_MAP_B + 0 + MPP_CHORD_MAP_BASE,
@@ -1292,21 +1292,6 @@ static const uint16_t mpp_piano_chord_all_map[MPP_MAX_CHORD_MAP] = {
   /* [A0] = */ MPP_CHORD_MAP_B + 2,
   /* [H0B] = */ MPP_CHORD_MAP_B + 6,
   /* [H0] = */ MPP_CHORD_MAP_B + 3,
-
-  /* 2nd octave */
-  /* [C0] = */ MPP_CHORD_MAP_B + 7,
-  /* [D0B] = */ MPP_CHORD_MAP_B + 10,
-  /* [D0] = */ MPP_CHORD_MAP_B + 8,
-  /* [E0B] = */ MPP_CHORD_MAP_B + 11,
-  /* [E0] = */ MPP_CHORD_MAP_B + 9,
-
-  /* [F0] = */ MPP_CHORD_MAP_B + 12,
-  /* [G0B] = */ MPP_CHORD_MAP_B + 16,
-  /* [G0] = */ MPP_CHORD_MAP_B + 13,
-  /* [A0B] = */ MPP_CHORD_MAP_B + 17,
-  /* [A0] = */ MPP_CHORD_MAP_B + 14,
-  /* [H0B] = */ MPP_CHORD_MAP_B + 18,
-  /* [H0] = */ MPP_CHORD_MAP_B + 15,
 };
 
 void
@@ -1431,6 +1416,7 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 	int bk = baseKey / MPP_BAND_STEP_12;
 	int ck = in_key / MPP_BAND_STEP_12;
 	MppScoreEntry mse;
+	int trans;
 	uint16_t map;
 	int off;
 
@@ -1438,16 +1424,19 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 	if (off < 0 || off >= MPP_MAX_CHORD_MAP)
 		return;
 
-	if (keyMode == MM_PASS_NONE_CHORD_ALL)
+	if (keyMode == MM_PASS_NONE_CHORD_TRANS) {
 		map = mpp_piano_chord_all_map[off];
-	else if (keyMode == MM_PASS_NONE_CHORD_PIANO)
+		trans = chordTranspose;
+	} else if (keyMode == MM_PASS_NONE_CHORD_PIANO) {
 		map = mpp_piano_chord_map[off];
-	else
+		trans = 0;
+	} else {
 		map = mpp_guitar_chord_map[off];
+		trans = 0;
+	}
 
-	if (map & MPP_CHORD_MAP_RELOAD) {
-		handleChordsLoad();
-		pressed_future = 2;
+	if (map & MPP_CHORD_MAP_TRANS) {
+		chordTranspose = (int)(map & MPP_CHORD_MAP_KEY) * MPP_BAND_STEP_12;
 		return;
 	} else if (map & MPP_CHORD_MAP_CUR) {
 		if (head.isFirst()) {
@@ -1481,6 +1470,9 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 	/* update channel and device */
 	mse.channel = (mse.channel + synthChannel) & 0xF;
 	mse.track = MPP_DEFAULT_TRACK(unit);
+
+	/* transpose key, if any */
+	mse.key += trans;
 
 	/* remove key if already pressed */
 	if (handleKeyRemovePast(&mse, vel, key_delay))
@@ -2227,7 +2219,7 @@ MppScoreMain :: outputChannelMaskGet(void)
 	case MM_PASS_ALL:
 		mask = 1U;
 		break;
-	case MM_PASS_NONE_CHORD_ALL:
+	case MM_PASS_NONE_CHORD_TRANS:
 	case MM_PASS_NONE_CHORD_PIANO:
 	case MM_PASS_NONE_CHORD_GUITAR:
 		mask = 1U;
@@ -2413,7 +2405,7 @@ MppScoreMain :: handleMidiKeyPressLocked(int key, int vel)
 	case MM_PASS_NONE_TRANS:
 		handleKeyPress(key, vel, 0);
 		break;
-	case MM_PASS_NONE_CHORD_ALL:
+	case MM_PASS_NONE_CHORD_TRANS:
 	case MM_PASS_NONE_CHORD_PIANO:
 	case MM_PASS_NONE_CHORD_GUITAR:
 		handleKeyPressChord(key, vel, 0);
@@ -2439,7 +2431,7 @@ MppScoreMain :: handleMidiKeyReleaseLocked(int key, int vel)
 	case MM_PASS_NONE_TRANS:
 		handleKeyRelease(key, vel, 0);
 		break;
-	case MM_PASS_NONE_CHORD_ALL:
+	case MM_PASS_NONE_CHORD_TRANS:
 	case MM_PASS_NONE_CHORD_PIANO:
 	case MM_PASS_NONE_CHORD_GUITAR:
 		handleKeyReleaseChord(key, vel, 0);
