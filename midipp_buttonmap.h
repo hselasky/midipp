@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2012-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -51,5 +51,14 @@ public slots:
 	void handle_pressed(int);
 	void handle_released(int);
 };
+
+#define	MppKeyModeButtonMap(title)	\
+	MppButtonMap(title "\0"		\
+	    "ALL\0"			\
+	    "FIXED\0"			\
+	    "TRANSP\0"			\
+	    "CHORD-PIANO\0"		\
+	    "CHORD-GUITAR\0"		\
+	    "CHORD-TRANS\0", 6, 3)
 
 #endif		/* _MIDIPP_BUTTONMAP_H_ */
