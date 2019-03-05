@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2012-2018 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2012-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -158,6 +158,9 @@ MppSettings :: doSave(void)
 				break;
 			case MM_PASS_NONE_CHORD_GUITAR:
 				setValue("keymode", 5);
+				break;
+			case MM_PASS_NONE_CHORD_ALL:
+				setValue("keymode", 6);
 				break;
 			default:
 				setValue("keymode", 0);
@@ -332,6 +335,9 @@ MppSettings :: doLoad(void)
 				break;
 			case 5:
 				mw->scores_main[x]->keyMode = MM_PASS_NONE_CHORD_GUITAR;
+				break;
+			case 6:
+				mw->scores_main[x]->keyMode = MM_PASS_NONE_CHORD_ALL;
 				break;
 			default:
 				mw->scores_main[x]->keyMode = MM_PASS_ALL;

@@ -140,9 +140,8 @@ public:
 	QPicture *picChord[2];
 
 	MppScoreEntry score_past[MPP_MAX_CHORD_MAP];
-	MppScoreEntry score_pressure[MPP_MAX_CHORD_MAP];
-	MppScoreEntry score_future_base[12];
-	MppScoreEntry score_future_treble[12];
+	MppScoreEntry score_future_base[MPP_MAX_CHORD_FUTURE];
+	MppScoreEntry score_future_treble[MPP_MAX_CHORD_FUTURE];
 
 	int visual_max;
 	int visual_p_max;

@@ -992,6 +992,10 @@ MppScoreMain :: handleParse(const QString &pstr)
 		keyMode = MM_PASS_NONE_CHORD_GUITAR;
 		mainWindow->keyModeUpdated = 1;
 		break;
+	case 6:
+		keyMode = MM_PASS_NONE_CHORD_ALL;
+		mainWindow->keyModeUpdated = 1;
+		break;
 	default:
 		break;
 	}
@@ -1156,90 +1160,169 @@ MppScoreMain :: handleLabelJump(int pos)
 		mainWindow->send_song_select_locked(pos);
 }
 
-#define	MPP_CHORD_MAP_KEY 0x0F
-#define	MPP_CHORD_MAP_CUR 0x10
-#define	MPP_CHORD_MAP_A	0x20
-#define	MPP_CHORD_MAP_B	0x40
-#define	MPP_CHORD_MAP_BASE 0x80
+#define	MPP_CHORD_OFFSET 14
+
+#define	MPP_CHORD_MAP_KEY 0x0FF
+#define	MPP_CHORD_MAP_CUR 0x100
+#define	MPP_CHORD_MAP_A	0x200
+#define	MPP_CHORD_MAP_B	0x400
+#define	MPP_CHORD_MAP_BASE 0x800
+#define	MPP_CHORD_MAP_RELOAD 0x1000
+
+#define	MPP_CHORD_MAP_CUR_OFF (MPP_CHORD_MAP_CUR + MPP_CHORD_OFFSET)
+#define	MPP_CHORD_MAP_A_OFF (MPP_CHORD_MAP_A + MPP_CHORD_OFFSET)
+#define	MPP_CHORD_MAP_B_OFF (MPP_CHORD_MAP_B + MPP_CHORD_OFFSET)
 
 #if C0 != 0
 #error "C is not starting the scale"
 #endif
 
-static const uint8_t mpp_piano_chord_map[MPP_MAX_CHORD_MAP] = {
+static const uint16_t mpp_piano_chord_map[MPP_MAX_CHORD_MAP] = {
   /* 1st octave */
   /* [C0] = */ 0,	/* dead */
-  /* [D0B] = */ MPP_CHORD_MAP_A | 2 | MPP_CHORD_MAP_BASE,
-  /* [D0] = */ MPP_CHORD_MAP_A | 0 | MPP_CHORD_MAP_BASE,
-  /* [E0B] = */ MPP_CHORD_MAP_A | 3 | MPP_CHORD_MAP_BASE,
-  /* [E0] = */ MPP_CHORD_MAP_A | 1 | MPP_CHORD_MAP_BASE,
+  /* [D0B] = */ MPP_CHORD_MAP_A + 2 + MPP_CHORD_MAP_BASE,
+  /* [D0] = */ MPP_CHORD_MAP_A + 0 + MPP_CHORD_MAP_BASE,
+  /* [E0B] = */ MPP_CHORD_MAP_A + 3 + MPP_CHORD_MAP_BASE,
+  /* [E0] = */ MPP_CHORD_MAP_A + 1 + MPP_CHORD_MAP_BASE,
 
-  /* [F0] = */ MPP_CHORD_MAP_A | 0,
-  /* [G0B] = */ MPP_CHORD_MAP_A | 4,
-  /* [G0] = */ MPP_CHORD_MAP_A | 1,
-  /* [A0B] = */ MPP_CHORD_MAP_A | 5,
-  /* [A0] = */ MPP_CHORD_MAP_A | 2,
-  /* [H0B] = */ MPP_CHORD_MAP_A | 6,
-  /* [H0] = */ MPP_CHORD_MAP_A | 3,
+  /* [F0] = */ MPP_CHORD_MAP_A_OFF + 0,
+  /* [G0B] = */ MPP_CHORD_MAP_A_OFF + 4,
+  /* [G0] = */ MPP_CHORD_MAP_A_OFF + 1,
+  /* [A0B] = */ MPP_CHORD_MAP_A_OFF + 5,
+  /* [A0] = */ MPP_CHORD_MAP_A_OFF + 2,
+  /* [H0B] = */ MPP_CHORD_MAP_A_OFF + 6,
+  /* [H0] = */ MPP_CHORD_MAP_A_OFF + 3,
 
   /* 2nd octave */
   /* [C1] = */ 0,	/* dead */
-  /* [D1B] = */ MPP_CHORD_MAP_B | 2 | MPP_CHORD_MAP_BASE,
-  /* [D1] = */ MPP_CHORD_MAP_B | 0 | MPP_CHORD_MAP_BASE,
-  /* [E1B] = */ MPP_CHORD_MAP_B | 3 | MPP_CHORD_MAP_BASE,
-  /* [E1] = */ MPP_CHORD_MAP_B | 1 | MPP_CHORD_MAP_BASE,
+  /* [D1B] = */ MPP_CHORD_MAP_B + 2 + MPP_CHORD_MAP_BASE,
+  /* [D1] = */ MPP_CHORD_MAP_B + 0 + MPP_CHORD_MAP_BASE,
+  /* [E1B] = */ MPP_CHORD_MAP_B + 3 + MPP_CHORD_MAP_BASE,
+  /* [E1] = */ MPP_CHORD_MAP_B + 1 + MPP_CHORD_MAP_BASE,
 
-  /* [F1] = */ MPP_CHORD_MAP_B | 0,
-  /* [G1B] = */ MPP_CHORD_MAP_B | 4,
-  /* [G1] = */ MPP_CHORD_MAP_B | 1,
-  /* [A1B] = */ MPP_CHORD_MAP_B | 5,
-  /* [A1] = */ MPP_CHORD_MAP_B | 2,
-  /* [H1B] = */ MPP_CHORD_MAP_B | 6,
-  /* [H1] = */ MPP_CHORD_MAP_B | 3,
+  /* [F1] = */ MPP_CHORD_MAP_B_OFF + 0,
+  /* [G1B] = */ MPP_CHORD_MAP_B_OFF + 4,
+  /* [G1] = */ MPP_CHORD_MAP_B_OFF + 1,
+  /* [A1B] = */ MPP_CHORD_MAP_B_OFF + 5,
+  /* [A1] = */ MPP_CHORD_MAP_B_OFF + 2,
+  /* [H1B] = */ MPP_CHORD_MAP_B_OFF + 6,
+  /* [H1] = */ MPP_CHORD_MAP_B_OFF + 3,
 };
 
-static const uint8_t mpp_guitar_chord_map[MPP_MAX_CHORD_MAP] = {
+static const uint16_t mpp_guitar_chord_map[MPP_MAX_CHORD_MAP] = {
   /* E - string */
-  /* [C0] = */ MPP_CHORD_MAP_CUR | 0 | MPP_CHORD_MAP_BASE,
-  /* [D0B] = */ MPP_CHORD_MAP_A | 0 | MPP_CHORD_MAP_BASE,
-  /* [D0] = */ MPP_CHORD_MAP_A | 1 | MPP_CHORD_MAP_BASE,
-  /* [E0B] = */ MPP_CHORD_MAP_B | 0 | MPP_CHORD_MAP_BASE,
-  /* [E0] = */ MPP_CHORD_MAP_B | 1 | MPP_CHORD_MAP_BASE,
+  /* [C0] = */ MPP_CHORD_MAP_CUR + 0 + MPP_CHORD_MAP_BASE,
+  /* [D0B] = */ MPP_CHORD_MAP_A + 0 + MPP_CHORD_MAP_BASE,
+  /* [D0] = */ MPP_CHORD_MAP_A + 1 + MPP_CHORD_MAP_BASE,
+  /* [E0B] = */ MPP_CHORD_MAP_B + 0 + MPP_CHORD_MAP_BASE,
+  /* [E0] = */ MPP_CHORD_MAP_B + 1 + MPP_CHORD_MAP_BASE,
 
   /* A - string */
-  /* [F0] = */ MPP_CHORD_MAP_CUR | 0,
-  /* [G0B] = */ MPP_CHORD_MAP_A | 0,
-  /* [G0] = */ MPP_CHORD_MAP_A | 5,
-  /* [A0B] = */ MPP_CHORD_MAP_B | 0,
-  /* [A0] = */ MPP_CHORD_MAP_B | 5,
+  /* [F0] = */ MPP_CHORD_MAP_CUR_OFF + 0,
+  /* [G0B] = */ MPP_CHORD_MAP_A_OFF + 0,
+  /* [G0] = */ MPP_CHORD_MAP_A_OFF + 5,
+  /* [A0B] = */ MPP_CHORD_MAP_B_OFF + 0,
+  /* [A0] = */ MPP_CHORD_MAP_B_OFF + 5,
 
   /* D - string */
-  /* [H0B] = */ MPP_CHORD_MAP_CUR | 1,
-  /* [H0] = */ MPP_CHORD_MAP_A | 1,
-  /* [C1] = */ MPP_CHORD_MAP_A | 6,
-  /* [D1B] = */ MPP_CHORD_MAP_B | 1,
-  /* [D1] = */ MPP_CHORD_MAP_B | 6,
+  /* [H0B] = */ MPP_CHORD_MAP_CUR_OFF + 1,
+  /* [H0] = */ MPP_CHORD_MAP_A_OFF + 1,
+  /* [C1] = */ MPP_CHORD_MAP_A_OFF + 6,
+  /* [D1B] = */ MPP_CHORD_MAP_B_OFF + 1,
+  /* [D1] = */ MPP_CHORD_MAP_B_OFF + 6,
 
   /* G - string */
-  /* [E1B] = */ MPP_CHORD_MAP_CUR | 2,
-  /* [E1] = */ MPP_CHORD_MAP_A | 2,
-  /* [F1] = */ MPP_CHORD_MAP_A | 7,
-  /* [G1B] = */ MPP_CHORD_MAP_B | 2,
-  /* [G1] = */ MPP_CHORD_MAP_B | 7,
+  /* [E1B] = */ MPP_CHORD_MAP_CUR_OFF + 2,
+  /* [E1] = */ MPP_CHORD_MAP_A_OFF + 2,
+  /* [F1] = */ MPP_CHORD_MAP_A_OFF + 7,
+  /* [G1B] = */ MPP_CHORD_MAP_B_OFF + 2,
+  /* [G1] = */ MPP_CHORD_MAP_B_OFF + 7,
 
   /* B - string */
-  /* [A1B] = */ MPP_CHORD_MAP_CUR | 3,
-  /* [A1] = */ MPP_CHORD_MAP_A | 3,
-  /* [H1B] = */ MPP_CHORD_MAP_A | 8,
-  /* [H1] = */ MPP_CHORD_MAP_B | 3,
-  /* [C2] = */ MPP_CHORD_MAP_B | 8,
+  /* [A1B] = */ MPP_CHORD_MAP_CUR_OFF + 3,
+  /* [A1] = */ MPP_CHORD_MAP_A_OFF + 3,
+  /* [H1B] = */ MPP_CHORD_MAP_A_OFF + 8,
+  /* [H1] = */ MPP_CHORD_MAP_B_OFF + 3,
+  /* [C2] = */ MPP_CHORD_MAP_B_OFF + 8,
 
   /* E - string */
-  /* [D2B] = */ MPP_CHORD_MAP_CUR | 4,
-  /* [D2] = */ MPP_CHORD_MAP_A | 4,
-  /* [E2B] = */ MPP_CHORD_MAP_A | 9,
-  /* [E2] = */ MPP_CHORD_MAP_B | 4,
-  /* [F2] = */ MPP_CHORD_MAP_B | 9,
+  /* [D2B] = */ MPP_CHORD_MAP_CUR_OFF + 4,
+  /* [D2] = */ MPP_CHORD_MAP_A_OFF + 4,
+  /* [E2B] = */ MPP_CHORD_MAP_A_OFF + 9,
+  /* [E2] = */ MPP_CHORD_MAP_B_OFF + 4,
+  /* [F2] = */ MPP_CHORD_MAP_B_OFF + 9,
+};
+
+static const uint16_t mpp_piano_chord_all_map[MPP_MAX_CHORD_MAP] = {
+  /* [C0] = */ MPP_CHORD_MAP_CUR + 0,
+  /* [D0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [D0] = */ MPP_CHORD_MAP_CUR + 1,
+  /* [E0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [E0] = */ MPP_CHORD_MAP_CUR + 2,
+
+  /* [F0] = */ MPP_CHORD_MAP_CUR + 3,
+  /* [G0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [G0] = */ MPP_CHORD_MAP_CUR + 4,
+  /* [A0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [A0] = */ MPP_CHORD_MAP_CUR + 5,
+  /* [H0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [H0] = */ MPP_CHORD_MAP_CUR + 6,
+
+  /* [C0] = */ MPP_CHORD_MAP_CUR + 7,
+  /* [D0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [D0] = */ MPP_CHORD_MAP_CUR + 8,
+  /* [E0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [E0] = */ MPP_CHORD_MAP_CUR + 9,
+
+  /* [F0] = */ MPP_CHORD_MAP_CUR + 10,
+  /* [G0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [G0] = */ MPP_CHORD_MAP_CUR + 11,
+  /* [A0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [A0] = */ MPP_CHORD_MAP_CUR + 12,
+  /* [H0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [H0] = */ MPP_CHORD_MAP_CUR + 13,
+
+  /* [C0] = */ MPP_CHORD_MAP_CUR + 14,
+  /* [D0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [D0] = */ MPP_CHORD_MAP_CUR + 15,
+  /* [E0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [E0] = */ MPP_CHORD_MAP_CUR + 16,
+
+  /* [F0] = */ MPP_CHORD_MAP_CUR + 17,
+  /* [G0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [G0] = */ MPP_CHORD_MAP_CUR + 18,
+  /* [A0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [A0] = */ MPP_CHORD_MAP_CUR + 19,
+  /* [H0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [H0] = */ MPP_CHORD_MAP_CUR + 20,
+
+  /* [C0] = */ MPP_CHORD_MAP_CUR + 21,
+  /* [D0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [D0] = */ MPP_CHORD_MAP_CUR + 22,
+  /* [E0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [E0] = */ MPP_CHORD_MAP_CUR + 23,
+
+  /* [F0] = */ MPP_CHORD_MAP_CUR + 24,
+  /* [G0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [G0] = */ MPP_CHORD_MAP_CUR + 25,
+  /* [A0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [A0] = */ MPP_CHORD_MAP_CUR + 26,
+  /* [H0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [H0] = */ MPP_CHORD_MAP_CUR + 27,
+
+  /* [C0] = */ MPP_CHORD_MAP_CUR + 28,
+  /* [D0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [D0] = */ MPP_CHORD_MAP_CUR + 29,
+  /* [E0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [E0] = */ MPP_CHORD_MAP_CUR + 30,
+
+  /* [F0] = */ MPP_CHORD_MAP_CUR + 31,
+  /* [G0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [G0] = */ MPP_CHORD_MAP_CUR + 32,
+  /* [A0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [A0] = */ MPP_CHORD_MAP_CUR + 33,
+  /* [H0B] = */ MPP_CHORD_MAP_RELOAD,
+  /* [H0] = */ MPP_CHORD_MAP_CUR + 34,
 };
 
 void
@@ -1298,7 +1381,7 @@ MppScoreMain :: handleChordsLoad(void)
 	
 	if (nb != 0) {
 		MppSort(base, nb);
-		for (x = 0; x != 12; x++) {
+		for (x = 0; x != MPP_MAX_CHORD_FUTURE; x++) {
 			score_future_base[x].dur = 1;
 			score_future_base[x].key = base[0];
 			score_future_base[x].channel = chan;
@@ -1308,7 +1391,10 @@ MppScoreMain :: handleChordsLoad(void)
 
 	if (nk != 0) {
 		MppSort(key, nk);
-		for (x = 0; x != 12; x++) {
+		for (x = 0; x != MPP_CHORD_OFFSET; x++)
+			MppTrans(key, nk, -1);
+
+		for (x = 0; x != MPP_MAX_CHORD_FUTURE; x++) {
 			score_future_treble[x].dur = 1;
 			score_future_treble[x].key = key[0];
 			score_future_treble[x].channel = chan;
@@ -1363,20 +1449,26 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 {
 	int bk = baseKey / MPP_BAND_STEP_12;
 	int ck = in_key / MPP_BAND_STEP_12;
-	MppScoreEntry mse = {};
-	uint8_t map;
+	MppScoreEntry mse;
+	uint16_t map;
 	int off;
 
 	off = ck - bk;
 	if (off < 0 || off >= MPP_MAX_CHORD_MAP)
 		return;
 
-	if (keyMode == MM_PASS_NONE_CHORD_PIANO)
+	if (keyMode == MM_PASS_NONE_CHORD_ALL)
+		map = mpp_piano_chord_all_map[off];
+	else if (keyMode == MM_PASS_NONE_CHORD_PIANO)
 		map = mpp_piano_chord_map[off];
 	else
 		map = mpp_guitar_chord_map[off];
 
-	if (map & MPP_CHORD_MAP_CUR) {
+	if (map & MPP_CHORD_MAP_RELOAD) {
+		handleChordsLoad();
+		pressed_future = 2;
+		return;
+	} else if (map & MPP_CHORD_MAP_CUR) {
 		if (head.isFirst()) {
 			handleChordsLoad();
 			pressed_future = 2;
@@ -1430,9 +1522,6 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 	/* store information for key release command */
 	score_past[off] = mse;
 
-	/* store information for pressure command */
-	score_pressure[off] = mse;
-
 	mainWindow->output_key(mse.track, mse.channel, mse.key, vel, key_delay, 0);
 
 	/* check for secondary event */
@@ -1456,7 +1545,7 @@ MppScoreMain :: handleKeyPressureChord(int in_key, int vel, uint32_t key_delay)
 	if (off < 0 || off >= MPP_MAX_CHORD_MAP)
 		return;
 
-	pn = &score_pressure[off];
+	pn = &score_past[off];
 
 	if (pn->dur != 0) {
 		mainWindow->output_key_pressure(pn->track, pn->channel, pn->key, vel, key_delay);
@@ -2157,6 +2246,7 @@ MppScoreMain :: outputChannelMaskGet(void)
 	case MM_PASS_ALL:
 		mask = 1U;
 		break;
+	case MM_PASS_NONE_CHORD_ALL:
 	case MM_PASS_NONE_CHORD_PIANO:
 	case MM_PASS_NONE_CHORD_GUITAR:
 		mask = 1U;
@@ -2342,6 +2432,7 @@ MppScoreMain :: handleMidiKeyPressLocked(int key, int vel)
 	case MM_PASS_NONE_TRANS:
 		handleKeyPress(key, vel, 0);
 		break;
+	case MM_PASS_NONE_CHORD_ALL:
 	case MM_PASS_NONE_CHORD_PIANO:
 	case MM_PASS_NONE_CHORD_GUITAR:
 		handleKeyPressChord(key, vel, 0);
@@ -2367,6 +2458,7 @@ MppScoreMain :: handleMidiKeyReleaseLocked(int key, int vel)
 	case MM_PASS_NONE_TRANS:
 		handleKeyRelease(key, vel, 0);
 		break;
+	case MM_PASS_NONE_CHORD_ALL:
 	case MM_PASS_NONE_CHORD_PIANO:
 	case MM_PASS_NONE_CHORD_GUITAR:
 		handleKeyReleaseChord(key, vel, 0);
