@@ -390,7 +390,7 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig)
 		scale_x = 1.0;
 		scale_y = 1.0;
 	}
-		
+
 	/* extract all text */
 	for (x = 0; x != visual_max; x++) {
 		QString *pstr = pVisual[x].str;
@@ -1850,6 +1850,9 @@ MppScoreMain :: handleScorePrint(void)
 			      printer.logicalDpiY() * 0.5);
 
 		handlePrintSub(&printer, orig);
+
+		/* re-create the graphics due to shared state */
+		handlePrintSub(0, QPoint(0,0));
 	}
 
 	delete dlg;
