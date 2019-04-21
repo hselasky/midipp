@@ -1,5 +1,5 @@
 Name:           midipp
-Version:        2.0.1
+Version:        2.0.2
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
@@ -31,7 +31,7 @@ with your fingertips. List of supported features:
 %setup -q -a 1
 
 %build
-qmake-qt4 PREFIX=/usr DESTDIR=$RPM_BUILD_ROOT HAVE_STATIC=YES HAVE_JACK=YES LIBUMIDIPATH=libumidi-2.0.14 midipp.pro
+qmake-qt4 PREFIX=/usr DESTDIR=$RPM_BUILD_ROOT HAVE_STATIC=YES HAVE_JACK=YES LIBUMIDIPATH=libumidi-2.1.0 midipp.pro
 make %{?_smp_mflags}
 
 %install
