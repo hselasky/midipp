@@ -1,12 +1,12 @@
 Name:           midipp
-Version:        2.0.0
+Version:        2.0.1
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
 License:        BSD-2-Clause
 URL:            http://www.selasky.org/hans_petter/midistudio
 Source0:        http://www.selasky.org/hans_petter/distfiles/%{name}-%{version}.tar.bz2
-Source1:        http://www.selasky.org/hans_petter/distfiles/libumidi-2.0.14.tar.bz2
+Source1:        http://www.selasky.org/hans_petter/distfiles/libumidi-2.1.0.tar.bz2
 
 BuildRequires:  make gcc libjack-devel phonon-devel qt-devel qt-settings qtwebkit-devel
 Requires:       qt
@@ -49,7 +49,9 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Sun Oct 21 2018 HPS hps@selasky.org 2.0.1-1
+* Sun Apr 21 2019 HPS hps@selasky.org 2.0.2-1
+* Sun Apr 21 2019 HPS hps@selasky.org 2.0.1-1
+- Multiple minor fixes.
 * Wed Oct 3 2018 HPS hps@selasky.org 2.0.0-1
 - Added support for quartertones, octotones, hexatones and so on.
 - Added support for bass offset effect.
