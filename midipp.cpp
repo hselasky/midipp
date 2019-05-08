@@ -285,7 +285,7 @@ MppSortXform(void *ptr, size_t n, size_t lim, size_t size, MppCmp_t *fn, void *a
 {
 #define	MPP_XSORT_TABLE_MAX (1 << 4)
 	size_t x, y, z;
-	unsigned t, u, v;
+	size_t t, u, v;
 	size_t p[MPP_XSORT_TABLE_MAX];
 	int retval = 0;
 
