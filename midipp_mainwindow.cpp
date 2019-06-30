@@ -1665,17 +1665,35 @@ MppMainWindow :: check_mirror(uint8_t index)
 int
 MppMainWindow :: do_extended_alloc(int key, int refcount)
 {
+	key++;	/* avoid zero default */
+
+	/* use existing key, if possible */
 	for (int x = 0; x != 128; x++) {
-		if (extended_keys[x][1] == 0)
-			continue;
 		if (extended_keys[x][0] == key) {
 			extended_keys[x][1] += refcount;
 			return (x);
 		}
 	}
+
 	if (refcount > 0) {
+		/* try to allocate an empty key */
+		for (int x = 0; x != 128; x++) {
+			if (extended_keys[x][0] != 0)
+				continue;
+			extended_keys[x][0] = key;
+			extended_keys[x][1] = refcount;
+			return (x);
+		}
+		/* release all unused keys, shouldn't happen */
 		for (int x = 0; x != 128; x++) {
 			if (extended_keys[x][1] != 0)
+				continue;
+			extended_keys[x][0] = 0;
+			extended_keys[x][1] = 0;
+		}
+		/* try to allocate an empty key */
+		for (int x = 0; x != 128; x++) {
+			if (extended_keys[x][0] != 0)
 				continue;
 			extended_keys[x][0] = key;
 			extended_keys[x][1] = refcount;
