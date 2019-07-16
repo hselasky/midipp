@@ -10,10 +10,13 @@
 	<string>Created by Qt/QMake</string>
 	<key>CFBundleIconFile</key>
 	<string>midipp_ios.png</string>
-	<key>CFBundleIcons</key>
-	<dict/>
-	<key>CFBundleIcons~ipad</key>
-	<dict/>
+	<key>CFBundleIconFiles</key>
+	<array>
+		<string>midipp_ios.png</string>
+		<string>midipp_ios_retina.png</string>
+		<string>midipp_76x76.png</string>
+		<string>midipp_152x152.png</string>
+	</array>
 	<key>CFBundleIdentifier</key>
 	<string>org.selasky.midipp</string>
 	<key>CFBundleName</key>
