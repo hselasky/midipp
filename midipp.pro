@@ -28,7 +28,6 @@ QT += widgets
 
 !isEmpty(HAVE_ANDROID) {
 HAVE_STATIC=YES
-HAVE_BUNDLE_ICONS=YES
 HAVE_NO_SHOW=YES
 HAVE_ANDROID=YES
 QT += androidextras
@@ -50,7 +49,6 @@ ANDROID_PACKAGE_SOURCE_DIR= $${PWD}/android
 !isEmpty(HAVE_IOS) {
 HAVE_STATIC=YES
 HAVE_COREMIDI=YES
-HAVE_BUNDLE_ICONS=YES
 HAVE_NO_SHOW=YES
 icons.path	= $${PREFIX}
 icons.files	= midipp_ios.png midipp_ios_retina.png midipp_76x76.png midipp_152x152.png
@@ -63,7 +61,6 @@ QMAKE_IOS_DEPLOYMENT_TARGET= 9.2
 !isEmpty(HAVE_MACOSX) {
 HAVE_STATIC=YES
 HAVE_COREMIDI=YES
-HAVE_BUNDLE_ICONS=YES
 icons.path	= $${DESTDIR}/Contents/Resources
 icons.files	= MidiPlayerPro.icns
 QMAKE_BUNDLE_DATA += icons
@@ -207,12 +204,12 @@ INCLUDEPATH	+= $${LIBUMIDIPATH}
 target.path	= $${PREFIX}/bin
 INSTALLS	+= target
 
-isEmpty(HAVE_BUNDLE_ICONS) {
-  icons.path	= $${PREFIX}/share/pixmaps
-  icons.files	= midipp.png
-  INSTALLS	+= icons
-}
+!macx:!android:!ios:unix {
+icons.path	= $${PREFIX}/share/pixmaps
+icons.files	= midipp.png
+INSTALLS	+= icons
 
 desktop.path	= $${PREFIX}/share/applications
 desktop.files	= midipp.desktop
 INSTALLS	+= desktop
+}
