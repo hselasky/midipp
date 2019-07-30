@@ -1174,9 +1174,9 @@ MppScoreMain :: handleLabelJump(int pos)
 static const uint16_t mpp_piano_chord_map[MPP_MAX_CHORD_MAP] = {
   /* 1st octave */
   /* [C0] = */ 0,	/* dead */
-  /* [D0B] = */ MPP_CHORD_MAP_A + 2 + MPP_CHORD_MAP_BASE,
+  /* [D0B] = */ 0,	/* dead */
   /* [D0] = */ MPP_CHORD_MAP_A + 0 + MPP_CHORD_MAP_BASE,
-  /* [E0B] = */ MPP_CHORD_MAP_A + 3 + MPP_CHORD_MAP_BASE,
+  /* [E0B] = */ MPP_CHORD_MAP_A + 2 + MPP_CHORD_MAP_BASE,
   /* [E0] = */ MPP_CHORD_MAP_A + 1 + MPP_CHORD_MAP_BASE,
 
   /* [F0] = */ MPP_CHORD_MAP_A + 0,
@@ -1189,9 +1189,9 @@ static const uint16_t mpp_piano_chord_map[MPP_MAX_CHORD_MAP] = {
 
   /* 2nd octave */
   /* [C1] = */ 0,	/* dead */
-  /* [D1B] = */ MPP_CHORD_MAP_B + 2 + MPP_CHORD_MAP_BASE,
+  /* [D1B] = */ MPP_CHORD_MAP_A + 7,
   /* [D1] = */ MPP_CHORD_MAP_B + 0 + MPP_CHORD_MAP_BASE,
-  /* [E1B] = */ MPP_CHORD_MAP_B + 3 + MPP_CHORD_MAP_BASE,
+  /* [E1B] = */ MPP_CHORD_MAP_B + 2 + MPP_CHORD_MAP_BASE,
   /* [E1] = */ MPP_CHORD_MAP_B + 1 + MPP_CHORD_MAP_BASE,
 
   /* [F1] = */ MPP_CHORD_MAP_B + 0,
@@ -1201,6 +1201,10 @@ static const uint16_t mpp_piano_chord_map[MPP_MAX_CHORD_MAP] = {
   /* [A1] = */ MPP_CHORD_MAP_B + 2,
   /* [H1B] = */ MPP_CHORD_MAP_B + 6,
   /* [H1] = */ MPP_CHORD_MAP_B + 3,
+
+  /* 3rd octave */
+  /* [C2] = */ 0,	/* dead */
+  /* [D2B] = */ MPP_CHORD_MAP_B + 7,
 };
 
 static const uint16_t mpp_guitar_chord_map[MPP_MAX_CHORD_MAP] = {
@@ -1265,9 +1269,9 @@ static const uint16_t mpp_piano_chord_all_map[MPP_MAX_CHORD_MAP] = {
 
   /* 2nd octave */
   /* [C0] = */ 0,	/* dead */
-  /* [D0B] = */ MPP_CHORD_MAP_A + 2 + MPP_CHORD_MAP_BASE,
+  /* [D0B] = */ 0,	/* dead */
   /* [D0] = */ MPP_CHORD_MAP_A + 0 + MPP_CHORD_MAP_BASE,
-  /* [E0B] = */ MPP_CHORD_MAP_A + 3 + MPP_CHORD_MAP_BASE,
+  /* [E0B] = */ MPP_CHORD_MAP_A + 2 + MPP_CHORD_MAP_BASE,
   /* [E0] = */ MPP_CHORD_MAP_A + 1 + MPP_CHORD_MAP_BASE,
 
   /* [F0] = */ MPP_CHORD_MAP_A + 0,
@@ -1280,9 +1284,9 @@ static const uint16_t mpp_piano_chord_all_map[MPP_MAX_CHORD_MAP] = {
 
   /* 3rd octave */
   /* [C0] = */ 0,	/* dead */
-  /* [D0B] = */ MPP_CHORD_MAP_B + 2 + MPP_CHORD_MAP_BASE,
+  /* [D0B] = */ MPP_CHORD_MAP_A + 7,
   /* [D0] = */ MPP_CHORD_MAP_B + 0 + MPP_CHORD_MAP_BASE,
-  /* [E0B] = */ MPP_CHORD_MAP_B + 3 + MPP_CHORD_MAP_BASE,
+  /* [E0B] = */ MPP_CHORD_MAP_B + 2 + MPP_CHORD_MAP_BASE,
   /* [E0] = */ MPP_CHORD_MAP_B + 1 + MPP_CHORD_MAP_BASE,
 
   /* [F0] = */ MPP_CHORD_MAP_B + 0,
@@ -1292,6 +1296,10 @@ static const uint16_t mpp_piano_chord_all_map[MPP_MAX_CHORD_MAP] = {
   /* [A0] = */ MPP_CHORD_MAP_B + 2,
   /* [H0B] = */ MPP_CHORD_MAP_B + 6,
   /* [H0] = */ MPP_CHORD_MAP_B + 3,
+
+  /* 4th octave */
+  /* [C0] = */ 0,	/* dead */
+  /* [D0B] = */ MPP_CHORD_MAP_B + 7,
 };
 
 void
@@ -1302,6 +1310,7 @@ MppScoreMain :: handleChordsLoad(void)
 	MppElement *ptr;
 	int duration;
 	uint8_t x;
+	uint8_t y;
 	uint8_t ns;
 	uint8_t nb;
 	uint8_t nk;
@@ -1350,6 +1359,16 @@ MppScoreMain :: handleChordsLoad(void)
 	
 	if (nb != 0) {
 		MppSort(base, nb);
+
+		/* remove equal keys back to back */
+		for (x = y = 1; x != nb; x++) {
+			if ((base[x] % MPP_MAX_BANDS) == (base[y - 1] % MPP_MAX_BANDS))
+				continue;
+			base[y++] = base[x];
+		}
+
+		nb = y;
+
 		for (x = 0; x != MPP_MAX_CHORD_FUTURE; x++) {
 			score_future_base[x].dur = 1;
 			score_future_base[x].key = base[0];
@@ -1360,6 +1379,16 @@ MppScoreMain :: handleChordsLoad(void)
 
 	if (nk != 0) {
 		MppSort(key, nk);
+
+		/* remove equal keys back to back */
+		for (x = y = 1; x != nk; x++) {
+			if ((key[x] % MPP_MAX_BANDS) == (key[y - 1] % MPP_MAX_BANDS))
+				continue;
+			key[y++] = key[x];
+		}
+
+		nk = y;
+
 		for (x = 0; x != MPP_MAX_CHORD_FUTURE; x++) {
 			score_future_treble[x].dur = 1;
 			score_future_treble[x].key = key[0];
