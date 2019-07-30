@@ -1310,7 +1310,6 @@ MppScoreMain :: handleChordsLoad(void)
 	MppElement *ptr;
 	int duration;
 	uint8_t x;
-	uint8_t y;
 	uint8_t ns;
 	uint8_t nb;
 	uint8_t nk;
