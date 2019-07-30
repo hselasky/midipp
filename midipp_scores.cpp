@@ -1360,16 +1360,11 @@ MppScoreMain :: handleChordsLoad(void)
 	if (nb != 0) {
 		MppSort(base, nb);
 
-		/* remove equal keys back to back */
-		for (x = y = 1; x != nb; x++) {
-			if ((base[x] % MPP_MAX_BANDS) == (base[y - 1] % MPP_MAX_BANDS))
-				continue;
-			base[y++] = base[x];
-		}
-
-		nb = y;
-
 		for (x = 0; x != MPP_MAX_CHORD_FUTURE; x++) {
+			/* remove equal keys back to back */
+			while (x != 0 && base[0] == score_future_base[x - 1].key)
+				MppTrans(base, nb, 1);
+			/* store new key */
 			score_future_base[x].dur = 1;
 			score_future_base[x].key = base[0];
 			score_future_base[x].channel = chan;
@@ -1380,16 +1375,11 @@ MppScoreMain :: handleChordsLoad(void)
 	if (nk != 0) {
 		MppSort(key, nk);
 
-		/* remove equal keys back to back */
-		for (x = y = 1; x != nk; x++) {
-			if ((key[x] % MPP_MAX_BANDS) == (key[y - 1] % MPP_MAX_BANDS))
-				continue;
-			key[y++] = key[x];
-		}
-
-		nk = y;
-
 		for (x = 0; x != MPP_MAX_CHORD_FUTURE; x++) {
+			/* remove equal keys back to back */
+			while (x != 0 && key[0] == score_future_treble[x - 1].key)
+				MppTrans(key, nb, 1);
+			/* store new key */
 			score_future_treble[x].dur = 1;
 			score_future_treble[x].key = key[0];
 			score_future_treble[x].channel = chan;
