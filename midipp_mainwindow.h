@@ -55,7 +55,7 @@ public:
 	void handle_make_scores_visible(MppScoreMain *);
 	void handle_make_tab_visible(QWidget *);
 
-	QString get_midi_score_duration(uint32_t *psum = 0);
+	QString get_midi_score_duration(uint32_t *psum);
 	int log_midi_score_duration();
 	int convert_midi_duration(struct umidi20_track *, uint32_t thres, uint32_t chan_mask);
 	void import_midi_track(struct umidi20_track *, uint32_t = 0, int = -1, int = 0);

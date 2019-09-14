@@ -2370,11 +2370,10 @@ MppMainWindow :: get_midi_score_duration(uint32_t *psum)
 	else
 		lend = retval / 2;
 
-	snprintf(buf, sizeof(buf), "W%u.%u /* %u */",
-	    retval - lend, lend, retval);
+	snprintf(buf, sizeof(buf), "W%u.%u /* %u @ %u ms */",
+	    retval - lend, lend, retval, *psum);
 
-	if (psum != 0)
-		*psum += retval;
+	*psum += retval;
 
 	return (QString(buf));
 }
