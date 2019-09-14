@@ -93,7 +93,7 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 	gl->setRowStretch(2 + MPP_LOOP_MAX, 1);
 	gl->setColumnStretch(7 + MPP_MAX_VIEWS, 1);
 
-	lbl_chn_title = new QLabel(tr("DstChan"));
+	lbl_chn_title = new QLabel(tr("DestChan"));
 	lbl_dur_title = new QLabel(tr("Duration"));
 	lbl_state_title = new QLabel(tr("State"));
 	lbl_mkey_title = new QLabel(tr("Multikey"));
