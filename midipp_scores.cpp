@@ -2308,7 +2308,12 @@ MppScoreMain :: outputControl(uint8_t ctrl, uint8_t val)
 	}
 
 	if (ctrl == 0x40) {
-		mw->tab_loop->add_pedal(val);
+		if (mw->tab_loop->pedal_rec != 0) {
+			for (uint8_t n = 0; n != MPP_LOOP_MAX; n++) {
+				if (mw->tab_loop->check_record(n))
+					mid_control(d, ctrl, val);
+			}
+		}
 		lastPedalValue = val;
 	}
 }

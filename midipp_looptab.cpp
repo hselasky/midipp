@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -93,10 +93,10 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 	gl->setRowStretch(2 + MPP_LOOP_MAX, 1);
 	gl->setColumnStretch(7 + MPP_MAX_VIEWS, 1);
 
-	lbl_chn_title = new QLabel(tr("Channel"));
-	lbl_dur_title = new QLabel(tr("Dur-s"));
+	lbl_chn_title = new QLabel(tr("DstChan"));
+	lbl_dur_title = new QLabel(tr("Duration"));
 	lbl_state_title = new QLabel(tr("State"));
-	lbl_mkey_title = new QLabel(tr("Key-m"));
+	lbl_mkey_title = new QLabel(tr("Multikey"));
 
 	gl->addWidget(lbl_state_title, 1, 6 + MPP_MAX_VIEWS, 1, 1);
 	gl->addWidget(lbl_chn_title, 1, 5 + MPP_MAX_VIEWS, 1, 1);
@@ -144,82 +144,31 @@ MppLoopTab :: ~MppLoopTab()
 }
 
 /* This function must be called locked */
-void
-MppLoopTab :: add_key(int in_key, int vel)
+bool
+MppLoopTab :: check_record(uint8_t n)
 {
-	struct mid_data *d = &mid_data;
+	struct mid_data *d = &mw->mid_data;
 	uint32_t pos;
-	uint8_t n;
 
-	/* ignore non-12-scale keys for now */
-	if (in_key % MPP_BAND_STEP_12)
-		return;
-	in_key /= MPP_BAND_STEP_12;
-
-	/* range check */
-	if (in_key < 0 || in_key > 127)
-		return;
+	if (state[n] != ST_REC)
+		return (false);
 
 	pos = mw->get_time_offset();
 	if (pos == 0)
 		pos = 1;
 
-	for (n = 0; n != MPP_LOOP_MAX; n++) {
+	if (first_pos[n] == 0)
+		first_pos[n] = pos;
 
-		if (state[n] != ST_REC)
-			continue;
+	last_pos[n] = pos;
 
-		if (first_pos[n] == 0)
-			first_pos[n] = pos;
+	needs_update = 1;
 
-		last_pos[n] = pos;
-
-		needs_update = 1;
-
-		d->track = track[n];
-	
-		mid_set_channel(d, chan_val[n]);
-		mid_set_position(d, pos - first_pos[n]);
-		mid_key_press(d, in_key, vel, 0);
-	}
-}
-
-/* This function must be called locked */
-void
-MppLoopTab :: add_pedal(uint8_t val)
-{
-	struct mid_data *d = &mid_data;
-	uint32_t pos;
-	uint32_t off;
-	uint8_t n;
-
-	if (pedal_rec == 0)
-		return;
-
-	pos = mw->get_time_offset();
-	if (pos == 0)
-		pos = 1;
-
-	for (n = 0; n != MPP_LOOP_MAX; n++) {
-
-		if (state[n] != ST_REC)
-			continue;
-
-		if (first_pos[n] == 0) {
-			off = 0;
-		} else {
-			off = pos - first_pos[n];
-			last_pos[n] = pos;
-		}
-
-		needs_update = 1;
-
-		d->track = track[n];
-	
-		mid_set_channel(d, chan_val[n]);
-		mid_set_position(d, off);
-		mid_pedal(d, val);
-	}
+	d->track = track[n];
+	mid_set_channel(d, chan_val[n]);
+	mid_set_position(d, pos - first_pos[n]);
+	mid_set_device_no(d, 0xFF);
+	return (true);
 }
 
 void

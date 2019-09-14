@@ -42,8 +42,7 @@ public:
 	MppLoopTab(QWidget *parent, MppMainWindow *);
 	~MppLoopTab();
 
-	void add_key(int key, int vel);
-	void add_pedal(uint8_t val);
+	bool check_record(uint8_t n);
 	int handle_trigN(int key, int amp);
 	void handle_clearN(int n);
 	void fill_loop_data(int n, int vel, int key_off);
@@ -79,7 +78,6 @@ public:
 	uint32_t last_pos[MPP_LOOP_MAX];
 	uint32_t state[MPP_LOOP_MAX];
 
-	struct mid_data mid_data;
 	struct umidi20_song *song;
 	struct umidi20_track *track[MPP_LOOP_MAX];
 

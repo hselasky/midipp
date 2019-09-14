@@ -1589,14 +1589,14 @@ MppMainWindow :: handle_config_print_fontsel()
 	}
 }
 
-uint8_t
+bool
 MppMainWindow :: check_play(uint8_t index, uint8_t chan, uint32_t off)
 {
 	struct mid_data *d = &mid_data;
 	uint32_t pos;
 
 	if (index >= MPP_MAX_TRACKS || chan >= 0x10)
-		return (0);
+		return (false);
 
 	handle_midi_trigger();
 
@@ -1613,17 +1613,17 @@ MppMainWindow :: check_play(uint8_t index, uint8_t chan, uint32_t off)
 	mid_set_position(d, pos);
 	mid_set_device_no(d, MPP_MAGIC_DEVNO + index);
 
-	return (1);
+	return (true);
 }
 
-uint8_t
+bool
 MppMainWindow :: check_record(uint8_t index, uint8_t chan, uint32_t off)
 {
 	struct mid_data *d = &mid_data;
 	uint32_t pos;
 
 	if (midiRecordOff || index >= MPP_MAX_TRACKS || chan >= 0x10)
-		return (0);
+		return (false);
 
 	handle_midi_trigger();
 
@@ -1637,14 +1637,14 @@ MppMainWindow :: check_record(uint8_t index, uint8_t chan, uint32_t off)
 	mid_set_position(d, pos);
 	mid_set_device_no(d, 0xFF);
 
-	return (1);
+	return (true);
 }
 
-uint8_t
+bool
 MppMainWindow :: check_mirror(uint8_t index)
 {
 	if (index >= MPP_MAX_TRACKS)
-		return (1);
+		return (true);
 
 	for (unsigned int n = 0; n != MPP_MAX_VIEWS; n++) {
 		MppScoreMain *sm = scores_main[n];
@@ -1659,7 +1659,7 @@ MppMainWindow :: check_mirror(uint8_t index)
 	}
 
 	/* else there are no mirrors */
-	return (0);
+	return (false);
 }
 
 int
@@ -2889,6 +2889,7 @@ void
 MppMainWindow :: output_key(int index, int chan, int key, int vel, int delay, int dur)
 {
 	struct mid_data *d = &mid_data;
+	uint8_t n;
 
 	/* check for time scaling */
 	if (dlg_bpm->period_cur != 0 && dlg_bpm->bpm_other != 0)
@@ -2906,7 +2907,13 @@ MppMainWindow :: output_key(int index, int chan, int key, int vel, int delay, in
 		do_key_press(key, vel, dur);
 	}
 
-	tab_loop->add_key(key, vel);
+	/* output key to loop recording, if any */
+	for (n = 0; n != MPP_LOOP_MAX; n++) {
+		if (tab_loop->check_record(n)) {
+			mid_delay(d, delay);
+			do_key_press(key, vel, dur);
+		}
+	}
 }
 
 /* must be called locked */
