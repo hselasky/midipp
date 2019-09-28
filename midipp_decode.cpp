@@ -640,7 +640,9 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	connect(but_step_up_one, SIGNAL(released()), this, SLOT(handle_play_release()));
 	connect(but_step_down_one, SIGNAL(pressed()), this, SLOT(handle_step_down_one()));
 	connect(but_step_down_one, SIGNAL(released()), this, SLOT(handle_play_release()));
+
 	connect(but_round_12, SIGNAL(released()), this, SLOT(handle_round_12()));
+	connect(but_round_12, SIGNAL(released()), this, SLOT(handle_play_release()));
 
 	connect(lin_edit, SIGNAL(textChanged(const QString &)), this, SLOT(handle_parse()));
 
@@ -934,7 +936,9 @@ MppDecodeTab :: handle_step_down_one()
 void
 MppDecodeTab :: handle_round_12()
 {
+	handle_play_release();
 	round(MPP_BAND_STEP_12);
+	handle_play_press();
 }
 
 void
