@@ -946,7 +946,7 @@ MppDecodeTab :: round(int value)
 {
 	int x,y,mod;
 
-	if (value < 0)
+	if (value < 1)
 		return;
 
 	mod = (value / MPP_BAND_STEP_CHORD);
