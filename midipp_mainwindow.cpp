@@ -1671,7 +1671,17 @@ MppMainWindow :: do_extended_alloc(int key, int refcount)
 	for (int x = 0; x != 128; x++) {
 		if (extended_keys[x][0] == key) {
 			extended_keys[x][1] += refcount;
-			return (x);
+			if (extended_keys[x][1] > 1) {
+				/* already pressed */
+				extended_keys[x][1] = 1;
+				return (-1);
+			} else if (extended_keys[x][1] < 0) {
+				/* already released */
+				extended_keys[x][1] = 0;
+				return (-1);
+			} else {
+				return (x);
+			}
 		}
 	}
 
