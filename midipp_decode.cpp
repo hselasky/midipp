@@ -1116,6 +1116,21 @@ MppDecodeTab :: keyPressEvent(QKeyEvent *event)
 }
 
 void
+MppDecodeTab :: keyReleaseEvent(QKeyEvent *event)
+{
+	switch (event->key()) {
+	case Qt::Key_Up:
+		handle_play_release();
+		break;
+	case Qt::Key_Down:
+		handle_play_release();
+		break;
+	default:
+		break;
+	}
+}
+
+void
 MppDecodeEditor :: mouseDoubleClickEvent(QMouseEvent *e)
 {
 	MppHead temp;

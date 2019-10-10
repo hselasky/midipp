@@ -68,6 +68,7 @@ public:
 	void setText(QString);
 	uint8_t parseScoreChord(MppChordElement *);
 	void keyPressEvent(QKeyEvent *);
+  	void keyReleaseEvent(QKeyEvent *);
 	void round(int);
 
 	MppMainWindow *mw;
