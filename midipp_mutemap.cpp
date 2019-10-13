@@ -49,17 +49,17 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 	gb_mute->addWidget(new QLabel(tr("Mute enable")),
 	    0, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
-	gl->addWidget(gb_mute, 0, 0, 1, 5);
-	gl->addWidget(gb_other, 1, 0, 1, 5);
+	gl->addWidget(gb_mute, 0, 0, 1, 4);
+	gl->addWidget(gb_other, 1, 0, 1, 4);
 
-	but_reset_all = new QPushButton(tr("Reset All"));
+	but_reset_all = new QPushButton(tr("Reset"));
 	but_close_all = new QPushButton(tr("Close"));
 
 	gl->setRowStretch(2, 1);
-	gl->setColumnStretch(5, 1);
+	gl->setColumnStretch(4, 1);
 
-	gl->addWidget(but_close_all, 3, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(but_reset_all, 3, 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(but_close_all, 3, 2, 1, 2);
+	gl->addWidget(but_reset_all, 3, 0, 1, 2);
 
 	connect(but_reset_all, SIGNAL(released()), this, SLOT(handle_reset_all()));
 	connect(but_close_all, SIGNAL(released()), this, SLOT(handle_close_all()));
@@ -89,7 +89,7 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 	cbx_mute_non_channel = new MppButtonMap("Mute non-channel MIDI events\0" "NO\0" "YES\0", 2, 2);
 	connect(cbx_mute_non_channel, SIGNAL(selectionChanged(int)), this, SLOT(handle_apply_all()));
 
-	cbx_mute_local_keys = new MppButtonMap("Send local MIDI keys command\0" "NONE\0" "ENABLE\0" "DISABLE\0", 3, 3);
+	cbx_mute_local_keys = new MppButtonMap("Send MIDI local keys command\0" "NONE\0" "ENABLE\0" "DISABLE\0", 3, 3);
 	connect(cbx_mute_local_keys, SIGNAL(selectionChanged(int)), this, SLOT(handle_apply_all()));
 
 	cbx_mute_control = new MppButtonMap("Mute MIDI control events\0" "NO\0" "YES\0", 2, 2);
