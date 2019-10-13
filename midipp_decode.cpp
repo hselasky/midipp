@@ -782,8 +782,7 @@ MppDecodeTab :: handle_insert()
 				ptr->txt = "";
 			}
 
-			info.start->txt = mw->led_config_insert->text() +
-			    getText();
+			info.start->txt = getText();
 
 			cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor, 1);
 			cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, row);
@@ -794,7 +793,7 @@ MppDecodeTab :: handle_insert()
 		}
 	} else {
 		cursor.removeSelectedText();
-		cursor.insertText(mw->led_config_insert->text() + getText() + QChar('\n'));
+		cursor.insertText(getText() + QChar('\n'));
 	}
 	cursor.endEditBlock();
 

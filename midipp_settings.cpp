@@ -137,10 +137,6 @@ MppSettings :: doSave(void)
 	setValue("save_shortcut", save_shortcut ? 1 : 0);
 	endGroup();
 
-	beginGroup("config");
-	setValue("record_insert", mw->led_config_insert->text());
-	endGroup();
-
 	if (save_viewmode) {
 		for (x = 0; x != MPP_MAX_VIEWS; x++) {
 			beginGroup(concat("view%d", x));
@@ -268,8 +264,6 @@ MppSettings :: doLoad(void)
 	save_database_data = valueDefault("global/save_database_data", -1);
 	save_custom = valueDefault("global/save_custom", -1);
 	save_shortcut = valueDefault("global/save_shortcut", -1);
-
-	mw->led_config_insert->setText(stringDefault("config/record_insert", ""));
 
 	if (save_viewmode > 0) {
 		for (x = 0; x != MPP_MAX_VIEWS; x++) {

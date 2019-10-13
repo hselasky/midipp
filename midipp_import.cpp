@@ -115,9 +115,7 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 					ptab->handle_align(ps->sm->spnScoreFileAlign->value());
 					ptab->handle_refresh();
 
-					scs += ps->sm->mainWindow->led_config_insert->text() +
-					    ptab->getText() +
-					    "\n";
+					scs += ptab->getText() + "\n";
 				}
 				ai++;
 			}

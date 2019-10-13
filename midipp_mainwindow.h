@@ -265,9 +265,6 @@ public:
 	QPushButton *but_config_edit_fontsel;
 	QPushButton *but_config_print_fontsel;
 
-	MppGroupBox *gb_config_insert;
-	QLineEdit *led_config_insert;
-
 	QString *CurrMidiFileName;
 
 	/* tab <Shortcut> */

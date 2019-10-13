@@ -554,19 +554,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		gb_config_device->addWidget(but_config_dev[n], n + 1, 4 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	}
 
-	led_config_insert = new QLineEdit(QString());
-	led_config_insert->setMaxLength(256);
-
-	gb_config_insert = new MppGroupBox(tr("Scores recording prefix string"));
-	gb_config_insert->addWidget(led_config_insert, 0, 0, 1, 1);
-
 	x = 0;
 
 	tab_config_gl->addWidget(gb_config_device, x, 0, 1, 8);
-
-	x++;
-
-	tab_config_gl->addWidget(gb_config_insert, x, 0, 1, 8);
 
 	x++;
 
@@ -880,7 +870,6 @@ MppMainWindow :: handle_watchdog()
 			cursor = QTextCursor(ped->textCursor());
 			cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor, 1);
 			cursor.beginEditBlock();
-			cursor.insertText(led_config_insert->text());
 		}
 
 		for (x = 0; x != num_events; x++) {
