@@ -138,9 +138,7 @@ MppInstrumentTab :: handle_instr_channel_changed(int chan)
 	spn_instr_curr_bank->setValue(temp[0]);
 	spn_instr_curr_prog->setValue(temp[1]);
 
-	spn_instr_curr_chan->blockSignals(1);
-	spn_instr_curr_chan->setValue(chan);
-	spn_instr_curr_chan->blockSignals(0);
+	MPP_BLOCKED(spn_instr_curr_chan,setValue(chan));
 }
 
 void
@@ -150,17 +148,9 @@ MppInstrumentTab :: handle_instr_program()
 	int bank = spn_instr_curr_bank->value();
 	int prog = spn_instr_curr_prog->value();
 
-	spn_instr_bank[chan]->blockSignals(1);
-	spn_instr_prog[chan]->blockSignals(1);
-	cbx_instr_mute[chan]->blockSignals(1);
-
-	spn_instr_bank[chan]->setValue(bank);
-	spn_instr_prog[chan]->setValue(prog);
-	cbx_instr_mute[chan]->setChecked(0);
-
-	spn_instr_bank[chan]->blockSignals(0);
-	spn_instr_prog[chan]->blockSignals(0);
-	cbx_instr_mute[chan]->blockSignals(0);
+	MPP_BLOCKED(spn_instr_bank[chan],setValue(bank));
+	MPP_BLOCKED(spn_instr_prog[chan],setValue(prog));
+	MPP_BLOCKED(cbx_instr_mute[chan],setChecked(0));
 
 	mw->atomic_lock();
 	mw->instr[chan].updated |= 1;
@@ -240,17 +230,9 @@ MppInstrumentTab :: handle_instr_changed(int dummy)
 		mw->atomic_unlock();
 
 		if (update_curr) {
-			spn_instr_bank[x]->blockSignals(1);
-			spn_instr_prog[x]->blockSignals(1);
-			cbx_instr_mute[x]->blockSignals(1);
-
-			spn_instr_bank[x]->setValue(temp[0]);
-			spn_instr_prog[x]->setValue(temp[1]);
-			cbx_instr_mute[x]->setChecked(temp[2]);
-
-			spn_instr_bank[x]->blockSignals(0);
-			spn_instr_prog[x]->blockSignals(0);
-			cbx_instr_mute[x]->blockSignals(0);
+			MPP_BLOCKED(spn_instr_bank[x],setValue(temp[0]));
+			MPP_BLOCKED(spn_instr_prog[x],setValue(temp[1]));
+			MPP_BLOCKED(cbx_instr_mute[x],setChecked(temp[2]));
 
 			mw->atomic_lock();
 			update_curr = (curr_chan == x);
@@ -258,17 +240,9 @@ MppInstrumentTab :: handle_instr_changed(int dummy)
 		}
 
 		if (update_curr) {
-			spn_instr_curr_chan->blockSignals(1);
-			spn_instr_curr_bank->blockSignals(1);
-			spn_instr_curr_prog->blockSignals(1);
-
-			spn_instr_curr_chan->setValue(x);
-			spn_instr_curr_bank->setValue(temp[0]);
-			spn_instr_curr_prog->setValue(temp[1]);
-
-			spn_instr_curr_chan->blockSignals(0);
-			spn_instr_curr_bank->blockSignals(0);
-			spn_instr_curr_prog->blockSignals(0);
+			MPP_BLOCKED(spn_instr_curr_chan,setValue(x));
+			MPP_BLOCKED(spn_instr_curr_bank,setValue(temp[0]));
+			MPP_BLOCKED(spn_instr_curr_prog,setValue(temp[1]));
 		}
 	}
 
@@ -310,35 +284,19 @@ MppInstrumentTab :: handle_instr_reset()
 	if (this == ni)
 		return;
 
-	for (unsigned int x = 0; x != 16; x++) {
-		spn_instr_bank[x]->blockSignals(1);
-		spn_instr_prog[x]->blockSignals(1);
-		cbx_instr_mute[x]->blockSignals(1);
-
-		spn_instr_bank[x]->setValue(0);
-		spn_instr_prog[x]->setValue(0);
-		cbx_instr_mute[x]->setChecked(0);
-
-		spn_instr_bank[x]->blockSignals(0);
-		spn_instr_prog[x]->blockSignals(0);
-		cbx_instr_mute[x]->blockSignals(0);
+	for (uint8_t x = 0; x != 16; x++) {
+		MPP_BLOCKED(spn_instr_bank[x],setValue(0));
+		MPP_BLOCKED(spn_instr_prog[x],setValue(0));
+		MPP_BLOCKED(cbx_instr_mute[x],setChecked(0));
 
 		mw->atomic_lock();
 		mw->instr[x].updated = 1;
 		mw->atomic_unlock();
 	}
 
-	spn_instr_curr_chan->blockSignals(1);
-	spn_instr_curr_bank->blockSignals(1);
-	spn_instr_curr_prog->blockSignals(1);
-
-	spn_instr_curr_chan->setValue(0);
-	spn_instr_curr_bank->setValue(0);
-	spn_instr_curr_prog->setValue(0);
-
-	spn_instr_curr_chan->blockSignals(0);
-	spn_instr_curr_bank->blockSignals(0);
-	spn_instr_curr_prog->blockSignals(0);
+	MPP_BLOCKED(spn_instr_curr_chan,setValue(0));
+	MPP_BLOCKED(spn_instr_curr_bank,setValue(0));
+	MPP_BLOCKED(spn_instr_curr_prog,setValue(0));
 
 	handle_instr_changed(0);
 }
@@ -347,11 +305,8 @@ void
 MppInstrumentTab :: handle_instr_mute_all()
 {
 
-	for (unsigned int n = 0; n != 16; n++) {
-		cbx_instr_mute[n]->blockSignals(1);
-		cbx_instr_mute[n]->setChecked(1);
-		cbx_instr_mute[n]->blockSignals(0);
-	}
+	for (uint8_t n = 0; n != 16; n++)
+		MPP_BLOCKED(cbx_instr_mute[n],setChecked(1));
 
 	handle_instr_changed(0);
 }
@@ -360,11 +315,8 @@ void
 MppInstrumentTab :: handle_instr_unmute_all()
 {
 
-	for (unsigned int n = 0; n != 16; n++) {
-		cbx_instr_mute[n]->blockSignals(1);
-		cbx_instr_mute[n]->setChecked(0);
-		cbx_instr_mute[n]->blockSignals(0);
-	}
+	for (uint8_t n = 0; n != 16; n++)
+		MPP_BLOCKED(cbx_instr_mute[n],setChecked(0));
 
 	handle_instr_changed(0);
 }

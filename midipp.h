@@ -139,6 +139,12 @@
 #define	MPP_TREBLE_TRACK(n) ((n) * MPP_TRACKS_PER_VIEW + 1)
 #define	MPP_BASS_TRACK(n) ((n) * MPP_TRACKS_PER_VIEW + 2)
 
+#define	MPP_BLOCKED(obj, what) do {		\
+    (obj)->blockSignals(1);			\
+    (obj)->what;				\
+    (obj)->blockSignals(0);			\
+} while (0)
+
 #define	MPP_TRACKS_PER_VIEW 3
 
 #if (MPP_MAGIC_DEVNO < MPP_MAX_DEVS)

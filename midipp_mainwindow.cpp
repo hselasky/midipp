@@ -960,9 +960,7 @@ MppMainWindow :: handle_watchdog()
 		value = dlg_bpm->enabled;
 		atomic_unlock();
 
-		mbm_bpm_generator->blockSignals(1);
-		mbm_bpm_generator->setSelection(value);
-		mbm_bpm_generator->blockSignals(0);
+		MPP_BLOCKED(mbm_bpm_generator,setSelection(value));
 	}
 }
 
@@ -2882,9 +2880,7 @@ MppMainWindow :: handle_config_dev(int n, int automagic)
 	}
 
 	if (retval == QDialog::Accepted) {
-		led_config_dev[n]->blockSignals(1);
-		led_config_dev[n]->setText(diag.result_dev);
-		led_config_dev[n]->blockSignals(0);
+		MPP_BLOCKED(led_config_dev[n], setText(diag.result_dev));
 		handle_config_apply();
 	}
 	return (retval);

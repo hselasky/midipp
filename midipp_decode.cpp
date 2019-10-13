@@ -550,9 +550,7 @@ MppDecodeTab :: parseScoreChord(MppChordElement *pinfo)
 	chord_sharp = is_sharp;
 	chord_mask = footprint;
 
-	lin_edit->blockSignals(1);
-	lin_edit->setText(out);
-	lin_edit->blockSignals(0);
+	MPP_BLOCKED(lin_edit,setText(out));
 
 	handle_align(pinfo->key_max + 1);
 	handle_refresh();
@@ -1013,12 +1011,8 @@ MppDecodeTab :: handle_refresh()
 		out_key += " */";
 	}
 
-	lin_edit->blockSignals(1);
-	lin_edit->setText(str);
-	lin_edit->blockSignals(0);
-	lin_out->blockSignals(1);
-	lin_out->setText(out_key);
-	lin_out->blockSignals(0);
+	MPP_BLOCKED(lin_edit,setText(str));
+	MPP_BLOCKED(lin_out,setText(out_key));
 
 	wi_dc->update();
 }
@@ -1093,10 +1087,7 @@ MppDecodeTab :: getText()
 void
 MppDecodeTab :: setText(QString str)
 {
-  	lin_edit->blockSignals(1);
-	lin_edit->setText(str);
-	lin_edit->blockSignals(0);
-
+	MPP_BLOCKED(lin_edit,setText(str));
 	handle_parse();
 }
 
