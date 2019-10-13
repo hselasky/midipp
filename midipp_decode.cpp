@@ -577,9 +577,9 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	gl = new QGridLayout(this);
 
 	gb = new MppGroupBox(tr("Chord Selector"));
-	gl->addWidget(gb, 0,0,1,1);
-	gl->setRowStretch(2,1);
-	gl->setColumnStretch(1,1);
+
+	gl->setRowStretch(1,1);
+	gl->setColumnStretch(0,1);
 
 	lin_edit = new QLineEdit(QString("C"));
 	lin_edit->setMaxLength(256);
@@ -671,7 +671,7 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	gb->addWidget(but_play, 9, 0, 1, 2);
 
 	gb_gen = new MppGroupBox(tr("Chord Scratch Area"));
-	gl->addWidget(gb_gen, 1,0,1,2);
+	gl->addWidget(gb_gen, 1,0,1,1);
 
 	editor = new MppDecodeEditor(_mw);
 	gb_gen->addWidget(editor, 0,0,1,1);
@@ -680,7 +680,16 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	wi_dc = new MppDecodeCircle(this);
 	gb_dc->addWidget(wi_dc, 0,0,1,1);
 
-	gl->addWidget(gb_dc, 0,1,1,1);
+	split = new QSplitter();
+#if defined(TARGET_OS_IPHONE) || defined(TARGET_IPHONE_SIMULATOR)
+	split->setHandleWidth(32);
+#else
+	split->setHandleWidth(16);
+#endif
+	split->addWidget(gb);
+	split->addWidget(gb_dc);
+
+	gl->addWidget(split, 0,0,1,1);
 	
 	handle_parse();
     
