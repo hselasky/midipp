@@ -1439,34 +1439,32 @@ MppMainWindow :: handle_config_reload()
 	umidi20_config_import(&cfg);
 
 	handle_compile();
+
+	/* wait for MIDI devices to be opened */
+	MppSleep::msleep(100 /* ms */);
+
+	/* apply local MIDI keys configuration */
+	handle_config_local_keys();
 }
 
 void
 MppMainWindow :: handle_config_apply()
 {
-	struct mid_data *d = &mid_data;
-	uint8_t ScMidiTriggered;
 	uint8_t deviceSelectionMap[MPP_MAX_DEVS];
 	uint32_t devInputMaskCopy[MPP_MAX_DEVS];
-	uint32_t pos;
-	int n;
-	int x;
-	int y;
 
 	deviceBits = 0;
 	memset(devInputMaskCopy, 0, sizeof(devInputMaskCopy));
 
-	for (n = 0; n != MPP_MAX_DEVS; n++) {
+	for (uint8_t n = 0; n != MPP_MAX_DEVS; n++) {
 
-		if (deviceName[n] != NULL)
-			free(deviceName[n]);
-
+		free(deviceName[n]);
 		deviceName[n] = MppQStringToAscii(led_config_dev[n]->text());
 
 		if (cbx_config_dev[n][0]->isChecked())
 			deviceBits |= (MPP_DEV0_PLAY << (2 * n));
 
-		for (x = 0; x != MPP_MAX_VIEWS; x++) {
+		for (uint8_t x = 0; x != MPP_MAX_VIEWS; x++) {
 			if (cbx_config_dev[n][1 + x]->isChecked() == 0)
 				continue;
 			devInputMaskCopy[n] |= (1U << x);
@@ -1476,15 +1474,24 @@ MppMainWindow :: handle_config_apply()
 		deviceSelectionMap[n] = but_config_sel[n]->value();
 	}
 
-	handle_config_reload();
-
-	/* wait for MIDI devices to be opened */
-	MppSleep::msleep(100 /* ms */);
-
 	atomic_lock();
 	memcpy(devSelMap, deviceSelectionMap, sizeof(devSelMap));
 	memcpy(devInputMask, devInputMaskCopy, sizeof(devInputMask));
-	ScMidiTriggered = midiTriggered;
+	atomic_unlock();
+	
+	handle_config_reload();
+}
+
+void
+MppMainWindow :: handle_config_local_keys()
+{
+	struct mid_data *d = &mid_data;
+	uint32_t pos;
+	uint32_t off = 0;
+	uint8_t midiTriggeredOld;
+
+	atomic_lock();
+	midiTriggeredOld = midiTriggered;
 	midiTriggered = 1;
 
 	handle_midi_trigger();
@@ -1500,9 +1507,8 @@ MppMainWindow :: handle_config_apply()
 	 * Update local key enable/disable on all devices and
 	 * channels:
 	 */
-	for (n = 0, y = 0; n != MPP_MAX_DEVS; n++) {
-
-		for (x = 0; x != 16; x++) {
+	for (uint8_t n = 0; n != MPP_MAX_DEVS; n++) {
+		for (uint8_t x = 0; x != 16; x++) {
 			uint8_t buf[4];
 
 			d->track = track[0];
@@ -1514,22 +1520,19 @@ MppMainWindow :: handle_config_apply()
 				buf[0] = 0xB0 | x;
 				buf[1] = 0x7A;
 				buf[2] = 0x7F;
-				mid_add_raw(d, buf, 3, y);
+				mid_add_raw(d, buf, 3, off++);
 			}
 
 			if (disableLocalKeys[n]) {
 				buf[0] = 0xB0 | x;
 				buf[1] = 0x7A;
 				buf[2] = 0x00;
-				mid_add_raw(d, buf, 3, y);
+				mid_add_raw(d, buf, 3, off++);
 			}
-
-			/* wait a bit before sending next MIDI events */
-			y++;
 		}
 	}
 
-	midiTriggered = ScMidiTriggered;
+	midiTriggered = midiTriggeredOld;
 	atomic_unlock();
 }
 
@@ -2815,8 +2818,6 @@ MppMainWindow :: MidiInit(void)
 
 	atomic_unlock();
 
-	/* reload the configuration */
-
 	handle_config_reload();
 }
 
@@ -2843,19 +2844,12 @@ MppMainWindow :: MidiUnInit(void)
 	}
 }
 
-int
+void
 MppMainWindow :: handle_mute_map(int n)
 {
-	int retval;
-
 	MppMuteMap diag(this, this, n);
 
-	retval = diag.exec();
-
-	if (retval == QDialog::Accepted)
-		handle_config_apply();
-
-	return (retval);
+	diag.exec();
 }
 
 int

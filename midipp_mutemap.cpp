@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2012 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,6 @@
 MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
   : QDialog(parent)
 {
-	int n;
 
 	mw = _mw;
 	devno = _devno;
@@ -42,7 +41,7 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 	gb_mute = new MppGroupBox("MIDI Output Channel Mute Map");
 	gb_other = new MppGroupBox("MIDI Output Mute");
 
-	setWindowTitle(tr("MIDI Output Mute Map For Device %1").arg(_devno));
+	setWindowTitle(tr("MIDI Output Mute Map"));
 	setWindowIcon(QIcon(MppIconFile));
 
 	gb_mute->addWidget(new QLabel(tr("Mute enable")),
@@ -53,32 +52,24 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 	gl->addWidget(gb_mute, 0, 0, 1, 5);
 	gl->addWidget(gb_other, 1, 0, 1, 5);
 
-	but_set_all = new QPushButton(tr("Set All"));
-	but_clear_all = new QPushButton(tr("Clear All"));
-	but_revert_all = new QPushButton(tr("Revert"));
-	but_apply_all = new QPushButton(tr("Apply"));
-	but_cancel_all = new QPushButton(tr("Cancel"));
+	but_reset_all = new QPushButton(tr("Reset All"));
+	but_close_all = new QPushButton(tr("Close"));
 
 	gl->setRowStretch(2, 1);
 	gl->setColumnStretch(5, 1);
 
-	gl->addWidget(but_apply_all, 3, 3, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(but_cancel_all, 3, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(but_set_all, 3, 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(but_clear_all, 3, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gl->addWidget(but_revert_all, 3, 2, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(but_close_all, 3, 4, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(but_reset_all, 3, 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
-	connect(but_set_all, SIGNAL(released()), this, SLOT(handle_set_all()));
-	connect(but_clear_all, SIGNAL(released()), this, SLOT(handle_clear_all()));
-	connect(but_revert_all, SIGNAL(released()), this, SLOT(handle_revert_all()));
-	connect(but_apply_all, SIGNAL(released()), this, SLOT(handle_apply_all()));
-	connect(but_cancel_all, SIGNAL(released()), this, SLOT(handle_cancel_all()));
+	connect(but_reset_all, SIGNAL(released()), this, SLOT(handle_reset_all()));
+	connect(but_close_all, SIGNAL(released()), this, SLOT(handle_close_all()));
 
-	for (n = 0; n != 16; n++) {
+	for (uint8_t n = 0; n != 16; n++) {
 		int x_off;
 		int y_off;
 
 		cbx_mute[n] = new MppCheckBox();
+		connect(cbx_mute[n], SIGNAL(stateChanged(int,int)), this, SLOT(handle_apply_all()));
 
 		x_off = (n & 8) ? 2: 0;
 		y_off = (n & 7) + 1;
@@ -90,10 +81,19 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 	}
 
 	cbx_mute_program = new MppButtonMap("Mute MIDI program events\0" "NO\0" "YES\0", 2, 2);
+	connect(cbx_mute_program, SIGNAL(selectionChanged(int)), this, SLOT(handle_apply_all()));
+
 	cbx_mute_pedal = new MppButtonMap("Mute MIDI pedal events\0" "NO\0" "YES\0", 2, 2);
+	connect(cbx_mute_pedal, SIGNAL(selectionChanged(int)), this, SLOT(handle_apply_all()));
+
 	cbx_mute_non_channel = new MppButtonMap("Mute non-channel MIDI events\0" "NO\0" "YES\0", 2, 2);
-	cbx_mute_local_keys = new MppButtonMap("Local keys MIDI command sent\0" "NONE\0" "ENABLE\0" "DISABLE\0", 3, 3);
+	connect(cbx_mute_non_channel, SIGNAL(selectionChanged(int)), this, SLOT(handle_apply_all()));
+
+	cbx_mute_local_keys = new MppButtonMap("Send local MIDI keys command\0" "NONE\0" "ENABLE\0" "DISABLE\0", 3, 3);
+	connect(cbx_mute_local_keys, SIGNAL(selectionChanged(int)), this, SLOT(handle_apply_all()));
+
 	cbx_mute_control = new MppButtonMap("Mute MIDI control events\0" "NO\0" "YES\0", 2, 2);
+	connect(cbx_mute_control, SIGNAL(selectionChanged(int)), this, SLOT(handle_apply_all()));
 
 	gb_other->addWidget(cbx_mute_program, 0, 0, 1, 1);
 	gb_other->addWidget(cbx_mute_pedal, 0, 1, 1, 1);
@@ -104,27 +104,20 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 	handle_revert_all();
 }
 
-MppMuteMap :: ~MppMuteMap()
-{
-
-}
-
 void
-MppMuteMap :: handle_set_all()
+MppMuteMap :: handle_reset_all()
 {
-	int n;
 
-	for (n = 0; n != 16; n++)
-		cbx_mute[n]->setChecked(1);
-}
+	for (uint8_t n = 0; n != 16; n++)
+		MPP_BLOCKED(cbx_mute[n],setChecked(0));
 
-void
-MppMuteMap :: handle_clear_all()
-{
-	int n;
+	MPP_BLOCKED(cbx_mute_program,setSelection(0));
+	MPP_BLOCKED(cbx_mute_pedal,setSelection(0));
+	MPP_BLOCKED(cbx_mute_non_channel,setSelection(0));
+	MPP_BLOCKED(cbx_mute_local_keys,setSelection(0));
+	MPP_BLOCKED(cbx_mute_control,setSelection(0));
 
-	for (n = 0; n != 16; n++)
-		cbx_mute[n]->setChecked(0);
+	handle_apply_all();
 }
 
 void
@@ -136,10 +129,9 @@ MppMuteMap :: handle_revert_all()
 	uint8_t mute_local_keys_copy;
 	uint8_t mute_midi_non_channel_copy;
 	uint8_t mute_control_copy;
-	int n;
 
 	mw->atomic_lock();
-	for (n = 0; n != 16; n++)
+	for (uint8_t n = 0; n != 16; n++)
 		mute_copy[n] = mw->muteMap[devno][n] ? 1 : 0;
 
 	mute_prog_copy = mw->muteProgram[devno];
@@ -154,14 +146,14 @@ MppMuteMap :: handle_revert_all()
 	mute_control_copy = mw->muteAllControl[devno];
 	mw->atomic_unlock();
 
-	for (n = 0; n != 16; n++)
-		cbx_mute[n]->setChecked(mute_copy[n]);
+	for (uint8_t n = 0; n != 16; n++)
+		MPP_BLOCKED(cbx_mute[n],setChecked(mute_copy[n]));
 
-	cbx_mute_program->setSelection(mute_prog_copy);
-	cbx_mute_pedal->setSelection(mute_pedal_copy);
-	cbx_mute_local_keys->setSelection(mute_local_keys_copy);
-	cbx_mute_non_channel->setSelection(mute_midi_non_channel_copy);
-	cbx_mute_control->setSelection(mute_control_copy);
+	MPP_BLOCKED(cbx_mute_program,setSelection(mute_prog_copy));
+	MPP_BLOCKED(cbx_mute_pedal,setSelection(mute_pedal_copy));
+	MPP_BLOCKED(cbx_mute_local_keys,setSelection(mute_local_keys_copy));
+	MPP_BLOCKED(cbx_mute_non_channel,setSelection(mute_midi_non_channel_copy));
+	MPP_BLOCKED(cbx_mute_control,setSelection(mute_control_copy));
 }
 
 void
@@ -174,9 +166,9 @@ MppMuteMap :: handle_apply_all()
 	uint8_t mute_local_disable_copy;
 	uint8_t mute_midi_non_channel_copy;
 	uint8_t mute_control_copy;
-	int n;
+	bool apply = false;
 
-	for (n = 0; n != 16; n++)
+	for (uint8_t n = 0; n != 16; n++)
 		mute_copy[n] = (cbx_mute[n]->checkState() == Qt::Checked);
 
 	mute_prog_copy = (cbx_mute_program->currSelection != 0);
@@ -187,22 +179,25 @@ MppMuteMap :: handle_apply_all()
 	mute_control_copy = (cbx_mute_control->currSelection != 0);
 
 	mw->atomic_lock();
-	for (n = 0; n != 16; n++)
+	for (uint8_t n = 0; n != 16; n++)
 		mw->muteMap[devno][n] = mute_copy[n];
 
 	mw->muteProgram[devno] = mute_prog_copy;
 	mw->mutePedal[devno] = mute_pedal_copy;
+	apply |= (mw->enableLocalKeys[devno] != mute_local_enable_copy);
 	mw->enableLocalKeys[devno] = mute_local_enable_copy;
+	apply |= (mw->disableLocalKeys[devno] != mute_local_disable_copy);
 	mw->disableLocalKeys[devno] = mute_local_disable_copy;
 	mw->muteAllNonChannel[devno] = mute_midi_non_channel_copy;
 	mw->muteAllControl[devno] = mute_control_copy;
 	mw->atomic_unlock();
 
-	this->accept();
+	if (apply)
+		mw->handle_config_local_keys();
 }
 
 void
-MppMuteMap :: handle_cancel_all()
+MppMuteMap :: handle_close_all()
 {
-	this->reject();
+	this->accept();
 }

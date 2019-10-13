@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +34,7 @@ class MppMuteMap : public QDialog
 
 public:
 	MppMuteMap(QWidget *parent, MppMainWindow *, int);
-	~MppMuteMap();
+	~MppMuteMap() {};
 
 	MppMainWindow *mw;
 	int devno;
@@ -51,19 +51,14 @@ public:
 	MppButtonMap *cbx_mute_control;
 	MppButtonMap *cbx_mute_non_channel;
 
-	QPushButton *but_set_all;
-	QPushButton *but_clear_all;
-	QPushButton *but_revert_all;
-	QPushButton *but_apply_all;
-	QPushButton *but_cancel_all;
+	QPushButton *but_reset_all;
+	QPushButton *but_close_all;
 
 public slots:
-
-	void handle_set_all();
-	void handle_clear_all();
-	void handle_revert_all();
+	void handle_reset_all();
+	void handle_close_all();
 	void handle_apply_all();
-	void handle_cancel_all();
+  	void handle_revert_all();
 };
 
 #endif		/* _MIDIPP_MUTEMAP_H_ */

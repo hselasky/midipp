@@ -333,6 +333,7 @@ public slots:
 	void handle_midi_trigger();
 	void handle_config_changed();
 	void handle_config_apply();
+  	void handle_config_local_keys();
 	void handle_config_reload();
 	void handle_config_view_fontsel();
 	void handle_config_edit_fontsel();
@@ -342,7 +343,7 @@ public slots:
 	void handle_gpro_file_import(int);
 	void handle_mxml_file_import(int);
 
-	int handle_mute_map(int);
+	void handle_mute_map(int);
 	int handle_config_dev(int, int = 0);
 
 	void handle_bpm();
