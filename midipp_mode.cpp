@@ -120,6 +120,9 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	spn_sec_treb_volume->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
 	connect(spn_sec_treb_volume, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
+	spn_aux_chan = new MppChanSel(sm->mainWindow, 0, 0);
+	connect(spn_aux_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+
 	spn_aux_base_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE);
 	connect(spn_aux_base_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
@@ -162,6 +165,7 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 
 	gb_oconfig->addWidget(new QLabel(tr("Primary")), 1, 0, 1, 1);
 	gb_oconfig->addWidget(spn_pri_chan, 1, 1, 1, 1);
+	gb_oconfig->addWidget(spn_aux_chan, 1, 2, 1, 1);
 	gb_oconfig->addWidget(spn_pri_dev, 1, 3, 1, 1);
 	gb_oconfig->addWidget(spn_pri_volume, 1, 4, 1, 1);
 
@@ -192,6 +196,7 @@ MppMode :: update_all(void)
 	int channel;
 	int channelBase;
 	int channelTreb;
+	int auxChannel;
 	int auxChannelBase;
 	int auxChannelTreb;
 	int device;
@@ -213,6 +218,7 @@ MppMode :: update_all(void)
 	channel = sm->synthChannel;
 	channelBase = sm->synthChannelBase;
 	channelTreb = sm->synthChannelTreb;
+	auxChannel = sm->auxChannel;
 	auxChannelBase = sm->auxChannelBase;
 	auxChannelTreb = sm->auxChannelTreb;
 	device = sm->synthDevice;
@@ -235,6 +241,7 @@ MppMode :: update_all(void)
 	spn_pri_chan->setValue(channel);
 	spn_sec_base_chan->setValue(channelBase);
 	spn_sec_treb_chan->setValue(channelTreb);
+	spn_aux_chan->setValue(auxChannel);
 	spn_aux_base_chan->setValue(auxChannelBase);
 	spn_aux_treb_chan->setValue(auxChannelTreb);
 	spn_pri_dev->setValue(device);
@@ -303,6 +310,7 @@ MppMode :: handle_changed()
 	int channel;
 	int channelBase;
 	int channelTreb;
+	int auxChannel;
 	int auxChannelBase;
 	int auxChannelTreb;
 	int device;
@@ -323,6 +331,7 @@ MppMode :: handle_changed()
 	channel = spn_pri_chan->value();
 	channelBase = spn_sec_base_chan->value();
 	channelTreb = spn_sec_treb_chan->value();
+	auxChannel = spn_aux_chan->value();
 	auxChannelBase = spn_aux_base_chan->value();
 	auxChannelTreb = spn_aux_treb_chan->value();
 	device = spn_pri_dev->value();
@@ -347,6 +356,7 @@ MppMode :: handle_changed()
 	sm->synthChannel = channel;
 	sm->synthChannelBase = channelBase;
 	sm->synthChannelTreb = channelTreb;
+	sm->auxChannel = auxChannel;
 	sm->auxChannelBase = auxChannelBase;
 	sm->auxChannelTreb = auxChannelTreb;
 	sm->synthDevice = device;

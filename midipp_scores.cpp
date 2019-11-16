@@ -190,6 +190,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	synthChannel = ((_unit == 1) ? 9 : 0);
 	synthChannelBase = -1;
 	synthChannelTreb = -1;
+	auxChannel = -1;
 	auxChannelBase = -1;
 	auxChannelTreb = -1;
 	synthDevice = -1;
@@ -1214,32 +1215,32 @@ static const uint16_t mpp_aux_chord_map[MPP_MAX_CHORD_MAP] = {
   /* 1st octave */
   /* [C0] = */ 0,	/* dead */
   /* [D0B] = */ 0,	/* dead */
-  /* [D0] = */ MPP_CHORD_MAP_A + 0 + MPP_CHORD_MAP_BASE,
+  /* [D0] = */ MPP_CHORD_MAP_A + 0 + MPP_CHORD_MAP_BASE + MPP_CHORD_MAP_AUX,
   /* [E0B] = */ MPP_CHORD_MAP_A + 2 + MPP_CHORD_MAP_BASE + MPP_CHORD_MAP_AUX,
-  /* [E0] = */ MPP_CHORD_MAP_A + 1 + MPP_CHORD_MAP_BASE,
+  /* [E0] = */ MPP_CHORD_MAP_A + 1 + MPP_CHORD_MAP_BASE + MPP_CHORD_MAP_AUX,
 
-  /* [F0] = */ MPP_CHORD_MAP_A + 0,
+  /* [F0] = */ MPP_CHORD_MAP_A + 0 + MPP_CHORD_MAP_AUX,
   /* [G0B] = */ MPP_CHORD_MAP_A + 4 + MPP_CHORD_MAP_AUX,
-  /* [G0] = */ MPP_CHORD_MAP_A + 1,
+  /* [G0] = */ MPP_CHORD_MAP_A + 1 + MPP_CHORD_MAP_AUX,
   /* [A0B] = */ MPP_CHORD_MAP_A + 5 + MPP_CHORD_MAP_AUX,
-  /* [A0] = */ MPP_CHORD_MAP_A + 2,
+  /* [A0] = */ MPP_CHORD_MAP_A + 2 + MPP_CHORD_MAP_AUX,
   /* [H0B] = */ MPP_CHORD_MAP_A + 6 + MPP_CHORD_MAP_AUX,
-  /* [H0] = */ MPP_CHORD_MAP_A + 3,
+  /* [H0] = */ MPP_CHORD_MAP_A + 3 + MPP_CHORD_MAP_AUX,
 
   /* 2nd octave */
   /* [C0] = */ 0,	/* dead */
   /* [D0B] = */ MPP_CHORD_MAP_A + 7 + MPP_CHORD_MAP_AUX,
-  /* [D0] = */ MPP_CHORD_MAP_B + 0 + MPP_CHORD_MAP_BASE,
+  /* [D0] = */ MPP_CHORD_MAP_B + 0 + MPP_CHORD_MAP_BASE + MPP_CHORD_MAP_AUX,
   /* [E0B] = */ MPP_CHORD_MAP_B + 2 + MPP_CHORD_MAP_BASE + MPP_CHORD_MAP_AUX,
-  /* [E0] = */ MPP_CHORD_MAP_B + 1 + MPP_CHORD_MAP_BASE,
+  /* [E0] = */ MPP_CHORD_MAP_B + 1 + MPP_CHORD_MAP_BASE + MPP_CHORD_MAP_AUX,
 
-  /* [F0] = */ MPP_CHORD_MAP_B + 0,
+  /* [F0] = */ MPP_CHORD_MAP_B + 0 + MPP_CHORD_MAP_AUX,
   /* [G0B] = */ MPP_CHORD_MAP_B + 4 + MPP_CHORD_MAP_AUX,
-  /* [G0] = */ MPP_CHORD_MAP_B + 1,
+  /* [G0] = */ MPP_CHORD_MAP_B + 1 + MPP_CHORD_MAP_AUX,
   /* [A0B] = */ MPP_CHORD_MAP_B + 5 + MPP_CHORD_MAP_AUX,
-  /* [A0] = */ MPP_CHORD_MAP_B + 2,
+  /* [A0] = */ MPP_CHORD_MAP_B + 2 + MPP_CHORD_MAP_AUX,
   /* [H0B] = */ MPP_CHORD_MAP_B + 6 + MPP_CHORD_MAP_AUX,
-  /* [H0] = */ MPP_CHORD_MAP_B + 3,
+  /* [H0] = */ MPP_CHORD_MAP_B + 3 + MPP_CHORD_MAP_AUX,
 
   /* 3rd octave */
   /* [C0] = */ 0,	/* dead */
@@ -1477,14 +1478,22 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 	}
 
 	if (map & MPP_CHORD_MAP_AUX) {
+	  	/* update channel and device */
+		mse.channel = (mse.channel + auxChannel) & 0xF;
+		mse.track = MPP_DEFAULT_TRACK(unit);
+
 		if (map & MPP_CHORD_MAP_BASE) {
-			/* update channel and device */
-			mse.channel = auxChannelBase;
-			mse.track = MPP_BASS_TRACK(unit);
+			if (auxChannelBase != (int)mse.channel ||
+			    synthDeviceBase != synthDevice) {
+				mse.channelSec = auxChannelBase + 1;
+				mse.trackSec = MPP_BASS_TRACK(unit);
+			}
 		} else {
-			/* update channel and device */
-			mse.channel = auxChannelTreb;
-			mse.track = MPP_TREBLE_TRACK(unit);
+			if (auxChannelTreb != (int)mse.channel ||
+			    synthDeviceTreb != synthDevice) {
+				mse.channelSec = auxChannelTreb + 1;
+				mse.trackSec = MPP_TREBLE_TRACK(unit);
+			}
 		}
 	} else {
 	  	/* update channel and device */
@@ -1507,7 +1516,7 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 	}
 
 	/* check for nonexisting key or channel */
-	if (mse.dur == 0 || mse.channel >= 16)
+	if (mse.dur == 0 || mse.channel > 15)
 		return;
 
 	/* transpose key, if any */
