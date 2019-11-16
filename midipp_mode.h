@@ -94,7 +94,6 @@ public:
 	MppDevSel *spn_sec_treb_dev;
 	MppVolume *spn_sec_treb_volume;
 
-	MppChanSel *spn_aux_chan;
 	MppChanSel *spn_aux_base_chan;
 	MppChanSel *spn_aux_treb_chan;
 

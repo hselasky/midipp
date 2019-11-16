@@ -160,7 +160,6 @@ public:
 	uint8_t synthChannel;
 	int8_t synthChannelBase;
 	int8_t synthChannelTreb;
-	int8_t auxChannel;
 	int8_t auxChannelBase;
 	int8_t auxChannelTreb;
 	int8_t synthDevice;
