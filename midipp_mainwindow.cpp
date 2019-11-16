@@ -2070,11 +2070,11 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 				devno = sm->synthDevice;
 				break;
 			case MPP_TREBLE_TRACK(0):
-				if (sm->synthChannelTreb > -1)
+				if (sm->synthChannelTreb > -1 || sm->auxChannelTreb > -1)
 					devno = sm->synthDeviceTreb;
 				break;
 			case MPP_BASS_TRACK(0):
-				if (sm->synthChannelBase > -1)
+				if (sm->synthChannelBase > -1 || sm->auxChannelBase > -1)
 					devno = sm->synthDeviceBase;
 				break;
 			default:
@@ -2136,11 +2136,11 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 				devno = sm->synthDevice;
 				break;
 			case MPP_TREBLE_TRACK(0):
-				if (sm->synthChannelTreb > -1)
+				if (sm->synthChannelTreb > -1 || sm->auxChannelTreb > -1)
 					devno = sm->synthDeviceTreb;
 				break;
 			case MPP_BASS_TRACK(0):
-				if (sm->synthChannelBase > -1)
+				if (sm->synthChannelBase > -1 || sm->auxChannelBase > -1)
 					devno = sm->synthDeviceBase;
 				break;
 			default:
