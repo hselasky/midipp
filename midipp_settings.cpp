@@ -152,7 +152,7 @@ MppSettings :: doSave(void)
 			case MM_PASS_NONE_CHORD_PIANO:
 				setValue("keymode", 4);
 				break;
-			case MM_PASS_NONE_CHORD_GUITAR:
+			case MM_PASS_NONE_CHORD_AUX:
 				setValue("keymode", 5);
 				break;
 			case MM_PASS_NONE_CHORD_TRANS:
@@ -174,6 +174,9 @@ MppSettings :: doSave(void)
 			setValue("synthchannel", mw->scores_main[x]->synthChannel);
 			setValue("synthchannelbase", mw->scores_main[x]->synthChannelBase);
 			setValue("synthchanneltreb", mw->scores_main[x]->synthChannelTreb);
+			setValue("auxchannel", mw->scores_main[x]->auxChannel);
+			setValue("auxchannelbase", mw->scores_main[x]->auxChannelBase);
+			setValue("auxchanneltreb", mw->scores_main[x]->auxChannelTreb);
 			setValue("synthdevice", mw->scores_main[x]->synthDevice);
 			setValue("synthdevicebase", mw->scores_main[x]->synthDeviceBase);
 			setValue("synthdevicetreb", mw->scores_main[x]->synthDeviceTreb);
@@ -275,6 +278,9 @@ MppSettings :: doLoad(void)
 			int synthChannel = valueDefault(concat("view%d/synthchannel", x), (x == 1) ? 9 : 0);
 			int synthChannelBase = valueDefault(concat("view%d/synthchannelbase", x), -1);
 			int synthChannelTreb = valueDefault(concat("view%d/synthchanneltreb", x), -1);
+			int auxChannel = valueDefault(concat("view%d/auxchannel", x), -1);
+			int auxChannelBase = valueDefault(concat("view%d/auxchannelbase", x), -1);
+			int auxChannelTreb = valueDefault(concat("view%d/auxchanneltreb", x), -1);
 			int synthDevice = valueDefault(concat("view%d/synthdevice", x), -1);
 			int synthDeviceBase = valueDefault(concat("view%d/synthdevicebase", x), -1);
 			int synthDeviceTreb = valueDefault(concat("view%d/synthdevicetreb", x), -1);
@@ -295,6 +301,12 @@ MppSettings :: doLoad(void)
 				synthChannelBase = -1;
 			if (synthChannelTreb < 0 || synthChannelTreb > 15)
 				synthChannelTreb = -1;
+			if (auxChannel < 0 || auxChannel > 15)
+				auxChannel = -1;
+			if (auxChannelBase < 0 || auxChannelBase > 15)
+				auxChannelBase = -1;
+			if (auxChannelTreb < 0 || auxChannelTreb > 15)
+				auxChannelTreb = -1;
 			if (synthDevice < 0 || synthDevice >= MPP_MAX_DEVS)
 				synthDevice = -1;
 			if (synthDeviceBase < 0 || synthDeviceBase >= MPP_MAX_DEVS)
@@ -328,7 +340,7 @@ MppSettings :: doLoad(void)
 				mw->scores_main[x]->keyMode = MM_PASS_NONE_CHORD_PIANO;
 				break;
 			case 5:
-				mw->scores_main[x]->keyMode = MM_PASS_NONE_CHORD_GUITAR;
+				mw->scores_main[x]->keyMode = MM_PASS_NONE_CHORD_AUX;
 				break;
 			case 6:
 				mw->scores_main[x]->keyMode = MM_PASS_NONE_CHORD_TRANS;
@@ -350,6 +362,9 @@ MppSettings :: doLoad(void)
 			mw->scores_main[x]->synthChannel = synthChannel;
 			mw->scores_main[x]->synthChannelBase = synthChannelBase;
 			mw->scores_main[x]->synthChannelTreb = synthChannelTreb;
+			mw->scores_main[x]->auxChannel = auxChannel;
+			mw->scores_main[x]->auxChannelBase = auxChannelBase;
+			mw->scores_main[x]->auxChannelTreb = auxChannelTreb;
 			mw->scores_main[x]->synthDevice = synthDevice;
 			mw->scores_main[x]->synthDeviceBase = synthDeviceBase;
 			mw->scores_main[x]->synthDeviceTreb = synthDeviceTreb;

@@ -190,6 +190,9 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	synthChannel = ((_unit == 1) ? 9 : 0);
 	synthChannelBase = -1;
 	synthChannelTreb = -1;
+	auxChannel = -1;
+	auxChannelBase = -1;
+	auxChannelTreb = -1;
 	synthDevice = -1;
 	synthDeviceBase = -1;
 	synthDeviceTreb = -1;
@@ -789,7 +792,7 @@ MppScoreMain :: viewPaintEvent(QPaintEvent *event)
 	/* overlay (active chord) */
 
 	if (keyMode == MM_PASS_NONE_CHORD_PIANO ||
-	    keyMode == MM_PASS_NONE_CHORD_GUITAR) {
+	    keyMode == MM_PASS_NONE_CHORD_AUX) {
 		int width = viewWidgetSub->width();
 		int mask;
 
@@ -989,7 +992,7 @@ MppScoreMain :: handleParse(const QString &pstr)
 		mainWindow->keyModeUpdated = 1;
 		break;
 	case 5:
-		keyMode = MM_PASS_NONE_CHORD_GUITAR;
+		keyMode = MM_PASS_NONE_CHORD_AUX;
 		mainWindow->keyModeUpdated = 1;
 		break;
 	case 6:
@@ -1166,6 +1169,7 @@ MppScoreMain :: handleLabelJump(int pos)
 #define	MPP_CHORD_MAP_B	0x400
 #define	MPP_CHORD_MAP_BASE 0x800
 #define	MPP_CHORD_MAP_TRANS 0x1000
+#define	MPP_CHORD_MAP_AUX 0x2000
 
 #if C0 != 0
 #error "C is not starting the scale"
@@ -1207,48 +1211,55 @@ static const uint16_t mpp_piano_chord_map[MPP_MAX_CHORD_MAP] = {
   /* [D2B] = */ MPP_CHORD_MAP_B + 7,
 };
 
-static const uint16_t mpp_guitar_chord_map[MPP_MAX_CHORD_MAP] = {
-  /* E - string */
-  /* [C0] = */ MPP_CHORD_MAP_CUR + 0 + MPP_CHORD_MAP_BASE,
-  /* [D0B] = */ MPP_CHORD_MAP_A + 0 + MPP_CHORD_MAP_BASE,
-  /* [D0] = */ MPP_CHORD_MAP_A + 1 + MPP_CHORD_MAP_BASE,
-  /* [E0B] = */ MPP_CHORD_MAP_B + 0 + MPP_CHORD_MAP_BASE,
+static const uint16_t mpp_aux_chord_map[MPP_MAX_CHORD_MAP] = {
+  /* 1st octave */
+  /* [C0] = */ 0,	/* dead */
+  /* [D0B] = */ 0,	/* dead */
+  /* [D0] = */ MPP_CHORD_MAP_AUX + 0 + MPP_CHORD_MAP_BASE,
+  /* [E0B] = */ MPP_CHORD_MAP_AUX + 2 + MPP_CHORD_MAP_BASE,
+  /* [E0] = */ MPP_CHORD_MAP_AUX + 1 + MPP_CHORD_MAP_BASE,
+
+  /* [F0] = */ MPP_CHORD_MAP_AUX + 0,
+  /* [G0B] = */ MPP_CHORD_MAP_AUX + 4,
+  /* [G0] = */ MPP_CHORD_MAP_AUX + 1,
+  /* [A0B] = */ MPP_CHORD_MAP_AUX + 5,
+  /* [A0] = */ MPP_CHORD_MAP_AUX + 2,
+  /* [H0B] = */ MPP_CHORD_MAP_AUX + 6,
+  /* [H0] = */ MPP_CHORD_MAP_AUX + 3,
+
+  /* 2nd octave */
+  /* [C0] = */ 0,	/* dead */
+  /* [D0B] = */ MPP_CHORD_MAP_AUX + 7,
+  /* [D0] = */ MPP_CHORD_MAP_A + 0 + MPP_CHORD_MAP_BASE,
+  /* [E0B] = */ MPP_CHORD_MAP_A + 2 + MPP_CHORD_MAP_BASE,
+  /* [E0] = */ MPP_CHORD_MAP_A + 1 + MPP_CHORD_MAP_BASE,
+
+  /* [F0] = */ MPP_CHORD_MAP_A + 0,
+  /* [G0B] = */ MPP_CHORD_MAP_A + 4,
+  /* [G0] = */ MPP_CHORD_MAP_A + 1,
+  /* [A0B] = */ MPP_CHORD_MAP_A + 5,
+  /* [A0] = */ MPP_CHORD_MAP_A + 2,
+  /* [H0B] = */ MPP_CHORD_MAP_A + 6,
+  /* [H0] = */ MPP_CHORD_MAP_A + 3,
+
+  /* 3rd octave */
+  /* [C0] = */ 0,	/* dead */
+  /* [D0B] = */ MPP_CHORD_MAP_A + 7,
+  /* [D0] = */ MPP_CHORD_MAP_B + 0 + MPP_CHORD_MAP_BASE,
+  /* [E0B] = */ MPP_CHORD_MAP_B + 2 + MPP_CHORD_MAP_BASE,
   /* [E0] = */ MPP_CHORD_MAP_B + 1 + MPP_CHORD_MAP_BASE,
 
-  /* A - string */
-  /* [F0] = */ MPP_CHORD_MAP_CUR + 0,
-  /* [G0B] = */ MPP_CHORD_MAP_A + 0,
-  /* [G0] = */ MPP_CHORD_MAP_A + 5,
-  /* [A0B] = */ MPP_CHORD_MAP_B + 0,
-  /* [A0] = */ MPP_CHORD_MAP_B + 5,
+  /* [F0] = */ MPP_CHORD_MAP_B + 0,
+  /* [G0B] = */ MPP_CHORD_MAP_B + 4,
+  /* [G0] = */ MPP_CHORD_MAP_B + 1,
+  /* [A0B] = */ MPP_CHORD_MAP_B + 5,
+  /* [A0] = */ MPP_CHORD_MAP_B + 2,
+  /* [H0B] = */ MPP_CHORD_MAP_B + 6,
+  /* [H0] = */ MPP_CHORD_MAP_B + 3,
 
-  /* D - string */
-  /* [H0B] = */ MPP_CHORD_MAP_CUR + 1,
-  /* [H0] = */ MPP_CHORD_MAP_A + 1,
-  /* [C1] = */ MPP_CHORD_MAP_A + 6,
-  /* [D1B] = */ MPP_CHORD_MAP_B + 1,
-  /* [D1] = */ MPP_CHORD_MAP_B + 6,
-
-  /* G - string */
-  /* [E1B] = */ MPP_CHORD_MAP_CUR + 2,
-  /* [E1] = */ MPP_CHORD_MAP_A + 2,
-  /* [F1] = */ MPP_CHORD_MAP_A + 7,
-  /* [G1B] = */ MPP_CHORD_MAP_B + 2,
-  /* [G1] = */ MPP_CHORD_MAP_B + 7,
-
-  /* B - string */
-  /* [A1B] = */ MPP_CHORD_MAP_CUR + 3,
-  /* [A1] = */ MPP_CHORD_MAP_A + 3,
-  /* [H1B] = */ MPP_CHORD_MAP_A + 8,
-  /* [H1] = */ MPP_CHORD_MAP_B + 3,
-  /* [C2] = */ MPP_CHORD_MAP_B + 8,
-
-  /* E - string */
-  /* [D2B] = */ MPP_CHORD_MAP_CUR + 4,
-  /* [D2] = */ MPP_CHORD_MAP_A + 4,
-  /* [E2B] = */ MPP_CHORD_MAP_A + 9,
-  /* [E2] = */ MPP_CHORD_MAP_B + 4,
-  /* [F2] = */ MPP_CHORD_MAP_B + 9,
+  /* 4th octave */
+  /* [C0] = */ 0,	/* dead */
+  /* [D0B] = */ MPP_CHORD_MAP_B + 7,
 };
 
 static const uint16_t mpp_piano_chord_all_map[MPP_MAX_CHORD_MAP] = {
@@ -1449,14 +1460,14 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 		map = mpp_piano_chord_map[off];
 		trans = 0;
 	} else {
-		map = mpp_guitar_chord_map[off];
+		map = mpp_aux_chord_map[off];
 		trans = 0;
 	}
 
 	if (map & MPP_CHORD_MAP_TRANS) {
 		chordTranspose = (int)(map & MPP_CHORD_MAP_KEY) * MPP_BAND_STEP_12;
 		return;
-	} else if (map & MPP_CHORD_MAP_CUR) {
+	} else if (map & (MPP_CHORD_MAP_CUR | MPP_CHORD_MAP_AUX)) {
 		if (head.isFirst()) {
 			handleChordsLoad();
 			pressed_future = 2;
@@ -1481,13 +1492,59 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 		mse = score_future_treble[map & MPP_CHORD_MAP_KEY];
 	}
 
-	/* check for nonexisting key */
-	if (mse.dur == 0)
-		return;
+	if (map & MPP_CHORD_MAP_AUX) {
+		if (auxChannel == -1) {
+			if (map & MPP_CHORD_MAP_BASE) {
+				/* update channel and device */
+				mse.channel = auxChannelBase;
+				mse.track = MPP_BASS_TRACK(unit);
+			} else {
+				/* update channel and device */
+				mse.channel = auxChannelTreb;
+				mse.track = MPP_TREBLE_TRACK(unit);
+			}
+		} else {
+			/* update channel and device */
+			mse.channel = (mse.channel + auxChannel) & 0xF;
+			mse.track = MPP_DEFAULT_TRACK(unit);
 
-	/* update channel and device */
-	mse.channel = (mse.channel + synthChannel) & 0xF;
-	mse.track = MPP_DEFAULT_TRACK(unit);
+			if (map & MPP_CHORD_MAP_BASE) {
+				if (auxChannelBase != (int)mse.channel ||
+				    synthDeviceBase != synthDevice) {
+					mse.channelSec = auxChannelBase + 1;
+					mse.trackSec = MPP_BASS_TRACK(unit);
+				}
+			} else {
+				if (auxChannelTreb != (int)mse.channel ||
+				    synthDeviceTreb != synthDevice) {
+					mse.channelSec = auxChannelTreb + 1;
+					mse.trackSec = MPP_TREBLE_TRACK(unit);
+				}
+			}
+		}
+	} else {
+	  	/* update channel and device */
+		mse.channel = (mse.channel + synthChannel) & 0xF;
+		mse.track = MPP_DEFAULT_TRACK(unit);
+
+		if (map & MPP_CHORD_MAP_BASE) {
+			if (synthChannelBase != (int)mse.channel ||
+			    synthDeviceBase != synthDevice) {
+				mse.channelSec = synthChannelBase + 1;
+				mse.trackSec = MPP_BASS_TRACK(unit);
+			}
+		} else {
+			if (synthChannelTreb != (int)mse.channel ||
+			    synthDeviceTreb != synthDevice) {
+				mse.channelSec = synthChannelTreb + 1;
+				mse.trackSec = MPP_TREBLE_TRACK(unit);
+			}
+		}
+	}
+
+	/* check for nonexisting key or channel */
+	if (mse.dur == 0 || mse.channel >= 16)
+		return;
 
 	/* transpose key, if any */
 	mse.key += trans;
@@ -1495,20 +1552,6 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 	/* remove key if already pressed */
 	if (handleKeyRemovePast(&mse, vel, key_delay))
 		key_delay++;
-
-	if (map & MPP_CHORD_MAP_BASE) {
-		if (synthChannelBase != (int)mse.channel ||
-		    synthDeviceBase != synthDevice) {
-			mse.channelSec = synthChannelBase + 1;
-			mse.trackSec = MPP_BASS_TRACK(unit);
-		}
-	} else {
-		if (synthChannelTreb != (int)mse.channel ||
-		    synthDeviceTreb != synthDevice) {
-			mse.channelSec = synthChannelTreb + 1;
-			mse.trackSec = MPP_TREBLE_TRACK(unit);
-		}
-	}
 
 	/* store information for key release command */
 	score_past[off] = mse;
@@ -2231,50 +2274,59 @@ MppScoreMain :: handleScoreFileReplaceAll(void)
 }
 
 /* must be called locked */
-uint16_t
-MppScoreMain :: outputChannelMaskGet(void)
+void
+MppScoreMain :: outputChannelMaskGet(uint16_t *pmask)
 {
-	uint32_t mask;
-
 	switch (keyMode) {
 	case MM_PASS_ALL:
-		mask = 1U;
+		pmask[MPP_DEFAULT_TRACK(0)] = 1U;
 		break;
 	case MM_PASS_NONE_CHORD_TRANS:
 	case MM_PASS_NONE_CHORD_PIANO:
-	case MM_PASS_NONE_CHORD_GUITAR:
-		mask = 1U;
+	case MM_PASS_NONE_CHORD_AUX:
+		pmask[MPP_DEFAULT_TRACK(0)] = 1U;
+
 		if (synthChannelBase > -1) {
-			const int y = (synthChannelBase - synthChannel) & 0xF;
-			mask |= 1U << y;
+			const uint16_t m = 1U << ((synthChannelBase - synthChannel) & 0xF);
+			if (synthDevice != -1 &&
+			    synthDeviceBase != -1 &&
+			    synthDeviceBase != synthDevice)
+				pmask[MPP_BASS_TRACK(0)] |= m;
+			else
+				pmask[MPP_DEFAULT_TRACK(0)] |= m;
 		}
 		if (synthChannelTreb > -1) {
-			const int y = (synthChannelTreb - synthChannel) & 0xF;
-			mask |= 1U << y;
+			const uint16_t m = 1U << ((synthChannelTreb - synthChannel) & 0xF);
+			if (synthDevice != -1 &&
+			    synthDeviceTreb != -1 &&
+			    synthDeviceTreb != synthDevice)
+				pmask[MPP_TREBLE_TRACK(0)] |= m;
+			else
+				pmask[MPP_DEFAULT_TRACK(0)] |= m;
 		}
-		/* check for wrap around */
-		mask |= (mask >> 16);
-		mask &= 0xFFFF;
+		if (auxChannelBase > -1) {
+			const uint16_t m = 1U << ((auxChannelBase - synthChannel) & 0xF);
+			if (synthDevice != -1 &&
+			    synthDeviceBase != -1 &&
+			    synthDeviceBase != synthDevice)
+				pmask[MPP_BASS_TRACK(0)] |= m;
+			else
+				pmask[MPP_DEFAULT_TRACK(0)] |= m;
+		}
+		if (auxChannelTreb > -1) {
+			const uint16_t m = 1U << ((auxChannelTreb - synthChannel) & 0xF);
+			if (synthDevice != -1 &&
+			    synthDeviceTreb != -1 &&
+			    synthDeviceTreb != synthDevice)
+				pmask[MPP_TREBLE_TRACK(0)] |= m;
+			else
+				pmask[MPP_DEFAULT_TRACK(0)] |= m;
+		}
 		break;
 	default:
-		mask = active_channels;
+		pmask[MPP_DEFAULT_TRACK(0)] = active_channels;
 		break;
 	}
-	return (mask);
-}
-
-
-uint8_t
-MppScoreMain :: outputTrackMirror(uint8_t which)
-{
-	/* check for broadcasters */
-	if (synthDevice == -1)
-		return (which != MPP_DEFAULT_TRACK(0));
-	if (synthChannelTreb > -1 && synthDeviceTreb == -1)
-		return (which != MPP_TREBLE_TRACK(0));
-	if (synthChannelBase > -1 && synthDeviceBase == -1)
-		return (which != MPP_BASS_TRACK(0));
-	return (0);
 }
 
 /* must be called locked */
@@ -2284,28 +2336,26 @@ MppScoreMain :: outputControl(uint8_t ctrl, uint8_t val)
 	MppMainWindow *mw = mainWindow;
 	struct mid_data *d = &mw->mid_data;
 	const unsigned int off = unit * MPP_TRACKS_PER_VIEW;
-	uint16_t ChannelMask;
+	uint16_t ChannelMask[MPP_TRACKS_PER_VIEW] = {};
 	uint8_t chan;
 
 	chan = synthChannel;
-	ChannelMask = outputChannelMaskGet();
+	outputChannelMaskGet(ChannelMask);
 
 	/* the control event is distributed to all active channels */
-	while (ChannelMask) {
-		if (ChannelMask & 1) {
-			for (unsigned int x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
-				if (outputTrackMirror(x))
-					continue;
+	do {
+		for (unsigned int x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
+			if (ChannelMask[x] & 1) {
 				if (mw->check_play(off + x, chan, 0))
 					mid_control(d, ctrl, val);
 				if (mw->check_record(off + x, chan, 0))
 					mid_control(d, ctrl, val);
 			}
+			ChannelMask[x] /= 2;
 		}
-		ChannelMask /= 2;
 		chan++;
 		chan &= 0xF;
-	}
+	} while (chan != synthChannel);
 
 	if (ctrl == 0x40) {
 		if (mw->tab_loop->pedal_rec != 0) {
@@ -2325,12 +2375,12 @@ MppScoreMain :: outputChanPressure(uint8_t pressure)
 	MppMainWindow *mw = mainWindow;
 	struct mid_data *d = &mw->mid_data;
 	const unsigned int off = unit * MPP_TRACKS_PER_VIEW;
-	uint16_t ChannelMask;
+	uint16_t ChannelMask[MPP_TRACKS_PER_VIEW] = {};
 	uint8_t chan;
 	uint8_t buf[4];
 
 	chan = synthChannel;
-	ChannelMask = outputChannelMaskGet();
+	outputChannelMaskGet(ChannelMask);
 
 	buf[0] = 0xD0;
 	buf[1] = pressure & 0x7F;
@@ -2338,21 +2388,19 @@ MppScoreMain :: outputChanPressure(uint8_t pressure)
 	buf[3] = 0;
 
 	/* the pressure event is distributed to all active channels */
-	while (ChannelMask) {
-		if (ChannelMask & 1) {
-			for (unsigned int x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
-				if (outputTrackMirror(x))
-					continue;
+	do {
+		for (unsigned int x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
+			if (ChannelMask[x] & 1) {
 				if (mw->check_play(off + x, chan, 0))
 					mid_add_raw(d, buf, 2, 0);
 				if (mw->check_record(off + x, chan, 0))
 					mid_add_raw(d, buf, 2, 0);
 			}
+			ChannelMask[x] /= 2;
 		}
-		ChannelMask /= 2;
 		chan++;
 		chan &= 0xF;
-	}
+	} while (chan != synthChannel);
 }
 
 /* must be called locked */
@@ -2362,29 +2410,26 @@ MppScoreMain :: outputPitch(uint16_t val)
 	MppMainWindow *mw = mainWindow;
 	struct mid_data *d = &mw->mid_data;
 	const unsigned int off = unit * MPP_TRACKS_PER_VIEW;
-	uint16_t ChannelMask;
+	uint16_t ChannelMask[MPP_TRACKS_PER_VIEW] = {};
 	uint8_t chan;
 
 	chan = synthChannel;
-	ChannelMask = outputChannelMaskGet();
+	outputChannelMaskGet(ChannelMask);
 
 	/* the pitch event is distributed to all active channels */
-	while (ChannelMask) {
-		if (ChannelMask & 1) {
-			/* the control event is distributed to all active devices */
-			for (unsigned int x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
-				if (outputTrackMirror(x))
-					continue;
+	do {
+		for (unsigned int x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
+			if (ChannelMask[x] & 1) {
 				if (mw->check_play(off + x, chan, 0))
 					mid_pitch_bend(d, val);
 				if (mw->check_record(off + x, chan, 0))
 					mid_pitch_bend(d, val);
 			}
+			ChannelMask[x] /= 2;
 		}
-		ChannelMask /= 2;
 		chan++;
 		chan &= 0xF;
-	}
+	} while (chan != synthChannel);
 }
 
 int
@@ -2433,7 +2478,7 @@ MppScoreMain :: handleMidiKeyPressLocked(int key, int vel)
 		break;
 	case MM_PASS_NONE_CHORD_TRANS:
 	case MM_PASS_NONE_CHORD_PIANO:
-	case MM_PASS_NONE_CHORD_GUITAR:
+	case MM_PASS_NONE_CHORD_AUX:
 		handleKeyPressChord(key, vel, 0);
 		break;
 	case MM_PASS_ALL:
@@ -2459,7 +2504,7 @@ MppScoreMain :: handleMidiKeyReleaseLocked(int key, int vel)
 		break;
 	case MM_PASS_NONE_CHORD_TRANS:
 	case MM_PASS_NONE_CHORD_PIANO:
-	case MM_PASS_NONE_CHORD_GUITAR:
+	case MM_PASS_NONE_CHORD_AUX:
 		handleKeyReleaseChord(key, vel, 0);
 		break;
 	case MM_PASS_ALL:

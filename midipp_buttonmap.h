@@ -58,7 +58,7 @@ public slots:
 	    "FIXED\0"			\
 	    "TRANSP\0"			\
 	    "CHORD-PIANO\0"		\
-	    "CHORD-GUITAR\0"		\
+	    "CHORD-AUX\0"		\
 	    "CHORD-TRANS\0", 6, 3)
 
 #endif		/* _MIDIPP_BUTTONMAP_H_ */

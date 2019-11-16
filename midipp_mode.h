@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2018 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,7 +39,7 @@ enum {
 	MM_PASS_NONE_FIXED,
 	MM_PASS_NONE_TRANS,
 	MM_PASS_NONE_CHORD_PIANO,
-	MM_PASS_NONE_CHORD_GUITAR,
+	MM_PASS_NONE_CHORD_AUX,
 	MM_PASS_NONE_CHORD_TRANS,
 	MM_PASS_MAX,
 };
@@ -93,6 +93,10 @@ public:
 	MppChanSel *spn_sec_treb_chan;
 	MppDevSel *spn_sec_treb_dev;
 	MppVolume *spn_sec_treb_volume;
+
+	MppChanSel *spn_aux_chan;
+	MppChanSel *spn_aux_base_chan;
+	MppChanSel *spn_aux_treb_chan;
 
 public slots:
 	void handle_reset();

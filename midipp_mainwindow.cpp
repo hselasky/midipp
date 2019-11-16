@@ -243,7 +243,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " * K6.2 - select FIXED key mode.\n"
 	    " * K6.3 - select TRANS key mode.\n"
 	    " * K6.4 - select CHORD-PIANO key mode.\n"
-	    " * K6.5 - select CHORD-GUITAR key mode.\n"
+	    " * K6.5 - select CHORD-AUX key mode.\n"
 	    " * K6.6 - select CHORD-TRANS key mode.\n"
 	    " * K7.<number>.<how>.<align> - select show background.\n"
 	    " * K7.<number>.0.<align> - select zoomed background. (default)\n"
@@ -1969,7 +1969,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 				    sm->synthChannel, key, vel);
 				break;
 			case MM_PASS_NONE_CHORD_PIANO:
-			case MM_PASS_NONE_CHORD_GUITAR:
+			case MM_PASS_NONE_CHORD_AUX:
 			case MM_PASS_NONE_CHORD_TRANS:
 				sm->handleKeyPressureChord(key, vel, 0);
 				break;
@@ -1984,7 +1984,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			switch (sm->keyMode) {
 			case MM_PASS_ALL:
 			case MM_PASS_NONE_CHORD_PIANO:
-			case MM_PASS_NONE_CHORD_GUITAR:
+			case MM_PASS_NONE_CHORD_AUX:
 			case MM_PASS_NONE_CHORD_TRANS:
 				sm->outputChanPressure(vel);
 				break;
@@ -3205,7 +3205,7 @@ MppMainWindow :: getCurrTransposeScore(void)
 		unsigned int y;
 
 		if (sm->keyMode != MM_PASS_NONE_CHORD_PIANO &&
-		    sm->keyMode != MM_PASS_NONE_CHORD_GUITAR &&
+		    sm->keyMode != MM_PASS_NONE_CHORD_AUX &&
 		    sm->keyMode != MM_PASS_NONE_CHORD_TRANS)
 			continue;
 		for (y = 0; y != MPP_MAX_CHORD_MAP; y++) {

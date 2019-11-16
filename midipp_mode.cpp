@@ -120,6 +120,15 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	spn_sec_treb_volume->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
 	connect(spn_sec_treb_volume, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
+	spn_aux_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE);
+	connect(spn_aux_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+
+	spn_aux_base_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE);
+	connect(spn_aux_base_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+
+	spn_aux_treb_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE);
+	connect(spn_aux_treb_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	
 	but_note_mode = new MppButtonMap("Output note mode\0" "Normal\0" "SysEx\0", 2, 2);
 	connect(but_note_mode, SIGNAL(selectionChanged(int)), this, SLOT(handle_changed()));
 
@@ -149,24 +158,28 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	gb_iconfig->addWidget(new QLabel(tr("Channel")), 1, 0, 1, 1);
 	gb_iconfig->addWidget(spn_input_chan, 1, 1, 1, 1);
 
-	gb_oconfig->addWidget(new QLabel(tr("Channel")), 0, 1, 1, 1, Qt::AlignCenter);
-	gb_oconfig->addWidget(new QLabel(tr("Device")), 0, 2, 1, 1, Qt::AlignCenter);
-	gb_oconfig->addWidget(new QLabel(tr("Volume")), 0, 3, 1, 1, Qt::AlignCenter);
+	gb_oconfig->addWidget(new QLabel(tr("Main\nchannel")), 0, 1, 1, 1, Qt::AlignCenter);
+	gb_oconfig->addWidget(new QLabel(tr("Auxilary\nchannel")), 0, 2, 1, 1, Qt::AlignCenter);
+	gb_oconfig->addWidget(new QLabel(tr("Device")), 0, 3, 1, 1, Qt::AlignCenter);
+	gb_oconfig->addWidget(new QLabel(tr("Volume")), 0, 4, 1, 1, Qt::AlignCenter);
 
 	gb_oconfig->addWidget(new QLabel(tr("Primary")), 1, 0, 1, 1);
 	gb_oconfig->addWidget(spn_pri_chan, 1, 1, 1, 1);
-	gb_oconfig->addWidget(spn_pri_dev, 1, 2, 1, 1);
-	gb_oconfig->addWidget(spn_pri_volume, 1, 3, 1, 1);
+	gb_oconfig->addWidget(spn_aux_chan, 1, 2, 1, 1);
+	gb_oconfig->addWidget(spn_pri_dev, 1, 3, 1, 1);
+	gb_oconfig->addWidget(spn_pri_volume, 1, 4, 1, 1);
 
 	gb_oconfig->addWidget(new QLabel(tr("Secondary\nbass")), 2, 0, 1, 1);
 	gb_oconfig->addWidget(spn_sec_base_chan, 2, 1, 1, 1);
-	gb_oconfig->addWidget(spn_sec_base_dev, 2, 2, 1, 1);
-	gb_oconfig->addWidget(spn_sec_base_volume, 2, 3, 1, 1);
+	gb_oconfig->addWidget(spn_aux_base_chan, 2, 2, 1, 1);
+	gb_oconfig->addWidget(spn_sec_base_dev, 2, 3, 1, 1);
+	gb_oconfig->addWidget(spn_sec_base_volume, 2, 4, 1, 1);
 
 	gb_oconfig->addWidget(new QLabel(tr("Secondary\ntreble")), 3, 0, 1, 1);
 	gb_oconfig->addWidget(spn_sec_treb_chan, 3, 1, 1, 1);
-	gb_oconfig->addWidget(spn_sec_treb_dev, 3, 2, 1, 1);
-	gb_oconfig->addWidget(spn_sec_treb_volume, 3, 3, 1, 1);
+	gb_oconfig->addWidget(spn_aux_treb_chan, 3, 2, 1, 1);
+	gb_oconfig->addWidget(spn_sec_treb_dev, 3, 3, 1, 1);
+	gb_oconfig->addWidget(spn_sec_treb_volume, 3, 4, 1, 1);
 }
 
 MppMode :: ~MppMode()
@@ -183,6 +196,9 @@ MppMode :: update_all(void)
 	int channel;
 	int channelBase;
 	int channelTreb;
+	int auxChannel;
+	int auxChannelBase;
+	int auxChannelTreb;
 	int device;
 	int deviceBase;
 	int deviceTreb;
@@ -202,6 +218,9 @@ MppMode :: update_all(void)
 	channel = sm->synthChannel;
 	channelBase = sm->synthChannelBase;
 	channelTreb = sm->synthChannelTreb;
+	auxChannel = sm->auxChannel;
+	auxChannelBase = sm->auxChannelBase;
+	auxChannelTreb = sm->auxChannelTreb;
 	device = sm->synthDevice;
 	deviceBase = sm->synthDeviceBase;
 	deviceTreb = sm->synthDeviceTreb;
@@ -222,6 +241,9 @@ MppMode :: update_all(void)
 	spn_pri_chan->setValue(channel);
 	spn_sec_base_chan->setValue(channelBase);
 	spn_sec_treb_chan->setValue(channelTreb);
+	spn_aux_chan->setValue(auxChannel);
+	spn_aux_base_chan->setValue(auxChannelBase);
+	spn_aux_treb_chan->setValue(auxChannelTreb);
 	spn_pri_dev->setValue(device);
 	spn_sec_base_dev->setValue(deviceBase);
 	spn_sec_treb_dev->setValue(deviceTreb);
@@ -288,6 +310,9 @@ MppMode :: handle_changed()
 	int channel;
 	int channelBase;
 	int channelTreb;
+	int auxChannel;
+	int auxChannelBase;
+	int auxChannelTreb;
 	int device;
 	int deviceBase;
 	int deviceTreb;
@@ -306,6 +331,9 @@ MppMode :: handle_changed()
 	channel = spn_pri_chan->value();
 	channelBase = spn_sec_base_chan->value();
 	channelTreb = spn_sec_treb_chan->value();
+	auxChannel = spn_aux_chan->value();
+	auxChannelBase = spn_aux_base_chan->value();
+	auxChannelTreb = spn_aux_treb_chan->value();
 	device = spn_pri_dev->value();
 	deviceBase = spn_sec_base_dev->value();
 	deviceTreb = spn_sec_treb_dev->value();
@@ -328,6 +356,9 @@ MppMode :: handle_changed()
 	sm->synthChannel = channel;
 	sm->synthChannelBase = channelBase;
 	sm->synthChannelTreb = channelTreb;
+	sm->auxChannel = auxChannel;
+	sm->auxChannelBase = auxChannelBase;
+	sm->auxChannelTreb = auxChannelTreb;
 	sm->synthDevice = device;
 	sm->synthDeviceBase = deviceBase;
 	sm->synthDeviceTreb = deviceTreb;

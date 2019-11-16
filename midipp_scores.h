@@ -80,8 +80,7 @@ public:
 	void handleScoreFileOpenRaw(char *, uint32_t);
 	void handlePrintSub(QPrinter *pd, QPoint orig);
 	int handleScoreFileOpenSub(QString fname);
-	uint16_t outputChannelMaskGet(void);
-	uint8_t outputTrackMirror(uint8_t);
+	void outputChannelMaskGet(uint16_t *pmask);
 	void outputControl(uint8_t ctrl, uint8_t val);
 	void outputChanPressure(uint8_t pressure);
 	void outputPitch(uint16_t val);
@@ -161,6 +160,9 @@ public:
 	uint8_t synthChannel;
 	int8_t synthChannelBase;
 	int8_t synthChannelTreb;
+	int8_t auxChannel;
+	int8_t auxChannelBase;
+	int8_t auxChannelTreb;
 	int8_t synthDevice;
 	int8_t synthDeviceBase;
 	int8_t synthDeviceTreb;
