@@ -1633,23 +1633,7 @@ MppMainWindow :: check_record(uint8_t index, uint8_t chan, uint32_t off)
 bool
 MppMainWindow :: check_mirror(uint8_t index)
 {
-	if (index >= MPP_MAX_TRACKS)
-		return (true);
-
-	for (unsigned int n = 0; n != MPP_MAX_VIEWS; n++) {
-		MppScoreMain *sm = scores_main[n];
-
-		/* check for broadcasters */
-		if (sm->synthDevice == -1)
-			return (index != MPP_DEFAULT_TRACK(sm->unit));
-		if (sm->synthChannelTreb > -1 && sm->synthDeviceTreb == -1)
-			return (index != MPP_TREBLE_TRACK(sm->unit));
-		if (sm->synthChannelBase > -1 && sm->synthDeviceBase == -1)
-			return (index != MPP_BASS_TRACK(sm->unit));
-	}
-
-	/* else there are no mirrors */
-	return (false);
+	return (index != MPP_DEFAULT_TRACK(0));
 }
 
 int
