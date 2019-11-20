@@ -2250,17 +2250,18 @@ MppScoreMain :: handleScoreFileReplaceAll(void)
 void
 MppScoreMain :: outputChannelMaskGet(uint16_t *pmask)
 {
+	uint32_t m;
+
 	switch (keyMode) {
 	case MM_PASS_ALL:
-		pmask[MPP_DEFAULT_TRACK(0)] = 1U;
+		pmask[MPP_DEFAULT_TRACK(0)] = 1U << synthChannel;
 		break;
 	case MM_PASS_NONE_CHORD_TRANS:
 	case MM_PASS_NONE_CHORD_PIANO:
-	case MM_PASS_NONE_CHORD_AUX:
-		pmask[MPP_DEFAULT_TRACK(0)] = 1U;
+		pmask[MPP_DEFAULT_TRACK(0)] = 1U << synthChannel;
 
 		if (synthChannelBase > -1) {
-			const uint16_t m = 1U << ((synthChannelBase - synthChannel) & 0xF);
+			m = 1U << synthChannelBase;
 			if (synthDevice != -1 &&
 			    synthDeviceBase != -1 &&
 			    synthDeviceBase != synthDevice)
@@ -2269,7 +2270,7 @@ MppScoreMain :: outputChannelMaskGet(uint16_t *pmask)
 				pmask[MPP_DEFAULT_TRACK(0)] |= m;
 		}
 		if (synthChannelTreb > -1) {
-			const uint16_t m = 1U << ((synthChannelTreb - synthChannel) & 0xF);
+			m = 1U << synthChannelTreb;
 			if (synthDevice != -1 &&
 			    synthDeviceTreb != -1 &&
 			    synthDeviceTreb != synthDevice)
@@ -2277,8 +2278,12 @@ MppScoreMain :: outputChannelMaskGet(uint16_t *pmask)
 			else
 				pmask[MPP_DEFAULT_TRACK(0)] |= m;
 		}
+		break;
+	case MM_PASS_NONE_CHORD_AUX:
+		pmask[MPP_DEFAULT_TRACK(0)] = 1U << auxChannel;
+
 		if (auxChannelBase > -1) {
-			const uint16_t m = 1U << ((auxChannelBase - synthChannel) & 0xF);
+			m = 1U << auxChannelBase;
 			if (synthDevice != -1 &&
 			    synthDeviceBase != -1 &&
 			    synthDeviceBase != synthDevice)
@@ -2287,7 +2292,7 @@ MppScoreMain :: outputChannelMaskGet(uint16_t *pmask)
 				pmask[MPP_DEFAULT_TRACK(0)] |= m;
 		}
 		if (auxChannelTreb > -1) {
-			const uint16_t m = 1U << ((auxChannelTreb - synthChannel) & 0xF);
+			m = 1U << auxChannelTreb;
 			if (synthDevice != -1 &&
 			    synthDeviceTreb != -1 &&
 			    synthDeviceTreb != synthDevice)
@@ -2297,7 +2302,8 @@ MppScoreMain :: outputChannelMaskGet(uint16_t *pmask)
 		}
 		break;
 	default:
-		pmask[MPP_DEFAULT_TRACK(0)] = active_channels;
+		m = (active_channels << synthChannel);
+		pmask[MPP_DEFAULT_TRACK(0)] = m | (m >> 16);
 		break;
 	}
 }
@@ -2312,23 +2318,19 @@ MppScoreMain :: outputControl(uint8_t ctrl, uint8_t val)
 	uint16_t ChannelMask[MPP_TRACKS_PER_VIEW] = {};
 	uint8_t chan;
 
-	chan = synthChannel;
 	outputChannelMaskGet(ChannelMask);
 
 	/* the control event is distributed to all active channels */
-	do {
+	for (chan = 0; chan != 16; chan++) {
 		for (unsigned int x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
-			if (ChannelMask[x] & 1) {
+			if ((ChannelMask[x] >> chan) & 1) {
 				if (mw->check_play(off + x, chan, 0))
 					mid_control(d, ctrl, val);
 				if (mw->check_record(off + x, chan, 0))
 					mid_control(d, ctrl, val);
 			}
-			ChannelMask[x] /= 2;
 		}
-		chan++;
-		chan &= 0xF;
-	} while (chan != synthChannel);
+	}
 
 	if (ctrl == 0x40) {
 		if (mw->tab_loop->pedal_rec != 0) {
@@ -2352,7 +2354,6 @@ MppScoreMain :: outputChanPressure(uint8_t pressure)
 	uint8_t chan;
 	uint8_t buf[4];
 
-	chan = synthChannel;
 	outputChannelMaskGet(ChannelMask);
 
 	buf[0] = 0xD0;
@@ -2361,19 +2362,16 @@ MppScoreMain :: outputChanPressure(uint8_t pressure)
 	buf[3] = 0;
 
 	/* the pressure event is distributed to all active channels */
-	do {
+	for (chan = 0; chan != 16; chan++) {
 		for (unsigned int x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
-			if (ChannelMask[x] & 1) {
+			if ((ChannelMask[x] >> chan) & 1) {
 				if (mw->check_play(off + x, chan, 0))
 					mid_add_raw(d, buf, 2, 0);
 				if (mw->check_record(off + x, chan, 0))
 					mid_add_raw(d, buf, 2, 0);
 			}
-			ChannelMask[x] /= 2;
 		}
-		chan++;
-		chan &= 0xF;
-	} while (chan != synthChannel);
+	}
 }
 
 /* must be called locked */
@@ -2386,23 +2384,19 @@ MppScoreMain :: outputPitch(uint16_t val)
 	uint16_t ChannelMask[MPP_TRACKS_PER_VIEW] = {};
 	uint8_t chan;
 
-	chan = synthChannel;
 	outputChannelMaskGet(ChannelMask);
 
 	/* the pitch event is distributed to all active channels */
-	do {
+	for (chan = 0; chan != 16; chan++) {
 		for (unsigned int x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
-			if (ChannelMask[x] & 1) {
+			if ((ChannelMask[x] >> chan) & 1) {
 				if (mw->check_play(off + x, chan, 0))
 					mid_pitch_bend(d, val);
 				if (mw->check_record(off + x, chan, 0))
 					mid_pitch_bend(d, val);
 			}
-			ChannelMask[x] /= 2;
 		}
-		chan++;
-		chan &= 0xF;
-	} while (chan != synthChannel);
+	}
 }
 
 int
