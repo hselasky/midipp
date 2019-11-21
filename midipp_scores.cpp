@@ -1474,7 +1474,7 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 	if (map & MPP_CHORD_MAP_AUX) {
 		/* update channel and device */
 		if (auxChannel > -1) {
-			mse.channel = (mse.channel + auxChannel) & 0xF;
+			mse.channel = auxChannel;
 			mse.track = MPP_DEFAULT_TRACK(unit);
 		} else {
 			mse.channel = -1;
@@ -1489,7 +1489,7 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 		}
 	} else {
 	  	/* update channel and device */
-		mse.channel = (mse.channel + synthChannel) & 0xF;
+		mse.channel = synthChannel;
 		mse.track = MPP_DEFAULT_TRACK(unit);
 
 		if (map & MPP_CHORD_MAP_BASE) {
