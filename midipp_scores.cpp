@@ -1309,7 +1309,6 @@ MppScoreMain :: handleChordsLoad(void)
 	uint8_t ns;
 	uint8_t nb;
 	uint8_t nk;
-	uint8_t chan;
 	int score[24];
 	int base[24];
 	int key[24];
@@ -1320,7 +1319,6 @@ MppScoreMain :: handleChordsLoad(void)
 	nb = 0;
 	nk = 0;
 	ns = 0;
-	chan = 0;
 	duration = 1;
 
 	head.currLine(&start, &stop);
@@ -1336,9 +1334,6 @@ MppScoreMain :: handleChordsLoad(void)
 				break;
 			if (ns < 24)
 				score[ns++] = ptr->value[0];
-			break;
-		case MPP_T_CHANNEL:
-			chan = ptr->value[0];
 			break;
 		default:
 			break;
@@ -1362,7 +1357,6 @@ MppScoreMain :: handleChordsLoad(void)
 			/* store new key */
 			score_future_base[x].dur = 1;
 			score_future_base[x].key = base[0];
-			score_future_base[x].channel = chan;
 			MppTrans(base, nb, 1);
 		}
 	}
@@ -1377,7 +1371,6 @@ MppScoreMain :: handleChordsLoad(void)
 			/* store new key */
 			score_future_treble[x].dur = 1;
 			score_future_treble[x].key = key[0];
-			score_future_treble[x].channel = chan;
 			MppTrans(key, nk, 1);
 		}
 	}
@@ -1399,17 +1392,18 @@ MppScoreMain :: handleKeyRemovePast(MppScoreEntry *pn, int vel, uint32_t key_del
 
 	for (x = 0; x != MPP_MAX_CHORD_MAP; x++) {
 		if (score_past[x].dur != 0 &&
-		    score_past[x].key == pn->key &&
-		    score_past[x].channel == pn->channel) {
-
-			mainWindow->output_key(score_past[x].track,
-			    score_past[x].channel, score_past[x].key,
-			    -vel, key_delay, 0);
+		    score_past[x].key == pn->key) {
+			/* check for primary event */
+			if (score_past[x].channel > -1) {
+				mainWindow->output_key(score_past[x].track,
+				    score_past[x].channel, score_past[x].key,
+				    -vel, key_delay, 0);
+			}
 
 			/* check for secondary event */
-			if (score_past[x].channelSec != 0) {
+			if (score_past[x].channelSec > -1) {
 				mainWindow->output_key(score_past[x].trackSec,
-				    score_past[x].channelSec - 1, score_past[x].key,
+				    score_past[x].channelSec, score_past[x].key,
 				    -vel, key_delay, 0);
 			}
 
@@ -1478,22 +1472,20 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 	}
 
 	if (map & MPP_CHORD_MAP_AUX) {
-	  	/* update channel and device */
-		mse.channel = (mse.channel + auxChannel) & 0xF;
-		mse.track = MPP_DEFAULT_TRACK(unit);
+		/* update channel and device */
+		if (auxChannel > -1) {
+			mse.channel = (mse.channel + auxChannel) & 0xF;
+			mse.track = MPP_DEFAULT_TRACK(unit);
+		} else {
+			mse.channel = -1;
+		}
 
 		if (map & MPP_CHORD_MAP_BASE) {
-			if (auxChannelBase != (int)mse.channel ||
-			    synthDeviceBase != synthDevice) {
-				mse.channelSec = auxChannelBase + 1;
-				mse.trackSec = MPP_BASS_TRACK(unit);
-			}
+			mse.channelSec = auxChannelBase;
+			mse.trackSec = MPP_BASS_TRACK(unit);
 		} else {
-			if (auxChannelTreb != (int)mse.channel ||
-			    synthDeviceTreb != synthDevice) {
-				mse.channelSec = auxChannelTreb + 1;
-				mse.trackSec = MPP_TREBLE_TRACK(unit);
-			}
+			mse.channelSec = auxChannelTreb;
+			mse.trackSec = MPP_TREBLE_TRACK(unit);
 		}
 	} else {
 	  	/* update channel and device */
@@ -1501,22 +1493,16 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 		mse.track = MPP_DEFAULT_TRACK(unit);
 
 		if (map & MPP_CHORD_MAP_BASE) {
-			if (synthChannelBase != (int)mse.channel ||
-			    synthDeviceBase != synthDevice) {
-				mse.channelSec = synthChannelBase + 1;
-				mse.trackSec = MPP_BASS_TRACK(unit);
-			}
+			mse.channelSec = synthChannelBase;
+			mse.trackSec = MPP_BASS_TRACK(unit);
 		} else {
-			if (synthChannelTreb != (int)mse.channel ||
-			    synthDeviceTreb != synthDevice) {
-				mse.channelSec = synthChannelTreb + 1;
-				mse.trackSec = MPP_TREBLE_TRACK(unit);
-			}
+			mse.channelSec = synthChannelTreb;
+			mse.trackSec = MPP_TREBLE_TRACK(unit);
 		}
 	}
 
 	/* check for nonexisting key or channel */
-	if (mse.dur == 0 || mse.channel > 15)
+	if (mse.dur == 0)
 		return;
 
 	/* transpose key, if any */
@@ -1529,11 +1515,15 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 	/* store information for key release command */
 	score_past[off] = mse;
 
-	mainWindow->output_key(mse.track, mse.channel, mse.key, vel, key_delay, 0);
+	/* check for primary event */
+	if (mse.channel > -1) {
+		mainWindow->output_key(mse.track, mse.channel,
+		    mse.key, vel, key_delay, 0);
+	}
 
 	/* check for secondary event */
-	if (mse.channelSec != 0) {
-		mainWindow->output_key(mse.trackSec, mse.channelSec - 1,
+	if (mse.channelSec > -1) {
+		mainWindow->output_key(mse.trackSec, mse.channelSec,
 		    mse.key, vel, key_delay, 0);
 	}
 	mainWindow->cursorUpdate = 1;
@@ -1555,12 +1545,16 @@ MppScoreMain :: handleKeyPressureChord(int in_key, int vel, uint32_t key_delay)
 	pn = &score_past[off];
 
 	if (pn->dur != 0) {
-		mainWindow->output_key_pressure(pn->track, pn->channel, pn->key, vel, key_delay);
+		/* check for primary event */
+		if (pn->channel > -1) {
+			mainWindow->output_key_pressure(pn->track, pn->channel,
+			    pn->key, vel, key_delay);
+		}
 
 		/* check for secondary event */
-		if (pn->channelSec != 0) {
-			mainWindow->output_key_pressure(
-			    pn->trackSec, pn->channelSec - 1, pn->key, vel, key_delay);
+		if (pn->channelSec > -1) {
+			mainWindow->output_key_pressure(pn->trackSec, pn->channelSec,
+			    pn->key, vel, key_delay);
 		}
 	}
 }
@@ -1582,12 +1576,15 @@ MppScoreMain :: handleKeyReleaseChord(int in_key, int vel, uint32_t key_delay)
 
 	/* release key once, if any */
 	if (pn->dur != 0) {
-		mainWindow->output_key(pn->track, pn->channel,
-		    pn->key, -vel, key_delay, 0);
+		/* check for primary event */
+		if (pn->channel > -1) {
+			mainWindow->output_key(pn->track, pn->channel,
+			    pn->key, -vel, key_delay, 0);
+		}
 
 		/* check for secondary event */
-		if (pn->channelSec != 0) {
-			mainWindow->output_key(pn->trackSec, pn->channelSec - 1,
+		if (pn->channelSec > -1) {
+			mainWindow->output_key(pn->trackSec, pn->channelSec,
 			    pn->key, -vel, key_delay, 0);
 		}
 		pn->dur = 0;
@@ -2252,60 +2249,24 @@ MppScoreMain :: outputChannelMaskGet(uint16_t *pmask)
 {
 	uint32_t m;
 
-	switch (keyMode) {
-	case MM_PASS_ALL:
-		pmask[MPP_DEFAULT_TRACK(0)] = 1U << synthChannel;
-		break;
-	case MM_PASS_NONE_CHORD_TRANS:
-	case MM_PASS_NONE_CHORD_PIANO:
-		pmask[MPP_DEFAULT_TRACK(0)] = 1U << synthChannel;
+	/* AllMode */
+	pmask[MPP_DEFAULT_TRACK(0)] |= 1U << synthChannel;
 
-		if (synthChannelBase > -1) {
-			m = 1U << synthChannelBase;
-			if (synthDevice != -1 &&
-			    synthDeviceBase != -1 &&
-			    synthDeviceBase != synthDevice)
-				pmask[MPP_BASS_TRACK(0)] |= m;
-			else
-				pmask[MPP_DEFAULT_TRACK(0)] |= m;
-		}
-		if (synthChannelTreb > -1) {
-			m = 1U << synthChannelTreb;
-			if (synthDevice != -1 &&
-			    synthDeviceTreb != -1 &&
-			    synthDeviceTreb != synthDevice)
-				pmask[MPP_TREBLE_TRACK(0)] |= m;
-			else
-				pmask[MPP_DEFAULT_TRACK(0)] |= m;
-		}
-		break;
-	case MM_PASS_NONE_CHORD_AUX:
-		pmask[MPP_DEFAULT_TRACK(0)] = 1U << auxChannel;
+	/* ChordMode */
+	if (auxChannel > -1)
+		pmask[MPP_DEFAULT_TRACK(0)] |= 1U << auxChannel;
+	if (synthChannelBase > -1)
+		pmask[MPP_BASS_TRACK(0)] |= 1U << synthChannelBase;
+	if (synthChannelTreb > -1)
+		pmask[MPP_TREBLE_TRACK(0)] |= 1U << synthChannelTreb;
+	if (auxChannelBase > -1)
+		pmask[MPP_BASS_TRACK(0)] |= 1U << auxChannelBase;
+	if (auxChannelTreb > -1)
+		pmask[MPP_TREBLE_TRACK(0)] |= 1U << auxChannelTreb;
 
-		if (auxChannelBase > -1) {
-			m = 1U << auxChannelBase;
-			if (synthDevice != -1 &&
-			    synthDeviceBase != -1 &&
-			    synthDeviceBase != synthDevice)
-				pmask[MPP_BASS_TRACK(0)] |= m;
-			else
-				pmask[MPP_DEFAULT_TRACK(0)] |= m;
-		}
-		if (auxChannelTreb > -1) {
-			m = 1U << auxChannelTreb;
-			if (synthDevice != -1 &&
-			    synthDeviceTreb != -1 &&
-			    synthDeviceTreb != synthDevice)
-				pmask[MPP_TREBLE_TRACK(0)] |= m;
-			else
-				pmask[MPP_DEFAULT_TRACK(0)] |= m;
-		}
-		break;
-	default:
-		m = (active_channels << synthChannel);
-		pmask[MPP_DEFAULT_TRACK(0)] = m | (m >> 16);
-		break;
-	}
+	/* TransMode */
+	m = (active_channels << synthChannel);
+	pmask[MPP_DEFAULT_TRACK(0)] |= m | (m >> 16);
 }
 
 /* must be called locked */

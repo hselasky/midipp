@@ -54,6 +54,7 @@ public:
 
 	MppScoreMain *sm;
 
+	void sanity_check(void);
 	void update_all(void);
 
 	/* view number */

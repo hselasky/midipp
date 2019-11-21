@@ -29,7 +29,7 @@
 #include "midipp_button.h"
 #include "midipp_mainwindow.h"
 
-MppChanSelDiag :: MppChanSelDiag(QWidget *parent, int val, int have_any) :
+MppChanSelDiag :: MppChanSelDiag(QWidget *parent, int val, int have_any, int mask) :
 	QDialog(parent), QGridLayout(this)
 {
 	MppButton *pmb;
@@ -45,8 +45,12 @@ MppChanSelDiag :: MppChanSelDiag(QWidget *parent, int val, int have_any) :
 		pmb = new MppButton(MppChanName(x, have_any), x);
 		QDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int))); 
 		addWidget(pmb, x / 4, x % 4, 1, 1);
-		if (x == val)
-			pmb->setFocus();
+		if ((mask >> x) & 1) {
+			if (x == val)
+				pmb->setFocus();
+		} else {
+			pmb->setDisabled(1);
+		}
 		butChannel[x] = pmb;
 	}
 
@@ -98,6 +102,7 @@ MppChanSel :: MppChanSel(MppMainWindow *_mw, int val, int have_any) :
 	channel = val;
 	haveAny = have_any;
 	mw = _mw;
+	channelMask = 0xFFFFU;
 
 	setText(MppChanName(val, haveAny));
 	connect(this, SIGNAL(released()), this, SLOT(handle_released()));
@@ -119,6 +124,12 @@ MppChanSel :: setValue(int value)
 	}
 }
 
+void
+MppChanSel :: setChannelMask(uint16_t mask)
+{
+	channelMask = mask;
+}
+
 int
 MppChanSel :: value()
 {
@@ -132,7 +143,7 @@ MppChanSel :: ~MppChanSel()
 void
 MppChanSel :: handle_released()
 {
-	MppChanSelDiag diag(this, channel, haveAny);
+	MppChanSelDiag diag(this, channel, haveAny, channelMask);
 
 	if (diag.exec() == QDialog::Accepted)
 		setValue(diag.value.value);

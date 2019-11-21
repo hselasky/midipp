@@ -298,8 +298,8 @@ struct MppScoreEntry {
 	int dur;
 	int8_t track;
 	int8_t trackSec;
-	uint8_t channel;
-	uint8_t channelSec;
+	int8_t channel;
+	int8_t channelSec;
 };
 
 struct MppInstr {

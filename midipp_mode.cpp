@@ -120,7 +120,7 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	spn_sec_treb_volume->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
 	connect(spn_sec_treb_volume, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
-	spn_aux_chan = new MppChanSel(sm->mainWindow, 0, 0);
+	spn_aux_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE);
 	connect(spn_aux_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
 	spn_aux_base_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE);
@@ -188,6 +188,141 @@ MppMode :: ~MppMode()
 }
 
 void
+MppMode :: sanity_check(void)
+{
+  	int channel;
+	int channelBase;
+	int channelTreb;
+	int auxChannel;
+	int auxChannelBase;
+	int auxChannelTreb;
+	int device;
+	int deviceBase;
+	int deviceTreb;
+
+	uint32_t usemask[MPP_MAX_DEVS] = {};
+	uint32_t usemask_all = 0;
+
+	sm->mainWindow->atomic_lock();
+	channel = sm->synthChannel;
+	channelBase = sm->synthChannelBase;
+	channelTreb = sm->synthChannelTreb;
+	auxChannel = sm->auxChannel;
+	auxChannelBase = sm->auxChannelBase;
+	auxChannelTreb = sm->auxChannelTreb;
+	device = sm->synthDevice;
+	deviceBase = sm->synthDeviceBase;
+	deviceTreb = sm->synthDeviceTreb;
+	sm->mainWindow->atomic_unlock();
+
+	/* collect channel use mask */
+	
+	if (device == -1) {
+		for (int x = 0; x != MPP_MAX_DEVS; x++)
+			usemask[x] |= 1U << channel;
+		if (auxChannel > -1) {
+			for (int x = 0; x != MPP_MAX_DEVS; x++)
+				usemask[x] |= 1U << auxChannel;
+		}
+	} else {
+		usemask[device] |= 1U << channel;
+		if (auxChannel > -1)
+			usemask[device] |= 1U << auxChannel;
+	}
+
+	if (deviceBase == -1) {
+		if (channelBase > -1) {
+			for (int x = 0; x != MPP_MAX_DEVS; x++)
+				usemask[x] |= 1U << channelBase;
+		}
+		if (auxChannelBase > -1) {
+			for (int x = 0; x != MPP_MAX_DEVS; x++)
+				usemask[x] |= 1U << auxChannelBase;
+		}
+	} else {
+		if (channelBase > -1)
+			usemask[deviceBase] |= 1U << channelBase;
+		if (auxChannelBase > -1)
+			usemask[deviceBase] |= 1U << auxChannelBase;
+	}
+
+	if (deviceTreb == -1) {
+		if (channelTreb > -1) {
+			for (int x = 0; x != MPP_MAX_DEVS; x++)
+				usemask[x] |= 1U << channelTreb;
+		}
+		if (auxChannelTreb > -1) {
+			for (int x = 0; x != MPP_MAX_DEVS; x++)
+				usemask[x] |= 1U << auxChannelTreb;
+		}
+	} else {
+		if (channelTreb > -1)
+			usemask[deviceTreb] |= 1U << channelTreb;
+		if (auxChannelTreb > -1)
+			usemask[deviceTreb] |= 1U << auxChannelTreb;
+	}
+
+	for (int x = 0; x != MPP_MAX_DEVS; x++)
+		usemask_all |= usemask[x];
+
+	/* disable channels that are conflicting */
+
+	if (device == -1) {
+		spn_pri_chan->setChannelMask(~usemask_all | (1U << channel));
+		if (auxChannel > -1)
+			spn_aux_chan->setChannelMask(~usemask_all | (1U << auxChannel));
+		else
+			spn_aux_chan->setChannelMask(~usemask_all);
+	} else {
+		spn_pri_chan->setChannelMask(~usemask[device] | (1U << channel));
+		if (auxChannel > -1)
+			spn_aux_chan->setChannelMask(~usemask[device] | (1U << auxChannel));
+		else
+			spn_aux_chan->setChannelMask(~usemask[device]);
+	}
+
+	if (deviceBase == -1) {
+		if (channelBase > -1)
+			spn_sec_base_chan->setChannelMask(~usemask_all | (1U << channelBase));
+		else
+			spn_sec_base_chan->setChannelMask(~usemask_all);
+		if (auxChannelBase > -1)
+			spn_aux_base_chan->setChannelMask(~usemask_all | (1U << auxChannelBase));
+		else
+			spn_aux_base_chan->setChannelMask(~usemask_all);
+	} else {
+		if (channelBase > -1)
+			spn_sec_base_chan->setChannelMask(~usemask[deviceBase] | (1U << channelBase));
+		else
+			spn_sec_base_chan->setChannelMask(~usemask[deviceBase]);
+		if (auxChannelBase > -1)
+			spn_aux_base_chan->setChannelMask(~usemask[deviceBase] | (1U << auxChannelBase));
+		else
+			spn_aux_base_chan->setChannelMask(~usemask[deviceBase]);
+	}
+
+	if (deviceTreb == -1) {
+		if (channelTreb > -1)
+			spn_sec_treb_chan->setChannelMask(~usemask_all | (1U << channelTreb));
+		else
+			spn_sec_treb_chan->setChannelMask(~usemask_all);
+		if (auxChannelTreb > -1)
+			spn_aux_treb_chan->setChannelMask(~usemask_all | (1U << auxChannelTreb));
+		else
+			spn_aux_treb_chan->setChannelMask(~usemask_all);
+	} else {
+		if (channelTreb > -1)
+			spn_sec_treb_chan->setChannelMask(~usemask[deviceTreb] | (1U << channelTreb));
+		else
+			spn_sec_treb_chan->setChannelMask(~usemask[deviceTreb]);
+		if (auxChannelTreb > -1)
+			spn_aux_treb_chan->setChannelMask(~usemask[deviceTreb] | (1U << auxChannelTreb));
+		else
+			spn_aux_treb_chan->setChannelMask(~usemask[deviceTreb]);
+	}
+}
+
+void
 MppMode :: update_all(void)
 {
 	int base_key;
@@ -234,26 +369,28 @@ MppMode :: update_all(void)
 	note_mode = sm->noteMode;
 	sm->mainWindow->atomic_unlock();
 
-	spn_base->setValue(base_key);
-	sli_delay->setValue(key_delay);
-	sli_contrast->setValue(chord_contrast);
-	spn_input_chan->setValue(channelInput);
-	spn_pri_chan->setValue(channel);
-	spn_sec_base_chan->setValue(channelBase);
-	spn_sec_treb_chan->setValue(channelTreb);
-	spn_aux_chan->setValue(auxChannel);
-	spn_aux_base_chan->setValue(auxChannelBase);
-	spn_aux_treb_chan->setValue(auxChannelTreb);
-	spn_pri_dev->setValue(device);
-	spn_sec_base_dev->setValue(deviceBase);
-	spn_sec_treb_dev->setValue(deviceTreb);
-	spn_pri_volume->setValue(volume);
-	spn_sec_base_volume->setValue(volumeBase);
-	spn_sec_treb_volume->setValue(volumeTreb);
-	but_mode->setSelection(key_mode);
-	cbx_norm->setChecked(chord_norm);
-	but_song_events->setSelection(song_events);
-	but_note_mode->setSelection(note_mode);
+	MPP_BLOCKED(spn_base,setValue(base_key));
+	MPP_BLOCKED(sli_delay,setValue(key_delay));
+	MPP_BLOCKED(sli_contrast,setValue(chord_contrast));
+	MPP_BLOCKED(spn_input_chan,setValue(channelInput));
+	MPP_BLOCKED(spn_pri_chan,setValue(channel));
+	MPP_BLOCKED(spn_sec_base_chan,setValue(channelBase));
+	MPP_BLOCKED(spn_sec_treb_chan,setValue(channelTreb));
+	MPP_BLOCKED(spn_aux_chan,setValue(auxChannel));
+	MPP_BLOCKED(spn_aux_base_chan,setValue(auxChannelBase));
+	MPP_BLOCKED(spn_aux_treb_chan,setValue(auxChannelTreb));
+	MPP_BLOCKED(spn_pri_dev,setValue(device));
+	MPP_BLOCKED(spn_sec_base_dev,setValue(deviceBase));
+	MPP_BLOCKED(spn_sec_treb_dev,setValue(deviceTreb));
+	MPP_BLOCKED(spn_pri_volume,setValue(volume));
+	MPP_BLOCKED(spn_sec_base_volume,setValue(volumeBase));
+	MPP_BLOCKED(spn_sec_treb_volume,setValue(volumeTreb));
+	MPP_BLOCKED(but_mode,setSelection(key_mode));
+	MPP_BLOCKED(cbx_norm,setChecked(chord_norm));
+	MPP_BLOCKED(but_song_events,setSelection(song_events));
+	MPP_BLOCKED(but_note_mode,setSelection(note_mode));
+
+	sanity_check();
 }
 
 void
@@ -290,6 +427,9 @@ MppMode :: handle_reset()
 	spn_pri_chan->setValue(0);
 	spn_sec_base_chan->setValue(-1);
 	spn_sec_treb_chan->setValue(-1);
+	spn_aux_chan->setValue(-1);
+	spn_aux_base_chan->setValue(-1);
+	spn_aux_treb_chan->setValue(-1);
 	spn_pri_dev->setValue(-1);
 	spn_sec_base_dev->setValue(-1);
 	spn_sec_treb_dev->setValue(-1);
@@ -371,4 +511,6 @@ MppMode :: handle_changed()
 	sm->songEventsOn = song_events;
 	sm->noteMode = note_mode;
 	sm->mainWindow->atomic_unlock();
+
+	sanity_check();
 }

@@ -278,7 +278,7 @@ MppSettings :: doLoad(void)
 			int synthChannel = valueDefault(concat("view%d/synthchannel", x), (x == 1) ? 9 : 0);
 			int synthChannelBase = valueDefault(concat("view%d/synthchannelbase", x), -1);
 			int synthChannelTreb = valueDefault(concat("view%d/synthchanneltreb", x), -1);
-			int auxChannel = valueDefault(concat("view%d/auxchannel", x), (x == 1) ? 9 : 0);
+			int auxChannel = valueDefault(concat("view%d/auxchannel", x), -1);
 			int auxChannelBase = valueDefault(concat("view%d/auxchannelbase", x), -1);
 			int auxChannelTreb = valueDefault(concat("view%d/auxchanneltreb", x), -1);
 			int synthDevice = valueDefault(concat("view%d/synthdevice", x), -1);
@@ -302,7 +302,7 @@ MppSettings :: doLoad(void)
 			if (synthChannelTreb < 0 || synthChannelTreb > 15)
 				synthChannelTreb = -1;
 			if (auxChannel < 0 || auxChannel > 15)
-				auxChannel = 0;
+				auxChannel = -1;
 			if (auxChannelBase < 0 || auxChannelBase > 15)
 				auxChannelBase = -1;
 			if (auxChannelTreb < 0 || auxChannelTreb > 15)

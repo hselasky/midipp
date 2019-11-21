@@ -45,7 +45,7 @@ public slots:
 class MppChanSelDiag : public QDialog, public QGridLayout
 {
 public:
-	MppChanSelDiag(QWidget *, int, int);
+	MppChanSelDiag(QWidget *, int, int, int = 0xFFFF);
 	~MppChanSelDiag();
 
 	MppButton *butChannel[16];
@@ -60,11 +60,13 @@ public:
 	MppChanSel(MppMainWindow *, int, int);
 	~MppChanSel();
 
+	void setChannelMask(uint16_t);
 	void setValue(int);
 	int value();
 private:
 	int channel;
 	int haveAny;
+	uint16_t channelMask;
 	MppMainWindow *mw;
 
 public slots:
