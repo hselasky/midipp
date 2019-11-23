@@ -973,8 +973,6 @@ MppMainWindow :: handle_midi_file_new()
 
 	atomic_lock();
 	for (unsigned int x = 0; x != MPP_MAX_TRACKS; x++) {
-		if (track[x] == 0)
-			continue;
 		umidi20_event_queue_drain(&track[x]->queue);
 		any = 1;
 	}
@@ -992,12 +990,11 @@ MppMainWindow :: update_play_device_no()
 	struct umidi20_event *event;
 
 	for (unsigned int x = 0; x != MPP_MAX_TRACKS; x++) {
-		if (track[x] == 0)
-			continue;
-
 		/* hint for "MidiEventTxCallback() */
-		UMIDI20_QUEUE_FOREACH(event, &track[x]->queue)
-			event->device_no = MPP_MAGIC_DEVNO + x;
+		UMIDI20_QUEUE_FOREACH(event, &track[x]->queue) {
+			event->device_no = MPP_MAGIC_DEVNO +
+			    (x % MPP_MAX_MW_TRACKS);
+		}
 	}
 }
 
@@ -1113,12 +1110,8 @@ load_file:
 			/* reserve low positions for channel program events */
 			if (event_copy->position < MPP_MIN_POS)
 				event_copy->position = MPP_MIN_POS;
-			if (track[x] != 0) {
-				umidi20_event_queue_insert(&track[x]->queue,
-				    event_copy, UMIDI20_CACHE_INPUT);
-			} else {
-				umidi20_event_free(event_copy);
-			}
+			umidi20_event_queue_insert(&track[x]->queue,
+			    event_copy, UMIDI20_CACHE_INPUT);
 		}
 	    }
 	    if ((how & 2) && ++x == MPP_MAX_TRACKS)
@@ -1167,9 +1160,6 @@ void
 MppMainWindow :: handle_midi_file_instr_delete()
 {
 	for (unsigned int x = 0; x != MPP_MAX_TRACKS; x++) {
-		if (track[x] == 0)
-			continue;
-
 		umidi20_event_queue_move(&track[x]->queue, NULL, 0,
 		    MPP_MIN_POS, 0, 0-1, UMIDI20_CACHE_INPUT);
 	}
@@ -1584,7 +1574,7 @@ MppMainWindow :: check_play(uint8_t index, uint8_t chan, uint32_t off, uint8_t d
 	struct mid_data *d = &mid_data;
 	uint32_t pos;
 
-	if (index >= MPP_MAX_TRACKS || chan >= 0x10)
+	if (index >= MPP_MAX_MW_TRACKS || chan >= 0x10)
 		return (false);
 
 	handle_midi_trigger();
@@ -1613,7 +1603,7 @@ MppMainWindow :: check_record(uint8_t index, uint8_t chan, uint32_t off)
 	struct mid_data *d = &mid_data;
 	uint32_t pos;
 
-	if (midiRecordOff || index >= MPP_MAX_TRACKS || chan >= 0x10)
+	if (midiRecordOff || index >= MPP_MAX_MW_TRACKS || chan >= 0x10)
 		return (false);
 
 	handle_midi_trigger();
@@ -2595,8 +2585,6 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 void
 MppMainWindow :: handle_midi_file_import(int n)
 {
-	if (track[0] == 0)
-		return;
 	import_midi_track(track[0], MIDI_FLAG_DIALOG |
 	    MIDI_FLAG_MULTI_CHAN | MIDI_FLAG_ERASE_DEST, 0, n);
 }
@@ -3107,7 +3095,7 @@ MppMainWindow :: send_byte_event_locked(uint8_t which)
 
 	buf[0] = which;
 
-	for (n = 0; n != MPP_MAX_TRACKS; n += MPP_TRACKS_PER_VIEW) {
+	for (n = 0; n != MPP_MAX_MW_TRACKS; n += MPP_TRACKS_PER_VIEW) {
 		if (check_play(n, 0, 0))
 			mid_add_raw(&mid_data, buf, 1, 0);
 		if (check_record(n, 0, 0))
@@ -3130,7 +3118,7 @@ MppMainWindow :: send_song_select_locked(uint8_t which)
 	buf[0] = 0xF3;
 	buf[1] = which & 0x7F;
 
-	for (n = 0; n != MPP_MAX_TRACKS; n += MPP_TRACKS_PER_VIEW) {
+	for (n = 0; n != MPP_MAX_MW_TRACKS; n += MPP_TRACKS_PER_VIEW) {
 		if (check_play(n, 0, 0))
 			mid_add_raw(&mid_data, buf, 2, 0);
 		if (check_record(n, 0, 0))
