@@ -31,6 +31,7 @@
 #include "midipp_groupbox.h"
 #include "midipp_mainwindow.h"
 #include "midipp_instrument.h"
+#include "midipp_devsel.h"
 
 MppInstrumentTab :: MppInstrumentTab(MppMainWindow *_mw)
 {
@@ -38,12 +39,14 @@ MppInstrumentTab :: MppInstrumentTab(MppMainWindow *_mw)
 
 	gl = new MppGridLayout();
 
-	but_instr_program = new QPushButton(tr("Program One"));
-	but_instr_program_all = new QPushButton(tr("Program All"));
+	but_instr_program = new QPushButton(tr(":: Program one ::\nchannel"));
+	but_instr_program_all = new QPushButton(tr(":: Program all ::\nchannels"));
 	but_instr_reset = new QPushButton(tr("Reset"));
 	but_instr_rem = new QPushButton(tr("Delete muted"));
 	but_instr_mute_all = new QPushButton(tr("Mute all"));
 	but_instr_unmute_all = new QPushButton(tr("Unmute all"));
+
+	spn_instr_curr_dev = new MppDevSel(-1, MPP_DEV_ALL);
 
 	spn_instr_curr_chan = new MppChanSel(mw, 0, 0);
 	connect(spn_instr_curr_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_instr_channel_changed(int)));
@@ -57,14 +60,16 @@ MppInstrumentTab :: MppInstrumentTab(MppMainWindow *_mw)
 	spn_instr_curr_prog->setValue(0);
 
 	gb_instr_select = new MppGroupBox(tr("Synth and Recording Instrument Selector"));
-	gb_instr_select->addWidget(new QLabel(tr("Channel")), 0, 0, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-	gb_instr_select->addWidget(new QLabel(tr("Bank")), 0, 1, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-	gb_instr_select->addWidget(new QLabel(tr("Program")), 0, 2, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-	gb_instr_select->addWidget(spn_instr_curr_chan, 1, 0, 1, 1);
-	gb_instr_select->addWidget(spn_instr_curr_bank, 1, 1, 1, 1);
-	gb_instr_select->addWidget(spn_instr_curr_prog, 1, 2, 1, 1);
-	gb_instr_select->addWidget(but_instr_program, 1, 3, 1, 3);
-	gb_instr_select->addWidget(but_instr_program_all, 1, 6, 1, 2);
+	gb_instr_select->addWidget(new QLabel(tr("Device")), 0, 0, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+	gb_instr_select->addWidget(new QLabel(tr("Channel")), 0, 1, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+	gb_instr_select->addWidget(new QLabel(tr("Bank")), 0, 2, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+	gb_instr_select->addWidget(new QLabel(tr("Program")), 0, 3, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+	gb_instr_select->addWidget(spn_instr_curr_dev, 1, 0, 1, 1);
+	gb_instr_select->addWidget(spn_instr_curr_chan, 1, 1, 1, 1);
+	gb_instr_select->addWidget(spn_instr_curr_bank, 1, 2, 1, 1);
+	gb_instr_select->addWidget(spn_instr_curr_prog, 1, 3, 1, 1);
+	gb_instr_select->addWidget(but_instr_program, 1, 4, 1, 1);
+	gb_instr_select->addWidget(but_instr_program_all, 1, 5, 1, 1);
 
 	gb_instr_table = new MppGroupBox(tr("Synth and Recording Instrument Table"));
 
@@ -181,6 +186,7 @@ MppInstrumentTab :: handle_instr_changed(int dummy)
 
 	struct mid_data *d = &mw->mid_data;
 	int temp[3];
+	int dev;
 	uint8_t curr_chan;
 	uint8_t x;
 	uint8_t y;
@@ -246,6 +252,10 @@ MppInstrumentTab :: handle_instr_changed(int dummy)
 		}
 	}
 
+	/* Get device number */
+
+	dev = spn_instr_curr_dev->value();
+
 	/* Do the real programming */
 
 	mw->atomic_lock();
@@ -257,10 +267,10 @@ MppInstrumentTab :: handle_instr_changed(int dummy)
 			continue;
 
 		mw->instr[x].updated = 0;
-		for (y = 0; y != MPP_MAX_TRACKS; y++) {
-			if (mw->check_mirror(y))
+		for (y = 0; y != MPP_MAGIC_DEVNO; y++) {
+			if (dev != -1 && dev != y)
 				continue;
-			if (mw->check_play(y, x, 0) == 0)
+			if (mw->check_play(0, x, 0, y) == 0)
 				continue;
 			mid_delay(d, z);
 			mid_set_bank_program(d, x, 
