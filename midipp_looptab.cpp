@@ -91,7 +91,7 @@ MppLoopTabTimerCallback(void *arg)
 		for (qreal n = 0; n != plt->loop[x].repeat_factor; n++) {
 			uint32_t off = 2 * (n * plt->loop[x].period * plt->loop[x].scale_factor);
 
-			for (int z = 0; z != MPP_MAX_MW_TRACKS; z++) {
+			for (int z = 0; z != MPP_MAX_TRACKS; z++) {
 				UMIDI20_QUEUE_FOREACH(event, &plt->loop[x].track[z]->queue) {
 					if (~umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL)
 						continue;
@@ -155,7 +155,7 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 #endif
 	for (n = x = 0; x != 4; x++) {
 		for (y = 0; y != 4; y++, n++) {
-			for (z = 0; z != MPP_MAX_MW_TRACKS; z++)
+			for (z = 0; z != MPP_MAX_TRACKS; z++)
 				loop[n].track[z] = umidi20_track_alloc();
 			loop[n].but_trig = new MppButton(
 			    tr("Loop %1\n"
@@ -187,7 +187,7 @@ MppLoopTab :: ~MppLoopTab()
 
 	mw->atomic_lock();
 	for (n = 0; n != MPP_LOOP_MAX; n++) {
-		for (z = 0; z != MPP_MAX_MW_TRACKS; z++)
+		for (z = 0; z != MPP_MAX_TRACKS; z++)
 			umidi20_track_free(loop[n].track[z]);
 	}
 	mw->atomic_unlock();
@@ -200,7 +200,7 @@ MppLoopTab :: check_record(uint8_t index, uint8_t chan, uint8_t n)
 	struct mid_data *d = &mw->mid_data;
 	uint32_t pos;
 
-	if (index >= MPP_MAX_MW_TRACKS || chan >= 0x10 || n >= MPP_LOOP_MAX)
+	if (index >= MPP_MAX_TRACKS || chan >= 0x10 || n >= MPP_LOOP_MAX)
 		return (false);
 	if (loop[n].state != ST_REC)
 		return (false);
@@ -240,7 +240,7 @@ MppLoopTab :: handle_import(int n)
 	track_merged = umidi20_track_alloc();
 
 	mw->atomic_lock();
-	for (z = 0; z != MPP_MAX_MW_TRACKS; z++) {
+	for (z = 0; z != MPP_MAX_TRACKS; z++) {
 		UMIDI20_QUEUE_FOREACH(event, &loop[n].track[z]->queue) {
 			event_copy = umidi20_event_copy(event, 0);
 			umidi20_event_queue_insert(&track_merged->queue,
@@ -264,7 +264,7 @@ MppLoopTab :: handle_recordN(int n)
 
 	loop[n].period = 0;
 
-	for (int z = 0; z != MPP_MAX_MW_TRACKS; z++) {
+	for (int z = 0; z != MPP_MAX_TRACKS; z++) {
 		struct umidi20_event *first = 0;
 		size_t num_first = 0;
 		uint32_t period = 0;
@@ -356,7 +356,7 @@ MppLoopTab :: handle_clear(int n)
 void
 MppLoopTab :: handle_clearN(int n)
 {
-	for (unsigned z = 0; z != MPP_MAX_MW_TRACKS; z++)
+	for (unsigned z = 0; z != MPP_MAX_TRACKS; z++)
 		umidi20_event_queue_drain(&loop[n].track[z]->queue);
 
 	loop[n].state = ST_IDLE;

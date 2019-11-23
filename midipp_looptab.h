@@ -30,7 +30,7 @@
 
 struct MppLoopEntry {
 	MppButton *but_trig;
-	struct umidi20_track *track[MPP_MAX_MW_TRACKS];
+	struct umidi20_track *track[MPP_MAX_TRACKS];
 	qreal scale_factor;
 	qreal repeat_factor;
 	uint32_t period;

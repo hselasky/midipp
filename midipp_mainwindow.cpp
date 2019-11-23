@@ -984,7 +984,7 @@ MppMainWindow :: update_play_device_no()
 		/* hint for "MidiEventTxCallback() */
 		UMIDI20_QUEUE_FOREACH(event, &track[x]->queue) {
 			event->device_no = MPP_MAGIC_DEVNO +
-			    (x % MPP_MAX_MW_TRACKS);
+			    (x % MPP_MAX_TRACKS);
 		}
 	}
 }
@@ -1565,7 +1565,7 @@ MppMainWindow :: check_play(uint8_t index, uint8_t chan, uint32_t off, uint8_t d
 	struct mid_data *d = &mid_data;
 	uint32_t pos;
 
-	if (index >= MPP_MAX_MW_TRACKS || chan >= 0x10)
+	if (index >= MPP_MAX_TRACKS || chan >= 0x10)
 		return (false);
 
 	handle_midi_trigger();
@@ -1594,7 +1594,7 @@ MppMainWindow :: check_record(uint8_t index, uint8_t chan, uint32_t off)
 	struct mid_data *d = &mid_data;
 	uint32_t pos;
 
-	if (midiRecordOff || index >= MPP_MAX_MW_TRACKS || chan >= 0x10)
+	if (midiRecordOff || index >= MPP_MAX_TRACKS || chan >= 0x10)
 		return (false);
 
 	handle_midi_trigger();
@@ -3090,7 +3090,7 @@ MppMainWindow :: send_byte_event_locked(uint8_t which)
 
 	buf[0] = which;
 
-	for (n = 0; n != MPP_MAX_MW_TRACKS; n += MPP_TRACKS_PER_VIEW) {
+	for (n = 0; n != MPP_MAX_TRACKS; n += MPP_TRACKS_PER_VIEW) {
 		if (check_play(n, 0, 0))
 			mid_add_raw(&mid_data, buf, 1, 0);
 		if (check_record(n, 0, 0))
@@ -3113,7 +3113,7 @@ MppMainWindow :: send_song_select_locked(uint8_t which)
 	buf[0] = 0xF3;
 	buf[1] = which & 0x7F;
 
-	for (n = 0; n != MPP_MAX_MW_TRACKS; n += MPP_TRACKS_PER_VIEW) {
+	for (n = 0; n != MPP_MAX_TRACKS; n += MPP_TRACKS_PER_VIEW) {
 		if (check_play(n, 0, 0))
 			mid_add_raw(&mid_data, buf, 2, 0);
 		if (check_record(n, 0, 0))
