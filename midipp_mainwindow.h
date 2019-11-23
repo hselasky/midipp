@@ -75,7 +75,6 @@ public:
 	uint8_t do_instr_check(struct umidi20_event *event, uint8_t *pchan);
 	bool check_play(uint8_t index, uint8_t chan, uint32_t off);
 	bool check_record(uint8_t index, uint8_t chan, uint32_t off);
-	bool check_mirror(uint8_t index);
 
 	void handle_watchdog_sub(MppScoreMain *, int);
 

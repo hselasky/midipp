@@ -1147,10 +1147,9 @@ MppMainWindow :: handle_midi_file_instr_prepend()
 {
 	struct mid_data *d = &mid_data;
 	uint8_t x;
+	uint8_t n;
 
-	for (unsigned int n = 0; n != MPP_MAX_TRACKS; n++) {
-		if (check_mirror(n))
-			continue;
+	for (n = 0; n != MPP_MAX_TRACKS; n++) {
 		for (x = 0; x != 16; x++) {
 			d->track = track[n];
 			mid_set_channel(d, x);
@@ -1419,7 +1418,7 @@ MppMainWindow :: handle_config_reload()
 	}
 
 	/* enable magic device */
-	for (n = MPP_MAGIC_DEVNO; n != (MPP_MAGIC_DEVNO + MPP_MAX_TRACKS); n++) {
+	for (n = MPP_MAGIC_DEVNO; n != UMIDI20_N_DEVICES; n++) {
 		STRLCPY(cfg.cfg_dev[n].play_fname, "/dev/null",
 		    sizeof(cfg.cfg_dev[n].play_fname));
 		cfg.cfg_dev[n].play_enabled_cfg = 1;
@@ -1628,12 +1627,6 @@ MppMainWindow :: check_record(uint8_t index, uint8_t chan, uint32_t off)
 	mid_set_device_no(d, 0xFF);
 
 	return (true);
-}
-
-bool
-MppMainWindow :: check_mirror(uint8_t index)
-{
-	return (index != MPP_DEFAULT_TRACK(0));
 }
 
 int
@@ -2046,7 +2039,7 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 				do_drop = 1;
 			}
 		} else if (device_no >= MPP_MAGIC_DEVNO &&
-		    device_no < (MPP_MAGIC_DEVNO + MPP_MAX_TRACKS)) {
+		    device_no < UMIDI20_N_DEVICES) {
 			int index = device_no - MPP_MAGIC_DEVNO;
 			int devno = -2;	/* no device */
 
@@ -2122,7 +2115,7 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			if (mw->muteAllNonChannel[device_no])
 				do_drop = 1;
 		} else if (device_no >= MPP_MAGIC_DEVNO &&
-		    device_no < (MPP_MAGIC_DEVNO + MPP_MAX_TRACKS)) {
+		    device_no < UMIDI20_N_DEVICES) {
 			int index = device_no - MPP_MAGIC_DEVNO;
 			int devno = -2;	/* no device */
 
@@ -3105,15 +3098,14 @@ MppMainWindow :: send_byte_event_locked(uint8_t which)
 {
 	uint8_t buf[1];
 	uint8_t trig;
+	uint8_t n;
 
 	trig = midiTriggered;
 	midiTriggered = 1;
 
 	buf[0] = which;
 
-	for (unsigned int n = 0; n != MPP_MAX_TRACKS; n++) {
-		if (check_mirror(n))
-			continue;
+	for (n = 0; n != MPP_MAX_TRACKS; n += MPP_TRACKS_PER_VIEW) {
 		if (check_play(n, 0, 0))
 			mid_add_raw(&mid_data, buf, 1, 0);
 		if (check_record(n, 0, 0))
@@ -3128,6 +3120,7 @@ MppMainWindow :: send_song_select_locked(uint8_t which)
 {
 	uint8_t buf[2];
 	uint8_t trig;
+	uint8_t n;
 
 	trig = midiTriggered;
 	midiTriggered = 1;
@@ -3135,9 +3128,7 @@ MppMainWindow :: send_song_select_locked(uint8_t which)
 	buf[0] = 0xF3;
 	buf[1] = which & 0x7F;
 
-	for (unsigned int n = 0; n != MPP_MAX_TRACKS; n++) {
-		if (check_mirror(n))
-			continue;
+	for (n = 0; n != MPP_MAX_TRACKS; n += MPP_TRACKS_PER_VIEW) {
 		if (check_play(n, 0, 0))
 			mid_add_raw(&mid_data, buf, 2, 0);
 		if (check_record(n, 0, 0))
