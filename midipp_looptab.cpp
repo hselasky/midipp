@@ -304,7 +304,7 @@ MppLoopTab :: handle_recordN(int n)
 	}
 	/* check if there are no events */
 	if (loop[n].period == 0)
-		loop[n].state = ST_IDLE;
+		handle_clearN(n);
 }
 
 void
