@@ -73,7 +73,7 @@ public:
 
 	uint8_t noise8(uint8_t factor);
 	uint8_t do_instr_check(struct umidi20_event *event, uint8_t *pchan);
-	bool check_play(uint8_t index, uint8_t chan, uint32_t off);
+	bool check_play(uint8_t index, uint8_t chan, uint32_t off, uint8_t = MPP_MAGIC_DEVNO);
 	bool check_record(uint8_t index, uint8_t chan, uint32_t off);
 
 	void handle_watchdog_sub(MppScoreMain *, int);

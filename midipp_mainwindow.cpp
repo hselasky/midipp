@@ -1579,7 +1579,7 @@ MppMainWindow :: handle_config_print_fontsel()
 }
 
 bool
-MppMainWindow :: check_play(uint8_t index, uint8_t chan, uint32_t off)
+MppMainWindow :: check_play(uint8_t index, uint8_t chan, uint32_t off, uint8_t device_no)
 {
 	struct mid_data *d = &mid_data;
 	uint32_t pos;
@@ -1600,8 +1600,10 @@ MppMainWindow :: check_play(uint8_t index, uint8_t chan, uint32_t off)
 	noteMode = scores_main[index / MPP_TRACKS_PER_VIEW]->noteMode;
 	mid_set_channel(d, chan);
 	mid_set_position(d, pos);
-	mid_set_device_no(d, MPP_MAGIC_DEVNO + index);
-
+	if (device_no < MPP_MAGIC_DEVNO)
+		mid_set_device_no(d, device_no);
+	else
+		mid_set_device_no(d, MPP_MAGIC_DEVNO + index);
 	return (true);
 }
 
