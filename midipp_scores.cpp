@@ -2275,7 +2275,7 @@ MppScoreMain :: outputControl(uint8_t ctrl, uint8_t val)
 {
 	MppMainWindow *mw = mainWindow;
 	struct mid_data *d = &mw->mid_data;
-	const unsigned int off = unit * MPP_TRACKS_PER_VIEW;
+	const unsigned off = unit * MPP_TRACKS_PER_VIEW;
 	uint16_t ChannelMask[MPP_TRACKS_PER_VIEW] = {};
 	uint8_t chan;
 
@@ -2283,25 +2283,22 @@ MppScoreMain :: outputControl(uint8_t ctrl, uint8_t val)
 
 	/* the control event is distributed to all active channels */
 	for (chan = 0; chan != 16; chan++) {
-		for (unsigned int x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
+		for (unsigned x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
 			if ((ChannelMask[x] >> chan) & 1) {
 				if (mw->check_play(off + x, chan, 0))
 					mid_control(d, ctrl, val);
 				if (mw->check_record(off + x, chan, 0))
 					mid_control(d, ctrl, val);
+				for (unsigned n = 0; n != MPP_LOOP_MAX; n++) {
+					if (mw->tab_loop->check_record(off + x, chan, n))
+						mid_control(d, ctrl, val);
+				}
 			}
 		}
 	}
 
-	if (ctrl == 0x40) {
-		if (mw->tab_loop->pedal_rec != 0) {
-			for (uint8_t n = 0; n != MPP_LOOP_MAX; n++) {
-				if (mw->tab_loop->check_record(n))
-					mid_control(d, ctrl, val);
-			}
-		}
+	if (ctrl == 0x40)
 		lastPedalValue = val;
-	}
 }
 
 /* must be called locked */
@@ -2310,7 +2307,7 @@ MppScoreMain :: outputChanPressure(uint8_t pressure)
 {
 	MppMainWindow *mw = mainWindow;
 	struct mid_data *d = &mw->mid_data;
-	const unsigned int off = unit * MPP_TRACKS_PER_VIEW;
+	const unsigned off = unit * MPP_TRACKS_PER_VIEW;
 	uint16_t ChannelMask[MPP_TRACKS_PER_VIEW] = {};
 	uint8_t chan;
 	uint8_t buf[4];
@@ -2324,12 +2321,16 @@ MppScoreMain :: outputChanPressure(uint8_t pressure)
 
 	/* the pressure event is distributed to all active channels */
 	for (chan = 0; chan != 16; chan++) {
-		for (unsigned int x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
+		for (unsigned x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
 			if ((ChannelMask[x] >> chan) & 1) {
 				if (mw->check_play(off + x, chan, 0))
 					mid_add_raw(d, buf, 2, 0);
 				if (mw->check_record(off + x, chan, 0))
 					mid_add_raw(d, buf, 2, 0);
+				for (unsigned n = 0; n != MPP_LOOP_MAX; n++) {
+					if (mw->tab_loop->check_record(off + x, chan, n))
+						mid_add_raw(d, buf, 2, 0);
+				}
 			}
 		}
 	}
@@ -2341,7 +2342,7 @@ MppScoreMain :: outputPitch(uint16_t val)
 {
 	MppMainWindow *mw = mainWindow;
 	struct mid_data *d = &mw->mid_data;
-	const unsigned int off = unit * MPP_TRACKS_PER_VIEW;
+	const unsigned off = unit * MPP_TRACKS_PER_VIEW;
 	uint16_t ChannelMask[MPP_TRACKS_PER_VIEW] = {};
 	uint8_t chan;
 
@@ -2349,12 +2350,16 @@ MppScoreMain :: outputPitch(uint16_t val)
 
 	/* the pitch event is distributed to all active channels */
 	for (chan = 0; chan != 16; chan++) {
-		for (unsigned int x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
+		for (unsigned x = 0; x != MPP_TRACKS_PER_VIEW; x++) {
 			if ((ChannelMask[x] >> chan) & 1) {
 				if (mw->check_play(off + x, chan, 0))
 					mid_pitch_bend(d, val);
 				if (mw->check_record(off + x, chan, 0))
 					mid_pitch_bend(d, val);
+				for (unsigned n = 0; n != MPP_LOOP_MAX; n++) {
+					if (mw->tab_loop->check_record(off + x, chan, n))
+						mid_pitch_bend(d, val);
+				}
 			}
 		}
 	}

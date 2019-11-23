@@ -34,13 +34,96 @@
 #include "midipp_button.h"
 #include "midipp_midi.h"
 #include "midipp_instrument.h"
+#include "midipp_groupbox.h"
+
+static void
+mid_add_event(struct mid_data *d, struct umidi20_event *event)
+{
+	event->position += d->position[0];
+
+	if (d->cc_enabled) {
+		/*
+		 * Need to lock the root device before adding
+		 * entries to the play queue:
+		 */
+		pthread_mutex_lock(&(root_dev.mutex));
+		umidi20_event_queue_insert(&root_dev.play[d->cc_device_no].queue,
+		    event, UMIDI20_CACHE_INPUT);
+		pthread_mutex_unlock(&(root_dev.mutex));
+	} else {
+		umidi20_event_queue_insert(&d->track->queue,
+		    event, UMIDI20_CACHE_INPUT);
+	}
+}
+
+static void
+MppLoopTabTimerCallback(void *arg)
+{
+	MppLoopTab *plt = (MppLoopTab *)arg;
+	uint32_t period = 0;
+	struct umidi20_event *event;
+	struct umidi20_event *event_copy;
+
+	plt->mw->atomic_lock();
+	for (int x = 0; x != MPP_LOOP_MAX; x++) {
+		if (plt->loop[x].state != MppLoopTab::ST_PLAYING)
+			continue;
+		if (period < plt->loop[x].period)
+			period = plt->loop[x].period;
+	}
+
+	plt->pos_align = plt->mw->get_time_offset();
+	if (plt->pos_align == 0)
+		plt->pos_align = 1;
+	
+	if (period == 0) {
+	  	umidi20_update_timer(&MppLoopTabTimerCallback, plt, 1, 0);
+	  	plt->mw->atomic_unlock();		
+		return;
+	}
+
+	for (int x = 0; x != MPP_LOOP_MAX; x++) {
+		if (plt->loop[x].state != MppLoopTab::ST_PLAYING)
+			continue;
+		plt->loop[x].repeat_factor = qRound((qreal)period / (qreal)plt->loop[x].period);
+		plt->loop[x].scale_factor = (qreal)period / (plt->loop[x].repeat_factor * (qreal)plt->loop[x].period);
+
+		for (qreal n = 0; n != plt->loop[x].repeat_factor; n++) {
+			uint32_t off = 2 * (n * plt->loop[x].period * plt->loop[x].scale_factor);
+
+			for (int z = 0; z != MPP_MAX_MW_TRACKS; z++) {
+				UMIDI20_QUEUE_FOREACH(event, &plt->loop[x].track[z]->queue) {
+					if (~umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL)
+						continue;
+					if (umidi20_event_get_control_address(event) == 0x40 &&
+					    plt->pedal_rec == 0)
+						continue;
+					if (plt->mw->check_play(z, 0, off)) {
+						event_copy = umidi20_event_copy(event, 0);
+						if (event_copy != 0)
+							mid_add_event(&plt->mw->mid_data, event_copy);
+					}
+					if (plt->mw->check_record(z, 0, off)) {
+						event_copy = umidi20_event_copy(event, 0);
+						if (event_copy != 0)
+							mid_add_event(&plt->mw->mid_data, event_copy);
+					}
+				}
+			}
+		}
+	}
+	plt->mw->atomic_unlock();
+
+	umidi20_update_timer(&MppLoopTabTimerCallback, plt, 2 * period, 0);
+}
 
 MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
   : QWidget(parent)
 {
-	char buf[32];
 	int n;
 	int x;
+	int y;
+	int z;
 
 	/* set memory default */
 
@@ -50,279 +133,235 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 
 	gl = new QGridLayout(this);
 
-	for (n = 0; n != MPP_LOOP_MAX; n++) {
-		spn_chan[n] = new MppChanSel(mw, 0, 0);
-
-		spn_key[n] = new MppSpinBox(0,0);
-		spn_key[n]->setValue(MPP_BAND_STEP_12 * n);
-
-		snprintf(buf, sizeof(buf), "Loop%X", n);
-
-		lbl_dur[n] = new QLabel(tr("00.00"));
-		lbl_loop[n] = new QLabel(tr(buf));
-		lbl_state[n] = new QLabel();
-
-		but_clear[n] = new MppButton(tr("Clear"), n);
-		but_trig[n] = new MppButton(tr("Trigger"), n);
-
-		for (x = 0; x != MPP_MAX_VIEWS; x++)
-			but_import[n][x] = new MppButton(QString("To %1-Scores").arg(QChar('A' + x)), n + (MPP_LOOP_MAX * x));
-	}
-
-	for (n = 0; n != MPP_LOOP_MAX; n++) {
-
-		gl->addWidget(lbl_state[n], (MPP_LOOP_MAX-n-1) + 2, 6 + MPP_MAX_VIEWS, 1, 1);
-		gl->addWidget(spn_chan[n], (MPP_LOOP_MAX-n-1) + 2, 5 + MPP_MAX_VIEWS, 1, 1);
-		gl->addWidget(lbl_dur[n], (MPP_LOOP_MAX-n-1) + 2, 4 + MPP_MAX_VIEWS, 1, 1);
-		gl->addWidget(but_clear[n], (MPP_LOOP_MAX-n-1) + 2, 2 + MPP_MAX_VIEWS, 1, 1);
-		gl->addWidget(but_trig[n], (MPP_LOOP_MAX-n-1) + 2, 1 + MPP_MAX_VIEWS, 1, 1);
-		gl->addWidget(lbl_loop[n], (MPP_LOOP_MAX-n-1) + 2, 0, 1, 1);
-		gl->addWidget(spn_key[n], (MPP_LOOP_MAX-n-1) + 2, 3 + MPP_MAX_VIEWS, 1, 1);
-
-		for (x = 0; x != MPP_MAX_VIEWS; x++) {
-			gl->addWidget(but_import[n][x], (MPP_LOOP_MAX-n-1) + 2, 1 + x, 1, 1);
-			connect(but_import[n][x], SIGNAL(released(int)), this, SLOT(handle_import(int)));
-		}
-
-		connect(spn_chan[n], SIGNAL(valueChanged(int)), this, SLOT(handle_value_changed(int)));
-		connect(spn_key[n], SIGNAL(valueChanged(int)), this, SLOT(handle_value_changed(int)));
-		connect(but_clear[n], SIGNAL(released(int)), this, SLOT(handle_clear(int)));
-		connect(but_trig[n], SIGNAL(pressed(int)), this, SLOT(handle_trig(int)));
-	}
-
-	gl->setRowStretch(2 + MPP_LOOP_MAX, 1);
-	gl->setColumnStretch(7 + MPP_MAX_VIEWS, 1);
-
-	lbl_chn_title = new QLabel(tr("DestChan"));
-	lbl_dur_title = new QLabel(tr("Duration"));
-	lbl_state_title = new QLabel(tr("State"));
-	lbl_mkey_title = new QLabel(tr("Multikey"));
-
-	gl->addWidget(lbl_state_title, 1, 6 + MPP_MAX_VIEWS, 1, 1);
-	gl->addWidget(lbl_chn_title, 1, 5 + MPP_MAX_VIEWS, 1, 1);
-	gl->addWidget(lbl_dur_title, 1, 4 + MPP_MAX_VIEWS, 1, 1);
-	gl->addWidget(lbl_mkey_title, 1, 3 + MPP_MAX_VIEWS, 1, 1);
-
-	but_reset = new QPushButton(tr("Reset"));
-	connect(but_reset, SIGNAL(released()), this, SLOT(handle_reset()));
-	gl->addWidget(but_reset, 0, 7, 1, 2);
-
-	mbm_loop = new MppButtonMap("Looping feature\0" "OFF\0" "ON\0", 2, 2);
-	connect(mbm_loop, SIGNAL(selectionChanged(int)), this, SLOT(handle_loop(int)));
-	gl->addWidget(mbm_loop, 0, 0, 1, 2);
-
-	mbm_multi = new MppButtonMap("Multiple keys feature\0" "OFF\0" "ON\0", 2, 2);
-	connect(mbm_multi, SIGNAL(selectionChanged(int)), this, SLOT(handle_multi(int)));
-	gl->addWidget(mbm_multi, 0, 2, 1, 2);
-
 	mbm_pedal_rec = new MppButtonMap("Record pedal\0" "OFF\0" "ON\0", 2, 2);
 	connect(mbm_pedal_rec, SIGNAL(selectionChanged(int)), this, SLOT(handle_pedal_rec(int)));
-	gl->addWidget(mbm_pedal_rec, 0, 4, 1, 2);
+	gl->addWidget(mbm_pedal_rec, 0, 0, 1, 1);
+
+	mbm_arm_import = new MppButtonMap("Import to\0" "OFF\0" "View-A\0" "View-B\0", 3, 3);
+	gl->addWidget(mbm_arm_import, 0, 1, 1, 1);
+
+	mbm_arm_reset = new MppButtonMap("Reset one\0" "OFF\0" "ON\0", 2, 2);
+	gl->addWidget(mbm_arm_reset, 0, 2, 1, 1);
+
+	gb_control = new MppGroupBox("Control area");
+	gl->addWidget(gb_control, 1, 0, 1, 3);
+
+	but_reset = new QPushButton(tr("Reset all"));
+	connect(but_reset, SIGNAL(released()), this, SLOT(handle_reset()));
+	gl->addWidget(but_reset, 2, 0, 1, 1);
+	
+#if MPP_LOOP_MAX != 16
+#error "This code needs an update"
+#endif
+	for (n = x = 0; x != 4; x++) {
+		for (y = 0; y != 4; y++, n++) {
+			for (z = 0; z != MPP_MAX_MW_TRACKS; z++)
+				loop[n].track[z] = umidi20_track_alloc();
+			loop[n].but_trig = new MppButton(
+			    tr("Loop %1\n"
+			       "IDLE :: 00.00\n").arg(n), n);
+			connect(loop[n].but_trig, SIGNAL(released(int)),
+			    this, SLOT(handle_trigger(int)));
+			gb_control->addWidget(loop[n].but_trig, x, y, 1, 1);
+		}
+	}
+	
+	gl->setRowStretch(1, 1);
+	gl->setColumnStretch(3, 1);
 
 	mw->atomic_lock();
-
 	needs_update = 1;
-
-	for (n = 0; n != MPP_LOOP_MAX; n++)
-		track[n] = umidi20_track_alloc();
-
 	mw->atomic_unlock();
 
 	handle_value_changed(0);
+
+	umidi20_set_timer(&MppLoopTabTimerCallback, this, 1);
 }
 
 MppLoopTab :: ~MppLoopTab()
 {
 	uint8_t n;
+	uint8_t z;
+
+	umidi20_unset_timer(&MppLoopTabTimerCallback, this);
 
 	mw->atomic_lock();
-
-	for (n = 0; n != MPP_LOOP_MAX; n++)
-		umidi20_track_free(track[n]);
-
+	for (n = 0; n != MPP_LOOP_MAX; n++) {
+		for (z = 0; z != MPP_MAX_MW_TRACKS; z++)
+			umidi20_track_free(loop[n].track[z]);
+	}
 	mw->atomic_unlock();
 }
 
 /* This function must be called locked */
 bool
-MppLoopTab :: check_record(uint8_t n)
+MppLoopTab :: check_record(uint8_t index, uint8_t chan, uint8_t n)
 {
 	struct mid_data *d = &mw->mid_data;
 	uint32_t pos;
 
-	if (state[n] != ST_REC)
+	if (index >= MPP_MAX_MW_TRACKS || chan >= 0x10 || n >= MPP_LOOP_MAX)
+		return (false);
+	if (loop[n].state != ST_REC)
 		return (false);
 
 	pos = mw->get_time_offset();
 	if (pos == 0)
 		pos = 1;
 
-	if (first_pos[n] == 0)
-		first_pos[n] = pos;
+	if (loop[n].first == 0)
+		loop[n].first = pos_align;
 
-	last_pos[n] = pos;
+	loop[n].last = pos;
 
 	needs_update = 1;
 
-	d->track = track[n];
-	mid_set_channel(d, chan_val[n]);
-	mid_set_position(d, pos - first_pos[n]);
+	d->track = loop[n].track[index];
+	mid_set_channel(d, chan);
+	mid_set_position(d, pos - loop[n].first);
 	mid_set_device_no(d, 0xFF);
 	return (true);
 }
 
-void
-MppLoopTab :: handle_trig(int n)
+bool
+MppLoopTab :: handle_import(int n)
 {
+	struct umidi20_track *track_merged;
+	struct umidi20_event *event;
+	struct umidi20_event *event_copy;
+	int arm_state = mbm_arm_import->currSelection;
+	int z;
+
+	if (arm_state == 0)
+		return (false);
+
+	mbm_arm_import->setSelection(0);
+
+	track_merged = umidi20_track_alloc();
+
 	mw->atomic_lock();
-	switch (state[n]) {
+	for (z = 0; z != MPP_MAX_MW_TRACKS; z++) {
+		UMIDI20_QUEUE_FOREACH(event, &loop[n].track[z]->queue) {
+			event_copy = umidi20_event_copy(event, 0);
+			umidi20_event_queue_insert(&track_merged->queue,
+			    event_copy, UMIDI20_CACHE_INPUT);
+		}
+	}
+	mw->atomic_unlock();
+
+    	mw->import_midi_track(track_merged, MIDI_FLAG_DURATION | MIDI_FLAG_DIALOG, n, arm_state - 1);
+
+	umidi20_track_free(track_merged);
+
+	return (true);
+}
+
+/* Must be called locked */
+void
+MppLoopTab :: handle_recordN(int n)
+{
+	struct umidi20_event *event;
+
+	loop[n].period = 0;
+
+	for (int z = 0; z != MPP_MAX_MW_TRACKS; z++) {
+		struct umidi20_event *first = 0;
+		size_t num_first = 0;
+		uint32_t period = 0;
+
+		UMIDI20_QUEUE_FOREACH(event, &loop[n].track[z]->queue) {
+			if (umidi20_event_is_key_start(event)) {
+				if (first == 0) {
+					first = event;
+					num_first++;
+				} else if (umidi20_event_get_key(event) == umidi20_event_get_key(first) &&
+					   umidi20_event_get_channel(event) == umidi20_event_get_channel(first)) {
+					num_first++;
+				}
+			}
+		}
+		if (num_first & 1)
+			continue;
+		if (first == 0)
+			continue;
+
+		num_first /= 2;
+
+		UMIDI20_QUEUE_FOREACH(event, &loop[n].track[z]->queue) {
+			if (umidi20_event_is_key_start(event)) {
+				if (umidi20_event_get_key(event) == umidi20_event_get_key(first) &&
+				    umidi20_event_get_channel(event) == umidi20_event_get_channel(first)) {
+					if (!num_first--) {
+						period = event->position - first->position;
+						break;
+					}
+				}
+			}
+		}
+		/* collect largest period */
+		if (period > loop[n].period)
+			loop[n].period = period;
+	}
+	/* check if there are no events */
+	if (loop[n].period == 0)
+		loop[n].state = ST_IDLE;
+}
+
+void
+MppLoopTab :: handle_trigger(int n)
+{
+	if (handle_import(n) || handle_clear(n))
+		return;
+
+	mw->atomic_lock();
+	switch (loop[n].state) {
 	case ST_IDLE:
-		state[n] = ST_REC;
+		loop[n].state = ST_REC;
 		break;
 	case ST_REC:
-		/* FALLTHROUGH */
+		loop[n].state = ST_PLAYING;
+		handle_recordN(n);
+		break;
+	case ST_PLAYING:
+		loop[n].state = ST_STOPPED;
+		break;
+	case ST_STOPPED:
+		loop[n].state = ST_PLAYING;
+		break;
 	default:
-		state[n] = ST_DONE;
 		break;
 	}
-	last_loop = n;
 	needs_update = 1;
 	mw->atomic_unlock();
 }
 
-void
-MppLoopTab :: handle_import(int n)
-{
-	int which = n % MPP_LOOP_MAX;
-	int view = n / MPP_LOOP_MAX;
-
-	mw->import_midi_track(track[which], MIDI_FLAG_DURATION | MIDI_FLAG_DIALOG, which, view);
-}
-
-/* Must be called locked */
-void
-MppLoopTab :: fill_loop_data(int n, int vel, int key_off)
-{
-	struct umidi20_event *event;
-	uint32_t pos;
-	int key;
-	uint8_t chan;
-	uint8_t y;
-
-	UMIDI20_QUEUE_FOREACH(event, &(track[n]->queue)) {
-
-		key = (umidi20_event_get_key(event) & 0x7F) * MPP_BAND_STEP_12;
-
-		key += key_off;
-
-		if (key > (255 * MPP_BAND_STEP_12) || key < 0)
-			continue;
-
-		chan = chan_val[n];
-		pos = event->position;
-
-		if (umidi20_event_get_control_address(event) == 0x40) {
-
-			uint8_t val;
-
-			val = umidi20_event_get_control_value(event);
-
-			for (y = 0; y != MPP_MAX_TRACKS; y++) {
-				if (mw->check_mirror(y))
-					continue;
-				if (mw->check_play(y, chan, pos))
-					mid_pedal(&mw->mid_data, val);
-				if (mw->check_record(y, chan, pos))
-					mid_pedal(&mw->mid_data, val);
-			}
-
-		} else if (umidi20_event_is_key_start(event)) {
-
-			for (y = 0; y != MPP_MAX_TRACKS; y++) {
-				if (mw->check_mirror(y))
-					continue;
-				if (mw->check_play(y, chan, pos))
-					mw->do_key_press(key, vel, 0);
-				if (mw->check_record(y, chan, pos))
-					mw->do_key_press(key, vel, 0);
-			}
-
-		} else if (umidi20_event_is_key_end(event)) {
-
-			for (y = 0; y != MPP_MAX_TRACKS; y++) {
-				if (mw->check_mirror(y))
-					continue;
-				if (mw->check_play(y, chan, pos))
-					mw->do_key_press(key, 0, 0);
-				if (mw->check_record(y, chan, pos))
-					mw->do_key_press(key, 0, 0);
-			}
-		}
-	}
-}
-
-/* Must be called locked */
-int
-MppLoopTab :: handle_trigN(int key, int vel)
-{
-	int n;
-	int found = 0;
-
-	if (loop_on == 0)
-		return (0);
-	for (n = 0; n != MPP_LOOP_MAX; n++) {
-		if (state[n] == ST_REC)
-			return (0);
-	}
-
-	if (is_multi == 0) {
-		n = last_loop;
-		key -= MPP_DEFAULT_BASE_KEY;
-
-		switch (state[n]) {
-		case ST_IDLE:
-		case ST_REC:
-			break;
-		default:
-			fill_loop_data(n, vel, key);
-			found = 1;
-			break;
-		}
-	} else {
-		for (n = 0; n != MPP_LOOP_MAX; n++) {
-			if (key_val[n] != key)
-				continue;
-
-			switch (state[n]) {
-			case ST_IDLE:
-			case ST_REC:
-				break;
-			default:
-				fill_loop_data(n, vel, 0);
-				found = 1;
-				break;
-			}
-		}
-	}
-	return (found);
-}
-
-void
+bool
 MppLoopTab :: handle_clear(int n)
 {
+  	int arm_state = mbm_arm_reset->currSelection;
+
+	if (arm_state == 0)
+		return (false);
+
+	mbm_arm_reset->setSelection(0);
+
 	mw->atomic_lock();
 	handle_clearN(n);
 	mw->atomic_unlock();
+
+	return (true);
 }
 
 /* Must be called locked */
 void
 MppLoopTab :: handle_clearN(int n)
 {
-	umidi20_event_queue_drain(&(track[n]->queue));
-	state[n] = ST_IDLE;
-	first_pos[n] = 0;
-	last_pos[n] = 0;
+	for (unsigned z = 0; z != MPP_MAX_MW_TRACKS; z++)
+		umidi20_event_queue_drain(&loop[n].track[z]->queue);
+
+	loop[n].state = ST_IDLE;
+	loop[n].first = 0;
+	loop[n].last = 0;
 
 	needs_update = 1;
 }
@@ -335,40 +374,17 @@ MppLoopTab :: handle_reset()
 	mw->atomic_lock();
 	for (n = 0; n != MPP_LOOP_MAX; n++)
 		handle_clearN(n);
-	last_loop = 0;
 	mw->atomic_unlock();
 
-	mbm_loop->setSelection(0);
 	mbm_pedal_rec->setSelection(0);
-	mbm_multi->setSelection(0);
-
-	for (n = 0; n != MPP_LOOP_MAX; n++) {
-		spn_chan[n]->setValue(0);
-		spn_key[n]->setValue(MPP_BAND_STEP_12 * n);
-	}
+	mbm_arm_import->setSelection(0);
+	mbm_arm_reset->setSelection(0);
 }
 
 void
 MppLoopTab :: handle_value_changed(int dummy)
 {
-	uint8_t x;
-	uint8_t temp[MPP_LOOP_MAX];
 
-	for (x = 0; x != MPP_LOOP_MAX; x++)
-		temp[x] = spn_chan[x]->value();
-
-	mw->atomic_lock();
-	for (x = 0; x != MPP_LOOP_MAX; x++)
-		chan_val[x] = temp[x];
-	mw->atomic_unlock();
-
-	for (x = 0; x != MPP_LOOP_MAX; x++)
-		temp[x] = spn_key[x]->value();
-
-	mw->atomic_lock();
-	for (x = 0; x != MPP_LOOP_MAX; x++)
-		key_val[x] = temp[x];
-	mw->atomic_unlock();
 }
 
 void
@@ -380,30 +396,12 @@ MppLoopTab :: handle_pedal_rec(int value)
 }
 
 void
-MppLoopTab :: handle_loop(int value)
-{
-	mw->atomic_lock();
-	loop_on = value;
-	mw->atomic_unlock();
-}
-
-void
-MppLoopTab :: handle_multi(int value)
-{
-	mw->atomic_lock();
-	is_multi = value;
-	mw->atomic_unlock();
-}
-
-void
 MppLoopTab :: watchdog()
 {
 	uint8_t n;
 	uint32_t dur;
 	char buf_dur[16];
-	char buf_state[16];
 	const char *pbuf;
-	uint8_t new_chan;
 
 	mw->atomic_lock();
 	n = needs_update;
@@ -413,41 +411,33 @@ MppLoopTab :: watchdog()
 	if (n == 0)
 		return;
 
-	new_chan = 255;
-
 	for (n = 0; n != MPP_LOOP_MAX; n++) {
 
 		mw->atomic_lock();
 
-		dur = (last_pos[n] - first_pos[n]) / 10;
+		dur = (loop[n].last - loop[n].first) / 10;
 
 		snprintf(buf_dur, sizeof(buf_dur),
 		    "%02u.%02u", (dur / 100) % 100, (dur % 100));
 
-		switch(state[n]) {
+		switch(loop[n].state) {
 		case ST_IDLE:
 			pbuf = "IDLE";
 			break;
 		case ST_REC:
-			new_chan = chan_val[n];
 			pbuf = "REC";
 			break;
+		case ST_PLAYING:
+			pbuf = "PLAY";
+			break;
 		default:
-			pbuf = "READY";
+			pbuf = "STOP";
 			break;
 		}
 
-		if (n == last_loop)
-			snprintf(buf_state, sizeof(buf_state), ">%s<", pbuf);
-		else
-			snprintf(buf_state, sizeof(buf_state), "<%s>", pbuf);
-
 		mw->atomic_unlock();
 
-		lbl_dur[n]->setText(tr(buf_dur));
-		lbl_state[n]->setText(tr(buf_state));
+		loop[n].but_trig->setText(
+		    tr("Loop %1\n" "%2 :: %3\n").arg(n).arg(pbuf).arg(buf_dur));
 	}
-
-	if (new_chan < 16)
-		mw->tab_instrument->handle_instr_channel_changed(new_chan);
 }

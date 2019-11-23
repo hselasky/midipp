@@ -320,7 +320,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 #ifndef HAVE_NO_SHOW
 	main_tb->addTab(tab_show_control->gl_main, tr("Show"));
 #endif
-	main_tb->addTab(tab_loop, tr("Loop"));
+	main_tb->addTab(tab_loop, tr("Looper"));
 	main_tb->addTab(tab_replay, tr("RePlay A"));
 	main_tb->addTab(tab_file_gl, tr("File"));
 	main_tb->addTab(tab_play_gl, tr("Play"));
@@ -738,12 +738,8 @@ MppMainWindow :: handle_play_press(int key, int which)
 		which = 0;
 
 	atomic_lock();
-	if (tab_loop->handle_trigN(key, 90) != 0) {
-		/* ignore */
-	} else {
-		MppScoreMain *sm = scores_main[which];
-		sm->handleMidiKeyPressLocked(key, 90);
-	}
+	MppScoreMain *sm = scores_main[which];
+	sm->handleMidiKeyPressLocked(key, 90);
 	atomic_unlock();
 }
 
@@ -1891,9 +1887,6 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 		default:
 			break;
 		}
-
-		if (mw->tab_loop->handle_trigN(key, vel))
-			goto done;
 	}
 
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
@@ -2850,7 +2843,7 @@ MppMainWindow :: output_key(int index, int chan, int key, int vel, int delay, in
 
 	/* output key to loop recording, if any */
 	for (n = 0; n != MPP_LOOP_MAX; n++) {
-		if (tab_loop->check_record(n)) {
+		if (tab_loop->check_record(index, chan, n)) {
 			mid_delay(d, delay);
 			do_key_press(key, vel, dur);
 		}
@@ -2863,16 +2856,24 @@ MppMainWindow :: output_key_pressure(int index, int chan, int key, int pressure,
 {
 	struct mid_data *d = &mid_data;
 
-	/* output key to all playback device(s) */
+	/* output pressure to all playback device(s) */
 	if (check_play(index, chan, 0)) {
 		mid_delay(d, delay);
 		do_key_pressure(key, pressure);
 	}
 
-	/* output key to recording device(s) */
+	/* output pressure to recording device(s) */
 	if (check_record(index, chan, 0)) {
 		mid_delay(d, delay);
 		do_key_pressure(key, pressure);
+	}
+
+	/* output pressure to loop recording, if any */
+	for (unsigned n = 0; n != MPP_LOOP_MAX; n++) {
+		if (tab_loop->check_record(index, chan, n)) {
+			mid_delay(d, delay);
+			do_key_pressure(key, pressure);
+		}
 	}
 }
 

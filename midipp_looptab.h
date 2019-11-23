@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,6 +28,17 @@
 
 #include "midipp.h"
 
+struct MppLoopEntry {
+	MppButton *but_trig;
+	struct umidi20_track *track[MPP_MAX_MW_TRACKS];
+	qreal scale_factor;
+	qreal repeat_factor;
+	uint32_t period;
+	uint32_t first;
+	uint32_t last;
+	uint32_t state;
+};
+
 class MppLoopTab : public QWidget
 {
 	Q_OBJECT;
@@ -36,16 +47,16 @@ public:
 	enum {
 		ST_IDLE,
 		ST_REC,
-		ST_DONE,
+		ST_PLAYING,
+		ST_STOPPED,
 	};
 
 	MppLoopTab(QWidget *parent, MppMainWindow *);
 	~MppLoopTab();
 
-	bool check_record(uint8_t n);
-	int handle_trigN(int key, int amp);
-	void handle_clearN(int n);
-	void fill_loop_data(int n, int vel, int key_off);
+	bool check_record(uint8_t index, uint8_t chan, uint8_t n);
+	void handle_clearN(int);
+	void handle_recordN(int);
 
 	uint8_t auto_zero_start[0];
 
@@ -53,54 +64,31 @@ public:
 
 	QGridLayout *gl;
 
-	MppChanSel *spn_chan[MPP_LOOP_MAX];
-	MppSpinBox *spn_key[MPP_LOOP_MAX];
+	MppGroupBox *gb_control;
 
-	QLabel *lbl_dur[MPP_LOOP_MAX];
-	QLabel *lbl_loop[MPP_LOOP_MAX];
-	QLabel *lbl_state[MPP_LOOP_MAX];
-
-	MppButton *but_import[MPP_LOOP_MAX][MPP_MAX_VIEWS];
-	MppButton *but_clear[MPP_LOOP_MAX];
-	MppButton *but_trig[MPP_LOOP_MAX];
-	MppButtonMap *mbm_loop;
+	MppButtonMap *mbm_arm_import;
+	MppButtonMap *mbm_arm_reset;
 	MppButtonMap *mbm_pedal_rec;
-	MppButtonMap *mbm_multi;
-
-	QLabel *lbl_chn_title;
-	QLabel *lbl_dur_title;
-	QLabel *lbl_state_title;
-	QLabel *lbl_mkey_title;
 
 	QPushButton *but_reset;
 
-	uint32_t first_pos[MPP_LOOP_MAX];
-	uint32_t last_pos[MPP_LOOP_MAX];
-	uint32_t state[MPP_LOOP_MAX];
+	struct MppLoopEntry loop[MPP_LOOP_MAX];
 
-	struct umidi20_song *song;
-	struct umidi20_track *track[MPP_LOOP_MAX];
-
-	int key_val[MPP_LOOP_MAX];
-	uint8_t chan_val[MPP_LOOP_MAX];
+	uint32_t pos_align;
+  
 	uint8_t pedal_rec;
-	uint8_t loop_on;
 	uint8_t needs_update;
-	uint8_t last_loop;
-	uint8_t is_multi;
 
 	uint8_t auto_zero_end[0];
 
 public slots:
 
+	bool handle_import(int);
+	bool handle_clear(int);
+	void handle_trigger(int);
 	void watchdog();
 	void handle_pedal_rec(int);
-	void handle_loop(int);
 	void handle_reset();
-	void handle_clear(int);
-	void handle_trig(int);
-	void handle_multi(int);
-	void handle_import(int);
 	void handle_value_changed(int);
 };
 

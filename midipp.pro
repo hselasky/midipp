@@ -2,7 +2,7 @@
 # QMAKE project file for MIDI Player PRO
 #
 TEMPLATE	= app
-CONFIG		+= qt warn_on release
+CONFIG		+= qt warn_on debug
 QT		+= core gui network
 
 # Automatic platform detection
