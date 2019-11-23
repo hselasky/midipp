@@ -74,7 +74,7 @@ MppCustomTab :: handle_send_custom(int which)
 	uint8_t buf[str.size()];
 	uint8_t trig;
 	char ch;
-	int d;
+	int dev;
  	int n;
 	int x;
 	int y;
@@ -112,7 +112,7 @@ MppCustomTab :: handle_send_custom(int which)
 		return;
 
 	/* get device number */
-	d = but_dev_sel->value();
+	dev = but_dev_sel->value();
 	
 	/* send MIDI data */
 
@@ -122,10 +122,11 @@ MppCustomTab :: handle_send_custom(int which)
 	mw->midiTriggered = 1;
 
 	for (n = 0; n != MPP_MAGIC_DEVNO; n++) {
-		if (d == -1 || d == n) {
-			if (mw->check_play(0, 0, 0, n))
-				mid_add_raw(&mw->mid_data, buf, y, 0);
-		}
+		if (dev != -1 && dev != n)
+			continue;
+		if (mw->check_play(0, 0, 0, n) == 0)
+			continue;
+		mid_add_raw(&mw->mid_data, buf, y, 0);
 	}
 	mw->midiTriggered = trig;
 
