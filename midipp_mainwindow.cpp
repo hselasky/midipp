@@ -86,12 +86,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	int x;
 
 	/* set memory default */
-
 	memset(auto_zero_start, 0, auto_zero_end - auto_zero_start);
-
-	CurrMidiFileName = NULL;
-	song = NULL;
-	memset(track, 0, sizeof(track));
 
 	umidi20_mutex_init(&mtx);
 
@@ -2729,16 +2724,6 @@ MppMainWindow :: MidiInit(void)
 
 	led_config_dev[0]->setText(QString("X:"));
 
-	handle_midi_record(0);
-	handle_midi_play(0);
-	handle_score_record(0);
-	tab_instrument->handle_instr_reset();
-
-	for (n = 0; n != UMIDI20_N_DEVICES; n++) {
-		umidi20_set_record_event_callback(n, &MidiEventRxCallback, this);
-		umidi20_set_play_event_callback(n, &MidiEventTxCallback, this);
-	}
-
 	atomic_lock();
 	song = umidi20_song_alloc(&mtx, UMIDI20_FILE_FORMAT_TYPE_0, 500,
 	    UMIDI20_FILE_DIVISION_TYPE_PPQ);
@@ -2757,6 +2742,11 @@ MppMainWindow :: MidiInit(void)
 		umidi20_song_track_add(song, NULL, track[n], 0);
 	}
 
+	for (n = 0; n != UMIDI20_N_DEVICES; n++) {
+		umidi20_set_record_event_callback(n, &MidiEventRxCallback, this);
+		umidi20_set_play_event_callback(n, &MidiEventTxCallback, this);
+	}
+
 	/* disable recording track */
 	umidi20_song_set_record_track(song, 0);
 
@@ -2770,6 +2760,10 @@ MppMainWindow :: MidiInit(void)
 
 	atomic_unlock();
 
+	handle_midi_record(0);
+	handle_midi_play(0);
+	handle_score_record(0);
+	tab_instrument->handle_instr_reset();
 	handle_config_reload();
 }
 
