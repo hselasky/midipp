@@ -230,8 +230,13 @@ MppLoopTab :: check_record(uint8_t index, uint8_t chan, uint8_t n)
 	if (pos == 0)
 		pos = 1;
 
-	if (loop[n].first == 0)
-		loop[n].first = pos_align;
+	if (loop[n].first == 0) {
+		uint32_t delta = (pos - pos_align);
+		if (delta >= (cur_period / 2))
+			loop[n].first = pos;
+		else
+			loop[n].first = pos_align;
+	}
 
 	loop[n].last = pos;
 
