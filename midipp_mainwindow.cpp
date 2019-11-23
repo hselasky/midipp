@@ -1286,6 +1286,19 @@ MppMainWindow :: handle_midi_trigger()
 			startPosition = umidi20_get_curr_position() - 0x40000000 - pausePosition;
 		}
 
+		/* cleanup old pending playback events */
+		for (unsigned x = 0; x != MPP_MAX_TRACKS; x++) {
+			struct umidi20_event *event;
+			struct umidi20_event *temp;
+
+			UMIDI20_QUEUE_FOREACH_SAFE(event, &track[x]->queue, temp) {
+				if (event->position >= 0x40000000) {
+					UMIDI20_IF_REMOVE(&track[x]->queue, event);
+					umidi20_event_free(event);
+				}
+			}
+		}
+
 		/* XXX first recursion point */
 		send_song_trigger_locked();
 
@@ -1295,6 +1308,7 @@ MppMainWindow :: handle_midi_trigger()
 
 		dlg_bpm->handle_update(1);
 		tab_replay->metronome->handleUpdateLocked();
+		tab_loop->handle_timer_sync();
 	}
 	atomic_unlock();
 }
@@ -1783,11 +1797,12 @@ MppMainWindow :: handle_stop(int flag)
 		/* only release once */
 		ps->dur = 0;
 
-		output_key(ps->track, ps->channel, ps->key, 0, 0, 0);
+		if (ps->channel > -1)
+			output_key(ps->track, ps->channel, ps->key, 0, 0, 0);
 
 		/* check for secondary event */
-		if (ps->channelSec != 0)
-			output_key(ps->trackSec, ps->channelSec - 1, ps->key, 0, 0, 0);
+		if (ps->channelSec > -1)
+			output_key(ps->trackSec, ps->channelSec, ps->key, 0, 0, 0);
 	    }
 
 	    /* SYSEX mode cleanup */
@@ -1975,7 +1990,6 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			sm->outputControl(ctrl, vel);
 		}
 	}
-done:
 	mw->atomic_unlock();
 }
 

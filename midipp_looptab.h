@@ -57,6 +57,7 @@ public:
 	bool check_record(uint8_t index, uint8_t chan, uint8_t n);
 	void handle_clearN(int);
 	void handle_recordN(int);
+	void handle_timer_sync();
 
 	uint8_t auto_zero_start[0];
 

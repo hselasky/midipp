@@ -76,7 +76,7 @@ MppLoopTabTimerCallback(void *arg)
 	if (plt->pos_align == 0)
 		plt->pos_align = 1;
 	
-	if (period == 0) {
+	if (period == 0 || plt->mw->midiTriggered == 0) {
 	  	umidi20_update_timer(&MppLoopTabTimerCallback, plt, 1, 0);
 	  	plt->mw->atomic_unlock();		
 		return;
@@ -115,6 +115,14 @@ MppLoopTabTimerCallback(void *arg)
 	plt->mw->atomic_unlock();
 
 	umidi20_update_timer(&MppLoopTabTimerCallback, plt, 2 * period, 0);
+}
+
+void
+MppLoopTab :: handle_timer_sync()
+{
+	mw->atomic_lock();
+	umidi20_update_timer(&MppLoopTabTimerCallback, this, 1, 1);
+	mw->atomic_unlock();
 }
 
 MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
