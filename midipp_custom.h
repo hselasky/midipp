@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,6 +40,8 @@ public:
 
 	QGridLayout *gl;
 	MppGroupBox *gb;
+	MppGroupBox *gb_dev_sel;
+	MppDevSel *but_dev_sel;
 
 	struct {
 		QLineEdit *led_send;

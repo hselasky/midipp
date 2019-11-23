@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013-2018 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,24 +29,29 @@
 #include "midipp_custom.h"
 #include "midipp_button.h"
 #include "midipp_groupbox.h"
+#include "midipp_devsel.h"
 
 MppCustomTab :: MppCustomTab(QWidget *parent, MppMainWindow *_mw)
   : QWidget(parent)
 {
 	int n;
-	char buf[16];
 
 	mw = _mw;
 
 	gl = new QGridLayout(this);
 
 	gb = new MppGroupBox(tr("Send custom hex-formatted MIDI command(s)"));
-	gl->addWidget(gb, 0,0,1,1);
+	gl->addWidget(gb, 0,0,1,4);
+
+	gb_dev_sel = new MppGroupBox(tr("Select output device(s)"));
+	gl->addWidget(gb_dev_sel, 1,0,1,1);
+
+	but_dev_sel = new MppDevSel(-1, MPP_DEV_ALL);
+	gb_dev_sel->addWidget(but_dev_sel, 0,0,1,1);
 
 	for (n = 0; n != MPP_CUSTOM_MAX; n++) {
-		snprintf(buf, sizeof(buf), "SEND-%d", n);
 		custom[n].led_send = new QLineEdit(QString("FF FF"));
-		custom[n].but_send = new MppButton(tr(buf), n);
+		custom[n].but_send = new MppButton(tr("SEND-%1").arg(n), n);
 
 		gb->addWidget(custom[n].led_send, n, 0, 1, 1);
 		gb->addWidget(custom[n].but_send, n, 1, 1, 1);
@@ -54,7 +59,8 @@ MppCustomTab :: MppCustomTab(QWidget *parent, MppMainWindow *_mw)
 		connect(custom[n].but_send, SIGNAL(released(int)), this, SLOT(handle_send_custom(int)));
 	}
 
-	gl->setRowStretch(n, 1);
+	gl->setRowStretch(2, 1);
+	gl->setColumnStretch(1, 1);
 }
 
 MppCustomTab :: ~MppCustomTab()
@@ -68,6 +74,7 @@ MppCustomTab :: handle_send_custom(int which)
 	uint8_t buf[str.size()];
 	uint8_t trig;
 	char ch;
+	int d;
  	int n;
 	int x;
 	int y;
@@ -104,6 +111,9 @@ MppCustomTab :: handle_send_custom(int which)
 	if (y == 0)
 		return;
 
+	/* get device number */
+	d = but_dev_sel->value();
+	
 	/* send MIDI data */
 
 	mw->atomic_lock();
@@ -111,11 +121,11 @@ MppCustomTab :: handle_send_custom(int which)
 	trig = mw->midiTriggered;
 	mw->midiTriggered = 1;
 
-	for (n = 0; n != MPP_MAX_TRACKS; n++) {
-		if (mw->check_mirror(n))
-			continue;
-		if (mw->check_play(n, 0, 0))
-			mid_add_raw(&mw->mid_data, buf, y, 0);
+	for (n = 0; n != MPP_MAGIC_DEVNO; n++) {
+		if (d == -1 || d == n) {
+			if (mw->check_play(0, 0, 0, n))
+				mid_add_raw(&mw->mid_data, buf, y, 0);
+		}
 	}
 	mw->midiTriggered = trig;
 
