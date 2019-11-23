@@ -75,7 +75,9 @@ MppLoopTabTimerCallback(void *arg)
 	plt->pos_align = plt->mw->get_time_offset();
 	if (plt->pos_align == 0)
 		plt->pos_align = 1;
-	
+
+	plt->cur_period = 2 * period;
+
 	if (period == 0 || plt->mw->midiTriggered == 0) {
 	  	umidi20_update_timer(&MppLoopTabTimerCallback, plt, 1, 0);
 	  	plt->mw->atomic_unlock();		
@@ -122,6 +124,10 @@ MppLoopTab :: handle_timer_sync()
 {
 	mw->atomic_lock();
 	umidi20_update_timer(&MppLoopTabTimerCallback, this, 1, 1);
+	/* update alignment position */
+	pos_align = mw->get_time_offset();
+	if (pos_align == 0)
+		pos_align = 1;
 	mw->atomic_unlock();
 }
 
@@ -157,7 +163,14 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 	but_reset = new QPushButton(tr("Reset all"));
 	connect(but_reset, SIGNAL(released()), this, SLOT(handle_reset()));
 	gl->addWidget(but_reset, 2, 0, 1, 1);
-	
+
+	sli_progress = new QSlider();
+	sli_progress->setRange(0, 999);
+	sli_progress->setOrientation(Qt::Horizontal);
+	sli_progress->setValue(0);
+	sli_progress->setDisabled(1);
+	gl->addWidget(sli_progress, 2, 1, 1, 2);
+
 #if MPP_LOOP_MAX != 16
 #error "This code needs an update"
 #endif
@@ -408,13 +421,27 @@ MppLoopTab :: watchdog()
 {
 	uint8_t n;
 	uint32_t dur;
+	uint32_t num;
 	char buf_dur[16];
 	const char *pbuf;
 
 	mw->atomic_lock();
 	n = needs_update;
 	needs_update = 0;
+
+	if (cur_period != 0) {
+		uint32_t pos = mw->get_time_offset();
+		if (pos == 0)
+			pos = 1;
+		num = (1000 * (pos - pos_align)) / cur_period;
+		if (num > 999)
+			num = 999;
+	} else {
+		num = 0;
+	}
 	mw->atomic_unlock();
+
+	sli_progress->setValue(num);
 
 	if (n == 0)
 		return;

@@ -72,10 +72,12 @@ public:
 	MppButtonMap *mbm_pedal_rec;
 
 	QPushButton *but_reset;
+	QSlider *sli_progress;
 
 	struct MppLoopEntry loop[MPP_LOOP_MAX];
 
 	uint32_t pos_align;
+	uint32_t cur_period;
   
 	uint8_t pedal_rec;
 	uint8_t needs_update;
