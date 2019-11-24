@@ -73,9 +73,6 @@ MppLoopTabTimerCallback(void *arg)
 	}
 
 	plt->pos_align = plt->mw->get_time_offset();
-	if (plt->pos_align == 0)
-		plt->pos_align = 1;
-
 	plt->cur_period = 2 * period;
 
 	if (period == 0 || plt->mw->midiTriggered == 0) {
@@ -85,33 +82,33 @@ MppLoopTabTimerCallback(void *arg)
 	}
 
 	for (int x = 0; x != MPP_LOOP_MAX; x++) {
+		uint32_t base_off;
 		if (plt->loop[x].state != MppLoopTab::ST_PLAYING)
 			continue;
 		plt->loop[x].repeat_factor = qRound((qreal)period / (qreal)plt->loop[x].period);
-		plt->loop[x].scale_factor = (qreal)period / (plt->loop[x].repeat_factor * (qreal)plt->loop[x].period);
+		plt->loop[x].scale_factor = (qreal)period / (plt->loop[x].repeat_factor *
+		    (qreal)plt->loop[x].period);
+
+		base_off = (2.0 / 8.0) * (plt->loop[x].period * plt->loop[x].sli_offset->value());
 
 		for (qreal n = 0; n != plt->loop[x].repeat_factor; n++) {
-			uint32_t off = 2 * (n * plt->loop[x].period * plt->loop[x].scale_factor);
-
 			for (int z = 0; z != MPP_MAX_TRACKS; z++) {
 				UMIDI20_QUEUE_FOREACH(event, &plt->loop[x].track[z]->queue) {
 					if (~umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL)
 						continue;
-					if (umidi20_event_get_control_address(event) == 0x40 &&
-					    plt->pedal_rec == 0)
-						continue;
-					if (plt->mw->check_play(z, 0, off)) {
+					if (plt->mw->check_play(z, 0, base_off)) {
 						event_copy = umidi20_event_copy(event, 0);
 						if (event_copy != 0)
 							mid_add_event(&plt->mw->mid_data, event_copy);
 					}
-					if (plt->mw->check_record(z, 0, off)) {
+					if (plt->mw->check_record(z, 0, base_off)) {
 						event_copy = umidi20_event_copy(event, 0);
 						if (event_copy != 0)
 							mid_add_event(&plt->mw->mid_data, event_copy);
 					}
 				}
 			}
+			base_off += 2.0 * plt->loop[x].period * plt->loop[x].scale_factor;
 		}
 	}
 	plt->mw->atomic_unlock();
@@ -126,8 +123,6 @@ MppLoopTab :: handle_timer_sync()
 	umidi20_update_timer(&MppLoopTabTimerCallback, this, 1, 1);
 	/* update alignment position */
 	pos_align = mw->get_time_offset();
-	if (pos_align == 0)
-		pos_align = 1;
 	mw->atomic_unlock();
 }
 
@@ -178,12 +173,18 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 		for (y = 0; y != 4; y++, n++) {
 			for (z = 0; z != MPP_MAX_TRACKS; z++)
 				loop[n].track[z] = umidi20_track_alloc();
+			loop[n].sli_offset = new QSlider();
+			loop[n].sli_offset->setRange(0, 7);
+			loop[n].sli_offset->setOrientation(Qt::Horizontal);
+			loop[n].sli_offset->setValue(0);
+			gb_control->addWidget(loop[n].sli_offset, 2*x + 1, y, 1, 1);
+
 			loop[n].but_trig = new MppButton(
 			    tr("Loop %1\n"
 			       "IDLE :: 00.00\n").arg(n), n);
 			connect(loop[n].but_trig, SIGNAL(released(int)),
 			    this, SLOT(handle_trigger(int)));
-			gb_control->addWidget(loop[n].but_trig, x, y, 1, 1);
+			gb_control->addWidget(loop[n].but_trig, 2*x + 0, y, 1, 1);
 		}
 	}
 	
@@ -221,22 +222,16 @@ MppLoopTab :: check_record(uint8_t index, uint8_t chan, uint8_t n)
 	struct mid_data *d = &mw->mid_data;
 	uint32_t pos;
 
-	if (index >= MPP_MAX_TRACKS || chan >= 0x10 || n >= MPP_LOOP_MAX)
-		return (false);
-	if (loop[n].state != ST_REC)
+	if (index >= MPP_MAX_TRACKS || chan >= 0x10 ||
+	    n >= MPP_LOOP_MAX || loop[n].state != ST_REC)
 		return (false);
 
 	pos = mw->get_time_offset();
 	if (pos == 0)
 		pos = 1;
 
-	if (loop[n].first == 0) {
-		uint32_t delta = (pos - pos_align);
-		if (delta >= (cur_period / 2))
-			loop[n].first = pos;
-		else
-			loop[n].first = pos_align;
-	}
+	if (loop[n].first == 0)
+		loop[n].first = pos;
 
 	loop[n].last = pos;
 
@@ -287,6 +282,7 @@ void
 MppLoopTab :: handle_recordN(int n)
 {
 	struct umidi20_event *event;
+	struct umidi20_event *temp;
 
 	loop[n].period = 0;
 
@@ -294,6 +290,16 @@ MppLoopTab :: handle_recordN(int n)
 		struct umidi20_event *first = 0;
 		size_t num_first = 0;
 		uint32_t period = 0;
+		uint32_t time_start = 0;
+
+		if (pedal_rec == 0) {
+			UMIDI20_QUEUE_FOREACH_SAFE(event, &loop[n].track[z]->queue, temp) {
+				if (umidi20_event_get_control_address(event) == 0x40) {
+					UMIDI20_IF_REMOVE(&loop[n].track[z]->queue, event);
+					umidi20_event_free(event);
+				}
+			}
+		}
 
 		UMIDI20_QUEUE_FOREACH(event, &loop[n].track[z]->queue) {
 			if (umidi20_event_is_key_start(event)) {
@@ -306,9 +312,20 @@ MppLoopTab :: handle_recordN(int n)
 				}
 			}
 		}
-		if (num_first & 1)
-			continue;
+
 		if (first == 0)
+			continue;
+
+		time_start = first->position;
+
+		UMIDI20_QUEUE_FOREACH(event, &loop[n].track[z]->queue) {
+			if (event->position < time_start)
+				event->position = 0;
+			else
+				event->position -= time_start;
+		}
+
+		if (num_first & 1)
 			continue;
 
 		num_first /= 2;
@@ -388,6 +405,7 @@ MppLoopTab :: handle_clearN(int n)
 	loop[n].state = ST_IDLE;
 	loop[n].first = 0;
 	loop[n].last = 0;
+	loop[n].period = 0;
 
 	needs_update = 1;
 }
@@ -455,7 +473,10 @@ MppLoopTab :: watchdog()
 
 		mw->atomic_lock();
 
-		dur = (loop[n].last - loop[n].first) / 10;
+		if (loop[n].period == 0)
+			dur = (loop[n].last - loop[n].first) / 10;
+		else
+			dur = (loop[n].period * 2) / 10;
 
 		snprintf(buf_dur, sizeof(buf_dur),
 		    "%02u.%02u", (dur / 100) % 100, (dur % 100));

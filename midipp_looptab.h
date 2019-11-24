@@ -30,6 +30,7 @@
 
 struct MppLoopEntry {
 	MppButton *but_trig;
+	QSlider *sli_offset;
 	struct umidi20_track *track[MPP_MAX_TRACKS];
 	qreal scale_factor;
 	qreal repeat_factor;
