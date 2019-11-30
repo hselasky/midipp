@@ -84,7 +84,7 @@ public:
 
 	void send_byte_event_locked(uint8_t);
 
-	int getCurrTransposeScore(void);
+	MppScoreMain *getCurrTransposeView(void);
 
 	QPlainTextEdit *currEditor();
 	MppScoreMain *currScores();

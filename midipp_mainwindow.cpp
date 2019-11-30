@@ -270,10 +270,14 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " *  number of steps. There are 12 steps in an octave.\n"
 	    " * X[+/-]<number>.<subdivision>.<mode>\n"
 	    " * X[+/-]<number>.<subdivision>.0 - fixed transposition. (default)\n"
-	    " * X[+/-]<number>.<subdivision>.1 - dynamic transposition using full\n"
-	    " *   bass score in chord mode.\n"
+	    " * X[+/-]<number>.<subdivision>.1 - dynamic transposition using full score\n"
+	    " *   at given bass offset in chord mode.\n"
 	    " * X[+/-]<number>.<subdivision>.2 - dynamic transposition using remainder of\n"
-	    " *   bass score in chord mode.\n"
+	    " *   score at given bass offset in chord mode.\n"
+	    " * X[+/-]<number>.<subdivision>.3 - dynamic transposition using full score\n"
+	    " *   at given treble offset in chord mode.\n"
+	    " * X[+/-]<number>.<subdivision>.4 - dynamic transposition using remainder of\n"
+	    " *   score at given treble offset in chord mode.\n"
 	    " */\n"
 	    "\n"
 	    "/*\n"
@@ -3167,12 +3171,12 @@ MppMainWindow :: atomic_unlock(void)
 }
 
 /* must be called locked */
-int
-MppMainWindow :: getCurrTransposeScore(void)
+MppScoreMain *
+MppMainWindow :: getCurrTransposeView(void)
 {
-	for (int x = 0; x != MPP_MAX_VIEWS; x++) {
+	for (unsigned x = 0; x != MPP_MAX_VIEWS; x++) {
 		MppScoreMain *sm = scores_main[x];
-		unsigned int y;
+		unsigned y;
 
 		if (sm->keyMode != MM_PASS_NONE_CHORD_PIANO &&
 		    sm->keyMode != MM_PASS_NONE_CHORD_AUX &&
@@ -3184,11 +3188,9 @@ MppMainWindow :: getCurrTransposeScore(void)
 		}
 		if (y == MPP_MAX_CHORD_MAP && sm->lastPedalValue <= 0x40)
 			continue;
-		if (sm->score_future_base[0].dur == 0)
-			continue;
-		return (sm->score_future_base[0].key);
+		return (sm);
 	}
-	return (-1);
+	return (0);
 }
 
 /* must be called locked */

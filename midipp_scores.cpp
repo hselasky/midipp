@@ -1656,6 +1656,8 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 
 		for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
 			switch (ptr->type) {
+			MppScoreMain *sm;
+			MppScoreEntry mse;
 			int ch;
 			int out_key;
 			int out_vel;
@@ -1666,24 +1668,46 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 				if (transpose == MPP_KEY_MIN)
 					break;
 
-				transpose = ptr->value[0] + key_trans;
-
 				switch (ptr->value[1]) {
 				case 1:
-					temp = mainWindow->getCurrTransposeScore();
-					if (temp >= 0)
-						transpose += temp;
-					else
-						transpose = MPP_KEY_MIN;
-					break;
 				case 2:
-					temp = mainWindow->getCurrTransposeScore();
-					if (temp >= 0)
-						transpose += temp % MPP_MAX_BANDS;
-					else
+				case 3:
+				case 4:
+					sm = mainWindow->getCurrTransposeView();
+					temp = ptr->value[0] / MPP_BAND_STEP_12;
+
+					if (sm == 0 || temp < 0 || temp >= MPP_MAX_CHORD_FUTURE) {
 						transpose = MPP_KEY_MIN;
+						break;
+					}
+
+					switch (ptr->value[1]) {
+					case 1:
+						mse = sm->score_future_base[temp];
+						break;
+					case 2:
+						mse = sm->score_future_base[temp];
+						mse.key %= MPP_MAX_BANDS;
+						break;
+					case 3:
+						mse = sm->score_future_treble[temp];
+						break;
+					case 4:
+						mse = sm->score_future_treble[temp];
+						mse.key %= MPP_MAX_BANDS;
+						break;
+					default:
+						memset(&mse, 0, sizeof(mse));
+						break;
+					}
+					if (mse.dur == 0) {
+						transpose = MPP_KEY_MIN;
+						break;
+					}
+					transpose = mse.key + key_trans;
 					break;
 				default:
+					transpose = ptr->value[0] + key_trans;
 					break;
 				}
 				break;

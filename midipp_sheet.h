@@ -94,7 +94,6 @@ public:
 	const QString outputColumn(ssize_t);
 	void	wheelEvent(QWheelEvent *);
 	void	watchdog();
-	int	getTranspose(int);
 
 public slots:
 	void	handleScrollChanged(int);

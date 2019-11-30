@@ -562,32 +562,6 @@ MppSheet::paintEvent(QPaintEvent * event)
 	}
 }
 
-int
-MppSheet :: getTranspose(int trans_mode)
-{
-	int temp;
-
-	switch (trans_mode) {
-	case 1:
-	case 4:
-		temp = mw->getCurrTransposeScore();
-		if (temp >= 0)
-			return (temp);
-		else
-			return (MPP_KEY_MIN);
-	case 2:
-	case 5:
-		temp = mw->getCurrTransposeScore();
-		if (temp >= 0)
-			return (MPP_BAND_REM(temp, MPP_MAX_BANDS));
-		else
-			return (MPP_KEY_MIN);
-	default:
-		break;
-	}
-	return (0);
-}
-
 void
 MppSheet::mousePressEvent(QMouseEvent * event)
 {
@@ -645,8 +619,7 @@ MppSheet::mousePressEvent(QMouseEvent * event)
 			switch (entries_rows[y].type) {
 			case MPP_T_SCORE_SUBDIV:
 				num = entries_rows[y].u.score.num +
-				    entries_rows[y].u.score.trans_number +
-				    getTranspose(entries_rows[y].u.score.trans_mode);
+				    entries_rows[y].u.score.trans_number;
 				chan = (sm->synthChannel +
 				    entries_rows[y].u.score.chan) & 0xF;
 				mw->output_key(MPP_DEFAULT_TRACK(sm->unit), chan, num, 75, 0, 0);
@@ -664,8 +637,7 @@ MppSheet::mousePressEvent(QMouseEvent * event)
 		switch (entries_rows[y].type) {
 		case MPP_T_SCORE_SUBDIV:
 			num = entries_rows[y].u.score.num +
-			    entries_rows[y].u.score.trans_number +
-			    getTranspose(entries_rows[y].u.score.trans_mode);
+			    entries_rows[y].u.score.trans_number;
 			chan = (sm->synthChannel +
 			    entries_rows[y].u.score.chan) & 0xF;
 			mw->output_key(MPP_DEFAULT_TRACK(sm->unit), chan, num, 75, 0, 0);
