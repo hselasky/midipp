@@ -38,15 +38,15 @@ struct MppSheetRow {
 	union {
 		struct {
 			int	chan;
-			short	trans_number;
-			short	trans_mode;
+			int	trans_number;
+			int	trans_mode;
 			int	dur;
 			int	num;
 		}	score;
 		struct {
 			int	chan;
-			short	trans_number;
-			short	trans_mode;
+			int	trans_number;
+			int	trans_mode;
 			int	num;
 		}	macro;
 		struct {
