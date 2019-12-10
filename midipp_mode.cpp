@@ -371,7 +371,9 @@ MppMode :: update_all(void)
 
 	MPP_BLOCKED(spn_base,setValue(base_key));
 	MPP_BLOCKED(sli_delay,setValue(key_delay));
+	handle_delay_label(key_delay);
 	MPP_BLOCKED(sli_contrast,setValue(chord_contrast));
+	handle_contrast_label(chord_contrast);
 	MPP_BLOCKED(spn_input_chan,setValue(channelInput));
 	MPP_BLOCKED(spn_pri_chan,setValue(channel));
 	MPP_BLOCKED(spn_sec_base_chan,setValue(channelBase));
@@ -396,25 +398,20 @@ MppMode :: update_all(void)
 void
 MppMode :: handle_contrast_label(int v)
 {
-	char buf[32];
-	v = ((v - 128) * 100) / 127;
+	v = (v * 100) / 255;
 
 	if (v > 100)
 		v = 100;
-	else if (v < -100)
-		v = -100;
+	else if (v < 0)
+		v = 0;
 
-	snprintf(buf, sizeof(buf),
-	    "Chord(-) vs Melody(+) (%d%%)", v);
-	gb_contrast->setTitle(tr(buf));
+	gb_contrast->setTitle(tr("FIXED and TRANSP mode chord (%1%) vs melody (%2%)").arg(100 - v).arg(v));
 }
 
 void
 MppMode :: handle_delay_label(int v)
 {
-	char buf[32];
-	snprintf(buf, sizeof(buf), "Random T/F/M key delay (%dms)", v);
-	gb_delay->setTitle(tr(buf));
+	gb_delay->setTitle(tr("FIXED and TRANSP mode random key delay (%1ms)").arg(v));
 }
 
 void

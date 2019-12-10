@@ -177,6 +177,7 @@ MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
 			loop[n].sli_offset->setRange(0, 7);
 			loop[n].sli_offset->setOrientation(Qt::Horizontal);
 			loop[n].sli_offset->setValue(0);
+			loop[n].sli_offset->setToolTip(tr("Time offset for loop"));
 			gb_control->addWidget(loop[n].sli_offset, 2*x + 1, y, 1, 1);
 
 			loop[n].but_trig = new MppButton(
