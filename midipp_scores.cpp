@@ -2320,9 +2320,6 @@ MppScoreMain :: outputControl(uint8_t ctrl, uint8_t val)
 			}
 		}
 	}
-
-	if (ctrl == 0x40)
-		lastPedalValue = val;
 }
 
 /* must be called locked */

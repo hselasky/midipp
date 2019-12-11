@@ -3176,19 +3176,11 @@ MppMainWindow :: getCurrTransposeView(void)
 {
 	for (unsigned x = 0; x != MPP_MAX_VIEWS; x++) {
 		MppScoreMain *sm = scores_main[x];
-		unsigned y;
 
-		if (sm->keyMode != MM_PASS_NONE_CHORD_PIANO &&
-		    sm->keyMode != MM_PASS_NONE_CHORD_AUX &&
-		    sm->keyMode != MM_PASS_NONE_CHORD_TRANS)
-			continue;
-		for (y = 0; y != MPP_MAX_CHORD_MAP; y++) {
-			if (sm->score_past[y].dur != 0)
-				break;
-		}
-		if (y == MPP_MAX_CHORD_MAP && sm->lastPedalValue <= 0x40)
-			continue;
-		return (sm);
+		if (sm->keyMode == MM_PASS_NONE_CHORD_PIANO ||
+		    sm->keyMode == MM_PASS_NONE_CHORD_AUX ||
+		    sm->keyMode == MM_PASS_NONE_CHORD_TRANS)
+			return (sm);
 	}
 	return (0);
 }
