@@ -1800,9 +1800,8 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 		head.state.key_lock = 1;
 		whatPlayKeyLocked = in_key;
 	} else if (head.state.key_lock > 0) {
-		if (in_key != (int)whatPlayKeyLocked) {
+		if (in_key != (int)whatPlayKeyLocked)
 			return;
-		}
 	}
 
 	/* play sheet */
@@ -1853,9 +1852,8 @@ void
 MppScoreMain :: handleKeyRelease(int in_key, int vel, uint32_t key_delay)
 {
 	if (head.state.key_lock > 0) {
-		if (in_key != (int)whatPlayKeyLocked) {
+		if (in_key != (int)whatPlayKeyLocked)
 			return;
-		}
 	}
 
 	decrementDuration(vel, key_delay);
