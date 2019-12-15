@@ -221,7 +221,6 @@ public:
 	MppButtonMap *mbm_score_record;
 	MppButtonMap *mbm_key_mode_a;
 	MppButtonMap *mbm_key_mode_b;
-	MppButtonMap *mbm_bpm_generator;
 
 	QPushButton *but_jump[MPP_MAX_LBUTTON];
 	QPushButton *but_compile;

@@ -448,9 +448,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mbm_key_mode_b = new MppKeyModeButtonMap("Input key mode for view B");
 	connect(mbm_key_mode_b, SIGNAL(selectionChanged(int)), this, SLOT(handle_key_mode_b(int)));
 
-	mbm_bpm_generator = new MppButtonMap("BPM generator\0" "OFF\0" "ON\0", 2, 2);
-	connect(mbm_bpm_generator, SIGNAL(selectionChanged(int)), dlg_bpm, SLOT(handle_bpm_enable(int)));
-
 	/* First column */
 
 	tab_play_gl->addWidget(gl_time,0,0,1,2);
@@ -464,7 +461,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_play_gl->addWidget(gl_synth_play, 0,2,2,2);
 	tab_play_gl->addWidget(mbm_score_record, 2,3,1,1);
-	tab_play_gl->addWidget(mbm_bpm_generator, 2,2,1,1);
+	tab_play_gl->addWidget(dlg_bpm->mbm_generator, 2,2,1,1);
 	tab_play_gl->addWidget(gl_bpm, 3,2,1,2);
 
 	tab_play_gl->addWidget(gl_tuning, 4,3,1,1);
@@ -944,7 +941,7 @@ MppMainWindow :: handle_watchdog()
 		value = dlg_bpm->enabled;
 		atomic_unlock();
 
-		MPP_BLOCKED(mbm_bpm_generator,setSelection(value));
+		MPP_BLOCKED(dlg_bpm->mbm_generator, setSelection(value));
 	}
 }
 

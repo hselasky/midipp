@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2016 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,6 +23,7 @@
  * SUCH DAMAGE.
  */
 
+#include "midipp_buttonmap.h"
 #include "midipp_bpm.h"
 #include "midipp_mainwindow.h"
 #include "midipp_scores.h"
@@ -78,6 +79,9 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 	int n;
 
 	mw = parent;
+
+	mbm_generator = new MppButtonMap("BPM generator\0" "OFF\0" "ON\0", 2, 2);
+	connect(mbm_generator, SIGNAL(selectionChanged(int)), this, SLOT(handle_bpm_enable(int)));
 
 	gl = new QGridLayout(this);
 
@@ -235,20 +239,19 @@ MppBpm :: handle_reload_all()
 void
 MppBpm :: handle_reset_all()
 {
-	int n;
-
-	for (n = 0; n != MPP_MAX_VIEWS; n++) {
-		cbx_out_view[n]->setCheckState(Qt::Unchecked);
-		cbx_sync_view[n]->setCheckState(Qt::Unchecked);
+	for (unsigned n = 0; n != MPP_MAX_VIEWS; n++) {
+		MPP_BLOCKED(cbx_out_view[n], setCheckState(Qt::Unchecked));
+		MPP_BLOCKED(cbx_sync_view[n], setCheckState(Qt::Unchecked));
 	}
 
-	cbx_midi_beat->setCheckState(Qt::Unchecked);
+	MPP_BLOCKED(cbx_midi_beat, setCheckState(Qt::Unchecked));
+	MPP_BLOCKED(mbm_generator, setSelection(0));
 
 	mw->atomic_lock();
 
-	for (n = 0; n != MPP_MAX_VIEWS; n++) {
+	for (unsigned n = 0; n != MPP_MAX_VIEWS; n++) {
 		view_out[n] = 0;
-		view_sync[n] = (n == 0);
+		view_sync[n] = 0;
 	}
 
 	beat = 0;

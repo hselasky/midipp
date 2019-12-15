@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2016 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2019 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,6 +56,7 @@ public:
 	MppCheckBox *cbx_out_view[MPP_MAX_VIEWS];
 	MppCheckBox *cbx_sync_view[MPP_MAX_VIEWS];
 	MppCheckBox *cbx_midi_beat;
+  	MppButtonMap *mbm_generator;
 
 	MppGroupBox *gb_ctrl;
 	MppGroupBox *gb_scale;
