@@ -49,7 +49,9 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Tue Jul 16 2019 HPS hps@selasky.org 2.0.3-1
+* Tue Dec 19 2019 HPS hps@selasky.org 2.0.4-1
+* Tue Dec 19 2019 HPS hps@selasky.org 2.0.3-1
+- Bugfixes and GUI updates.
 * Tue Jul 16 2019 HPS hps@selasky.org 2.0.2-1
 - Minor bugfix release.
 * Sun Apr 21 2019 HPS hps@selasky.org 2.0.1-1
