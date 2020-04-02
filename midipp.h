@@ -129,8 +129,13 @@
 #define	MPP_MAX_WIDGETS		32
 #define	MPP_PIANO_TAB_LABELS	10	/* hard coded */
 #define	MPP_POPUP_DELAY		2000	/* ms */
-#define	MPP_CHAN_ANY		1
-#define	MPP_CHAN_NONE		2
+
+#define	MPP_CHAN_NONE_MASK	(1 << 1)
+#define	MPP_CHAN_ANY_MASK	(1 << 2)
+#define	MPP_CHAN_MPE_MASK	(1 << 3)
+#define	MPP_CHAN_NONE		-1
+#define	MPP_CHAN_ANY		-2
+#define	MPP_CHAN_MPE 		-3	/* multi polyphonic expression */
 #define	MPP_DEV_ALL		1
 #define	MPP_DEV_NONE		2
 
@@ -357,7 +362,7 @@ public:
 
 extern Mpp Mpp;
 
-extern const QString MppChanName(int, int = 0);
+extern const QString MppChanName(int);
 extern const QString MppDevName(int, int = 0);
 extern QString MppBaseName(const QString &);
 extern char *MppQStringToAscii(const QString &);

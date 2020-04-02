@@ -293,20 +293,28 @@ MppSettings :: doLoad(void)
 
 			if (delayNoise < 0 || delayNoise > 255)
 				delayNoise = 0;
-			if (inputChannel < 0 || inputChannel > 15)
-				inputChannel = -1;
+			if (inputChannel < 0 || inputChannel > 15) {
+				switch (inputChannel) {
+				case MPP_CHAN_ANY:
+				case MPP_CHAN_MPE:
+					break;
+				default:
+					inputChannel = MPP_CHAN_ANY;
+					break;
+				}
+			}
 			if (synthChannel < 0 || synthChannel > 15)
 				synthChannel = 0;
 			if (synthChannelBase < 0 || synthChannelBase > 15)
-				synthChannelBase = -1;
+				synthChannelBase = MPP_CHAN_NONE;
 			if (synthChannelTreb < 0 || synthChannelTreb > 15)
-				synthChannelTreb = -1;
+				synthChannelTreb = MPP_CHAN_NONE;
 			if (auxChannel < 0 || auxChannel > 15)
-				auxChannel = -1;
+				auxChannel = MPP_CHAN_NONE;
 			if (auxChannelBase < 0 || auxChannelBase > 15)
-				auxChannelBase = -1;
+				auxChannelBase = MPP_CHAN_NONE;
 			if (auxChannelTreb < 0 || auxChannelTreb > 15)
-				auxChannelTreb = -1;
+				auxChannelTreb = MPP_CHAN_NONE;
 			if (synthDevice < 0 || synthDevice >= MPP_MAX_DEVS)
 				synthDevice = -1;
 			if (synthDeviceBase < 0 || synthDeviceBase >= MPP_MAX_DEVS)

@@ -3228,7 +3228,7 @@ MppMainWindow :: ScreenShot(QApplication &app)
 	diag3.exec();
 	MppScreenShot(&diag3, app);
 
-	MppChanSelDiag diag4(this, 0, MPP_CHAN_ANY);
+	MppChanSelDiag diag4(this, 0, 1 << (-MPP_CHAN_ANY));
 	diag4.exec();
 	MppScreenShot(&diag4, app);
 

@@ -60,21 +60,22 @@ Mpp :: ~Mpp()
 Q_DECL_EXPORT class Mpp Mpp;
 
 Q_DECL_EXPORT const QString
-MppChanName(int channel, int other)
+MppChanName(int channel)
 {
-	if (channel == 9)
-		return (QString("DRUMS"));
-
 	if (channel >= 0 && channel <= 15)
 		return (QString("CH::%1").arg(channel + 1));
 
-	switch (other) {
+	switch (channel) {
+	case 9:
+		return (QString("DRUMS"));
 	case MPP_CHAN_ANY:
 		return (QString("CH::ANY"));
 	case MPP_CHAN_NONE:
 		return (QString("CH::NONE"));
+	case MPP_CHAN_MPE:
+		return (QString("CH::MPE"));
 	default:
-		return (QString("CH::UNDEF"));
+		return (QString("CH::UND"));
 	}
 }
 

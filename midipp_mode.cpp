@@ -87,7 +87,7 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	connect(sli_delay, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 	handle_delay_label(sli_delay->value());
 
-	spn_input_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_ANY);
+	spn_input_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_ANY_MASK | MPP_CHAN_MPE_MASK);
 	connect(spn_input_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
 	spn_pri_chan = new MppChanSel(sm->mainWindow, 0, 0);
@@ -96,13 +96,13 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	spn_pri_dev = new MppDevSel(-1, MPP_DEV_ALL);
 	connect(spn_pri_dev, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
-	spn_sec_base_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE);
+	spn_sec_base_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE_MASK);
 	connect(spn_sec_base_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
 	spn_sec_base_dev = new MppDevSel(-1, MPP_DEV_ALL);
 	connect(spn_sec_base_dev, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
-	spn_sec_treb_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE);
+	spn_sec_treb_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE_MASK);
 	connect(spn_sec_treb_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
 	spn_sec_treb_dev = new MppDevSel(-1, MPP_DEV_ALL);
@@ -120,13 +120,13 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	spn_sec_treb_volume->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
 	connect(spn_sec_treb_volume, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
-	spn_aux_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE);
+	spn_aux_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE_MASK);
 	connect(spn_aux_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
-	spn_aux_base_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE);
+	spn_aux_base_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE_MASK);
 	connect(spn_aux_base_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
-	spn_aux_treb_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE);
+	spn_aux_treb_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE_MASK);
 	connect(spn_aux_treb_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 	
 	but_note_mode = new MppButtonMap("Output note mode\0" "Normal\0" "SysEx\0", 2, 2);
@@ -419,14 +419,14 @@ MppMode :: handle_reset()
 {
 	sli_contrast->setValue(128);
 	sli_delay->setValue(25);
-	spn_input_chan->setValue(-1);
+	spn_input_chan->setValue(MPP_CHAN_ANY);
 	spn_base->setValue(MPP_DEFAULT_BASE_KEY);
 	spn_pri_chan->setValue(0);
-	spn_sec_base_chan->setValue(-1);
-	spn_sec_treb_chan->setValue(-1);
-	spn_aux_chan->setValue(-1);
-	spn_aux_base_chan->setValue(-1);
-	spn_aux_treb_chan->setValue(-1);
+	spn_sec_base_chan->setValue(MPP_CHAN_NONE);
+	spn_sec_treb_chan->setValue(MPP_CHAN_NONE);
+	spn_aux_chan->setValue(-MPP_CHAN_NONE);
+	spn_aux_base_chan->setValue(MPP_CHAN_NONE);
+	spn_aux_treb_chan->setValue(MPP_CHAN_NONE);
 	spn_pri_dev->setValue(-1);
 	spn_sec_base_dev->setValue(-1);
 	spn_sec_treb_dev->setValue(-1);

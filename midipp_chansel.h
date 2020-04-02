@@ -57,7 +57,7 @@ class MppChanSel : public QPushButton
 	Q_OBJECT;
 
 public:
-	MppChanSel(MppMainWindow *, int, int);
+	MppChanSel(MppMainWindow *, int = 0, int = 0);
 	~MppChanSel();
 
 	void setChannelMask(uint16_t);
@@ -65,7 +65,7 @@ public:
 	int value();
 private:
 	int channel;
-	int haveAny;
+	int maskAny;
 	uint16_t channelMask;
 	MppMainWindow *mw;
 

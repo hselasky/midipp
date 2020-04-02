@@ -70,7 +70,7 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 		} else {
 			str = "empty";
 		}
-		gb_import->addWidget(new QLabel(MppChanName(x,0) + QString(" is ") + QString(str)),
+		gb_import->addWidget(new QLabel(MppChanName(x) + QString(" is ") + QString(str)),
 		    t,0+u,1,1,Qt::AlignLeft|Qt::AlignVCenter);
 
 		cbx_import[x] = new MppCheckBox();
