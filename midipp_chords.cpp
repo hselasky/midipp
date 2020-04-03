@@ -506,7 +506,9 @@ MppScoreMatchPattern12(const QString &pattern, const QString &str, int &add, int
 					goto add_num;
 				}
 			add_num:
-				if (u + 1 == str.length() || str[u + 1] == '/') {
+				if (u == str.length()) {
+					return (false);
+				} else if (u + 1 == str.length() || str[u + 1] == '/') {
 					if (str[u].isDigit() == 0 ||
 					    str[u].digitValue() == 0)
 						return (false);
