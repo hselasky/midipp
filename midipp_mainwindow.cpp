@@ -2081,27 +2081,26 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 			chan = umidi20_event_get_channel(event) & 0x0F;
 			key = umidi20_event_get_key(event) & 0x7F;
-
-			if (chan != 0)
-				sm->inputKeyToChannel[key] = chan;
-		  
-			key = key * MPP_BAND_STEP_12;
 			vel = umidi20_event_get_velocity(event);
 
-			sm->handleMidiKeyPressLocked(key, vel);
+			if (sm->inputChannel == MPP_CHAN_MPE && chan != 0) {
+				/* make sure key start is paired with key end */
+				if (sm->inputKeyToChannel[key] != 0)
+					sm->handleMidiKeyReleaseLocked(key * MPP_BAND_STEP_12, vel);
+				sm->inputKeyToChannel[key] = chan;
+			}
+			sm->handleMidiKeyPressLocked(key * MPP_BAND_STEP_12, vel);
 
 		} else if (umidi20_event_is_key_end(event)) {
 
 			chan = umidi20_event_get_channel(event) & 0x0F;
 			key = umidi20_event_get_key(event) & 0x7F;
-
-			if (chan != 0)
-				sm->inputKeyToChannel[key] = 0;
-
-			key = key * MPP_BAND_STEP_12;
 			vel = umidi20_event_get_velocity(event);
 
-			sm->handleMidiKeyReleaseLocked(key, vel);
+			if (sm->inputChannel == MPP_CHAN_MPE && chan != 0)
+				sm->inputKeyToChannel[key] = 0;
+
+			sm->handleMidiKeyReleaseLocked(key * MPP_BAND_STEP_12, vel);
 
 		} else if (mw->do_instr_check(event, mpe_channel)) {
 
