@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2020 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,14 +65,18 @@ public:
 	void do_clock_stats(void);
 	int do_extended_alloc(int key, int refcount);
 	void do_key_press(int key, int vel, int dur);
+  	void do_key_pitch(int key, int pressure);
 	void do_key_pressure(int key, int pressure);
+	void do_key_control(int key, uint8_t control, int value);
 	void output_key(int index, int chan, int key, int vel, int delay, int dur);
-	void output_key_pressure(int index, int chan, int key, int pressure, int delay = 0);
+	void output_key_pitch(int index, int chan, int key, int amount, uint32_t delay = 0);
+	void output_key_control(int index, int chan, int key, uint8_t control, int value, uint32_t delay = 0);
+	void output_key_pressure(int index, int chan, int key, int pressure, uint32_t delay = 0);
 
 	uint32_t get_time_offset(void);
 
 	uint8_t noise8(uint8_t factor);
-	uint8_t do_instr_check(struct umidi20_event *event, uint8_t *pchan);
+	uint8_t do_instr_check(struct umidi20_event *event, int = 0);
 	bool check_play(uint8_t index, uint8_t chan, uint32_t off, uint8_t = MPP_MAGIC_DEVNO);
 	bool check_record(uint8_t index, uint8_t chan, uint32_t off);
 

@@ -70,6 +70,8 @@ public:
 	void handleMidiKeyPressLocked(int key, int vel);
 	void handleMidiKeyReleaseLocked(int key, int vel);
 	void handleKeyPressChord(int key, int vel, uint32_t key_delay);
+	void handleKeyPitchChord(int in_key, int amount, uint32_t key_delay);
+	void handleKeyControlChord(int in_key, uint8_t control, int value, uint32_t key_delay);
 	void handleKeyPressureChord(int key, int vel, uint32_t key_delay);
 	void handleKeyReleaseChord(int key, int vel, uint32_t key_delay);
 	void handleKeyPressSub(int, int, uint32_t, int, int);
@@ -157,6 +159,7 @@ public:
 	int chordTranspose;
 
 	int8_t inputChannel;
+	uint8_t inputKeyToChannel[128];
 	uint8_t synthChannel;
 	int8_t synthChannelBase;
 	int8_t synthChannelTreb;

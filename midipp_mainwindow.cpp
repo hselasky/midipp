@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2020 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -213,7 +213,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_help->setLineWrapMode(QPlainTextEdit::NoWrap);
 	tab_help->setPlainText(tr(
 	    "/*\n"
-	    " * Copyright (c) 2009-2019 Hans Petter Selasky. All rights reserved.\n"
+	    " * Copyright (c) 2009-2020 Hans Petter Selasky. All rights reserved.\n"
 	    " */\n"
 
 	    "\n"
@@ -1086,7 +1086,7 @@ load_file:
 	        if (umidi20_event_is_voice(event) ||
 		    umidi20_event_is_sysex(event)) {
 
-		    if (do_instr_check(event, NULL) != 0) {
+		    if (do_instr_check(event) != 0) {
 			event_copy = NULL;
 		    } else {
 			event_copy = umidi20_event_copy(event, 0);
@@ -1711,6 +1711,65 @@ MppMainWindow :: do_key_press(int key, int vel, int dur)
 }
 
 void
+MppMainWindow :: do_key_pitch(int key, int amount)
+{
+	struct mid_data *d = &mid_data;
+
+	/* allow amount to span two octaves */
+	amount = key + ((amount - 8192) * (12 * MPP_BAND_STEP_12 / 4096));
+
+	/* range check absolute key */
+	if (amount >= MPP_MAX_KEYS)
+		amount = MPP_MAX_KEYS - 1;
+	else if (amount < 0)
+		amount = 0;
+
+	/* range check(s) */
+	if (key >= MPP_MAX_KEYS || key < 0)
+		return;
+
+	switch (noteMode) {
+	case MM_NOTEMODE_SYSEX:
+		key = do_extended_alloc(key, 0);
+		if (key < 0)
+			return;
+		break;
+	default:
+		key = (key + MPP_BAND_STEP_24) / MPP_BAND_STEP_12;
+		if (key >= 128 || key < 0)
+			return;
+		break;
+	}
+
+	mid_extended_key_pitch(d, key, amount);
+}
+
+void
+MppMainWindow :: do_key_control(int key, uint8_t control, int value)
+{
+	struct mid_data *d = &mid_data;
+
+	/* range check(s) */
+	if (key >= MPP_MAX_KEYS || key < 0)
+		return;
+
+	switch (noteMode) {
+	case MM_NOTEMODE_SYSEX:
+		key = do_extended_alloc(key, 0);
+		if (key < 0)
+			return;
+		break;
+	default:
+		key = (key + MPP_BAND_STEP_24) / MPP_BAND_STEP_12;
+		if (key >= 128 || key < 0)
+			return;
+		break;
+	}
+
+	mid_extended_key_control(d, key, control, value);
+}
+
+void
 MppMainWindow :: do_key_pressure(int key, int pressure)
 {
 	struct mid_data *d = &mid_data;
@@ -1809,6 +1868,9 @@ MppMainWindow :: handle_stop(int flag)
 	    /* SYSEX mode cleanup */
 	    memset(extended_keys, 0, sizeof(extended_keys));
 
+	    /* MPE mode cleanup */
+	    memset(scores_main[z]->inputKeyToChannel, 0, sizeof(scores_main[z]->inputKeyToChannel));
+
 	    /* check if we should kill the pedal, modulation and pitch */
 	    if (!(flag & 1)) {
 		scores_main[z]->outputControl(0x40, 0);
@@ -1864,6 +1926,7 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 	uint32_t what;
 	uint8_t chan;
 	uint8_t ctrl;
+	uint8_t mpe_channel;
 	int key;
 	int vel;
 	int n;
@@ -1913,9 +1976,14 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			continue;
 
 		/* filter on channel, if any */
-		if ((what & UMIDI20_WHAT_CHANNEL) && (sm->inputChannel > -1)) {
-			if ((uint8_t)sm->inputChannel != umidi20_event_get_channel(event))
-					continue;
+		if (what & UMIDI20_WHAT_CHANNEL) {
+			if (sm->inputChannel > -1 &&
+			    (uint8_t)sm->inputChannel != umidi20_event_get_channel(event))
+				continue;
+			mpe_channel = (sm->inputChannel == MPP_CHAN_MPE &&
+			    (umidi20_event_get_channel(event) & 0x0F) != 0);
+		} else {
+			mpe_channel = 0;
 		}
 
 		chan = sm->synthChannel;
@@ -1927,9 +1995,31 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 			/* command event */
 		} else if (umidi20_event_is_pitch_bend(event)) {
 
+			chan = umidi20_event_get_channel(event) & 0x0F;
 			vel = umidi20_event_get_pitch_value(event);
 
-			sm->outputPitch(vel);
+			if (sm->inputChannel == MPP_CHAN_MPE && chan != 0) {
+				for (key = 0; key != 128; key++) {
+					if (sm->inputKeyToChannel[key] != chan)
+						continue;
+
+					switch (sm->keyMode) {
+					case MM_PASS_ALL:
+						mw->output_key_pitch(MPP_DEFAULT_TRACK(sm->unit),
+						    sm->synthChannel, key * MPP_BAND_STEP_12, vel);
+						break;
+					case MM_PASS_NONE_CHORD_PIANO:
+					case MM_PASS_NONE_CHORD_AUX:
+					case MM_PASS_NONE_CHORD_TRANS:
+						sm->handleKeyPitchChord(key * MPP_BAND_STEP_12, vel, 0);
+						break;
+					default:
+						break;
+					}
+				}
+			} else {
+				sm->outputPitch(vel);
+			}
 
 		} else if (what & UMIDI20_WHAT_KEY_PRESSURE) {
 
@@ -1953,42 +2043,100 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 		} else if (what & UMIDI20_WHAT_CHANNEL_PRESSURE) {
 
 			vel = umidi20_event_get_pressure(event) & 0x7F;
+			chan = umidi20_event_get_channel(event) & 0x0F;
 
-			switch (sm->keyMode) {
-			case MM_PASS_ALL:
-			case MM_PASS_NONE_CHORD_PIANO:
-			case MM_PASS_NONE_CHORD_AUX:
-			case MM_PASS_NONE_CHORD_TRANS:
-				sm->outputChanPressure(vel);
-				break;
-			default:
-				break;
+			if (sm->inputChannel == MPP_CHAN_MPE && chan != 0) {
+				for (key = 0; key != 128; key++) {
+					if (sm->inputKeyToChannel[key] != chan)
+						continue;
+
+					switch (sm->keyMode) {
+					case MM_PASS_ALL:
+						mw->output_key_pressure(MPP_DEFAULT_TRACK(sm->unit),
+						    sm->synthChannel, key * MPP_BAND_STEP_12, vel, 0);
+						break;
+					case MM_PASS_NONE_CHORD_PIANO:
+					case MM_PASS_NONE_CHORD_AUX:
+					case MM_PASS_NONE_CHORD_TRANS:
+						sm->handleKeyPressureChord(key * MPP_BAND_STEP_12, vel, 0);
+						break;
+					default:
+						break;
+					}
+				}
+			} else {
+				switch (sm->keyMode) {
+				case MM_PASS_ALL:
+				case MM_PASS_NONE_CHORD_PIANO:
+				case MM_PASS_NONE_CHORD_AUX:
+				case MM_PASS_NONE_CHORD_TRANS:
+					sm->outputChanPressure(vel);
+					break;
+				default:
+					break;
+				}
 			}
 
 		} else if (umidi20_event_is_key_start(event)) {
 
-			key = (umidi20_event_get_key(event) & 0x7F) * MPP_BAND_STEP_12;
+			chan = umidi20_event_get_channel(event) & 0x0F;
+			key = umidi20_event_get_key(event) & 0x7F;
+
+			if (chan != 0)
+				sm->inputKeyToChannel[key] = chan;
+		  
+			key = key * MPP_BAND_STEP_12;
 			vel = umidi20_event_get_velocity(event);
 
 			sm->handleMidiKeyPressLocked(key, vel);
 
 		} else if (umidi20_event_is_key_end(event)) {
 
-			key = (umidi20_event_get_key(event) & 0x7F) * MPP_BAND_STEP_12;
+			chan = umidi20_event_get_channel(event) & 0x0F;
+			key = umidi20_event_get_key(event) & 0x7F;
+
+			if (chan != 0)
+				sm->inputKeyToChannel[key] = 0;
+
+			key = key * MPP_BAND_STEP_12;
 			vel = umidi20_event_get_velocity(event);
 
 			sm->handleMidiKeyReleaseLocked(key, vel);
 
-		} else if (mw->do_instr_check(event, &chan)) {
+		} else if (mw->do_instr_check(event, mpe_channel)) {
 
 		} else if ((what & UMIDI20_WHAT_CONTROL_VALUE) &&
 		    (ctrl < 120)) {
 
-			/* Only pass non-channel-mode control messages */
+			/* Only pass channel-mode control messages */
 
+			chan = umidi20_event_get_channel(event) & 0x0F;
 			vel = umidi20_event_get_control_value(event);
 
-			sm->outputControl(ctrl, vel);
+			if (sm->inputChannel == MPP_CHAN_MPE && chan != 0) {
+				vel *= MPP_BAND_STEP_12;
+
+				for (key = 0; key != 128; key++) {
+					if (sm->inputKeyToChannel[key] != chan)
+						continue;
+
+					switch (sm->keyMode) {
+					case MM_PASS_ALL:
+						mw->output_key_control(MPP_DEFAULT_TRACK(sm->unit),
+						    sm->synthChannel, key * MPP_BAND_STEP_12, ctrl, vel, 0);
+						break;
+					case MM_PASS_NONE_CHORD_PIANO:
+					case MM_PASS_NONE_CHORD_AUX:
+					case MM_PASS_NONE_CHORD_TRANS:
+						sm->handleKeyControlChord(key * MPP_BAND_STEP_12, ctrl, vel, 0);
+						break;
+					default:
+						break;
+					}
+				}
+			} else {
+				sm->outputControl(ctrl, vel);
+			}
 		}
 	}
 	mw->atomic_unlock();
@@ -2160,7 +2308,7 @@ MidiEventTxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 
 /* must be called locked */
 uint8_t
-MppMainWindow :: do_instr_check(struct umidi20_event *event, uint8_t *pchan)
+MppMainWindow :: do_instr_check(struct umidi20_event *event, int dry_run)
 {
 	if (umidi20_event_get_what(event) & UMIDI20_WHAT_CONTROL_VALUE) {
 		uint8_t addr;
@@ -2172,28 +2320,30 @@ MppMainWindow :: do_instr_check(struct umidi20_event *event, uint8_t *pchan)
 		chan = umidi20_event_get_channel(event) & 0xF;
 
 		if (addr == 0x00) {
+			if (dry_run)
+				return (1);
 			instr[chan].bank &= 0x007F;
 			instr[chan].bank |= (val << 7);
 			instr[chan].updated |= 2;
 			instr[chan].muted = 0;
 			instrUpdated = 1;
-			if (pchan != NULL)
-				*pchan = chan;
 			return (1);
 		} else if (addr == 0x20) {
+			if (dry_run)
+				return (1);
 			instr[chan].bank &= 0xFF80;
 			instr[chan].bank |= (val & 0x7F);
 			instr[chan].updated |= 2;
 			instr[chan].muted = 0;
 			instrUpdated = 1;
-			if (pchan != NULL)
-				*pchan = chan;
 			return (1);
 		}
 	} else if (umidi20_event_get_what(event) & UMIDI20_WHAT_PROGRAM_VALUE) {
 		uint8_t val;
 		uint8_t chan;
 
+		if (dry_run)
+			return (1);
 		val = umidi20_event_get_program_number(event);
 		chan = umidi20_event_get_channel(event) & 0xF;
 
@@ -2201,8 +2351,6 @@ MppMainWindow :: do_instr_check(struct umidi20_event *event, uint8_t *pchan)
 		instr[chan].updated |= 2;
 		instr[chan].muted = 0;
 		instrUpdated = 1;
-		if (pchan != NULL)
-			*pchan = chan;
 		return (1);
 	}
 	return (0);
@@ -2867,7 +3015,61 @@ MppMainWindow :: output_key(int index, int chan, int key, int vel, int delay, in
 
 /* must be called locked */
 void
-MppMainWindow :: output_key_pressure(int index, int chan, int key, int pressure, int delay)
+MppMainWindow :: output_key_pitch(int index, int chan, int key, int amount, uint32_t delay)
+{
+	struct mid_data *d = &mid_data;
+
+	/* output pitch to all playback device(s) */
+	if (check_play(index, chan, 0)) {
+		mid_delay(d, delay);
+		do_key_pitch(key, amount);
+	}
+
+	/* output pitch to recording device(s) */
+	if (check_record(index, chan, 0)) {
+		mid_delay(d, delay);
+		do_key_pitch(key, amount);
+	}
+
+	/* output pitch to loop recording, if any */
+	for (unsigned n = 0; n != MPP_LOOP_MAX; n++) {
+		if (tab_loop->check_record(index, chan, n)) {
+			mid_delay(d, delay);
+			do_key_pitch(key, amount);
+		}
+	}
+}
+
+/* must be called locked */
+void
+MppMainWindow :: output_key_control(int index, int chan, int key, uint8_t control, int value, uint32_t delay)
+{
+	struct mid_data *d = &mid_data;
+
+	/* output control to all playback device(s) */
+	if (check_play(index, chan, 0)) {
+		mid_delay(d, delay);
+		do_key_control(key, control, value);
+	}
+
+	/* output control to recording device(s) */
+	if (check_record(index, chan, 0)) {
+		mid_delay(d, delay);
+		do_key_control(key, control, value);
+	}
+
+	/* output control to loop recording, if any */
+	for (unsigned n = 0; n != MPP_LOOP_MAX; n++) {
+		if (tab_loop->check_record(index, chan, n)) {
+			mid_delay(d, delay);
+			do_key_control(key, control, value);
+		}
+	}
+}
+
+/* must be called locked */
+void
+MppMainWindow :: output_key_pressure(int index, int chan, int key, int pressure, uint32_t delay)
 {
 	struct mid_data *d = &mid_data;
 

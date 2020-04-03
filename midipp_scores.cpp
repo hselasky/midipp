@@ -1531,6 +1531,67 @@ MppScoreMain :: handleKeyPressChord(int in_key, int vel, uint32_t key_delay)
 
 /* must be called locked */
 void
+MppScoreMain :: handleKeyPitchChord(int in_key, int vel, uint32_t key_delay)
+{
+	int bk = baseKey / MPP_BAND_STEP_12;
+	int ck = in_key / MPP_BAND_STEP_12;
+	MppScoreEntry *pn;
+	int off;
+
+	off = ck - bk;
+	if (off < 0 || off >= MPP_MAX_CHORD_MAP)
+		return;
+
+	pn = &score_past[off];
+
+	if (pn->dur != 0) {
+		/* check for primary event */
+		if (pn->channel > -1) {
+			mainWindow->output_key_pitch(pn->track, pn->channel,
+			    pn->key, vel, key_delay);
+		}
+
+		/* check for secondary event */
+		if (pn->channelSec > -1) {
+			mainWindow->output_key_pitch(pn->trackSec, pn->channelSec,
+			    pn->key, vel, key_delay);
+		}
+	}
+}
+
+/* must be called locked */
+void
+MppScoreMain :: handleKeyControlChord(int in_key, uint8_t control, int value,
+    uint32_t key_delay)
+{
+	int bk = baseKey / MPP_BAND_STEP_12;
+	int ck = in_key / MPP_BAND_STEP_12;
+	MppScoreEntry *pn;
+	int off;
+
+	off = ck - bk;
+	if (off < 0 || off >= MPP_MAX_CHORD_MAP)
+		return;
+
+	pn = &score_past[off];
+
+	if (pn->dur != 0) {
+		/* check for primary event */
+		if (pn->channel > -1) {
+			mainWindow->output_key_control(pn->track, pn->channel,
+			    pn->key, control, value, key_delay);
+		}
+
+		/* check for secondary event */
+		if (pn->channelSec > -1) {
+			mainWindow->output_key_control(pn->trackSec, pn->channelSec,
+			    pn->key, control, value, key_delay);
+		}
+	}
+}
+
+/* must be called locked */
+void
 MppScoreMain :: handleKeyPressureChord(int in_key, int vel, uint32_t key_delay)
 {
 	int bk = baseKey / MPP_BAND_STEP_12;
