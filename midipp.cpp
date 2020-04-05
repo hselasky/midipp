@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2020 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -62,12 +62,13 @@ Q_DECL_EXPORT class Mpp Mpp;
 Q_DECL_EXPORT const QString
 MppChanName(int channel)
 {
-	if (channel >= 0 && channel <= 15)
-		return (QString("CH::%1").arg(channel + 1));
-
 	switch (channel) {
+	case 0 ... 8:
+		return (QString("CH::%1").arg(channel + 1));
 	case 9:
 		return (QString("DRUMS"));
+	case 10 ... 15:
+		return (QString("CH::%1").arg(channel + 1));
 	case MPP_CHAN_ANY:
 		return (QString("CH::ANY"));
 	case MPP_CHAN_NONE:
