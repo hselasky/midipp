@@ -2532,8 +2532,6 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 	convIndex = 0;
 	first_score = 0;
 
-	atomic_lock();
-
 	UMIDI20_QUEUE_FOREACH(event, &im_track->queue) {
 
 		if (!(umidi20_event_get_what(event) & UMIDI20_WHAT_CHANNEL))
@@ -2544,8 +2542,6 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 			chan_mask |= (1 << chan);
 		}
 	}
-
-	atomic_unlock();
 
 	if (flags & MIDI_FLAG_DIALOG) {
 
@@ -2569,8 +2565,6 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 	/* if no channels, just return */
 	if (chan_mask == 0)
 		return;
-
-	atomic_lock();
 
 	umidi20_track_compute_max_min(im_track);
 
@@ -2694,8 +2688,6 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 		}
 	}
 
-	atomic_unlock();
-
 	if (flags & MIDI_FLAG_STRING) {
 		snprintf(buf, sizeof(buf), "%5u", (convIndex + 15) / 16);
 
@@ -2735,8 +2727,26 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 void
 MppMainWindow :: handle_midi_file_import(int n)
 {
-	import_midi_track(track[0], MIDI_FLAG_DIALOG |
+	struct umidi20_track *track_merged;
+	struct umidi20_event *event;
+	struct umidi20_event *event_copy;
+
+	track_merged = umidi20_track_alloc();
+
+	atomic_lock();
+	for (unsigned int x = 0; x != MPP_MAX_TRACKS; x++) {
+		UMIDI20_QUEUE_FOREACH(event, &track[x]->queue) {
+			event_copy = umidi20_event_copy(event, 0);
+			umidi20_event_queue_insert(&track_merged->queue,
+			    event_copy, UMIDI20_CACHE_INPUT);
+		}
+	}
+	atomic_unlock();
+
+	import_midi_track(track_merged, MIDI_FLAG_DIALOG |
 	    MIDI_FLAG_MULTI_CHAN | MIDI_FLAG_ERASE_DEST, 0, n);
+
+	umidi20_track_free(track_merged);
 }
 
 void
