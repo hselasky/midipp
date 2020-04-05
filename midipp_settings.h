@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2012-2016 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2012-2020 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,22 +28,23 @@
 
 #include "midipp.h"
 
-class MppSettings : public QSettings 
-{
-	Q_OBJECT;
+#define	MPP_MAX_SETTINGS 5
 
+struct MppSettingsSave {
+	int instruments;
+	int viewmode;
+	int devices;
+	int font;
+	int database_url;
+	int database_data;
+	int custom;
+	int shortcut;
+};
+
+class MppSettingsSub : public QSettings {
 public:
-	MppSettings(MppMainWindow *_parent, const QString & fname);
-	~MppSettings(void);
-
-	int save_instruments;
-	int save_viewmode;
-	int save_devices;
-	int save_font;
-	int save_database_url;
-	int save_database_data;
-	int save_custom;
-	int save_shortcut;
+	MppSettingsSub(MppMainWindow *_parent, const QString &fname);
+	~MppSettingsSub(void) {};
 
 	QString stringDefault(const QString &, const QString &);
 	QByteArray byteArrayDefault(const QString &, const QByteArray &);
@@ -54,22 +55,39 @@ public:
 
 	void doSave(void);
 	void doLoad(void);
+	void doClear(void);
 
+	MppMainWindow *mw;
+
+	MppSettingsSave save;
+};
+
+class MppSettings : public QObject
+{
+	Q_OBJECT;
+
+public:
+	MppSettings(MppMainWindow *_parent);
+	~MppSettings(void);
+
+	MppSettingsSub *setting[MPP_MAX_SETTINGS];
+  
 	MppSettingsWhat *mpp_what;
 
-	QPushButton *but_config_save;
+	MppGroupBox *gb_save_preset;
+	MppGroupBox *gb_load_preset;
+
 	QPushButton *but_config_clean;
 	QPushButton *but_config_what;
-	QPushButton *but_config_load;
 
 	MppMainWindow *mw;
 
 public slots:
 
-	void handle_save(void);
+	void handle_save(int);
 	void handle_clean(void);
 	void handle_what(void);
-	void handle_load(void);
+	void handle_load(int);
 };
 
 class MppSettingsWhat : public QDialog
@@ -80,7 +98,7 @@ public:
 	MppSettingsWhat(MppSettings *_parent);
 	~MppSettingsWhat(void);
 
-	void doShow(void);
+	void doShow(const MppSettingsSave &);
 
 	MppSettings *ms;
 

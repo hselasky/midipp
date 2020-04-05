@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2012-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2012-2020 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,9 @@
 #include "midipp_mode.h"
 #include "midipp_import.h"
 #include "midipp_database.h"
+#include "midipp_groupbox.h"
 #include "midipp_checkbox.h"
+#include "midipp_button.h"
 #include "midipp_buttonmap.h"
 #include "midipp_custom.h"
 #include "midipp_shortcut.h"
@@ -39,29 +41,56 @@
 #include "midipp_instrument.h"
 #include "midipp_devsel.h"
 
-MppSettings :: MppSettings(MppMainWindow *_parent, const QString & fname)
-  : QSettings(fname)
+MppSettingsSub :: MppSettingsSub(MppMainWindow *_parent, const QString &fname) :
+    QSettings(fname), mw(_parent)
 {
+	save.instruments = -1;
+	save.viewmode = -1;
+	save.devices = -1;
+	save.font = -1;
+	save.database_url = -1;
+	save.database_data = -1;
+	save.custom = -1;
+	save.shortcut = -1;
+}
+
+MppSettings :: MppSettings(MppMainWindow *_parent)
+{
+	MppButton *pb;
+
 	mw = _parent;
 
-	save_instruments = -1;
-	save_viewmode = -1;
-	save_devices = -1;
-	save_font = -1;
-	save_database_url = -1;
-	save_database_data = -1;
-	save_custom = -1;
-	save_shortcut = -1;
+	gb_save_preset = new MppGroupBox(tr("Save selected preset"));
+	gb_load_preset = new MppGroupBox(tr("Load selected preset"));
 
-	but_config_save = new QPushButton(tr("Config Save"));
-	but_config_clean = new QPushButton(tr("Config Clean"));
-	but_config_what = new QPushButton(tr("Config What"));
-	but_config_load = new QPushButton(tr("Config Load"));
+	for (unsigned x = 0; x != MPP_MAX_SETTINGS; x++) {
+		QString name;
+		QString fname;
 
-	connect(but_config_save, SIGNAL(released()), this, SLOT(handle_save()));
+		if (x == 0) {
+			name = tr("DEFAULT");
+			fname = "midipp";
+		} else {
+			name = tr("PRESET::%1").arg(x);
+			fname = QString("midipp%1").arg(x);
+		}
+
+		pb = new MppButton(name, x);
+		connect(pb, SIGNAL(released(int)), this, SLOT(handle_save(int)));
+		gb_save_preset->addWidget(pb, 0, x, 1, 1);
+
+		pb = new MppButton(name, x);
+		connect(pb, SIGNAL(released(int)), this, SLOT(handle_load(int)));
+		gb_load_preset->addWidget(pb, 0, x, 1, 1);
+
+		setting[x] = new MppSettingsSub(mw, fname);
+	}
+
+	but_config_clean = new QPushButton(tr("Preset Clean"));
+	but_config_what = new QPushButton(tr("Preset What"));
+
 	connect(but_config_clean, SIGNAL(released()), this, SLOT(handle_clean()));
 	connect(but_config_what, SIGNAL(released()), this, SLOT(handle_what()));
-	connect(but_config_load, SIGNAL(released()), this, SLOT(handle_load()));
 
 	mpp_what = new MppSettingsWhat(this);
 }
@@ -69,10 +98,13 @@ MppSettings :: MppSettings(MppMainWindow *_parent, const QString & fname)
 MppSettings :: ~MppSettings(void)
 {
 	delete mpp_what;
+
+	for (unsigned x = 0; x != MPP_MAX_SETTINGS; x++)
+		delete setting[x];
 }
 
 int
-MppSettings :: valueDefault(const QString &str, int n)
+MppSettingsSub :: valueDefault(const QString &str, int n)
 {
 	int val;
 
@@ -85,7 +117,7 @@ MppSettings :: valueDefault(const QString &str, int n)
 }
 
 QString
-MppSettings :: stringDefault(const QString &str, const QString &n)
+MppSettingsSub :: stringDefault(const QString &str, const QString &n)
 {
 	QString val;
 
@@ -98,7 +130,7 @@ MppSettings :: stringDefault(const QString &str, const QString &n)
 }
 
 QByteArray
-MppSettings :: byteArrayDefault(const QString &str, const QByteArray &n)
+MppSettingsSub :: byteArrayDefault(const QString &str, const QByteArray &n)
 {
 	QByteArray val;
 
@@ -111,7 +143,7 @@ MppSettings :: byteArrayDefault(const QString &str, const QByteArray &n)
 }
 
 QString
-MppSettings :: concat(const char *fmt, int num, int sub)
+MppSettingsSub :: concat(const char *fmt, int num, int sub)
 {
 	char buf[80];
 	snprintf(buf, sizeof(buf), fmt, num, sub);
@@ -119,7 +151,7 @@ MppSettings :: concat(const char *fmt, int num, int sub)
 }
 
 void
-MppSettings :: doSave(void)
+MppSettingsSub :: doSave(void)
 {
 	int x;
 	int y;
@@ -127,17 +159,17 @@ MppSettings :: doSave(void)
 	clear();
 
 	beginGroup("global");
-	setValue("save_instruments", save_instruments ? 1 : 0);
-	setValue("save_viewmode", save_viewmode ? 1 : 0);
-	setValue("save_devices", save_devices ? 1 : 0);
-	setValue("save_font", save_font ? 1 : 0);
-	setValue("save_database_url", save_database_url ? 1 : 0);
-	setValue("save_database_data", save_database_data ? 1 : 0);
-	setValue("save_custom", save_custom ? 1 : 0);
-	setValue("save_shortcut", save_shortcut ? 1 : 0);
+	setValue("save_instruments", save.instruments ? 1 : 0);
+	setValue("save_viewmode", save.viewmode ? 1 : 0);
+	setValue("save_devices", save.devices ? 1 : 0);
+	setValue("save_font", save.font ? 1 : 0);
+	setValue("save_database_url", save.database_url ? 1 : 0);
+	setValue("save_database_data", save.database_data ? 1 : 0);
+	setValue("save_custom", save.custom ? 1 : 0);
+	setValue("save_shortcut", save.shortcut ? 1 : 0);
 	endGroup();
 
-	if (save_viewmode) {
+	if (save.viewmode) {
 		for (x = 0; x != MPP_MAX_VIEWS; x++) {
 			beginGroup(concat("view%d", x));
 			setValue("basekey192", mw->scores_main[x]->baseKey / MPP_BAND_STEP_192);
@@ -190,7 +222,7 @@ MppSettings :: doSave(void)
 		}
 	}
 
-	if (save_instruments) {
+	if (save.instruments) {
 		beginGroup("instruments");
 		for (x = 0; x != 16; x++) {
 			setValue(concat("bank%d", x), mw->tab_instrument->spn_instr_bank[x]->value());
@@ -200,7 +232,7 @@ MppSettings :: doSave(void)
 		endGroup();
 	}
 
-	if (save_devices) {
+	if (save.devices) {
 		for (y = 0; y != MPP_MAX_DEVS; y++) {
 			beginGroup(concat("device%d", y));
 			setValue("group", mw->but_config_sel[y]->value());
@@ -219,7 +251,7 @@ MppSettings :: doSave(void)
 			endGroup();
 		}
 	}
-	if (save_font) {
+	if (save.font) {
 		beginGroup("font");
 		setValue("default", mw->defaultFont.toString());
 		setValue("editor", mw->editFont.toString());
@@ -229,46 +261,47 @@ MppSettings :: doSave(void)
 #endif
 		endGroup();
 	}
-	if (save_database_url) {
+	if (save.database_url) {
 		beginGroup("database_url");
 		setValue("location", mw->tab_database->location->text());
 		endGroup();
 	}
-	if (save_database_data) {
+	if (save.database_data) {
 		beginGroup("database_data");
 		setValue("array", mw->tab_database->input_data);
 		endGroup();
 	}
-	if (save_custom) {
+	if (save.custom) {
 		beginGroup("custom_data");
 		for (x = 0; x != MPP_CUSTOM_MAX; x++)
 			setValue(concat("command%d", x), mw->tab_custom->custom[x].led_send->text());
 		endGroup();
 	}
-	if (save_shortcut) {
+	if (save.shortcut) {
 		beginGroup("shortcut_data");
 		for (x = 0; x != MPP_SHORTCUT_MAX; x++)
 			setValue(QString(mw->tab_shortcut->shortcut_desc[x]), mw->tab_shortcut->led_cmd[x]->text());
 		endGroup();
 	}
+	sync();
 }
 
 void
-MppSettings :: doLoad(void)
+MppSettingsSub :: doLoad(void)
 {
 	int x;
 	int y;
 
-	save_instruments = valueDefault("global/save_instruments", -1);
-	save_viewmode = valueDefault("global/save_viewmode", -1);
-	save_devices = valueDefault("global/save_devices", -1);
-	save_font = valueDefault("global/save_font", -1);
-	save_database_url = valueDefault("global/save_database_url", -1);
-	save_database_data = valueDefault("global/save_database_data", -1);
-	save_custom = valueDefault("global/save_custom", -1);
-	save_shortcut = valueDefault("global/save_shortcut", -1);
+	save.instruments = valueDefault("global/save_instruments", -1);
+	save.viewmode = valueDefault("global/save_viewmode", -1);
+	save.devices = valueDefault("global/save_devices", -1);
+	save.font = valueDefault("global/save_font", -1);
+	save.database_url = valueDefault("global/save_database_url", -1);
+	save.database_data = valueDefault("global/save_database_data", -1);
+	save.custom = valueDefault("global/save_custom", -1);
+	save.shortcut = valueDefault("global/save_shortcut", -1);
 
-	if (save_viewmode > 0) {
+	if (save.viewmode > 0) {
 		for (x = 0; x != MPP_MAX_VIEWS; x++) {
 			int baseKey = valueDefault(concat("view%d/basekey192", x), MPP_DEFAULT_BASE_KEY / MPP_BAND_STEP_192);
 			int delayNoise = valueDefault(concat("view%d/delay", x), 25);
@@ -398,7 +431,7 @@ MppSettings :: doLoad(void)
 		mw->mbm_key_mode_b->setSelection(value[1]);
 	}
 
-	if (save_instruments > 0) {
+	if (save.instruments > 0) {
 		for (x = 0; x != 16; x++) {
 			mw->tab_instrument->spn_instr_bank[x]->setValue(valueDefault(concat("instruments/bank%d", x), 0) & 16383);
 			mw->tab_instrument->spn_instr_prog[x]->setValue(valueDefault(concat("instruments/prog%d", x), 0) & 127);
@@ -406,7 +439,7 @@ MppSettings :: doLoad(void)
 		}
 	}
 
-	if (save_devices > 0) {
+	if (save.devices > 0) {
 		for (y = 0; y != MPP_MAX_DEVS; y++) {
 			mw->but_config_sel[y]->setValue(valueDefault(concat("device%d/group", y), y));
 			mw->led_config_dev[y]->setText(stringDefault(concat("device%d/device", y), ""));
@@ -440,7 +473,7 @@ MppSettings :: doLoad(void)
 			mw->atomic_unlock();
 		}
 	}
-	if (save_font > 0) {
+	if (save.font > 0) {
 		/* default font */
 		mw->defaultFont.fromString(
 		    stringDefault("font/default",
@@ -482,22 +515,22 @@ MppSettings :: doLoad(void)
 		    stringDefault("font/print",
 		    "Sans Serif,-1,18,5,75,0,0,0,0,0"));
 	}
-	if (save_database_url > 0) {
+	if (save.database_url > 0) {
 		mw->tab_database->location->setText(
 		    stringDefault("database_url/location", MPP_DEFAULT_URL));
 	}
-	if (save_database_data > 0) {
+	if (save.database_data > 0) {
 		mw->tab_database->input_data =
 		  byteArrayDefault("database_data/array", QByteArray());
 		mw->tab_database->handle_download_finished_sub();
 	}
-	if (save_custom > 0) {
+	if (save.custom > 0) {
 		for (x = 0; x != MPP_CUSTOM_MAX; x++) {
 			mw->tab_custom->custom[x].led_send->setText(
 			   stringDefault(concat("custom_data/command%d", x), ""));
 		}
 	}
-	if (save_shortcut > 0) {
+	if (save.shortcut > 0) {
 		for (x = 0; x != MPP_SHORTCUT_MAX; x++) {
 			mw->tab_shortcut->led_cmd[x]->setText(
 			    stringDefault(QString("shortcut_data/") +
@@ -507,10 +540,9 @@ MppSettings :: doLoad(void)
 }
 
 void
-MppSettings :: handle_save(void)
+MppSettings :: handle_save(int id)
 {
-	doSave();
-	sync();
+	setting[id]->doSave();
 }
 
 void
@@ -518,7 +550,7 @@ MppSettings :: handle_clean(void)
 {
 	QMessageBox mbox;
 
-	mbox.setText("Do you want to clear the configuration?");
+	mbox.setText("Do you want to clear the default preset?");
 	mbox.setInformativeText("This step cannot be undone!");
 	mbox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
 	mbox.setDefaultButton(QMessageBox::No);
@@ -531,6 +563,13 @@ MppSettings :: handle_clean(void)
 	if (ret != QMessageBox::Yes)
 		return;
 
+	setting[0]->doClear();
+	setting[0]->doLoad();
+}
+
+void
+MppSettingsSub :: doClear()
+{
 	clear();
 
 	beginGroup("global");
@@ -544,19 +583,19 @@ MppSettings :: handle_clean(void)
 	setValue("save_shortcut", 1);
 	endGroup();
 
-	doLoad();
+	sync();
 }
 
 void
 MppSettings :: handle_what(void)
 {
-	mpp_what->doShow();
+	mpp_what->doShow(setting[0]->save);
 }
 
 void
-MppSettings :: handle_load(void)
+MppSettings :: handle_load(int id)
 {
-	doLoad();
+	setting[id]->doLoad();
 
 	mw->handle_config_apply();
 }
@@ -583,7 +622,7 @@ MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
 	connect(but_ok, SIGNAL(released()), this, SLOT(accept()));
 	connect(but_reset, SIGNAL(released()), this, SLOT(handle_reset()));
 
-	setWindowTitle(tr("Configuration save and load selection"));
+	setWindowTitle(tr("Preset save and load selection"));
 	setWindowIcon(QIcon(MppIconFile));
 
 	gl->addWidget(new QLabel(tr("Save instrument settings")), 0, 0, 1, 1);
@@ -614,27 +653,33 @@ MppSettingsWhat :: ~MppSettingsWhat(void)
 }
 
 void
-MppSettingsWhat :: doShow(void)
+MppSettingsWhat :: doShow(const MppSettingsSave &save_)
 {
-	cbx_instruments->setChecked(ms->save_instruments ? 1 : 0);
-	cbx_viewmode->setChecked(ms->save_viewmode ? 1 : 0);
-	cbx_deviceconfig->setChecked(ms->save_devices ? 1 : 0);
-	cbx_font->setChecked(ms->save_font ? 1 : 0);
-	cbx_database_url->setChecked(ms->save_database_url ? 1 : 0);
-	cbx_database_data->setChecked(ms->save_database_data ? 1 : 0);
-	cbx_custom->setChecked(ms->save_custom ? 1 : 0);
-	cbx_shortcut->setChecked(ms->save_shortcut ? 1 : 0);
+	MppSettingsSave save = save_;
+
+	cbx_instruments->setChecked(save.instruments ? 1 : 0);
+	cbx_viewmode->setChecked(save.viewmode ? 1 : 0);
+	cbx_deviceconfig->setChecked(save.devices ? 1 : 0);
+	cbx_font->setChecked(save.font ? 1 : 0);
+	cbx_database_url->setChecked(save.database_url ? 1 : 0);
+	cbx_database_data->setChecked(save.database_data ? 1 : 0);
+	cbx_custom->setChecked(save.custom ? 1 : 0);
+	cbx_shortcut->setChecked(save.shortcut ? 1 : 0);
 
 	exec();
 
-	ms->save_instruments = cbx_instruments->isChecked() ? 1 : 0;
-	ms->save_viewmode = cbx_viewmode->isChecked() ? 1 : 0;
-	ms->save_devices = cbx_deviceconfig->isChecked() ? 1 : 0;
-	ms->save_font = cbx_font->isChecked() ? 1 : 0;
-	ms->save_database_url = cbx_database_url->isChecked() ? 1 : 0;
-	ms->save_database_data = cbx_database_data->isChecked() ? 1 : 0;
-	ms->save_custom = cbx_custom->isChecked() ? 1 : 0;
-	ms->save_shortcut = cbx_shortcut->isChecked() ? 1 : 0;
+	save.instruments = cbx_instruments->isChecked() ? 1 : 0;
+	save.viewmode = cbx_viewmode->isChecked() ? 1 : 0;
+	save.devices = cbx_deviceconfig->isChecked() ? 1 : 0;
+	save.font = cbx_font->isChecked() ? 1 : 0;
+	save.database_url = cbx_database_url->isChecked() ? 1 : 0;
+	save.database_data = cbx_database_data->isChecked() ? 1 : 0;
+	save.custom = cbx_custom->isChecked() ? 1 : 0;
+	save.shortcut = cbx_shortcut->isChecked() ? 1 : 0;
+
+	/* update what to save */
+	for (unsigned x = 0; x != MPP_MAX_SETTINGS; x++)
+		ms->setting[x]->save = save;
 }
 
 void

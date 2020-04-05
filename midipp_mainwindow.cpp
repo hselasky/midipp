@@ -488,7 +488,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* <Configuration> Tab */
 
-	mpp_settings = new MppSettings(this, "midipp");
+	mpp_settings = new MppSettings(this);
 
 	tim_config_apply = new QTimer(this);
         tim_config_apply->setSingleShot(1);
@@ -560,7 +560,14 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x++;
 
-	tab_config_gl->addWidget(mpp_settings->but_config_save, x, 0, 1, 1);
+	tab_config_gl->addWidget(mpp_settings->gb_load_preset, x, 0, 1, 8);
+
+	x++;
+
+	tab_config_gl->addWidget(mpp_settings->gb_save_preset, x, 0, 1, 8);
+
+	x++;
+	
 	tab_config_gl->addWidget(but_config_view_fontsel, x, 1, 1, 1);
 
 	x++;
@@ -570,9 +577,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x++;
 
-	tab_config_gl->addWidget(mpp_settings->but_config_load, x, 0, 1, 1);
 	tab_config_gl->addWidget(but_config_print_fontsel, x, 1, 1, 1);
-	tab_config_gl->addWidget(mpp_settings->but_config_clean, x, 3, 1, 1);
+	tab_config_gl->addWidget(mpp_settings->but_config_clean, x, 0, 1, 1);
 	tab_config_gl->setColumnStretch(8, 1);
 
 	/* Connect all */
@@ -608,7 +614,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	watchdog->start(250);
 
-	mpp_settings->handle_load();
+	mpp_settings->handle_load(0);
 }
 
 MppMainWindow :: ~MppMainWindow()
