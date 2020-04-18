@@ -1,5 +1,5 @@
 Name:           midipp
-Version:        2.0.4
+Version:        2.0.5
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
@@ -49,7 +49,11 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Tue Dec 19 2019 HPS hps@selasky.org 2.0.4-1
+* Tue Apr 18 2020 HPS hps@selasky.org 2.0.5-1
+* Tue Apr 18 2020 HPS hps@selasky.org 2.0.4-1
+- Added support for MPE.
+- Added support for multiple presets.
+- Fixed some bugs.
 * Tue Dec 19 2019 HPS hps@selasky.org 2.0.3-1
 - Bugfixes and GUI updates.
 * Tue Jul 16 2019 HPS hps@selasky.org 2.0.2-1
