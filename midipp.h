@@ -349,7 +349,7 @@ public:
 	QString HomeDirMXML;
 	QString HomeDirBackground;
 
-	int MajorAdjust[2];
+	int KeyAdjust[12];
 };
 
 class MppSleep : public QThread

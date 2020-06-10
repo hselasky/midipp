@@ -109,110 +109,6 @@ MppBitsToString(const MppChord_t &mask, int off)
 	return (temp);
 }
 
-static void
-MppFreqAdjust(double top, double &phase, double &freq)
-{
-	const double mid = top / 2.0;
-
-	const double p0 = 1.0;
-	const double p1 = pow(2.0, mid);
-	const double p2 = pow(2.0, top);
-
-	const double f1 = log(p1 - p0) / log(2.0);
-	const double f3 = log(p2 - p0) / log(2.0);
-
-	const double ff1 = f1 - floor(f1);
-	const double ff3 = f3 - floor(f3);
-
-	double delta;
-
-	delta = ff3 - ff1;
-	if (delta > 0.5)
-		delta -= 1.0;
-	else if (delta < -0.5)
-		delta += 1.0;
-
-	freq = log(pow(2.0, f1 + delta) + p0) / log(2.0);
-
-	phase = (f1 + delta);
-	phase = phase - floor(phase);
-}
-
-static void
-MppFreqAdjustInt(double top, int &phase, int &freq)
-{
-	double d_phase;
-	double d_freq;
-
-	MppFreqAdjust(top, d_phase, d_freq);
-
-	phase = round(d_phase * (double)MPP_MAX_BANDS);
-	freq = round(d_freq * (double)MPP_MAX_BANDS);
-}
-
-static void
-MppFindOptimalMajorViaBinarySearch(int &adjust0, int &adjust1)
-{
-	double step = MPP_BAND_STEP_12;
-	double freq = 7 * MPP_BAND_STEP_12;
-
-	while (step >= 0.5) {
-		double p_nor;
-		double p_add;
-		double p_sub;
-
-		double temp;
-		double adjust;
-
-		MppFreqAdjust(freq / (double)MPP_MAX_BANDS, p_nor, temp);
-		MppFreqAdjust((freq + step) / (double)MPP_MAX_BANDS, p_add, temp);
-		MppFreqAdjust((freq - step) / (double)MPP_MAX_BANDS, p_sub, temp);
-
-		if (p_add < -0.5)
-			p_add += 1.0;
-		else if (p_add > 0.5)
-			p_add -= 1.0;
-
-		if (p_add < 0)
-			p_add = -p_add;
-
-		if (p_sub < -0.5)
-			p_sub += 1.0;
-		else if (p_sub > 0.5)
-			p_sub -= 1.0;
-
-		if (p_sub < 0)
-			p_sub = -p_sub;
-	  
-		if (p_nor < -0.5)
-			p_nor += 1.0;
-		else if (p_nor > 0.5)
-			p_nor -= 1.0;
-
-		if (p_nor < 0)
-			p_nor = -p_nor;
-
-		adjust = 0;
-		if (p_add < p_nor) {
-			adjust = step;
-			p_nor = p_add;
-		}
-		if (p_sub < p_nor) {
-			adjust = -step;
-			p_nor = p_sub;
-		}
-		freq += adjust;
-		step /= 2.0;
-	}
-
-	freq = round(freq);
-
-	MppFreqAdjustInt(freq / (double)MPP_MAX_BANDS, adjust1, adjust0);
-
-	adjust0 -= 4 * MPP_BAND_STEP_12;
-	adjust1 = freq - 7 * MPP_BAND_STEP_12;
-}
-
 void
 MppScoreVariantInit(void)
 {
@@ -280,44 +176,21 @@ MppScoreVariantInit(void)
 		    .arg(MPP_MAX_CHORD_BANDS);
 	}
 
-	Mpp.VariantList += "\n/* List of harmonic triads with phase key */\n\n";
+	/* Key adjustment table for K5.1 effect */
+	Mpp.KeyAdjust[4] = round((MPP_MAX_BANDS * log(1.0 + 1.0 / 4.0) / log(2.0)) - (MPP_BAND_STEP_12 * 4));
+	Mpp.KeyAdjust[5] = round((MPP_MAX_BANDS * log(1.0 + 1.0 / 3.0) / log(2.0)) - (MPP_BAND_STEP_12 * 5));
+	Mpp.KeyAdjust[7] = round((MPP_MAX_BANDS * log(1.0 + 1.0 / 2.0) / log(2.0)) - (MPP_BAND_STEP_12 * 7));
 
-	for (x = 2; x != MPP_MAX_CHORD_BANDS; x++) {
-		int phase;
-		int freq;
+	Mpp.KeyAdjust[1] = Mpp.KeyAdjust[5] - Mpp.KeyAdjust[4];
+	Mpp.KeyAdjust[2] = Mpp.KeyAdjust[7] - Mpp.KeyAdjust[5];
+	Mpp.KeyAdjust[3] = Mpp.KeyAdjust[7] - Mpp.KeyAdjust[4];
 
-		MppFreqAdjustInt((double)x / (double)MPP_MAX_CHORD_BANDS, phase, freq);
+	Mpp.KeyAdjust[6] = Mpp.KeyAdjust[7] - Mpp.KeyAdjust[1];
 
-		freq += MPP_BAND_STEP_CHORD / 2;
-		freq -= freq % MPP_BAND_STEP_CHORD;
-
-		phase += MPP_BAND_STEP_CHORD / 2;
-		phase -= phase % MPP_BAND_STEP_CHORD;
-
-		Mpp.VariantList += MppKeyStr(
-		    MPP_MAX_BANDS * 5 + 0 * MPP_BAND_STEP_CHORD);
-		Mpp.VariantList += " ";
-		Mpp.VariantList += MppKeyStr(
-		    MPP_MAX_BANDS * 5 + freq);
-		Mpp.VariantList += " ";
-		Mpp.VariantList += MppKeyStr(
-		    MPP_MAX_BANDS * 5 + x * MPP_BAND_STEP_CHORD);
-		Mpp.VariantList += " ";
-		Mpp.VariantList += MppKeyStr(
-		    MPP_MAX_BANDS * 5 + phase);
-		Mpp.VariantList += "\n";
-	}
-
-	Mpp.VariantList += "\n/* Harmonic major with key C */\n\n";
-
-	MppFindOptimalMajorViaBinarySearch(Mpp.MajorAdjust[0], Mpp.MajorAdjust[1]);
-
-	Mpp.VariantList += MppKeyStr(MPP_MAX_BANDS * 5);
-	Mpp.VariantList += " ";
-	Mpp.VariantList += MppKeyStr(MPP_MAX_BANDS * 5 + Mpp.MajorAdjust[0] + MPP_BAND_STEP_12 * 4);
-	Mpp.VariantList += " ";
-	Mpp.VariantList += MppKeyStr(MPP_MAX_BANDS * 5 + Mpp.MajorAdjust[1] + MPP_BAND_STEP_12 * 7);
-	Mpp.VariantList += "\n";
+	Mpp.KeyAdjust[8] = -Mpp.KeyAdjust[4];
+	Mpp.KeyAdjust[9] = -Mpp.KeyAdjust[3];
+	Mpp.KeyAdjust[10] = -Mpp.KeyAdjust[2];
+	Mpp.KeyAdjust[11] = -Mpp.KeyAdjust[1];
 }
 
 static void

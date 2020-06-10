@@ -1161,6 +1161,7 @@ MppHead :: tuneScore()
 
 	while (foreachLine(&start, &stop)) {
 		MppChord_t mask;
+		int base = -1;
 		int rem;
 		int adjust[MPP_MAX_CHORD_BANDS] = {};
 
@@ -1171,6 +1172,9 @@ MppHead :: tuneScore()
 			switch (ptr->type) {
 			case MPP_T_SCORE_SUBDIV:
 				rem = MPP_BAND_REM(ptr->value[0], MPP_MAX_CHORD_BANDS);
+				/* first repeated remainder is the base */
+				if (base == -1 && mask.test(rem))
+					base = rem;
 				mask.set(rem);
 				adjust[rem] = rem * MPP_BAND_STEP_CHORD;
 				break;
@@ -1178,18 +1182,20 @@ MppHead :: tuneScore()
 				break;
 			}
 		}
-		if (mask.order() == 0)
+
+		/* if there are no keys, or base is undefined, skip */
+		if (mask.order() == 0 || base == -1)
 			continue;
 
+		/* compute adjustment */
 		for (int x = 0; x != MPP_MAX_CHORD_BANDS; x++) {
-			int y = (x + 4 * (MPP_BAND_STEP_12 / MPP_BAND_STEP_CHORD)) % MPP_MAX_CHORD_BANDS;
-			int z = (x + 7 * (MPP_BAND_STEP_12 / MPP_BAND_STEP_CHORD)) % MPP_MAX_CHORD_BANDS;
-			if (mask.test(x) == 0 ||
-			    mask.test(y) == 0 ||
-			    mask.test(z) == 0)
+			if (mask.test(x) == 0)
 				continue;
-			adjust[y] = y * MPP_BAND_STEP_CHORD + Mpp.MajorAdjust[0];
-			adjust[z] = z * MPP_BAND_STEP_CHORD + Mpp.MajorAdjust[1];
+			rem = (MPP_MAX_CHORD_BANDS + x - base) % MPP_MAX_CHORD_BANDS;
+			if (rem % (MPP_MAX_CHORD_BANDS / 12))
+				continue;
+			rem /= (MPP_MAX_CHORD_BANDS / 12);
+			adjust[x] = x * MPP_BAND_STEP_CHORD + Mpp.KeyAdjust[rem];
 		}
 
 		/* update all keys */
