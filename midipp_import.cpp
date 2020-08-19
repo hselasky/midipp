@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2016 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010-2020 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -251,7 +251,7 @@ midipp_import_parse(class midipp_import *ps)
 	if (ps->load_more != 0) {
 		/* load another line */
 		ps->index ^= 1;
-		ps->load_more--;
+		ps->load_more = 0;
 		return (0);
 	}
 
@@ -278,6 +278,7 @@ midipp_import_parse(class midipp_import *ps)
 		} else {
 			if (midipp_import_flush(ps, 1, 0))
 				return (1);
+			/* both lines were consumed */
 			ps->load_more = 1;
 		}
 		break;
@@ -285,6 +286,7 @@ midipp_import_parse(class midipp_import *ps)
 		if (ps->index == 0) {
 			if (midipp_import_flush(ps, 0, 1))
 				return (1);
+			/* both lines were consumed */
 			ps->load_more = 1;
 		} else {
 			if (midipp_import_flush(ps, 0, -1))
@@ -313,6 +315,7 @@ midipp_import_parse(class midipp_import *ps)
 				if (midipp_import_flush(ps, 1, 0))
 					return (1);
 			}
+			/* both lines were consumed */
 			ps->load_more = 1;
 		}
 		break;
@@ -369,7 +372,8 @@ midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm)
 			/* remove spaces from end of line */
 			ps->line_buffer =
 			    ps->line_buffer.replace(QRegExp("\\s*$"), "");
-			if (midipp_import_parse(ps))
+			if (ps->line_buffer.size() != 0 &&
+			    midipp_import_parse(ps) != 0)
 				goto done;
 			ps->line_buffer = QString();
 		} else {
@@ -379,11 +383,13 @@ midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm)
 	/* remove spaces from end of line */
 	ps->line_buffer =
 	    ps->line_buffer.replace(QRegExp("\\s*$"), "");
-	midipp_import_parse(ps);
+	if (midipp_import_parse(ps) != 0)
+		goto done;
 
 	if (ps->line_buffer.size() != 0 && ps->load_more == 0) {
 		ps->line_buffer = QString();
-		midipp_import_parse(ps);
+		if (midipp_import_parse(ps) != 0)
+			goto done;
 	}
 
  done:
