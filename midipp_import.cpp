@@ -49,7 +49,7 @@ static uint8_t
 midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 {
 	QString out;
-	QString scs;
+	QString lbl;
 
 	int off;
 	int x;
@@ -72,27 +72,50 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 				label *= 10;
 				label += str[bi].digitValue();
 			}
-			scs += QString("L%1:\n").arg(label);
+
+			/* output full text line */
+			lbl += "S\"";
+			for (ai = 0; ai != ps->n_words[i_txt]; ai++)
+			    lbl += ps->d_word[i_txt][ai].name;
+			lbl += "\"\n";
+			lbl += QString("L%1:\n\n").arg(label);
+
+			/* next label is current label added one */
 			ps->n_label = label + 1;
+
+			/* ignore current text line */
+			i_txt = -1;
+			output = 1;
+
 		} else if (str.size() > 0 && str[0] == '[' &&
 			   end.size() > 0 && end[end.size() - 1] == ']') {
+
+			/* update current strings */
 			str = QString("L%1 - ").arg(ps->n_label) + str.right(str.size() - 1);
 			end = end.left(end.size() - 1);
-			scs += QString("L%1:\n").arg(ps->n_label);
+
+			/* output full text line */
+			lbl += "S\"";
+			for (ai = 0; ai != ps->n_words[i_txt]; ai++)
+			    lbl += ps->d_word[i_txt][ai].name;
+			lbl += "\"\n";
+			lbl += QString("L%1:\n\n").arg(ps->n_label);
+
+			/* advance label number */
 			ps->n_label++;
 
-			/* recompute offsets */
-			for (off = ai = 0; ai != ps->n_words[i_txt]; ai++) {
-				ps->d_word[i_txt][ai].off = off;
-				off += ps->d_word[i_txt][ai].name.size();
-			}
-			if (off > ps->max_off)
-				ps->max_off = off;
+			/* ignore current text line */
+			i_txt = -1;
+			output = 1;
 		}
 	}
-	out += "S\"";
 
-	for (ai = bi = x = 0; x != ps->max_off; x++) {
+	if (i_txt > -1 || i_score > -1) {
+	    QString scs;
+
+	    out += "S\"";
+
+	    for (ai = bi = x = 0; x != ps->max_off; x++) {
 
 		any = 0;
 
@@ -140,19 +163,25 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 					break;
 
 				output = 1;
-				out += " ";
+				if ((x + 1) != ps->max_off)
+					out += " ";
 			}
 		} else {
 			if (!any)
 				break;
 
 			output = 1;
-			out += " ";
+			if ((x + 1) != ps->max_off)
+				out += " ";
 		}
+	    }
+	    out += "\"\n\n";
+	    out += scs;
+	    out += "\n";
 	}
-	out += "\"\n\n";
-	out += scs;
-	out += "\n";
+
+	/* add label if any */
+	out += lbl;
 
 	if (output) {
 		QTextCursor cursor(ps->sm->editWidget->textCursor());
