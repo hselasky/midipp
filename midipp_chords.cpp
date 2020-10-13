@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2018-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2018-2020 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -146,10 +146,12 @@ static const class MppScoreVariant MppScoreVariants12[] = {
 	INIT(MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0B) | MASK(MPP_D0B), "$h$f2", 0),
 
 	/* fourth */
-	INIT(MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) | MASK(MPP_D0) | MASK(MPP_F0), "4", "$M4", "dom4", 0),
-	INIT(MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0) | MASK(MPP_D0) | MASK(MPP_F0), "$m4", "$m$M4", 0),
-	INIT(MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_A0B) | MASK(MPP_D0) | MASK(MPP_F0), "$a4", "4$S5", "$a$M4", 0),
-	INIT(MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0B) | MASK(MPP_D0B) | MASK(MPP_F0), "$h4", 0),
+	INIT(MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) | MASK(MPP_F0), "4", "$M4", "dom4", 0),
+	INIT(MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0) | MASK(MPP_F0), "$m4", "$m$M4", 0),
+	INIT(MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_A0B) | MASK(MPP_F0), "$a4", "4$S5", "$a$M4", 0),
+	INIT(MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0B) | MASK(MPP_F0), "$h4", 0),
+	INIT(MASK(MPP_C0) | MASK(MPP_E0B) | MASK(MPP_G0) | MASK(MPP_G0B), "$m$S4", 0),
+	INIT(MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_A0B) | MASK(MPP_G0B), "$a$S4", 0),
 
 	/* ninth */
 	INIT(MASK(MPP_C0) | MASK(MPP_E0) | MASK(MPP_G0) | MASK(MPP_H0B) | MASK(MPP_D0), "9", "dom9", 0),
