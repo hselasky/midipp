@@ -1,0 +1,3 @@
+[submodule "libumidi"]
+	path = libumidi
+	url = https://github.com/hselasky/libumidi.git

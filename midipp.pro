@@ -69,7 +69,7 @@ OTHER_FILES += MidiPlayerPro.entitlements
 }
 
 isEmpty(LIBUMIDIPATH) {
-LIBUMIDIPATH=../libumidi20
+LIBUMIDIPATH=libumidi
 }
 
 !isEmpty(HAVE_NO_SHOW) {
