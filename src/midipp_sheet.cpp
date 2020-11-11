@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2016-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2016-2020 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -693,8 +693,10 @@ MppSheet::handleModeChanged(int value)
 void
 MppSheet :: wheelEvent(QWheelEvent *event)
 {
-	if (event->orientation() == Qt::Horizontal) {
-		delta_h -= event->delta();
+	QPoint p = event->angleDelta();
+
+	if (p.x() != 0) {
+		delta_h -= p.x();
 		int delta = delta_h / MPP_WHEEL_STEP;
 		delta_h %= MPP_WHEEL_STEP;
 		if (delta != 0) {
@@ -705,8 +707,9 @@ MppSheet :: wheelEvent(QWheelEvent *event)
 				delta = vs_horiz->maximum();
 			vs_horiz->setValue(delta);
 		}
-	} else if (event->orientation() == Qt::Vertical) {
-		delta_v -= event->delta();
+	}
+	if (p.y() != 0) {
+		delta_v -= p.y();
 		int delta = delta_v / MPP_WHEEL_STEP;
 		delta_v %= MPP_WHEEL_STEP;
 		if (delta != 0) {

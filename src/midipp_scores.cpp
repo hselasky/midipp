@@ -76,9 +76,10 @@ void
 MppScoreView :: wheelEvent(QWheelEvent *event)
 {
 	QScrollBar *ps = pScores->viewScroll;
+	QPoint p = event->angleDelta();
 
-	if (event->orientation() == Qt::Vertical) {
-		delta_v -= event->delta();
+	if (p.y() != 0) {
+		delta_v -= p.y();
 		int delta = delta_v / MPP_WHEEL_STEP;
 		delta_v %= MPP_WHEEL_STEP;
 		if (delta != 0) {
