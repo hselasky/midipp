@@ -5,7 +5,14 @@
 MIDI Player Pro allows you to play any kind of MIDI music in seconds
 with your fingertips.
 
+Changes for v2.0.5:
+- Added support for HPS JAM (Lyrics and Chords).
+- Fixed some chords.
+
 Changes for v2.0.4:
+- Added support for MPE.
+- Added support for multiple presets.
+- Fixed some bugs.
 
 Changes for v2.0.3:
 - Bugfixes and GUI updates.

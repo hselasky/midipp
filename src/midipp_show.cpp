@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013-2015 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2020 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -208,7 +208,7 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 
 	showFont.fromString(QString("Sans Serif,-1,24,5,75,0,0,0,0,0"));
 
-	butMode = new MppButtonMap("Current mode\0" "BLANK\0" "BACKGROUND\0" "LYRICS\0", 3, 3);
+	butMode = new MppButtonMap("Global show mode\0" "BLANK\0" "BACKGROUND\0" "LYRICS\0", 3, 3);
 	connect(butMode, SIGNAL(selectionChanged(int)), this, SLOT(handle_mode_change(int)));
 	
 #if MPP_MAX_VIEWS <= 3
@@ -282,16 +282,24 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 	butCopySettings = new QPushButton(tr("Copy current settings\nto clipboard"));
 	connect(butCopySettings, SIGNAL(released()), this, SLOT(handle_copysettings()));
 
+	butHpsJamOnOff = new MppButtonMap("Mode\0" "DISABLED\0" "LYRICS ONLY\0" "LYRICS AND CHORDS\0", 3, 3);
+	connect(butHpsJamOnOff, SIGNAL(selectionChanged(int)), this, SLOT(handle_hpsjam_change(int)));
+
+	editHpsJamServer = new QLineEdit();
+
+	portHpsJam = 0;
+
 	gl_main = new MppGridLayout();
 	gb_font = new MppGroupBox(tr("Font"));
 	gb_image = new MppGroupBox(tr("Background"));
+	gb_hpsjam = new MppGroupBox(tr("HPS JAM client"));
 
 	gl_main->addWidget(butTrack, 0, 0, 1, 2);
 	gl_main->addWidget(butMode, 0, 2, 1, 2);
 
-	gl_main->addWidget(butShowWindow, 4, 0, 1, 1);
-	gl_main->addWidget(butFullScreen, 4, 1, 1, 1);
-	gl_main->addWidget(butCopySettings, 4, 2, 1, 1);
+	gl_main->addWidget(butShowWindow, 5, 0, 1, 1);
+	gl_main->addWidget(butFullScreen, 5, 1, 1, 1);
+	gl_main->addWidget(butCopySettings, 5, 2, 1, 1);
 
 	gb_font->addWidget(butFontSelect, 0, 0, 1, 1);
 	gb_font->addWidget(butFontFgColor, 1, 0, 1, 1);
@@ -313,10 +321,15 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 	gb_image->addWidget(butImageRight, 8, 0, 1, 1);
 	gb_image->addWidget(butImageLeft, 9, 0, 1, 1);
 
-	gl_main->addWidget(gb_font, 2, 0, 1, 1);
-	gl_main->addWidget(gb_image, 2, 1, 1, 1);
+	gb_hpsjam->addWidget(new QLabel(tr("Address and port:")), 0,0);
+	gb_hpsjam->addWidget(editHpsJamServer, 0,1);
+	gb_hpsjam->addWidget(butHpsJamOnOff, 1,0,1,2);
 
-	gl_main->setRowStretch(3, 1);
+	gl_main->addWidget(gb_font, 2, 0, 2, 1);
+	gl_main->addWidget(gb_image, 2, 1, 2, 1);
+	gl_main->addWidget(gb_hpsjam, 2, 2, 1, 1);
+
+	gl_main->setRowStretch(4, 1);
 	gl_main->setColumnStretch(4, 1);
 
 	watchdog = new QTimer(this);
@@ -413,6 +426,8 @@ MppShowControl :: handle_text_watchdog()
 		if (aobj[0].isVisible() || aobj[1].isVisible()) {
 			aobj[0].fadeOut();
 			aobj[1].fadeOut();
+			hpsjam_send_text(QString(), QString());
+			hpsjam_send_text(QString(), QString());
 		}
 		return;
 	}
@@ -434,6 +449,8 @@ MppShowControl :: handle_text_watchdog()
 		aobj[0].str = *sm.pVisual[visual_last_index].str;
 		aobj[0].fadeIn();
 		toggle = 0;
+		hpsjam_send_text(*sm.pVisual[visual_last_index].str,
+				 *sm.pVisual[visual_last_index].str_chord);
 		break;
 	case 2:
 		toggle ^= 1;
@@ -450,6 +467,8 @@ MppShowControl :: handle_text_watchdog()
 			aobj[toggle ^ 1].str = *sm.pVisual[visual_curr_index].str;
 			aobj[toggle ^ 1].ypos_curr = aobj[toggle].height;
 			aobj[toggle ^ 1].fadeIn();
+			hpsjam_send_text(*sm.pVisual[visual_curr_index].str,
+					 *sm.pVisual[visual_curr_index].str_chord);
 		}
 		break;
 	default:
@@ -853,4 +872,75 @@ MppShowControl :: handle_pict_change()
 {
 	if (aobj[2].isVisible())
 		aobj[2].fadeOut();
+}
+
+void
+MppShowControl :: handle_hpsjam_change(int value)
+{
+	if (value) {
+		QString text = editHpsJamServer->text();
+		auto parts = text.split(QString(":"));
+		QString host;
+		uint16_t port;
+
+		switch (parts.length()) {
+		case 1:
+			QMessageBox::information(mw, MppVersion,
+			    tr("Please specify a port number: %1:<portnumber>").arg(text));
+			MPP_BLOCKED(butHpsJamOnOff,setSelection(0));
+			return;
+		case 2:
+			host = parts[0];
+			portHpsJam = port = parts[1].toUShort();
+			break;
+		default:
+			QMessageBox::information(mw, MppVersion,
+			    tr("Invalid server name: %1").arg(text));
+			MPP_BLOCKED(butHpsJamOnOff,setSelection(0));
+			return;
+		}
+
+		/* close previous socket, if any */
+		sockHpsJam.close();
+
+		for (unsigned x = 1;; x++) {
+			if (x == 128) {
+				QMessageBox::information(mw, MppVersion,
+				    tr("Could not bind client port"));
+				MPP_BLOCKED(butHpsJamOnOff,setSelection(0));
+				return;
+			}
+			if (sockHpsJam.bind(QHostAddress(), port + x))
+				break;
+		}
+
+		/* set destination address */
+		addrHpsJam = QHostAddress(host);
+	}
+}
+
+void
+MppShowControl :: hpsjam_send_text(const QString &lyrics, const QString &lyrics_and_chords)
+{
+	QString temp;
+	QByteArray ba;
+
+	switch (butHpsJamOnOff->currSelection) {
+	case 1:
+		temp = QString("set lyrics.text=") + lyrics;
+		ba = temp.toUtf8();
+		ba.truncate(4 * 256 - 4 + 16);
+
+		sockHpsJam.writeDatagram(ba.constData(), ba.length(), addrHpsJam, portHpsJam);
+		break;
+	case 2:
+		temp = QString("set lyrics.text=") + lyrics_and_chords;
+		ba = temp.toUtf8();
+		ba.truncate(4 * 256 - 4 + 16);
+
+		sockHpsJam.writeDatagram(ba.constData(), ba.length(), addrHpsJam, portHpsJam);
+		break;
+	default:
+		break;
+	}
 }

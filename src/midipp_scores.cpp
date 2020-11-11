@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2020 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -396,11 +396,12 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig)
 
 	/* extract all text */
 	for (x = 0; x != visual_max; x++) {
-		QString *pstr = pVisual[x].str;
+		delete pVisual[x].str;
+		delete pVisual[x].str_chord;
 
-		/* delete old and allocate a new string */
-		delete pstr;
-		pstr = new QString();
+		/* allocate new string(s) */
+		QString *pstr = new QString();
+		QString *pstr_chord = new QString();
 
 		/* parse through the text */
 		for (ptr = pVisual[x].start; ptr != pVisual[x].stop;
@@ -408,16 +409,23 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig)
 			switch (ptr->type) {
 			case MPP_T_STRING_DESC:
 				*pstr += ptr->txt;
+				*pstr_chord += ptr->txt;
+				break;
+			case MPP_T_STRING_CHORD:
+				*pstr_chord += ptr->txt;
 				break;
 			default:
 				break;
 			}
 		}
-		/* Trim string */
-		*pstr = pstr->trimmed();
 
-		/* store new string */
+		/* Trim string(s) */
+		*pstr = pstr->trimmed();
+		*pstr_chord = pstr_chord->trimmed();
+
+		/* store new string(s) */
 		pVisual[x].str = pstr;
+		pVisual[x].str_chord = pstr_chord;
 	}
 
 	rmax_x = MPP_VISUAL_R_MAX * scale_x;
@@ -854,8 +862,9 @@ MppScoreMain :: handleParse(const QString &pstr)
 
 	/* cleanup visual entries */
 	for (x = 0; x != visual_max; x++) {
-		delete (pVisual[x].str);
-		delete (pVisual[x].pic);
+		delete pVisual[x].str;
+		delete pVisual[x].str_chord;
+		delete pVisual[x].pic;
 		free (pVisual[x].pdot);
 	}
 

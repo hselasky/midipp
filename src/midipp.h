@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2020 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -322,6 +322,7 @@ struct MppVisualDot {
 struct MppVisualScore {
 	QPicture *pic;
 	QString *str;
+	QString *str_chord;
 	struct MppVisualDot *pdot;
 	MppElement *start;
 	MppElement *stop;

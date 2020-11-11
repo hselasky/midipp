@@ -50,7 +50,10 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Tue Apr 18 2020 HPS hps@selasky.org 2.0.5-1
+* Tue Nov 11 2020 HPS hps@selasky.org 2.0.6-1
+* Tue Nov 11 2020 HPS hps@selasky.org 2.0.5-1
+- Added support for HPS JAM (Lyrics and Chords).
+- Fixed some chords.
 * Tue Apr 18 2020 HPS hps@selasky.org 2.0.4-1
 - Added support for MPE.
 - Added support for multiple presets.

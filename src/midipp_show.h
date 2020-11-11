@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2020 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,6 +25,9 @@
 
 #ifndef _MIDIPP_SHOW_H_
 #define	_MIDIPP_SHOW_H_
+
+#include <QUdpSocket>
+#include <QHostAddress>
 
 #include "midipp.h"
 #include "midipp_element.h"
@@ -131,11 +134,13 @@ public:
 	void handle_pict_watchdog();
 	void handle_text_change();
 	void handle_pict_change();
+	void hpsjam_send_text(const QString &, const QString &);
 
 	MppMainWindow *mw;
 	MppGridLayout *gl_main;
 	MppGroupBox *gb_font;
 	MppGroupBox *gb_image;
+	MppGroupBox *gb_hpsjam;
 
 	enum {
 		MPP_SHOW_AOBJ_TEXT_0,
@@ -187,12 +192,19 @@ public:
 
 	QPushButton *butCopySettings;
 
+	MppButtonMap *butHpsJamOnOff;
+	QLineEdit *editHpsJamServer;
+	QUdpSocket sockHpsJam;
+	QHostAddress addrHpsJam;
+	uint16_t portHpsJam;
+
 	QTimer *watchdog;
 
 public slots:
 	void handle_watchdog();
 	void handle_mode_change(int);
 	void handle_track_change(int);
+	void handle_hpsjam_change(int);
 	void handle_show_window();
 	void handle_fullscreen();
 	void handle_fontselect();
