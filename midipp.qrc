@@ -1,15 +1,15 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
 <file>midipp.png</file>
-<file>play.png</file>
-<file>reload.png</file>
-<file>stop.png</file>
-<file>paste.png</file>
-<file>copy.png</file>
-<file>redo.png</file>
-<file>undo.png</file>
-<file>edit.png</file>
-<file>up_down.png</file>
+<file>icons/play.png</file>
+<file>icons/reload.png</file>
+<file>icons/stop.png</file>
+<file>icons/paste.png</file>
+<file>icons/copy.png</file>
+<file>icons/redo.png</file>
+<file>icons/undo.png</file>
+<file>icons/edit.png</file>
+<file>icons/up_down.png</file>
 </qresource>
 </RCC>
 

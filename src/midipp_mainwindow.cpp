@@ -125,15 +125,15 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mwEdit->setToolTip(tr("Edit or Insert a Chord"));
 	mwUpDown->setToolTip(tr("Move menu Up or Down"));
 
-	mwRewind->setIcon(QIcon(QString(":/stop.png")));
-	mwPlay->setIcon(QIcon(QString(":/play.png")));
-	mwReload->setIcon(QIcon(QString(":/reload.png")));
-	mwPaste->setIcon(QIcon(QString(":/paste.png")));
-	mwCopy->setIcon(QIcon(QString(":/copy.png")));
-	mwUndo->setIcon(QIcon(QString(":/undo.png")));
-	mwRedo->setIcon(QIcon(QString(":/redo.png")));
-	mwEdit->setIcon(QIcon(QString(":/edit.png")));
-	mwUpDown->setIcon(QIcon(QString(":/up_down.png")));
+	mwRewind->setIcon(QIcon(QString(":/icons/stop.png")));
+	mwPlay->setIcon(QIcon(QString(":/icons/play.png")));
+	mwReload->setIcon(QIcon(QString(":/icons/reload.png")));
+	mwPaste->setIcon(QIcon(QString(":/icons/paste.png")));
+	mwCopy->setIcon(QIcon(QString(":/icons/copy.png")));
+	mwUndo->setIcon(QIcon(QString(":/icons/undo.png")));
+	mwRedo->setIcon(QIcon(QString(":/icons/redo.png")));
+	mwEdit->setIcon(QIcon(QString(":/icons/edit.png")));
+	mwUpDown->setIcon(QIcon(QString(":/icons/up_down.png")));
 
 	mwRewind->setFocusPolicy(Qt::NoFocus);
 	mwPlay->setFocusPolicy(Qt::NoFocus);
