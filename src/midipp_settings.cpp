@@ -52,6 +52,7 @@ MppSettingsSub :: MppSettingsSub(MppMainWindow *_parent, const QString &fname) :
 	save.database_data = -1;
 	save.custom = -1;
 	save.shortcut = -1;
+	save.hpsjam_server = -1;
 }
 
 MppSettings :: MppSettings(MppMainWindow *_parent)
@@ -167,6 +168,7 @@ MppSettingsSub :: doSave(void)
 	setValue("save_database_data", save.database_data ? 1 : 0);
 	setValue("save_custom", save.custom ? 1 : 0);
 	setValue("save_shortcut", save.shortcut ? 1 : 0);
+	setValue("save_hpsjam_server", save.hpsjam_server ? 1 : 0);
 	endGroup();
 
 	if (save.viewmode) {
@@ -283,6 +285,11 @@ MppSettingsSub :: doSave(void)
 			setValue(QString(mw->tab_shortcut->shortcut_desc[x]), mw->tab_shortcut->led_cmd[x]->text());
 		endGroup();
 	}
+	if (save.hpsjam_server) {
+		beginGroup("hpsjam_server");
+		setValue("location", mw->tab_show_control->editHpsJamServer->text());
+		endGroup();
+	}
 	sync();
 }
 
@@ -300,6 +307,7 @@ MppSettingsSub :: doLoad(void)
 	save.database_data = valueDefault("global/save_database_data", -1);
 	save.custom = valueDefault("global/save_custom", -1);
 	save.shortcut = valueDefault("global/save_shortcut", -1);
+	save.hpsjam_server = valueDefault("global/save_hpsjam_server", -1);
 
 	if (save.viewmode > 0) {
 		for (x = 0; x != MPP_MAX_VIEWS; x++) {
@@ -537,6 +545,11 @@ MppSettingsSub :: doLoad(void)
 			    QString(mw->tab_shortcut->shortcut_desc[x]), ""));
 		}
 	}
+	if (save.hpsjam_server > 0) {
+		mw->tab_show_control->butHpsJamOnOff->setSelection(0);
+		mw->tab_show_control->editHpsJamServer->setText(
+		    stringDefault("hpsjam_server/location", MPP_DEFAULT_HPSJAM));
+	}
 }
 
 void
@@ -581,6 +594,7 @@ MppSettingsSub :: doClear()
 	setValue("save_database_data", 1);
 	setValue("save_custom", 1);
 	setValue("save_shortcut", 1);
+	setValue("save_hpsjam_server", 1);
 	endGroup();
 
 	sync();
@@ -615,6 +629,7 @@ MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
 	cbx_database_data = new MppCheckBox();
 	cbx_custom = new MppCheckBox();
 	cbx_shortcut = new MppCheckBox();
+	cbx_hpsjam_server = new MppCheckBox();
 
 	but_ok = new QPushButton(tr("Close"));
 	but_reset = new QPushButton(tr("Reset"));
@@ -633,6 +648,7 @@ MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
 	gl->addWidget(new QLabel(tr("Save database contents")), 5, 0, 1, 1);
 	gl->addWidget(new QLabel(tr("Save custom MIDI commands")), 6, 0, 1, 1);
 	gl->addWidget(new QLabel(tr("Save shortcut MIDI commands")), 7, 0, 1, 1);
+	gl->addWidget(new QLabel(tr("Save HPSJAM server location")), 8, 0, 1, 1);
 
 	gl->addWidget(cbx_instruments, 0, 2, 1, 2);
 	gl->addWidget(cbx_viewmode, 1, 2, 1, 2);
@@ -642,9 +658,10 @@ MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
 	gl->addWidget(cbx_database_data, 5, 2, 1, 2);
 	gl->addWidget(cbx_custom, 6, 2, 1, 2);
 	gl->addWidget(cbx_shortcut, 7, 2, 1, 2);
+	gl->addWidget(cbx_hpsjam_server, 8, 2, 1, 2);
 
-	gl->addWidget(but_reset, 8, 1, 1, 1);
-	gl->addWidget(but_ok, 8, 2, 1, 1);
+	gl->addWidget(but_reset, 9, 1, 1, 1);
+	gl->addWidget(but_ok, 9, 2, 1, 1);
 }
 
 MppSettingsWhat :: ~MppSettingsWhat(void)
@@ -665,6 +682,7 @@ MppSettingsWhat :: doShow(const MppSettingsSave &save_)
 	cbx_database_data->setChecked(save.database_data ? 1 : 0);
 	cbx_custom->setChecked(save.custom ? 1 : 0);
 	cbx_shortcut->setChecked(save.shortcut ? 1 : 0);
+	cbx_hpsjam_server->setChecked(save.hpsjam_server ? 1 : 0);
 
 	exec();
 
@@ -676,6 +694,7 @@ MppSettingsWhat :: doShow(const MppSettingsSave &save_)
 	save.database_data = cbx_database_data->isChecked() ? 1 : 0;
 	save.custom = cbx_custom->isChecked() ? 1 : 0;
 	save.shortcut = cbx_shortcut->isChecked() ? 1 : 0;
+	save.hpsjam_server = cbx_hpsjam_server->isChecked() ? 1 : 0;
 
 	/* update what to save */
 	for (unsigned x = 0; x != MPP_MAX_SETTINGS; x++)
@@ -693,4 +712,5 @@ MppSettingsWhat :: handle_reset(void)
 	cbx_database_data->setChecked(1);
 	cbx_custom->setChecked(1);
 	cbx_shortcut->setChecked(1);
+	cbx_hpsjam_server->setChecked(1);
 }

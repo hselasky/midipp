@@ -39,6 +39,7 @@ struct MppSettingsSave {
 	int database_data;
 	int custom;
 	int shortcut;
+	int hpsjam_server;
 };
 
 class MppSettingsSub : public QSettings {
@@ -115,6 +116,7 @@ public:
 	MppCheckBox *cbx_database_data;
 	MppCheckBox *cbx_custom;
 	MppCheckBox *cbx_shortcut;
+	MppCheckBox *cbx_hpsjam_server;
 
 public slots:
 	void handle_reset(void);

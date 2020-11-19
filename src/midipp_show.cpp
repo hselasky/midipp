@@ -286,6 +286,7 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 	connect(butHpsJamOnOff, SIGNAL(selectionChanged(int)), this, SLOT(handle_hpsjam_change(int)));
 
 	editHpsJamServer = new QLineEdit();
+	editHpsJamServer->setText(QString(MPP_DEFAULT_HPSJAM));
 
 	portHpsJam = 0;
 
@@ -916,6 +917,11 @@ MppShowControl :: handle_hpsjam_change(int value)
 
 		/* set destination address */
 		addrHpsJam = QHostAddress(host);
+		editHpsJamServer->setEnabled(false);
+	} else {
+		/* close previous socket, if any */
+		sockHpsJam.close();
+		editHpsJamServer->setEnabled(true);
 	}
 }
 
