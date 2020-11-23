@@ -284,6 +284,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	editWidget->setPlainText(defaultText);
 	editWidget->setCursorWidth(4);
 	editWidget->setLineWrapMode(QPlainTextEdit::NoWrap);
+	editWidget->setTabChangesFocus(true);
 
 	/* GridLayout */
 

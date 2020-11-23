@@ -440,6 +440,7 @@ MppImportTab :: MppImportTab(MppMainWindow *parent)
 	    
 	    "C  G  Am" "\n"
 	    "Welcome!" "\n"));
+	editWidget->setTabChangesFocus(true);
 
 	butImportFileNew = new QPushButton(tr("New"));
 	butImportFileOpen = new QPushButton(tr("Open"));

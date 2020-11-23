@@ -39,7 +39,6 @@ public:
 
 class MppTabButton : public QPushButton {
 public:
-	void mouseReleaseEvent(QMouseEvent *);
 	void mouseDoubleClickEvent(QMouseEvent *);
 };
 
@@ -66,7 +65,6 @@ public:
 
 	void addTab(QWidget *, const QString &);
 	void addWidget(QWidget *);
-	void handleMouseReleaseEvent(QWidget *);
 	void handleMouseDoubleClickEvent(QWidget *);
 	void makeWidgetVisible(QWidget *, QWidget * = 0);
 	void moveCurrWidgetLeft();
@@ -95,6 +93,7 @@ public:
 
 public slots:
 	void doRepaintCb();
+	void handleMouseReleaseEvent();
 signals:
 	void doRepaintEnqueue();
 };

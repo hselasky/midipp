@@ -26,14 +26,6 @@
 #include "midipp_tabbar.h"
 
 void
-MppTabButton :: mouseReleaseEvent(QMouseEvent *event)
-{
-	MppTabBar *ptab = (MppTabBar *)parent();
-	ptab->handleMouseReleaseEvent(this);
-	QPushButton::mouseReleaseEvent(event);
-}
-
-void
 MppTabButton :: mouseDoubleClickEvent(QMouseEvent *event)
 {
 	MppTabBar *ptab = (MppTabBar *)parent();
@@ -80,8 +72,10 @@ MppTabBar :: addWidget(QWidget *pWidget)
 	if (nwidgets < MPP_MAX_WIDGETS) {
 		widgets[nwidgets].pWidget = pWidget;
 		nwidgets++;
-		if (pWidget != 0)
+		if (pWidget != 0) {
 			pWidget->setParent(this);
+			connect(pWidget, SIGNAL(released()), this, SLOT(handleMouseReleaseEvent()));
+		}
 	}
 }
 
@@ -94,6 +88,7 @@ MppTabBar :: addTab(QWidget *pw, const QString &name)
 		tabs[ntabs].flags = FLAG_RIGHT;
 		tabs[ntabs].button.setText(name);
 		tabs[ntabs].button.setParent(this);
+		connect(&tabs[ntabs].button, SIGNAL(released()), this, SLOT(handleMouseReleaseEvent()));
 		if (ntabs == 0)
 			tabs[0].button.setFocus(Qt::TabFocusReason);
 		right_sw->addWidget(pw);
@@ -102,10 +97,10 @@ MppTabBar :: addTab(QWidget *pw, const QString &name)
 }
 
 void
-MppTabBar :: handleMouseReleaseEvent(QWidget *orig)
+MppTabBar :: handleMouseReleaseEvent()
 {
 	for (int x = 0; x != ntabs; x++) {
-		if (&tabs[x].button == orig) {
+		if (&tabs[x].button == sender()) {
 			makeWidgetVisible(tabs[x].w);
 			break;
 		}
