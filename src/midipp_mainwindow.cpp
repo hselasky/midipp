@@ -211,6 +211,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_help = new QPlainTextEdit();
 	tab_help->setFont(editFont);
 	tab_help->setLineWrapMode(QPlainTextEdit::NoWrap);
+	tab_help->setReadOnly(true);
+	tab_help->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
+
 	tab_help->setPlainText(tr(
 	    "/*\n"
 	    " * Copyright (c) 2009-2020 Hans Petter Selasky. All rights reserved.\n"
