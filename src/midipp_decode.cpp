@@ -545,6 +545,8 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	gl->addWidget(gb_gen, 1,0,1,1);
 
 	editor = new MppDecodeEditor(_mw);
+	editor->setTabChangesFocus(true);
+
 	gb_gen->addWidget(editor, 0,0,1,1);
 
 	gb_dc = new MppGroupBox(tr("Circle of fifths"));
