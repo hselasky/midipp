@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013-2018 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2020 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,8 +25,23 @@
 
 #include "midipp_tabbar.h"
 
-MppTabBar :: MppTabBar(QWidget *parent)
-    : QWidget(parent), MppTabBarRepaint(this)
+void
+MppTabButton :: mouseReleaseEvent(QMouseEvent *event)
+{
+	MppTabBar *ptab = (MppTabBar *)parent();
+	ptab->handleMouseReleaseEvent(this);
+	QPushButton::mouseReleaseEvent(event);
+}
+
+void
+MppTabButton :: mouseDoubleClickEvent(QMouseEvent *event)
+{
+	MppTabBar *ptab = (MppTabBar *)parent();
+	ptab->handleMouseDoubleClickEvent(this);
+	QPushButton::mouseDoubleClickEvent(event);
+}
+
+MppTabBar :: MppTabBar(QWidget *parent) : QWidget(parent)
 {
 	right_sw = new QStackedWidget(this);
 	left_sw = new QStackedWidget(this);
@@ -55,11 +70,8 @@ MppTabBar :: MppTabBar(QWidget *parent)
 #endif
 	split->addWidget(left_sw);
 	split->addWidget(right_sw);
-}
 
-MppTabBar :: ~MppTabBar()
-{
-
+	connect(this, SIGNAL(doRepaintEnqueue()), this, SLOT(doRepaintCb()));
 }
 
 void
@@ -68,10 +80,8 @@ MppTabBar :: addWidget(QWidget *pWidget)
 	if (nwidgets < MPP_MAX_WIDGETS) {
 		widgets[nwidgets].pWidget = pWidget;
 		nwidgets++;
-		if (pWidget != 0) {
+		if (pWidget != 0)
 			pWidget->setParent(this);
-			pWidget->show();
-		}
 	}
 }
 
@@ -82,61 +92,31 @@ MppTabBar :: addTab(QWidget *pw, const QString &name)
 		tabs[ntabs].w = pw;
 		tabs[ntabs].name = name;
 		tabs[ntabs].flags = FLAG_RIGHT;
+		tabs[ntabs].button.setText(name);
+		tabs[ntabs].button.setParent(this);
+		if (ntabs == 0)
+			tabs[0].button.setFocus(Qt::TabFocusReason);
 		right_sw->addWidget(pw);
 		ntabs++;
 	}
 }
 
 void
-MppTabBar :: mousePressEvent(QMouseEvent *event)
+MppTabBar :: handleMouseReleaseEvent(QWidget *orig)
 {
-	int x;
-	QPoint pos = event->pos();
-
-	for (x = 0; x != ntabs; x++) {
-		if (tabs[x].area.contains(pos)) {
+	for (int x = 0; x != ntabs; x++) {
+		if (&tabs[x].button == orig) {
 			makeWidgetVisible(tabs[x].w);
 			break;
 		}
 	}
-	for (x = 0; x != nwidgets; x++) {
-		if (widgets[x].pWidget == 0)
-			continue;
-		if (widgets[x].area.contains(pos))
-			QWidget::eventFilter(widgets[x].pWidget, event);
-	}
-	event->accept();
 }
 
 void
-MppTabBar :: mouseReleaseEvent(QMouseEvent *event)
+MppTabBar :: handleMouseDoubleClickEvent(QWidget *orig)
 {
-	int x;
-	QPoint pos = event->pos();
-    
-	for (x = 0; x != ntabs; x++) {
-		if (tabs[x].area.contains(pos)) {
-			makeWidgetVisible(tabs[x].w);
-			break;
-		}
-	}
-	for (x = 0; x != nwidgets; x++) {
-		if (widgets[x].pWidget == 0)
-			continue;
-		if (widgets[x].area.contains(pos))
-			QWidget::eventFilter(widgets[x].pWidget, event);
-	}
-	event->accept();
-}
-
-void
-MppTabBar :: mouseDoubleClickEvent(QMouseEvent *event)
-{
-	int x;
-	QPoint pos = event->pos();
-    
-	for (x = 0; x != ntabs; x++) {
-		if (tabs[x].area.contains(pos)) {
+	for (int x = 0; x != ntabs; x++) {
+		if (&tabs[x].button == orig) {
 			changeTab(x);
 			if (tabs[x].flags == FLAG_LEFT)
 				moveCurrWidgetRight();
@@ -145,27 +125,6 @@ MppTabBar :: mouseDoubleClickEvent(QMouseEvent *event)
 			break;
 		}
 	}
-	for (x = 0; x != nwidgets; x++) {
-		if (widgets[x].pWidget == 0)
-			continue;
-		if (widgets[x].area.contains(pos))
-			QWidget::eventFilter(widgets[x].pWidget, event);
-	}
-	event->accept();
-}
-
-void
-MppTabBar :: mouseMoveEvent(QMouseEvent *event)
-{
-	int x;
-	QPoint pos = event->pos();
-	for (x = 0; x != nwidgets; x++) {
-		if (widgets[x].pWidget == 0)
-			continue;
-		if (widgets[x].area.contains(pos))
-			QWidget::eventFilter(widgets[x].pWidget, event);
-	}
-	event->accept();
 }
 
 void
@@ -230,6 +189,11 @@ void
 MppTabBar :: makeWidgetVisible(QWidget *widget, QWidget *except)
 {
 	int x;
+
+	for (x = 0; x != ntabs; x++) {
+		if (tabs[x].w == widget)
+			break;
+	}
 
 	for (x = 0; ; x++) {
 		QWidget *tab = left_sw->widget(x);
@@ -305,7 +269,7 @@ MppTabBar :: paintEvent(QPaintEvent *event)
 	int ht = computeHeight(width());
 
 	if (ht != height())
-		doRepaintEnqueue();
+		emit doRepaintEnqueue();
 
 	QPainter paint(this);
 
@@ -358,21 +322,7 @@ MppTabBar :: paintEvent(QPaintEvent *event)
 		tabs[n].area = QRect(x_off + (basic_size / 2), y_off + (basic_size / 4),
 		    dw - basic_size, (basic_size * 2) - (basic_size / 2));
 
-		if (isVisible(tabs[n].w)) {
-			QRect area(x_off + basic_size, y_off + (basic_size / 4),
-			    dw - (2*basic_size), (basic_size * 2) - (basic_size / 2));
-
-			paint.setPen(QPen(Mpp.ColorWhite, 0));
-			paint.setBrush(Mpp.ColorWhite);
-			paint.drawRect(area);
-		}
-
-		paint.setPen(QPen(Mpp.ColorBlack, 0));
-		paint.setBrush(Mpp.ColorBlack);
-		paint.drawText(QRect(x_off + basic_size + (basic_size / 4),
-		    y_off + (basic_size / 2),
-		    dw - (2 * basic_size) - (basic_size / 2), basic_size),
-		    Qt::TextSingleLine | Qt::AlignCenter, tabs[n].name);
+		tabs[n].button.setGeometry(tabs[n].area);
 
 		x_off += dw;
 	}
@@ -395,7 +345,6 @@ MppTabBar :: paintEvent(QPaintEvent *event)
 		widgets[n].area = QRect(x_off - dw, y_off,
 		    4 * basic_size, 2 * basic_size);
 		widgets[n].pWidget->setGeometry(widgets[n].area);
-		QWidget::eventFilter(widgets[n].pWidget, event);
 	}
 	y_off = (r + 1) * basic_size * 2;
 }
@@ -432,22 +381,11 @@ MppTabBar :: computeHeight(int w) const
 	return ((r + 1) * basic_size * 2);
 }
 
-MppTabBarRepaint :: MppTabBarRepaint(MppTabBar *_tabbar)
-{
-	tabbar = _tabbar;
-	connect(this, SIGNAL(doRepaintEnqueue()), this, SLOT(doRepaintCb()));
-}
-
-MppTabBarRepaint :: ~MppTabBarRepaint()
-{
-
-}
-
 void
-MppTabBarRepaint :: doRepaintCb()
+MppTabBar :: doRepaintCb()
 {
-	int ht = tabbar->computeHeight(tabbar->width());
+	const int ht = computeHeight(width());
 
-	tabbar->setFixedHeight(ht);
-	tabbar->update();
+	setFixedHeight(ht);
+	update();
 }

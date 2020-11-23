@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013-2018 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2020 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,54 +32,42 @@ class MppTabWidget {
 public:
 	MppTabWidget() {
 		pWidget = 0;
-	}
-	~MppTabWidget() {
-	}
+	};
 	QRect area;
 	QWidget *pWidget;
 };
 
-class MppTab {
+class MppTabButton : public QPushButton {
+public:
+	void mouseReleaseEvent(QMouseEvent *);
+	void mouseDoubleClickEvent(QMouseEvent *);
+};
+
+class MppTab : public QObject {
+	Q_OBJECT;
 public:
 	MppTab() {
 		w = 0;
 		flags = 0;
 	};
-	~MppTab() {
-	};
 
 	QString name;
 	QRect area;
+	MppTabButton button;
 
 	QWidget *w;
 	int flags;
 };
 
-class MppTabBarRepaint : private QObject {
+class MppTabBar : public QWidget {
 	Q_OBJECT;
 public:
-	MppTabBarRepaint(MppTabBar *);
-	~MppTabBarRepaint();
-
-	MppTabBar *tabbar;
-
-public slots:
-	void doRepaintCb();
-signals:
-	void doRepaintEnqueue();
-};
-
-class MppTabBar : public QWidget, public MppTabBarRepaint {
-public:
 	MppTabBar(QWidget * = 0);
-	~MppTabBar();
 
 	void addTab(QWidget *, const QString &);
 	void addWidget(QWidget *);
-	void mousePressEvent(QMouseEvent *);
-	void mouseMoveEvent(QMouseEvent *);
-	void mouseReleaseEvent(QMouseEvent *);
-	void mouseDoubleClickEvent(QMouseEvent *);
+	void handleMouseReleaseEvent(QWidget *);
+	void handleMouseDoubleClickEvent(QWidget *);
 	void makeWidgetVisible(QWidget *, QWidget * = 0);
 	void moveCurrWidgetLeft();
 	void moveCurrWidgetRight();
@@ -104,6 +92,11 @@ public:
 
 	MppTabWidget widgets[MPP_MAX_WIDGETS];
 	MppTab tabs[MPP_MAX_TABS];
+
+public slots:
+	void doRepaintCb();
+signals:
+	void doRepaintEnqueue();
 };
 
 #endif	/* _MIDIPP_TABBAR_H_ */

@@ -52,6 +52,8 @@ unset INSTALL_ROOT
 %changelog
 * Tue Nov 19 2020 HPS hps@selasky.org 2.0.7-1
 * Tue Nov 19 2020 HPS hps@selasky.org 2.0.6-1
+- Fixed excessive stack usage
+- Added keyboard shortcuts for navigating views
 * Tue Nov 11 2020 HPS hps@selasky.org 2.0.5-1
 - Added support for HPS JAM (Lyrics and Chords).
 - Fixed some chords.

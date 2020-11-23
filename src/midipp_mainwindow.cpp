@@ -135,16 +135,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	mwEdit->setIcon(QIcon(QString(":/icons/edit.png")));
 	mwUpDown->setIcon(QIcon(QString(":/icons/up_down.png")));
 
-	mwRewind->setFocusPolicy(Qt::NoFocus);
-	mwPlay->setFocusPolicy(Qt::NoFocus);
-	mwReload->setFocusPolicy(Qt::NoFocus);
-	mwPaste->setFocusPolicy(Qt::NoFocus);
-	mwCopy->setFocusPolicy(Qt::NoFocus);
-	mwUndo->setFocusPolicy(Qt::NoFocus);
-	mwRedo->setFocusPolicy(Qt::NoFocus);
-	mwEdit->setFocusPolicy(Qt::NoFocus);
-	mwUpDown->setFocusPolicy(Qt::NoFocus);
-
 	connect(mwRewind, SIGNAL(released()), this, SLOT(handle_rewind()));
 	connect(mwPlay, SIGNAL(released()), this, SLOT(handle_midi_trigger()));
 	connect(mwReload, SIGNAL(released()), this, SLOT(handle_compile()));
