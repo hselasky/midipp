@@ -70,11 +70,9 @@ MppKeyStrNoOctave(int key)
 	int rem = MPP_BAND_REM(key, MPP_MAX_BANDS);
 	int off;
 	int sub;
-	int oct;
 
 	off = rem / MPP_BAND_STEP_12;
 	sub = rem % MPP_BAND_STEP_12;
-	oct = (key - rem) / MPP_MAX_BANDS;
 
 	if (sub != 0) {
 		const char *off_map[12] = {

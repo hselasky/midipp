@@ -833,7 +833,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 	MppElement *stop;
 	MppElement *ptr;
 	int key_mode;
-	int auto_melody;
 	int auto_utune;
 	int has_string;
 	int index;
@@ -851,9 +850,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 
 	/* set initial mask for active channels */
 	active_channels = 1;
-
-	/* no automatic melody */
-	auto_melody = 0;
 
 	/* no automatic micro tuning */
 	auto_utune = -1;
@@ -890,9 +886,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 					mainWindow->dlg_bpm->period_cur = ptr->value[2];
 					mainWindow->dlg_bpm->handle_update();
 					mainWindow->atomic_unlock();
-					break;
-				case MPP_CMD_AUTO_MELODY:
-					auto_melody = ptr->value[1];
 					break;
 				case MPP_CMD_KEY_MODE:
 					key_mode = ptr->value[1];
