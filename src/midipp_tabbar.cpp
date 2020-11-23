@@ -293,25 +293,23 @@ MppTabBar :: paintEvent(QPaintEvent *event)
 		if (isVisible(tabs[n].w)) {
 			paint.setPen(QPen(Mpp.ColorBlack, 0));
 			paint.setBrush(Mpp.ColorBlack);
-		} else {
-			paint.setPen(QPen(Mpp.ColorLight, 0));
-			paint.setBrush(Mpp.ColorLight);
-		}
-		if (tabs[n].flags & FLAG_LEFT) {
-			QPoint temp[3] = {
-				QPoint(x_off, y_off + basic_size),
-				QPoint(x_off + basic_size, y_off + (basic_size / 4)),
-				QPoint(x_off + basic_size, y_off + (basic_size * 2) - (basic_size / 4) - 1)
-			};
-			paint.drawPolygon(temp, 3);
 
-		} else if (tabs[n].flags & FLAG_RIGHT) {
-			QPoint temp[3] = {
-				QPoint(x_off + dw - basic_size, y_off + (basic_size / 4)),
-				QPoint(x_off + dw, y_off + basic_size),
-				QPoint(x_off + dw - basic_size, y_off + (basic_size * 2) - (basic_size / 4) - 1)
-			};
-			paint.drawPolygon(temp, 3);
+			if (tabs[n].flags & FLAG_LEFT) {
+				QPoint temp[3] = {
+					QPoint(x_off, y_off + basic_size),
+					QPoint(x_off + basic_size / 2, y_off + (basic_size / 4)),
+					QPoint(x_off + basic_size / 2, y_off + (basic_size * 2) - (basic_size / 4) - 1)
+				};
+				paint.drawPolygon(temp, 3);
+
+			} else if (tabs[n].flags & FLAG_RIGHT) {
+				QPoint temp[3] = {
+					QPoint(x_off + dw - basic_size / 2, y_off + (basic_size / 4)),
+					QPoint(x_off + dw, y_off + basic_size),
+					QPoint(x_off + dw - basic_size / 2, y_off + (basic_size * 2) - (basic_size / 4) - 1)
+				};
+				paint.drawPolygon(temp, 3);
+			}
 		}
 
 		tabs[n].area = QRect(x_off + (basic_size / 2), y_off + (basic_size / 4),
