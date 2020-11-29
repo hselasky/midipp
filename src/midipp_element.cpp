@@ -890,6 +890,8 @@ MppHead :: sortScore()
 	int duration;
 	int channel;
 
+	start = stop = 0;
+
 	while (foreachLine(&start, &stop) != 0) {
 		struct MppKeyInfo *mk;
 		size_t num = 0;
