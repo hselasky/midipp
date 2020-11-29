@@ -26,8 +26,6 @@
 # Makefile for MIDI Player Pro
 #
 
-VERSION=2.0.6
-
 DESTDIR?=
 PREFIX?=/usr/local
 HAVE_SCREENSHOT?=
@@ -50,30 +48,3 @@ clean: Makefile.unix
 	make -f Makefile.unix clean
 	rm -f Makefile.unix
 
-package: clean
-
-	tar -cvf temp.tar --exclude="*~" --exclude="*#" \
-		--exclude=".svn" --exclude="*.orig" --exclude="*.rej" \
-		Makefile \
-		midipp*.pro \
-		midipp*.qrc \
-		midipp*.plist \
-		MidiPlayerPro.icns \
-		HISTORY.TXT \
-		MidiPlayerPro*.entitlements \
-		src/midipp*.cpp \
-		src/midipp*.h \
-		*.png \
-		icons/*.png \
-		midipp*.desktop \
-		midipp*.spec
-
-	rm -rf midipp-${VERSION}
-
-	mkdir midipp-${VERSION}
-
-	tar -xvf temp.tar -C midipp-${VERSION}
-
-	rm -rf temp.tar
-
-	tar --uid=0 --gid=0 -jcvf midipp-${VERSION}.tar.bz2 midipp-${VERSION}
