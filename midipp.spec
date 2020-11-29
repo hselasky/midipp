@@ -1,5 +1,5 @@
 Name:           midipp
-Version:        2.0.6
+Version:        2.0.7
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
@@ -50,7 +50,9 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Tue Nov 19 2020 HPS hps@selasky.org 2.0.7-1
+* Tue Nov 29 2020 HPS hps@selasky.org 2.0.8-1
+* Tue Nov 29 2020 HPS hps@selasky.org 2.0.7-1
+- Fix for crash
 * Tue Nov 19 2020 HPS hps@selasky.org 2.0.6-1
 - Fixed excessive stack usage
 - Added keyboard shortcuts for navigating views
