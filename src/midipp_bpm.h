@@ -41,7 +41,7 @@ public:
 	void handle_jump_event_locked(int);
 
 	void handle_update(int = 0);
-	void handle_callback_locked(int = 0);
+	void handle_callback_locked();
 
 	MppMainWindow *mw;
 

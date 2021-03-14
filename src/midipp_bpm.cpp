@@ -38,17 +38,21 @@ MppTimerCallback(void *arg)
 	MppMainWindow *mw = mb->mw;
 
 	mw->atomic_lock();
-	mb->handle_callback_locked(0);
+	mb->handle_callback_locked();
 	mw->atomic_unlock();
 }
 
 void
-MppBpm :: handle_callback_locked(int force)
+MppBpm :: handle_callback_locked()
 {
 	MppScoreMain *sm;
 
-	if (force != 0 || (mw->midiTriggered != 0 && (toggle != 0 || enabled != 0))) {
+	if (mw->midiTriggered != 0 && (toggle != 0 || enabled != 0)) {
 		toggle = !toggle;
+
+		/* check if we should send a beat event */
+		if (beat != 0 && toggle != 0)
+			mw->send_byte_event_locked(0xF8);
 
 		for (unsigned n = 0; n != MPP_MAX_VIEWS; n++) {
 			if (view_out[n] == 0)
@@ -61,10 +65,8 @@ MppBpm :: handle_callback_locked(int force)
 			else
 				sm->handleKeyRelease(key, amp, 0);
 		}
-
-		/* check if we should send a beat event */
-		if (beat != 0 && toggle != 0)
-			mw->send_byte_event_locked(0xF8);
+	} else {
+		toggle = 0;
 	}
 }
 
@@ -350,7 +352,10 @@ MppBpm :: handle_beat_event_locked(int view_index)
 	    view_sync[view_index] == 0)
 		return;
 
+	/* stop current output, if any */
 	if (toggle != 0)
-		handle_callback_locked(1);
-	handle_callback_locked(1);
+		handle_callback_locked();
+
+	/* sync timer output */
+	handle_update(1);
 }
