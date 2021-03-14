@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2021 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,39 +36,36 @@ MppTimerCallback(void *arg)
 {
 	MppBpm *mb = (MppBpm *)arg;
 	MppMainWindow *mw = mb->mw;
-	MppScoreMain *sm;
-	uint8_t temp;
-	int n;
 
 	mw->atomic_lock();
+	mb->handle_callback_locked(0);
+	mw->atomic_unlock();
+}
 
-	mb->last_timeout = umidi20_get_curr_position();
+void
+MppBpm :: handle_callback_locked(int force)
+{
+	MppScoreMain *sm;
 
-	mb->handle_update();
+	if (force != 0 || (mw->midiTriggered != 0 && (toggle != 0 || enabled != 0))) {
+		toggle = !toggle;
 
-	if (mb->enabled != 0 && mw->midiTriggered != 0) {
-		if (mb->duty_ticks != 0 && mb->amp != 0) {
+		for (unsigned n = 0; n != MPP_MAX_VIEWS; n++) {
+			if (view_out[n] == 0)
+				continue;
 
-			for (n = 0; n != MPP_MAX_VIEWS; n++) {
-				if (mb->view_out[n] == 0)
-					continue;
+			sm = mw->scores_main[n];
 
-				/* avoid feedback */
-				temp = mb->view_sync[n];
-				mb->view_sync[n] = 0;
-
-				sm = mw->scores_main[n];
-				sm->handleKeyPress(mb->key, mb->amp, 0);
-				sm->handleKeyRelease(mb->key, mb->amp, mb->duty_ticks);
-
-				/* restore sync */
-				mb->view_sync[n] = temp;
-			}
+			if (toggle != 0)
+				sm->handleKeyPress(key, amp, 0);
+			else
+				sm->handleKeyRelease(key, amp, 0);
 		}
-		if (mb->beat != 0)
+
+		/* check if we should send a beat event */
+		if (beat != 0 && toggle != 0)
 			mw->send_byte_event_locked(0xF8);
 	}
-	mw->atomic_unlock();
 }
 
 MppBpm :: MppBpm(MppMainWindow *parent)
@@ -94,11 +91,6 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 	spn_bpm_value->setSuffix(tr(" bpm"));
 	connect(spn_bpm_value, SIGNAL(valueChanged(int)), this, SLOT(handle_config_change()));
 
-	spn_bpm_duty = new QSpinBox();
-	spn_bpm_duty->setRange(1, 199);
-	spn_bpm_duty->setSuffix(tr(" %"));
-	connect(spn_bpm_duty, SIGNAL(valueChanged(int)), this, SLOT(handle_config_change()));
-
 	spn_bpm_amp = new QSpinBox();
 	spn_bpm_amp->setRange(1, 127);
 	connect(spn_bpm_amp, SIGNAL(valueChanged(int)), this, SLOT(handle_config_change()));
@@ -115,11 +107,6 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 	spn_bpm_period_cur->setRange(0, 60000);
 	spn_bpm_period_cur->setSuffix(tr(" ms"));
 	connect(spn_bpm_period_cur, SIGNAL(valueChanged(int)), this, SLOT(handle_config_change()));
-
-	spn_sync_max = new QSpinBox();
-	spn_sync_max->setRange(0, 60000);
-	spn_sync_max->setSuffix(tr(" ms"));
-	connect(spn_sync_max, SIGNAL(valueChanged(int)), this, SLOT(handle_config_change()));
 
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
 		cbx_out_view[n] = new MppCheckBox();
@@ -145,20 +132,14 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 	gb_ctrl->addWidget(new QLabel(tr("Value (1..6000)")), 0, 0, 1, 1);
 	gb_ctrl->addWidget(spn_bpm_value, 0, 1, 1, 1);
 
-	gb_ctrl->addWidget(new QLabel(tr("Max sync offset (0..60000)")), 1, 0, 1, 1);
-	gb_ctrl->addWidget(spn_sync_max, 1, 1, 1, 1);
+	gb_ctrl->addWidget(new QLabel(tr("Amplitude (1..127)")), 1, 0, 1, 1);
+	gb_ctrl->addWidget(spn_bpm_amp, 1, 1, 1, 1);
 
-	gb_ctrl->addWidget(new QLabel(tr("Duty cycle (1..199)")), 2, 0, 1, 1);
-	gb_ctrl->addWidget(spn_bpm_duty, 2, 1, 1, 1);
+	gb_ctrl->addWidget(new QLabel(tr("Play key")), 2, 0, 1, 1);
+	gb_ctrl->addWidget(spn_bpm_key, 2, 1, 1, 1);
 
-	gb_ctrl->addWidget(new QLabel(tr("Amplitude (1..127)")), 3, 0, 1, 1);
-	gb_ctrl->addWidget(spn_bpm_amp, 3, 1, 1, 1);
-
-	gb_ctrl->addWidget(new QLabel(tr("Play key")), 4, 0, 1, 1);
-	gb_ctrl->addWidget(spn_bpm_key, 4, 1, 1, 1);
-
-	gb_ctrl->addWidget(new QLabel(tr("Output to MIDI beat event")), 7, 0, 1, 1);
-	gb_ctrl->addWidget(cbx_midi_beat, 7, 1, 1, 1);
+	gb_ctrl->addWidget(new QLabel(tr("Output to MIDI beat event")), 3, 0, 1, 1);
+	gb_ctrl->addWidget(cbx_midi_beat, 3, 1, 1, 1);
 
 	gb_scale = new MppGroupBox(tr("BPM time scaling"));
 
@@ -200,6 +181,8 @@ MppBpm :: MppBpm(MppMainWindow *parent)
 	gl->setRowStretch(3, 1);
 	gl->setColumnStretch(4, 1);
 
+	toggle = 0;
+
 	handle_reset_all();
 
 	umidi20_set_timer(&MppTimerCallback, this, 1000);
@@ -215,25 +198,21 @@ MppBpm :: ~MppBpm()
 void
 MppBpm :: handle_reload_all()
 {
-	int value[8];
+	int value[5];
 
 	mw->atomic_lock();
 	value[0] = bpm_cur;
-	value[1] = duty;
-	value[2] = amp;
-	value[3] = key;
-	value[4] = period_ref;
-	value[5] = period_cur;
-	value[6] = sync_max;
+	value[1] = amp;
+	value[2] = key;
+	value[3] = period_ref;
+	value[4] = period_cur;
 	mw->atomic_unlock();
 
 	spn_bpm_value->setValue(value[0]);
-	spn_bpm_duty->setValue(value[1]);
-	spn_bpm_amp->setValue(value[2]);
-	spn_bpm_key->setValue(value[3]);
-	spn_bpm_period_ref->setValue(value[4]);
-	spn_bpm_period_cur->setValue(value[5]);
-	spn_sync_max->setValue(value[6]);
+	spn_bpm_amp->setValue(value[1]);
+	spn_bpm_key->setValue(value[2]);
+	spn_bpm_period_ref->setValue(value[3]);
+	spn_bpm_period_cur->setValue(value[4]);
 }
 
 void
@@ -258,17 +237,10 @@ MppBpm :: handle_reset_all()
 	enabled = 0;
 	bpm_cur = 120;
 	bpm_other = 120;
-	sync_max = 250;
-	duty = 50;
-	duty_ticks = 0;
 	amp = 96;
 	key = MPP_DEFAULT_BASE_KEY;
 	period_ref = 120;
 	period_cur = 0;
-
-	history_in = 0;
-	history_out = 0;
-	last_timeout = 0;
 
 	handle_update();
 
@@ -296,79 +268,15 @@ MppBpm :: handle_bpm_enable(int value)
 void
 MppBpm :: handle_update(int restart)
 {
-	uint32_t cur_duration;
-	uint32_t new_duration;
-	uint32_t tmp_duration;
-	uint32_t max_offset;
-	uint32_t min_offset;
-	uint32_t tmp_offset;
 	uint32_t time_ms;
-	uint32_t bpm;
-	uint32_t x;
-	uint32_t y;
 
-	if (restart != 0) {
-		history_out = 0;
-		history_in = 0;
+	if (restart != 0)
 		bpm_other = bpm_cur;
-	}
-
-	bpm = bpm_get();
-
-	/* compute period in milliseconds */
-	new_duration = 0;
-	cur_duration = (bpm / bpm_cur);
-	if (cur_duration == 0)
-		cur_duration = 1;
-
-	min_offset = -1U;
-	max_offset = sync_max;
-	if (max_offset > cur_duration)
-		max_offset = cur_duration;
-
-	for (x = history_out; x != history_in; x = (x + 1) % MPP_MAX_BPM) {
-		for (y = (x + 1) % MPP_MAX_BPM; y != history_in;
-		     y = (y + 1) % MPP_MAX_BPM) {
-
-			tmp_duration = history_data[y] - history_data[x];
-
-			if (tmp_duration > cur_duration)
-				tmp_offset = tmp_duration - cur_duration;
-			else
-				tmp_offset = cur_duration - tmp_duration;
-
-			if (tmp_offset < (cur_duration / 2)) {
-				if (tmp_offset < min_offset) {
-					min_offset = tmp_offset;
-					new_duration = tmp_duration;
-				}
-			}
-		}
-	}
-
-	/* check if we should adjust the BPM value */
-	if (new_duration != 0) {
-		if (new_duration < (cur_duration - max_offset))
-			new_duration = cur_duration - max_offset;
-		else if (new_duration > (cur_duration + max_offset))
-			new_duration = cur_duration + max_offset;
-		if (new_duration == 0)
-			new_duration = 1;
-
-		bpm_other = bpm / new_duration;
-
-		if (bpm_other > 6000)
-			bpm_other = 6000;
-		else if (bpm_other == 0)
-			bpm_other = 1;
-	}
 
 	/* compute timer period in milliseconds */
-	time_ms = bpm_get() / bpm_other;
+	time_ms = bpm_get() / (2 * bpm_other);
 	if (time_ms == 0)
 		time_ms = 1;
-
-	duty_ticks = ((time_ms * duty) + ((2 * 100) - 1)) / (2 * 100);
 
 	umidi20_update_timer(&MppTimerCallback, this, time_ms, (restart != 0));
 }
@@ -376,7 +284,7 @@ MppBpm :: handle_update(int restart)
 void
 MppBpm :: handle_config_apply()
 {
-	uint32_t val[8];
+	uint32_t val[6];
 	uint32_t tmp[MPP_MAX_VIEWS];
 	uint32_t sync[MPP_MAX_VIEWS];
 	uint32_t n;
@@ -387,23 +295,19 @@ MppBpm :: handle_config_apply()
 	}
 
 	val[0] = spn_bpm_value->value();
-	val[1] = spn_bpm_duty->value();
-	val[2] = spn_bpm_amp->value();
-	val[3] = spn_bpm_key->value();
-	val[4] = spn_bpm_period_ref->value();
-	val[5] = spn_bpm_period_cur->value();
-	val[6] = spn_sync_max->value();
-	val[7] = (cbx_midi_beat->checkState() != Qt::Unchecked);
+	val[1] = spn_bpm_amp->value();
+	val[2] = spn_bpm_key->value();
+	val[3] = spn_bpm_period_ref->value();
+	val[4] = spn_bpm_period_cur->value();
+	val[5] = (cbx_midi_beat->checkState() != Qt::Unchecked);
 
 	mw->atomic_lock();
 	bpm_other = bpm_cur = val[0];
-	duty = val[1];
-	amp = val[2];
-	key = val[3];
-	period_ref = val[4];
-	period_cur = val[5];
-	sync_max = val[6];
-	beat = val[7];
+	amp = val[1];
+	key = val[2];
+	period_ref = val[3];
+	period_cur = val[4];
+	beat = val[5];
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
 		view_out[n] = tmp[n];
 		view_sync[n] = sync[n];
@@ -425,9 +329,6 @@ MppBpm :: handle_jump_event_locked(int view_index)
 	if (view_index < 0 || view_index >= MPP_MAX_VIEWS ||
 	    view_sync[view_index] == 0)
 		return;
-
-	history_out = 0;
-	history_in = 0;
 }
 
 uint32_t
@@ -445,48 +346,11 @@ MppBpm :: bpm_get()
 void
 MppBpm :: handle_beat_event_locked(int view_index)
 {
-	uint32_t limit_ms;
-	uint32_t time_ms;
-	uint32_t bpm;
-	uint32_t pos;
-
 	if (view_index < 0 || view_index >= MPP_MAX_VIEWS ||
 	    view_sync[view_index] == 0)
 		return;
 
-	pos = umidi20_get_curr_position();
-
-	/* get current bpm */
-	bpm = bpm_get();
-
-	/* compute period in milliseconds */
-	time_ms = bpm / bpm_cur;
-	if (time_ms == 0)
-		time_ms = 1;
-
-	/* remove old history */
-	while (history_in != history_out) {
-		uint32_t delta = pos -
-		    history_data[history_out];
-		if (delta < (2 * time_ms))
-			break;
-
-		history_out++;
-		history_out %= MPP_MAX_BPM;
-	}
-
-	/* keep adding data */
-	history_data[history_in] = pos;
-	history_in++;
-	history_in %= MPP_MAX_BPM;
-
-	/* compute limit in milliseconds */
-	if (time_ms > sync_max)
-		limit_ms = time_ms - sync_max;
-	else
-		limit_ms = 0;
-
-	/* check if beat is speeding up */
-	if ((uint32_t)(pos - last_timeout) > limit_ms)
-		umidi20_update_timer(&MppTimerCallback, this, time_ms, 1);
+	if (toggle != 0)
+		handle_callback_locked(1);
+	handle_callback_locked(1);
 }

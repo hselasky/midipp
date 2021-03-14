@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2020 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2021 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -1876,10 +1876,6 @@ MppScoreMain :: handleKeyPress(int in_key, int vel, uint32_t key_delay)
 	/* update cursor, if any */
 
 	mainWindow->cursorUpdate = 1;
-
-	/* update bpm, if any */
-
-	mainWindow->dlg_bpm->handle_beat_event_locked(unit);
 }
 
 /* must be called locked */

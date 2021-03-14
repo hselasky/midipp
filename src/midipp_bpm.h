@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2021 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,16 +41,15 @@ public:
 	void handle_jump_event_locked(int);
 
 	void handle_update(int = 0);
+	void handle_callback_locked(int = 0);
 
 	MppMainWindow *mw;
 
 	QGridLayout *gl;
 
 	QSpinBox *spn_bpm_value;
-	QSpinBox *spn_bpm_duty;
 	QSpinBox *spn_bpm_amp;
 	MppSpinBox *spn_bpm_key;
-	QSpinBox *spn_sync_max;
 	QSpinBox *spn_bpm_period_ref;
 	QSpinBox *spn_bpm_period_cur;
 	MppCheckBox *cbx_out_view[MPP_MAX_VIEWS];
@@ -67,18 +66,9 @@ public:
 	QPushButton *but_reset_all;
 	QPushButton *but_done_all;
 
-	uint32_t history_data[MPP_MAX_BPM];
-	uint32_t history_in;
-	uint32_t history_out;
-
-	uint32_t last_timeout;
-
 	uint32_t enabled;
 	uint32_t bpm_cur;
 	uint32_t bpm_other;
-	uint32_t sync_max;
-	uint32_t duty;
-	uint32_t duty_ticks;
 	uint32_t period_ref;
 	uint32_t period_cur;
 	int key;
@@ -86,6 +76,7 @@ public:
 	uint8_t view_sync[MPP_MAX_VIEWS];
 	uint8_t amp;
 	uint8_t beat;
+	uint8_t toggle;
 
 public slots:
 	void handle_config_apply();
