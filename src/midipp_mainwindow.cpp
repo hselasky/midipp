@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2020 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2021 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -1416,7 +1416,7 @@ MppMainWindow :: handle_config_reload()
 	for (n = MPP_MAGIC_DEVNO; n != UMIDI20_N_DEVICES; n++) {
 		STRLCPY(cfg.cfg_dev[n].play_fname, "/dev/null",
 		    sizeof(cfg.cfg_dev[n].play_fname));
-		cfg.cfg_dev[n].play_enabled_cfg = 1;
+		cfg.cfg_dev[n].play_enabled_cfg = UMIDI20_ENABLED_CFG_DEV;
 	}
 
 	umidi20_config_import(&cfg);
