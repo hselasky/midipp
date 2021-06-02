@@ -34,61 +34,61 @@ MIDI Player Pro was officially released the summer of 2011.
 </ul>
 
 # Screenshots from v2.x.x
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot000.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot000.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot001.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot001.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot002.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot002.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot003.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot003.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot004.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot004.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot005.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot005.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot006.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot006.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot007.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot007.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot008.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot008.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot009.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot009.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot010.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot010.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot011.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot011.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot012.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot012.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot013.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot013.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot014.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot014.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot015.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot015.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot016.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot016.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot017.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot017.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot018.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot018.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot019.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot019.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot020.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot020.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot021.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot021.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot022.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot022.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot023.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot023.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot024.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot024.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot025.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot025.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot026.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot026.png?"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot027.png"></IMG>
+<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot027.png?"></IMG>
 
 # Supported platforms
 <ul>
