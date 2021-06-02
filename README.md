@@ -20,30 +20,8 @@ MIDI Player Pro was officially released the summer of 2011.
   <li>supports quarter-, octo- and hexa- tones</li>
 </ul>
 
-# Demo video, 2011
-<A HREF="http://www.selasky.org/hans_petter/midistudio/midipp_demo_20_02_2011.mp4">Demo video (MP4 format, plays using VLC at least, 50MByte)</A>
-
-# Demo video, 2013
-<A HREF="http://www.selasky.org/hans_petter/midistudio/midipp_chord_mode_2013.mp4">Demo video showing chord mode (MP4 format, plays using VLC at least, 12MByte)</A>
-
-<A HREF="http://www.selasky.org/hans_petter/midistudio/midipp_chord_mode_2013.ogv">Demo video showing chord mode (OGG Theora format, plays using VLC, 70MByte)</A>
-
-# Demo video, 2014
-<A HREF="http://www.selasky.org/hans_petter/midistudio/midipp_chord_mode_2014.mp4">Demo video showing chord mode (MP4 format, plays using VLC at least,
-95MByte)</A>
-
-<A HREF="http://www.selasky.org/hans_petter/midistudio/midipp_chord_mode_2014.webm">Demo video showing chord mode (WebM format, plays using VLC,
-98MByte)</A> <BR>
-
-# Demo video, 2015
-<A HREF="http://www.selasky.org/hans_petter/midistudio/midipp_lac_mainz_2015.webm">Demo video showing the full feature set of MIDI Player Pro (WebM format, plays using VLC, 173MByte)</A>
-
-<A HREF="http://lac.linuxaudio.org/2015/video.php?id=52">Linux Audio Conference 2015</A>
-
-# Demo video, 2016
-<A HREF="http://www.selasky.org/hans_petter/midistudio/born_to_be_wild_midipp_2016.webm">Demo video showing how to use chord mode to import and play "Born to be wild" by Steppenwolf (WebM format, Plays using VLC, 9Mbyte)</A>
-
-<A HREF="http://www.selasky.org/hans_petter/midistudio/mary_did_you_know_midipp_2016.webm">Demo video showing how to use chord mode to play "Mary did you know" by Mark Lowry (WebM format, Plays using VLC, 5Mbyte)</A>
+# Demo videos
+<A HREF="https://www.youtube.com/playlist?list=PL85pRnIQwc7Q-wwT0DiUS2Gg2PhFnnOi1">Demo videos at Youtube</A>
 
 # Users Guide and Howtos
 <A HREF="http://www.selasky.org/hans_petter/midistudio/midipp_users_guide_2018.pdf">MIDIPP Users Guide 2018 (PDF format)</A>
