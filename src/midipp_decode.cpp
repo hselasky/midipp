@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010-2021 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -567,11 +567,15 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	handle_parse();
     
 	but_insert->setFocus();
-}
 
-MppDecodeTab :: ~MppDecodeTab()
-{
+	reset_state();
 
+	connect(this, SIGNAL(key_pressed(int)),
+		this, SLOT(handle_key_pressed(int)));
+	connect(this, SIGNAL(key_released(int)),
+		this, SLOT(handle_key_released(int)));
+	connect(this, SIGNAL(sustain_pedal(int)),
+		this, SLOT(handle_sustain_pedal(int)));
 }
 
 void
@@ -999,6 +1003,116 @@ MppDecodeTab :: keyReleaseEvent(QKeyEvent *event)
 		break;
 	default:
 		break;
+	}
+}
+
+void
+MppDecodeTab :: reset_state()
+{
+	memset(key_bitmap, 0, sizeof(key_bitmap));
+	sustain = 0;
+	stable = 0;
+}
+
+void
+MppDecodeTab :: watchdog()
+{
+	constexpr unsigned stride = MPP_BAND_STEP_12 / MPP_BAND_STEP_CHORD;
+	MppChordElement info = {};
+	unsigned int x;
+	int key;
+	bool any_new = false;
+	bool pressed = false;
+
+	for (x = 0; x != 128; x++) {
+		if (!(key_bitmap[x] & BIT_PRESSED)) {
+			if (key_bitmap[x] & BIT_CACHED)
+				any_new = true;
+			key_bitmap[x] &= ~BIT_CACHED;
+			continue;
+		}
+		if (!(key_bitmap[x] & BIT_CACHED)) {
+			key_bitmap[x] |= BIT_CACHED;
+			any_new = true;
+		}
+		key = x * MPP_BAND_STEP_12;
+		if (pressed == false)
+			info.key_base = key;
+		if (info.key_max < key)
+			info.key_max = key;
+		pressed = true;
+		info.stats[(x * stride) % MPP_MAX_CHORD_BANDS]++;
+	}
+
+	if (any_new || !pressed) {
+		stable = 0;
+		return;
+	} else {
+		switch (stable) {
+		case 0:
+			stable = 1;
+			return;
+		case 1:
+			stable = 2;
+			break;
+		default:
+			return;
+		}
+	}
+
+	if (parseScoreChord(&info) != 0)
+		return;
+
+	if (mw->scoreRecordOn == 2)
+		mw->mbm_score_record->setSelection(0);
+
+	QPlainTextEdit *ped = mw->currEditor();
+	if (ped == 0)
+		return;
+
+	QTextCursor cursor;
+
+	cursor = QTextCursor(ped->textCursor());
+	cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor, 1);
+	cursor.beginEditBlock();
+	cursor.insertText(getText() + QChar('\n'));
+	cursor.endEditBlock();
+
+	ped->setTextCursor(cursor);
+}
+
+void
+MppDecodeTab :: handle_key_pressed(int key)
+{
+	key /= MPP_BAND_STEP_12;
+	if (key < 0 || key > 127)
+		return;
+	key_bitmap[key] |= BIT_PRESSED;
+	key_bitmap[key] &= ~BIT_RELEASED;
+}
+
+void
+MppDecodeTab :: handle_key_released(int key)
+{
+	key /= MPP_BAND_STEP_12;
+	if (key < 0 || key > 127)
+		return;
+	key_bitmap[key] |= BIT_RELEASED;
+	if (sustain == 0)
+		key_bitmap[key] &= ~BIT_PRESSED;
+}
+
+void
+MppDecodeTab :: handle_sustain_pedal(int level)
+{
+	if (sustain == (level >= 64))
+		return;
+	sustain = (level >= 64);
+	if (sustain != 0)
+		return;
+	for (unsigned x = 0; x != 128; x++) {
+		if (key_bitmap[x] & BIT_RELEASED)
+			key_bitmap[x] &= ~BIT_PRESSED;
 	}
 }
 

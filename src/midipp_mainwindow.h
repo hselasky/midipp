@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2020 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2021 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -111,7 +111,6 @@ public:
 	uint32_t convIndex;
 
 	uint32_t lastKeyPress;
-	uint32_t lastInputEvent;
 	uint32_t noiseRem;
 
 	uint32_t devInputMask[MPP_MAX_DEVS];
@@ -132,10 +131,6 @@ public:
 	uint8_t muteAllControl[MPP_MAX_DEVS];
 	uint8_t muteAllNonChannel[MPP_MAX_DEVS];
 	uint8_t muteMap[MPP_MAX_DEVS][16];
-	uint8_t inputEvents[MPP_MAX_QUEUE];
-	uint8_t numInputEvents;
-	uint8_t controlEvents[MPP_MAX_QUEUE][4];
-	uint8_t numControlEvents;
 	uint8_t cursorUpdate;
 
 	uint8_t scoreRecordOn;

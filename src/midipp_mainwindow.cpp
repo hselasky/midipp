@@ -669,6 +669,9 @@ MppMainWindow :: handle_score_record(int value)
 	atomic_lock();
 	scoreRecordOn = value;
 	atomic_unlock();
+
+	if (value != 0)
+		tab_chord_gl->reset_state();
 }
 
 void
@@ -807,19 +810,12 @@ MppMainWindow :: handle_watchdog_sub(MppScoreMain *sm, int update_cursor)
 void
 MppMainWindow :: handle_watchdog()
 {
-	uint32_t delta;
 	int bpm;
-	char buf[32];
-	uint8_t events_copy[MPP_MAX_QUEUE][4];
-	uint8_t num_events;
-	uint8_t x;
-	uint8_t y;
-	uint8_t z;
-	uint8_t last_duration;
 	uint8_t instr_update;
 	uint8_t cursor_update;
 	uint8_t key_mode_update;
 	uint8_t ops;
+	uint8_t score_record_on;
 
 	/* update focus if any */
 	handle_tab_changed();
@@ -829,85 +825,16 @@ MppMainWindow :: handle_watchdog()
 	cursorUpdate = 0;
 	instr_update = instrUpdated;
 	instrUpdated = 0;
-	num_events = numInputEvents;
 	key_mode_update = keyModeUpdated;
 	keyModeUpdated = 0;
 	ops = doOperation;
 	doOperation = 0;
 	bpm = dlg_bpm->bpm_other;
-
-	if (num_events != 0) {
-		delta =  umidi20_get_curr_position() - lastInputEvent;
-		if (delta >= ((UMIDI20_BPM + 60 - 1) / 60)) {
-			numInputEvents = 0;
-			memcpy(events_copy, inputEvents, num_events);
-		} else {
-			/* wait until 1 second has elapsed */
-			num_events = 0;
-		}
-	}
-	if (num_events != 0) {
-
-		atomic_unlock();
-
-		QPlainTextEdit *ped = currEditor();
-		QTextCursor cursor;
-
-		mid_sort(events_copy[0], num_events);
-
-		last_duration = 0;
-
-		if (ped != 0) {
-			cursor = QTextCursor(ped->textCursor());
-			cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor, 1);
-			cursor.beginEditBlock();
-		}
-
-		for (x = 0; x != num_events; x++) {
-			for (y = x; y != num_events; y++) {
-				if (events_copy[0][x] != events_copy[0][y])
-					break;
-			}
-
-			z = y - 1;
-			y = y - x;
-
-			if (y != last_duration) {
-				last_duration = y;
-				snprintf(buf, sizeof(buf), "U%d %s ",
-				    y, mid_key_str[events_copy[0][x] & 0x7F]);
-			} else {
-				snprintf(buf, sizeof(buf), "%s ",
-				    mid_key_str[events_copy[0][x] & 0x7F]);
-			}
-
-			if (ped != 0) {
-				cursor.insertText(QString(buf));
-			}
-			x = z;
-		}
-
-		if (ped != 0) {
-			cursor.insertText(QString("\n"));
-			cursor.endEditBlock();
-			ped->setTextCursor(cursor);
-		}
-
-		if (scoreRecordOn == 2)
-			mbm_score_record->setSelection(0);
-
-		atomic_lock();
-	}
-	num_events = numControlEvents;
-	if (num_events != 0) {
-		numControlEvents = 0;
-		memcpy(events_copy, controlEvents, num_events * sizeof(controlEvents[0]));
-	}
+	score_record_on = scoreRecordOn;
 	atomic_unlock();
 
-	for (x = 0; x != num_events; x++) {
-		tab_shortcut->handle_record_event(events_copy[x]);
-	}
+	if (score_record_on)
+		tab_chord_gl->watchdog();
 
 	if (instr_update)
 		tab_instrument->handle_instr_changed(0);
@@ -921,7 +848,7 @@ MppMainWindow :: handle_watchdog()
 
 	do_clock_stats();
 
-	for (x = 0; x != MPP_MAX_VIEWS; x++) {
+	for (uint8_t x = 0; x != MPP_MAX_VIEWS; x++) {
 		if (key_mode_update)
 			handle_mode(x, 0);
 		handle_watchdog_sub(scores_main[x], cursor_update);
@@ -1939,31 +1866,29 @@ MidiEventRxCallback(uint8_t device_no, void *arg, struct umidi20_event *event, u
 	if (what & UMIDI20_WHAT_CHANNEL) {
 		if (mw->controlRecordOn != 0 &&
 		    umidi20_event_is_key_end(event) == 0) {
-			if (mw->numControlEvents < MPP_MAX_QUEUE) {
-				mw->controlEvents[mw->numControlEvents][0] = event->cmd[0];
-				mw->controlEvents[mw->numControlEvents][1] = event->cmd[1];
-				mw->controlEvents[mw->numControlEvents][2] = event->cmd[2];
-				mw->controlEvents[mw->numControlEvents][3] = event->cmd[3];
-				mw->numControlEvents++;
-			}
+			unsigned char data[4] = {
+			    event->cmd[0], event->cmd[1], event->cmd[2], event->cmd[3]
+			};
+			emit mw->tab_shortcut->record_event(data);
 		}
 	}
-	if (umidi20_event_is_key_start(event)) {
 
-		key = (umidi20_event_get_key(event) & 0x7F) * MPP_BAND_STEP_12;
-		vel = umidi20_event_get_velocity(event);
-
-		switch (mw->scoreRecordOn) {
-		case 1:
-		case 2:
-			if (mw->numInputEvents < MPP_MAX_QUEUE) {
-				mw->inputEvents[mw->numInputEvents] = key / MPP_BAND_STEP_12;
-				mw->numInputEvents++;
-				mw->lastInputEvent = umidi20_get_curr_position();
+	if (mw->scoreRecordOn != 0) {
+		if (umidi20_event_is_key_start(event)) {
+			key = (umidi20_event_get_key(event) & 0x7F) * MPP_BAND_STEP_12;
+			emit mw->tab_chord_gl->key_pressed(key);
+		} else if (umidi20_event_is_key_end(event)) {
+			key = (umidi20_event_get_key(event) & 0x7F) * MPP_BAND_STEP_12;
+			emit mw->tab_chord_gl->key_released(key);
+		} else if (what & UMIDI20_WHAT_CONTROL_VALUE) {
+			switch (umidi20_event_get_control_address(event)) {
+			case 0x40:
+				emit mw->tab_chord_gl->sustain_pedal(
+				    umidi20_event_get_control_value(event));
+				break;
+			default:
+				break;
 			}
-			break;
-		default:
-			break;
 		}
 	}
 

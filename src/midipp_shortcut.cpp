@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2021 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -140,6 +140,9 @@ MppShortcutTab :: MppShortcutTab(MppMainWindow *_mw)
 		}
 	}
 	handle_default();
+
+	connect(this, SIGNAL(record_event(unsigned char [4])),
+		this, SLOT(handle_record_event(unsigned char [4])));
 }
 
 MppShortcutTab :: ~MppShortcutTab()
@@ -344,7 +347,7 @@ MppShortcutTab :: handle_update()
 }
 
 void
-MppShortcutTab :: handle_record_event(const uint8_t *data)
+MppShortcutTab :: handle_record_event(unsigned char data[4])
 {
 	uint32_t x;
 	uint8_t match[3] = {(uint8_t)(data[1] & 0xF0),data[2],data[3]};

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2020 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2021 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -106,7 +106,6 @@
 #define	MPP_MAX_LINES	8192
 #define	MPP_MAX_SCORES	32
 #define	MPP_MAX_LABELS	32
-#define	MPP_MAX_QUEUE	32
 #define	MPP_MAX_DEVS	8
 #define	MPP_MAX_BPM	32
 #define	MPP_MAX_LBUTTON	16

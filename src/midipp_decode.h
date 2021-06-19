@@ -62,7 +62,6 @@ class MppDecodeTab : public QWidget
 
 public:
 	MppDecodeTab(MppMainWindow *);
-	~MppDecodeTab();
 
 	QString getText();
 	void setText(QString);
@@ -119,6 +118,23 @@ public:
 
 	MppChord_t chord_mask;
 
+	enum {
+		BIT_PRESSED = 1,
+		BIT_RELEASED = 2,
+		BIT_CACHED = 4,
+	};
+
+	uint8_t key_bitmap[128];
+	uint8_t sustain;
+	uint8_t stable;
+
+	void reset_state();
+	void watchdog();
+signals:
+	void key_pressed(int);
+	void key_released(int);
+	void sustain_pedal(int);
+
 public slots:
 	void handle_rol_up();
 	void handle_rol_down();
@@ -135,6 +151,9 @@ public slots:
 	void handle_parse();
 	void handle_refresh();
 	void handle_align(int);
+	void handle_key_pressed(int);
+	void handle_key_released(int);
+	void handle_sustain_pedal(int);
 };
 
 extern const QString MppKeyStr(int key);

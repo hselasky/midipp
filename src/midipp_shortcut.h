@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2021 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -91,10 +91,13 @@ public:
 	QTimer *watchdog;
 
 	uint8_t handle_event_received_locked(MppScoreMain *, struct umidi20_event *);
-	void handle_record_event(const uint8_t *);
 	void handle_update();
 
+signals:
+	void record_event(unsigned char [4]);
+
 public slots:
+	void handle_record_event(unsigned char [4]);
 	void handle_record(int);
 	void handle_watchdog();
 	void handle_text_changed(const QString &);

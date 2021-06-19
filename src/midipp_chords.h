@@ -157,14 +157,6 @@ struct MppChord {
 		}
 		return (0);
 	};
-	void operator =(const MppChord &other) {
-		if (this == &other)
-			return;
-		int x = sizeof(data) / sizeof(data[0]);
-		while (x--) {
-			data[x] = other.data[x];
-		}
-	};
 };
 
 class MppScoreVariant {
