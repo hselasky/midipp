@@ -660,11 +660,8 @@ MppStringToChordGeneric(MppChord_t &mask, uint32_t &rem, uint32_t &bass, uint32_
 		/* set mask */
 		mask = MppScoreVariants12[x].footprint[0];
 		/* check for add */
-		if (add > -1) {
-			if (mask.test(add * (MPP_BAND_STEP_12 / MPP_BAND_STEP_CHORD)))
-				goto error;
+		if (add > -1)
 			mask.set(add * (MPP_BAND_STEP_12 / MPP_BAND_STEP_CHORD));
-		}
 		/* adjust for rotation */
 		rem = (rem +
 		    (MppScoreVariants12[x].rots[0] * MPP_BAND_STEP_CHORD)) % MPP_MAX_BANDS;
