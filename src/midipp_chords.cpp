@@ -705,6 +705,7 @@ MppChordToStringGeneric(MppChord_t mask, uint32_t rem, uint32_t bass, uint32_t s
 {
 	uint32_t rots;
 	uint32_t rots_min = MPP_MAX_CHORD_BANDS;
+	uint32_t add_min = 0;
 	size_t z = 0;
 
 	rem = rem % MPP_MAX_BANDS;
@@ -720,16 +721,29 @@ MppChordToStringGeneric(MppChord_t mask, uint32_t rem, uint32_t bass, uint32_t s
 	/* adjust for rotations */
 	rem = (rem + rots * MPP_BAND_STEP_CHORD) % MPP_MAX_BANDS;
 
-	/* look for known chords, with shortest suffix */
-	for (size_t x = z = 0; x != (sizeof(MppScoreVariants12) / sizeof(MppScoreVariants12[0])); x++) {
-		if (MppScoreVariants12[x].footprint[0] != mask)
+	for (uint32_t add = z = 0; add != MPP_MAX_CHORD_BANDS; add += MPP_MAX_CHORD_BANDS / 12) {
+		if (mask.test(add) == 0)
 			continue;
-		if ((rots_min == MPP_MAX_CHORD_BANDS) ||
-		    (strlen(MppScoreVariants12[x].pattern[0]) <
-		     strlen(MppScoreVariants12[z].pattern[0]))) {
-			rots_min = MppScoreVariants12[x].rots[0];
-			z = x;
+		if (add != 0)
+			mask.clr(add);
+
+		/* look for known chords, with shortest suffix */
+		for (size_t x = 0; x != (sizeof(MppScoreVariants12) / sizeof(MppScoreVariants12[0])); x++) {
+			if (MppScoreVariants12[x].footprint[0] != mask)
+				continue;
+			if ((rots_min == MPP_MAX_CHORD_BANDS) ||
+			    (strlen(MppScoreVariants12[x].pattern[0]) <
+			     strlen(MppScoreVariants12[z].pattern[0]))) {
+				rots_min = MppScoreVariants12[x].rots[0];
+				add_min = add;
+				z = x;
+			}
 		}
+
+		if (add != 0)
+			mask.set(add);
+		else if (rots_min != MPP_MAX_CHORD_BANDS)
+			break;
 	}
 
 	/* check if there was a match */
@@ -743,6 +757,23 @@ MppChordToStringGeneric(MppChord_t mask, uint32_t rem, uint32_t bass, uint32_t s
 		rem = (rem + MPP_MAX_BANDS - rots_min * MPP_BAND_STEP_CHORD) % MPP_MAX_BANDS;
 
 		retval = MppKeyToStringGeneric(rem, sharp) + retval;
+		if (add_min != 0) {
+			static const char *add2str[12] = {
+				"",	/* not used */
+				"add+1",
+				"add2",
+				"add+2",
+				"add3",
+				"add4",
+				"add+4",
+				"add5",
+				"add+5",
+				"add6",
+				"add+6",
+				"add7"
+			};
+			retval += QString(add2str[add_min / (MPP_MAX_CHORD_BANDS / 12)]);
+		}
 		if (rem != bass)
 			retval += QString("/") + MppKeyToStringGeneric(bass, sharp);
 		return;
