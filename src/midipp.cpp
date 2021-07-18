@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2020 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2021 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -423,7 +423,7 @@ static const struct option midipp_opts[] = {
 	{ NULL, 0, NULL, 0 }
 };
 
-const QString MppVersion("MIDI Player Pro v2.0.8");
+const QString MppVersion("MIDI Player Pro v2.0.9");
 const QString MppIconFile(":/midipp.png");
 
 Q_DECL_EXPORT int
