@@ -35,7 +35,7 @@ struct MppChord {
 	void clr(size_t x) { data[x / 32] &= ~(1U << (x % 32)); };
 	void tog(size_t x) { data[x / 32] ^= 1U << (x % 32); };
 	bool test(size_t x) const { return ((data[x / 32] >> (x % 32)) & 1); };
-	uint32_t order() {
+	uint32_t order() const {
 		uint32_t retval = 0;
 		for (int x = 0; x != MPP_MAX_CHORD_BANDS; x++) {
 			if (test(x))
@@ -120,6 +120,11 @@ struct MppChord {
 		int x = sizeof(data) / sizeof(data[0]);
 		while (x--)
 			data[x] |= other.data[x];
+	};
+	void operator ^=(const MppChord &other) {
+		int x = sizeof(data) / sizeof(data[0]);
+		while (x--)
+			data[x] ^= other.data[x];
 	};
 	bool operator <(const MppChord &other) const {
 		int x = sizeof(data) / sizeof(data[0]);
