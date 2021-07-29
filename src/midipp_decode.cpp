@@ -192,7 +192,7 @@ MppScoreVariantInit(void)
 }
 
 static void
-MppInitArray(const uint8_t *src, MppChord_t *dst, uint8_t n)
+MppInitArray(const uint16_t *src, MppChord_t *dst, uint8_t n)
 {
 	while (n--) {
 		dst[n].zero();
@@ -224,7 +224,7 @@ MppCommonKeys(const MppChord_t & pa, const MppChord_t & pb, int a_key, int b_key
 
 MppDecodeCircle :: MppDecodeCircle(MppDecodeTab *_ptab)
 {
-	static const uint8_t circle[NMAX] = { 0x91, 0x89 };
+	static const uint16_t circle[NMAX] = { 0x91, 0x89, 0x249 };
 	ptab = _ptab;
 
 	MppInitArray(circle, mask, NMAX);
@@ -305,13 +305,14 @@ MppDecodeCircle :: paintEvent(QPaintEvent *event)
 	r = (w > h) ? h : w;
 	step = r / (2 * (NMAX + 2));
 
-	QFont fnt[2];
+	QFont fnt[NMAX];
 
 	fnt[0].setPixelSize(step / 1.5);
 	fnt[1].setPixelSize(step / 2.5);
+	fnt[2].setPixelSize(step / 3.5);
 
 	for (x = 0; x != NMAX; x++) {
-		qreal radius = (NMAX + 2 - x) * step - step / 2.0;
+		const qreal radius = (NMAX + 2 - x) * step - step / 2.0;
 
 		paint.setPen(QPen(Mpp.ColorBlack, 2));
 		paint.setBrush(QBrush());
@@ -321,14 +322,21 @@ MppDecodeCircle :: paintEvent(QPaintEvent *event)
 					 2.0*radius, 2.0*radius));
 
 		for (y = z = 0; y != 12; y++) {
-			double phase = 2.0 * M_PI * (double)y / 12.0;
-			qreal xp = radius * cos(phase) + w / 2.0;
-			qreal yp = radius * sin(phase) + h / 2.0;
+			const double phase = 2.0 * M_PI * (double)y / 12.0;
+			const qreal xp = radius * cos(phase) + w / 2.0;
+			const qreal yp = radius * sin(phase) + h / 2.0;
 
 			r_press[x][y] = QRect(xp - step / 2.0,
 					      yp - step / 2.0,
 					      step, step);
-			r_key[x][y] = (x == 1) ? (z + 9) % 12 : z;
+			switch (x) {
+			case 1:
+				r_key[x][y] = (z + 9) % 12;
+				break;
+			default:
+				r_key[x][y] = z;
+				break;
+			}
 			r_mask[x][y] = mask[x];
 
 			z += 7;
@@ -337,7 +345,7 @@ MppDecodeCircle :: paintEvent(QPaintEvent *event)
 	}
 
 	for (x = 0; x != NMAX; x++) {
-		paint.setFont(fnt[x == 1]);
+		paint.setFont(fnt[x]);
 
 		for (y = 0; y != 12; y++) {
 			QColor bg;
@@ -345,16 +353,17 @@ MppDecodeCircle :: paintEvent(QPaintEvent *event)
 
 			switch (MppCommonKeys(r_mask[x][y], footprint,
 					      r_key[x][y], found_key)) {
+			case 4:
 			case 3:
 				bg = Mpp.ColorWhite;
 				fg = Mpp.ColorBlack;
 				break;
 			case 2:
-				bg = Mpp.ColorGrey;
+				bg = Mpp.ColorLight;
 				fg = Mpp.ColorWhite;
 				break;
 			case 1:
-				bg = Mpp.ColorLight;
+				bg = Mpp.ColorGrey;
 				fg = Mpp.ColorWhite;
 				break;
 			default:
@@ -370,10 +379,22 @@ MppDecodeCircle :: paintEvent(QPaintEvent *event)
 			paint.setPen(QPen(fg, 0));
 			paint.setBrush(fg);
 
+			QString suffix;
+
+			switch (x) {
+			case 1:
+				suffix = "m";
+				break;
+			case 2:
+				suffix = "°7";
+				break;
+			default:
+				break;
+			}
+
 			paint.drawText(r_press[x][y],
 			    Qt::AlignCenter | Qt::TextSingleLine,
-			    MppKeyStrNoOctave(r_key[x][y] * MPP_BAND_STEP_12) +
-			    ((x == 1) ? "m" : ""));
+			    MppKeyStrNoOctave(r_key[x][y] * MPP_BAND_STEP_12) + suffix);
 		}
 	}
 }
