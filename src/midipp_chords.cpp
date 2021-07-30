@@ -211,6 +211,9 @@ static const class MppScoreVariant MppScoreVariants12[] = {
 	INIT(MASK(MPP_C0) | MASK(MPP_A0B) | MASK(MPP_H0B), "$asus$S6", "$asus$f7", 0),
 	INIT(MASK(MPP_C0) | MASK(MPP_G0) | MASK(MPP_H0), "sus7", 0),
 	INIT(MASK(MPP_C0) | MASK(MPP_A0B) | MASK(MPP_H0), "$asus7", 0),
+	INIT(MASK(MPP_C0) | MASK(MPP_G0) | MASK(MPP_H0B) | MASK(MPP_D0), "sus9", 0),
+	INIT(MASK(MPP_C0) | MASK(MPP_G0) | MASK(MPP_H0B) | MASK(MPP_F0), "sus11", 0),
+	INIT(MASK(MPP_C0) | MASK(MPP_G0) | MASK(MPP_H0B) | MASK(MPP_F0) | MASK(MPP_A0), "sus13", 0),
 
 	/* agumented and major seconds and sevenths susXXX */
 	INIT(MASK(MPP_C0) | MASK(MPP_D0B) | MASK(MPP_G0) | MASK(MPP_H0B), "7sus$S1", "7sus$f2", 0),
