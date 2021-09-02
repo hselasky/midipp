@@ -1,5 +1,5 @@
 Name:           midipp
-Version:        2.1.0
+Version:        2.1.1
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
@@ -50,7 +50,9 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Tue Aug 5 2021 HPS hps@selasky.org 2.1.1-1
+* Tue Sep 2 2021 HPS hps@selasky.org 2.1.2-1
+* Tue Sep 2 2021 HPS hps@selasky.org 2.1.1-1
+- Fix for crash using replay tab.
 * Tue Aug 5 2021 HPS hps@selasky.org 2.1.0-1
 - Added more sustained chords.
 - Improve circle of fifths.
