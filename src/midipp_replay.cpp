@@ -130,7 +130,7 @@ MppReplayTab :: handleUseExistingMidiFile()
 	mainWindow->scores_main[0]->handleScoreFileNew(1);
 	mainWindow->mbm_midi_record->setSelection(0);
 	mainWindow->mbm_midi_play->setSelection(0);
-	mainWindow->handle_midi_file_open(2);
+	mainWindow->handle_midi_file_open(4|2);
 }
 
 void
@@ -176,7 +176,7 @@ MppReplayTab :: handleStopRecordSomething()
 	mainWindow->handle_rewind();
 	mainWindow->mbm_midi_record->setSelection(0);
 	handleRestoreMode();
-	mainWindow->handle_midi_file_import(4);
+	mainWindow->handle_midi_file_import(0);
 }
 
 void
