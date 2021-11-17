@@ -287,7 +287,9 @@ MppSettingsSub :: doSave(void)
 	}
 	if (save.hpsjam_server) {
 		beginGroup("hpsjam_server");
+#ifndef HAVE_NO_SHOW
 		setValue("location", mw->tab_show_control->editHpsJamServer->text());
+#endif
 		endGroup();
 	}
 	sync();
@@ -546,9 +548,11 @@ MppSettingsSub :: doLoad(void)
 		}
 	}
 	if (save.hpsjam_server > 0) {
+#ifndef HAVE_NO_SHOW
 		mw->tab_show_control->butHpsJamOnOff->setSelection(0);
 		mw->tab_show_control->editHpsJamServer->setText(
 		    stringDefault("hpsjam_server/location", MPP_DEFAULT_HPSJAM));
+#endif
 	}
 }
 
