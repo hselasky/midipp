@@ -206,7 +206,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_help->setPlainText(tr(
 	    "/*\n"
-	    " * Copyright (c) 2009-2020 Hans Petter Selasky. All rights reserved.\n"
+	    " * Copyright (c) 2009-2021 Hans Petter Selasky. All rights reserved.\n"
 	    " */\n"
 
 	    "\n"
