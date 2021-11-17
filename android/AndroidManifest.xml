@@ -27,7 +27,6 @@
         </activity>
     </application>
 
-    <uses-sdk android:targetSdkVersion="30"/>
     <uses-feature android:name="android.software.midi" android:required="true"/>
     <supports-screens android:largeScreens="true" android:normalScreens="true" android:anyDensity="true" android:smallScreens="false"/>
 
