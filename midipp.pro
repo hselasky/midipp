@@ -177,6 +177,13 @@ SOURCES		+= $${LIBUMIDIPATH}/umidi20.c
 SOURCES		+= $${LIBUMIDIPATH}/umidi20_file.c
 SOURCES		+= $${LIBUMIDIPATH}/umidi20_gen.c
 INCLUDEPATH	+= $${LIBUMIDIPATH}
+ isEmpty(HAVE_ALSA) {
+ SOURCES	+= $${LIBUMIDIPATH}/umidi20_alsa_dummy.c
+ } else {
+ LIBS		+= -L${PREFIX}/lib -lasound
+ INCLUDEPATH	+= -I${PREFIX}/include
+ SOURCES	+= $${LIBUMIDIPATH}/umidi20_alsa.c
+ }
  isEmpty(HAVE_JACK) {
  SOURCES	+= $${LIBUMIDIPATH}/umidi20_jack_dummy.c
  } else {

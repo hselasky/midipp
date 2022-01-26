@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2021 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -206,7 +206,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_help->setPlainText(tr(
 	    "/*\n"
-	    " * Copyright (c) 2009-2021 Hans Petter Selasky. All rights reserved.\n"
+	    " * Copyright (c) 2009-2022 Hans Petter Selasky. All rights reserved.\n"
 	    " */\n"
 
 	    "\n"
@@ -1275,6 +1275,11 @@ MppMainWindow :: handle_config_reload()
 		    (p_rec != NULL) && (p_rec[0] != 0) &&
 		    (p_rec[1] == ':') && (p_rec[2] != 0))  {
 			switch (p_rec[0]) {
+			case 'L':
+				STRLCPY(cfg.cfg_dev[n].rec_fname, p_rec + 2,
+				    sizeof(cfg.cfg_dev[n].rec_fname));
+				cfg.cfg_dev[n].rec_enabled_cfg = UMIDI20_ENABLED_CFG_ALSA;
+				break;
 			case 'A':
 				STRLCPY(cfg.cfg_dev[n].rec_fname, p_rec + 2,
 				    sizeof(cfg.cfg_dev[n].rec_fname));
@@ -1307,6 +1312,11 @@ MppMainWindow :: handle_config_reload()
 		    (p_play != NULL) && (p_play[0] != 0) &&
 		    (p_play[1] == ':') && (p_play[2] != 0))  {
 			switch (p_play[0]) {
+			case 'L':
+				STRLCPY(cfg.cfg_dev[n].play_fname, p_play + 2,
+				    sizeof(cfg.cfg_dev[n].play_fname));
+				cfg.cfg_dev[n].play_enabled_cfg = UMIDI20_ENABLED_CFG_ALSA;
+				break;
 			case 'A':
 				STRLCPY(cfg.cfg_dev[n].play_fname, p_play + 2,
 				    sizeof(cfg.cfg_dev[n].play_fname));

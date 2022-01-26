@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2017 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -85,6 +85,22 @@ MppDevices :: MppDevices(QWidget *parent)
 		new QListWidgetItem(QString("D:/dev/") + fileInfo.fileName(), lw_play);
 	}
 
+	rec_alsa_str = umidi20_alsa_alloc_outputs();
+	if (rec_alsa_str != NULL) {
+		for (n = 0; rec_alsa_str[n] != NULL; n++) {
+			if (rec_alsa_str[n][0] != 0)
+				new QListWidgetItem(QString("L:") + QString(rec_alsa_str[n]), lw_rec);
+		}
+	}
+
+	play_alsa_str = umidi20_alsa_alloc_inputs();
+	if (play_alsa_str != NULL) {
+		for (n = 0; play_alsa_str[n] != NULL; n++) {
+			if (play_alsa_str[n][0] != 0)
+				new QListWidgetItem(QString("L:") + QString(play_alsa_str[n]), lw_play);
+		}
+	}
+
 	rec_jack_str = umidi20_jack_alloc_outputs();
 	if (rec_jack_str != NULL) {
 		for (n = 0; rec_jack_str[n] != NULL; n++) {
@@ -163,6 +179,9 @@ MppDevices :: autoSelect()
 
 MppDevices :: ~MppDevices()
 {
+	umidi20_alsa_free_outputs(rec_alsa_str);
+	umidi20_alsa_free_inputs(play_alsa_str);
+
 	umidi20_jack_free_outputs(rec_jack_str);
 	umidi20_jack_free_inputs(play_jack_str);
 
