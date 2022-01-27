@@ -1,12 +1,12 @@
 Name:           midipp
-Version:        2.1.1
+Version:        2.1.2
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
 License:        BSD-2-Clause
-URL:            http://www.selasky.org/hans_petter/midistudio
-Source0:        http://www.selasky.org/hans_petter/distfiles/%{name}-%{version}.tar.bz2
-Source1:        http://www.selasky.org/hans_petter/distfiles/libumidi-2.1.1.tar.bz2
+URL:            https://github.com/hselasky/midipp
+Source0:        https://codeload.github.com/hselasky/midipp/tar.gz/v2.1.2?dummy=/hselasky-midipp-v2.1.2_GH0.tar.gz
+Source1:        https://codeload.github.com/hselasky/libumidi/tar.gz/v2.1.3?dummy=/hselasky-libumidi-v2.1.3_GH0.tar.gz
 
 BuildRequires:  make gcc libjack-devel phonon-devel qt-devel qt-settings qtwebkit-devel
 Requires:       qt
@@ -16,7 +16,8 @@ MIDI Player Pro allows you to play any kind of MIDI music in seconds
 with your fingertips. List of supported features:
 
 - Raw MIDI.
-- Jack MIDI.
+- ALSA MIDI.
+- JACK MIDI.
 - MPE support.
 - Import from lyrics sites (chorded lyrics)
 - Import from GuitarPro v3 and v4 format.
@@ -32,7 +33,7 @@ with your fingertips. List of supported features:
 %setup -q -a 1
 
 %build
-qmake-qt4 PREFIX=/usr DESTDIR=$RPM_BUILD_ROOT HAVE_STATIC=YES HAVE_JACK=YES LIBUMIDIPATH=libumidi-2.1.1 midipp.pro
+qmake PREFIX=/usr DESTDIR=$RPM_BUILD_ROOT HAVE_STATIC=YES HAVE_ALSA=YES HAVE_JACK=YES LIBUMIDIPATH=libumidi-2.1.3 midipp.pro
 make %{?_smp_mflags}
 
 %install
@@ -50,7 +51,9 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Tue Sep 2 2021 HPS hps@selasky.org 2.1.2-1
+* Thu Jan 27 2022 HPS hps@selasky.org 2.1.3-1
+* Tue Jan 27 2022 HPS hps@selasky.org 2.1.2-1
+- Added support for ALSA MIDI.
 * Tue Sep 2 2021 HPS hps@selasky.org 2.1.1-1
 - Fix for crash using replay tab.
 * Tue Aug 5 2021 HPS hps@selasky.org 2.1.0-1

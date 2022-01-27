@@ -5,6 +5,9 @@
 MIDI Player Pro allows you to play any kind of MIDI music in seconds
 with your fingertips.
 
+Changes for v2.1.2:
+- Added support for ALSA MIDI.
+
 Changes for v2.1.1:
 - Fix for crash using replay tab.
 
