@@ -6,7 +6,7 @@ MIDI Player Pro was officially released the summer of 2011.
 
 # Features
 <ul>
-  <li>supports Raw MIDI, Jack MIDI and CoreMIDI</li>
+  <li>supports Raw MIDI, Jack MIDI, CoreMIDI, and ALSA</li>
   <li>supports indirect import from various chord and lyrics sites</li>
   <li>supports MIDI record looping</li>
   <li>supports simultaneous MIDI recording and playback</li>
