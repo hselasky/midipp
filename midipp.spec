@@ -6,7 +6,7 @@ Group:          Graphical Desktop/Applications/Multimedia
 License:        BSD-2-Clause
 URL:            https://github.com/hselasky/midipp
 Source0:        https://codeload.github.com/hselasky/midipp/tar.gz/v2.1.2?dummy=/hselasky-midipp-v2.1.2_GH0.tar.gz
-Source1:        https://codeload.github.com/hselasky/libumidi/tar.gz/v2.1.4?dummy=/hselasky-libumidi-v2.1.4_GH0.tar.gz
+Source1:        https://codeload.github.com/hselasky/libumidi/tar.gz/v2.1.5?dummy=/hselasky-libumidi-v2.1.5_GH0.tar.gz
 
 BuildRequires:  make gcc libjack-devel phonon-devel qt-devel qt-settings qtwebkit-devel
 Requires:       qt
