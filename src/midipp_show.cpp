@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013-2020 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2022 Hans Petter Selasky.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,16 +32,13 @@
 #include "midipp_mainwindow.h"
 #include "midipp_groupbox.h"
 
-MppShowWidget :: MppShowWidget(MppShowControl *_parent)
+MppShowWidget :: MppShowWidget(MppShowControl *_parent, bool _showChords)
 {
 	parent = _parent;
+	showChords = _showChords;
 
 	setWindowTitle(MppVersion);
 	setWindowIcon(QIcon(MppIconFile));
-}
-
-MppShowWidget :: ~MppShowWidget()
-{
 }
 
 void
@@ -98,6 +95,7 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 	}
 	for (x = 0; x != 2; x++) {
 		MppShowAnimObject &aobj = parent->aobj[x];
+		const QString &str = showChords ? aobj.str_chord : aobj.str;
 
 		if (parent->aobj[x].isVisible() == 0)
 			continue;
@@ -116,7 +114,7 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 		QRectF txtBound;
 		QRectF txtMax(0,0,wm,h);
 		paint.drawText(txtMax, Qt::AlignLeft |
-		    Qt::TextDontPrint | flags, aobj.str, &txtBound);
+		    Qt::TextDontPrint | flags, str, &txtBound);
 		txtMax.setHeight(txtBound.height() + wf);
 
 		switch (aobj.props.align) {
@@ -153,7 +151,7 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 
 		/* draw background, if any */
 		if (aobj.props.shadow < 100) {
-			if (!aobj.str.isEmpty()) {
+			if (!str.isEmpty()) {
 				paint.setPen(Qt::NoPen);
 				paint.setBrush(aobj.props.color.bg());
 				paint.setOpacity(aobj.opacity_curr *
@@ -167,7 +165,7 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 			paint.setBrush(aobj.props.color.bg());
 			paint.setOpacity(aobj.opacity_curr);
 			txtMax.adjust(wa,wa,wa,wa);
-			paint.drawText(txtMax, flags, aobj.str);
+			paint.drawText(txtMax, flags, str);
 			txtMax.adjust(-wa,-wa,-wa,-wa);
 		}
 
@@ -175,7 +173,7 @@ MppShowWidget :: paintEvent(QPaintEvent *event)
 		paint.setPen(aobj.props.color.fg());
 		paint.setBrush(aobj.props.color.fg());
 		paint.setOpacity(aobj.opacity_curr);
-		paint.drawText(txtMax, flags, aobj.str);
+		paint.drawText(txtMax, flags, str);
 
 		/* store height and width */
 		aobj.height = txtMax.height();
@@ -208,7 +206,7 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 
 	showFont.fromString(QString("Sans Serif,-1,24,5,75,0,0,0,0,0"));
 
-	butMode = new MppButtonMap("Global show mode\0" "BLANK\0" "BACKGROUND\0" "LYRICS\0", 3, 3);
+	butMode = new MppButtonMap("Global show mode\0" "BLANK\0" "BACKGROUND\0" "NORMAL\0", 3, 3);
 	connect(butMode, SIGNAL(selectionChanged(int)), this, SLOT(handle_mode_change(int)));
 	
 #if MPP_MAX_VIEWS <= 3
@@ -219,10 +217,13 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 #endif
 	connect(butTrack, SIGNAL(selectionChanged(int)), this, SLOT(handle_track_change(int)));
 
-	butShowWindow = new QPushButton(tr("Show\nWindow"));
-	connect(butShowWindow, SIGNAL(released()), this, SLOT(handle_show_window()));
+	butShowLyricsWindow = new QPushButton(tr("Show lyrics\nwindow"));
+	connect(butShowLyricsWindow, SIGNAL(released()), this, SLOT(handle_show_lyrics_window()));
 
-	butFullScreen = new QPushButton(tr("Toggle\nFullscreen"));
+	butShowChordsWindow = new QPushButton(tr("Show chords\nwindow"));
+	connect(butShowChordsWindow, SIGNAL(released()), this, SLOT(handle_show_chords_window()));
+
+	butFullScreen = new QPushButton(tr("Toggle\nfullscreen"));
 	connect(butFullScreen, SIGNAL(released()), this, SLOT(handle_fullscreen()));
 
 	butFontSelect = new QPushButton(tr("Change"));
@@ -298,9 +299,10 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 	gl_main->addWidget(butTrack, 0, 0, 1, 2);
 	gl_main->addWidget(butMode, 0, 2, 1, 2);
 
-	gl_main->addWidget(butShowWindow, 5, 0, 1, 1);
-	gl_main->addWidget(butFullScreen, 5, 1, 1, 1);
-	gl_main->addWidget(butCopySettings, 5, 2, 1, 1);
+	gl_main->addWidget(butShowLyricsWindow, 5, 0, 1, 1);
+	gl_main->addWidget(butShowChordsWindow, 5, 1, 1, 1);
+	gl_main->addWidget(butFullScreen, 5, 2, 1, 1);
+	gl_main->addWidget(butCopySettings, 5, 3, 1, 1);
 
 	gb_font->addWidget(butFontSelect, 0, 0, 1, 1);
 	gb_font->addWidget(butFontFgColor, 1, 0, 1, 1);
@@ -328,7 +330,7 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 
 	gl_main->addWidget(gb_font, 2, 0, 2, 1);
 	gl_main->addWidget(gb_image, 2, 1, 2, 1);
-	gl_main->addWidget(gb_hpsjam, 2, 2, 1, 1);
+	gl_main->addWidget(gb_hpsjam, 2, 2, 1, 2);
 
 	gl_main->setRowStretch(4, 1);
 	gl_main->setColumnStretch(4, 1);
@@ -336,7 +338,8 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 	watchdog = new QTimer(this);
 	connect(watchdog, SIGNAL(timeout()), this, SLOT(handle_watchdog()));
 
-	wg_show = new MppShowWidget(this);
+	wg_lyrics_show = new MppShowWidget(this, false);
+	wg_chords_show = new MppShowWidget(this, true);
 
 	watchdog->start(1000 / (3 * MPP_TRAN_MAX));
 }
@@ -374,16 +377,24 @@ MppShowControl :: handle_track_change(int n)
 }
 
 void
-MppShowControl :: handle_show_window()
+MppShowControl :: handle_show_lyrics_window()
 {
-	wg_show->setWindowState(wg_show->windowState() & ~Qt::WindowFullScreen);
-	wg_show->show();
+	wg_lyrics_show->setWindowState(wg_lyrics_show->windowState() & ~Qt::WindowFullScreen);
+	wg_lyrics_show->show();
+}
+
+void
+MppShowControl :: handle_show_chords_window()
+{
+	wg_chords_show->setWindowState(wg_chords_show->windowState() & ~Qt::WindowFullScreen);
+	wg_chords_show->show();
 }
 
 void
 MppShowControl :: handle_fullscreen()
 {
-	wg_show->setWindowState(wg_show->windowState() ^ Qt::WindowFullScreen);
+	wg_lyrics_show->setWindowState(wg_lyrics_show->windowState() ^ Qt::WindowFullScreen);
+	wg_chords_show->setWindowState(wg_chords_show->windowState() ^ Qt::WindowFullScreen);
 }
 
 void
@@ -423,7 +434,9 @@ MppShowControl :: handle_text_watchdog()
 	    visual_curr_index < 0 ||
 	    visual_curr_index >= sm.visual_max ||
 	    sm.pVisual[visual_last_index].str == 0 ||
-	    sm.pVisual[visual_curr_index].str == 0) {
+	    sm.pVisual[visual_curr_index].str == 0 ||
+	    sm.pVisual[visual_last_index].str_chord == 0 ||
+	    sm.pVisual[visual_curr_index].str_chord == 0) {
 		if (aobj[0].isVisible() || aobj[1].isVisible()) {
 			aobj[0].fadeOut();
 			aobj[1].fadeOut();
@@ -448,10 +461,10 @@ MppShowControl :: handle_text_watchdog()
 		aobj[0].reset();
 		aobj[0].props = text;
 		aobj[0].str = *sm.pVisual[visual_last_index].str;
+		aobj[0].str_chord = *sm.pVisual[visual_last_index].str_chord;
 		aobj[0].fadeIn();
 		toggle = 0;
-		hpsjam_send_text(*sm.pVisual[visual_last_index].str,
-				 *sm.pVisual[visual_last_index].str_chord);
+		hpsjam_send_text(aobj[0].str, aobj[0].str_chord);
 		break;
 	case 2:
 		toggle ^= 1;
@@ -459,6 +472,7 @@ MppShowControl :: handle_text_watchdog()
 		/* update first object */
 		aobj[toggle].moveUp(aobj[toggle].ypos_curr);
 		if (aobj[toggle].str != *sm.pVisual[visual_last_index].str ||
+		    aobj[toggle].str_chord != *sm.pVisual[visual_last_index].str_chord ||
 		    aobj[toggle].props != text)
 			aobj[toggle].fadeOut();
 		else if (visual_last_index != visual_curr_index) {
@@ -466,16 +480,18 @@ MppShowControl :: handle_text_watchdog()
 			aobj[toggle ^ 1].reset();
 			aobj[toggle ^ 1].props = text;
 			aobj[toggle ^ 1].str = *sm.pVisual[visual_curr_index].str;
+			aobj[toggle ^ 1].str_chord = *sm.pVisual[visual_curr_index].str_chord;
 			aobj[toggle ^ 1].ypos_curr = aobj[toggle].height;
 			aobj[toggle ^ 1].fadeIn();
-			hpsjam_send_text(*sm.pVisual[visual_curr_index].str,
-					 *sm.pVisual[visual_curr_index].str_chord);
+			hpsjam_send_text(aobj[toggle ^ 1].str, aobj[toggle ^ 1].str_chord);
 		}
 		break;
 	default:
 		if (visual_last_index != visual_curr_index) {
 			if (aobj[toggle].str == *sm.pVisual[visual_last_index].str &&
+			    aobj[toggle].str_chord == *sm.pVisual[visual_last_index].str_chord &&
 			    aobj[toggle ^ 1].str == *sm.pVisual[visual_curr_index].str &&
+			    aobj[toggle ^ 1].str_chord == *sm.pVisual[visual_curr_index].str_chord &&
 			    aobj[toggle ^ 1].props == text)
 				break;
 		}
@@ -485,6 +501,7 @@ MppShowControl :: handle_text_watchdog()
 		toggle ^= 1;
 		aobj[toggle].moveUp(aobj[toggle].ypos_curr);
 		if (aobj[toggle].str != *sm.pVisual[visual_last_index].str ||
+		    aobj[toggle].str_chord != *sm.pVisual[visual_last_index].str_chord ||
 		    aobj[toggle].props != text)
 			aobj[toggle].fadeOut();
 		break;
@@ -539,8 +556,10 @@ MppShowControl :: handle_watchdog()
 	handle_pict_watchdog();
 
 	for (x = 0; x != MPP_SHOW_AOBJ_MAX; x++) {
-		if (aobj[x].step())
-			wg_show->update();
+		if (aobj[x].step()) {
+			wg_lyrics_show->update();
+			wg_chords_show->update();
+		}
 	}
 }
 

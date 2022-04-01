@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013-2020 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2022 Hans Petter Selasky.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,10 +44,10 @@ enum {
 class MppShowWidget : public QWidget
 {
 public:
-	MppShowWidget(MppShowControl *);
-	~MppShowWidget();
+	MppShowWidget(MppShowControl *, bool);
 
 	MppShowControl *parent;
+	bool showChords;
 
 	void paintEvent(QPaintEvent *);
 	void keyPressEvent(QKeyEvent *);
@@ -57,6 +57,7 @@ public:
 class MppShowAnimObject {
 public:
 	QString str;
+	QString str_chord;
 	uint8_t zero_start[0];
 	qreal opacity_curr;
 	qreal opacity_step;
@@ -74,6 +75,7 @@ public:
 	{
 		memset(zero_start, 0, zero_end - zero_start);
 		str = QString();
+		str_chord = QString();
 	}
 	MppShowAnimObject()
 	{
@@ -162,12 +164,14 @@ public:
 	int8_t trackview;
 	int8_t toggle;
 
-	MppShowWidget *wg_show;
+	MppShowWidget *wg_lyrics_show;
+	MppShowWidget *wg_chords_show;
 
 	MppButtonMap *butMode;
 	MppButtonMap *butTrack;
 
-	QPushButton *butShowWindow;
+	QPushButton *butShowLyricsWindow;
+	QPushButton *butShowChordsWindow;
 	QPushButton *butFullScreen;
 
 	QPushButton *butFontSelect;
@@ -205,7 +209,8 @@ public slots:
 	void handle_mode_change(int);
 	void handle_track_change(int);
 	void handle_hpsjam_change(int);
-	void handle_show_window();
+	void handle_show_lyrics_window();
+	void handle_show_chords_window();
 	void handle_fullscreen();
 	void handle_fontselect();
 	void handle_fontfgcolor();

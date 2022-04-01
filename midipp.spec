@@ -1,11 +1,11 @@
 Name:           midipp
-Version:        2.1.2
+Version:        2.1.3
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
 License:        BSD-2-Clause
 URL:            https://github.com/hselasky/midipp
-Source0:        https://codeload.github.com/hselasky/midipp/tar.gz/v2.1.2?dummy=/hselasky-midipp-v2.1.2_GH0.tar.gz
+Source0:        https://codeload.github.com/hselasky/midipp/tar.gz/v2.1.3?dummy=/hselasky-midipp-v2.1.3_GH0.tar.gz
 Source1:        https://codeload.github.com/hselasky/libumidi/tar.gz/v2.1.5?dummy=/hselasky-libumidi-v2.1.5_GH0.tar.gz
 
 BuildRequires:  make gcc libjack-devel phonon-devel qt-devel qt-settings qtwebkit-devel
@@ -51,7 +51,9 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Thu Jan 27 2022 HPS hps@selasky.org 2.1.3-1
+* Fri Apr 1 2022 HPS hps@selasky.org 2.1.4-1
+* Fri Apr 1 2022 HPS hps@selasky.org 2.1.3-1
+- Added support for chords window.
 * Tue Jan 27 2022 HPS hps@selasky.org 2.1.2-1
 - Added support for ALSA MIDI.
 * Tue Sep 2 2021 HPS hps@selasky.org 2.1.1-1
