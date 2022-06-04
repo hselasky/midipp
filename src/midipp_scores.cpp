@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2021 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -398,22 +398,18 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig)
 
 	/* extract all text */
 	for (x = 0; x != visual_max; x++) {
-		delete pVisual[x].str;
-		delete pVisual[x].str_chord;
-
-		/* allocate new string(s) */
-		QString *pstr = new QString();
-		QString *pstr_chord = new QString();
+		pVisual[x].str = "";
+		pVisual[x].str_chord = "";
 
 		/* parse through the text */
 		for (ptr = pVisual[x].start; ptr != pVisual[x].stop; ptr = ptr->next()) {
 			switch (ptr->type) {
 			case MPP_T_STRING_DESC:
-				*pstr += ptr->txt;
-				*pstr_chord += ptr->txt;
+				pVisual[x].str += ptr->txt;
+				pVisual[x].str_chord += ptr->txt;
 				break;
 			case MPP_T_STRING_CHORD:
-				*pstr_chord += ptr->txt;
+				pVisual[x].str_chord += ptr->txt;
 				break;
 			default:
 				break;
@@ -421,12 +417,8 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig)
 		}
 
 		/* Trim string(s) */
-		*pstr = pstr->trimmed();
-		*pstr_chord = pstr_chord->trimmed();
-
-		/* store new string(s) */
-		pVisual[x].str = pstr;
-		pVisual[x].str_chord = pstr_chord;
+		pVisual[x].str = pVisual[x].str.trimmed();
+		pVisual[x].str_chord = pVisual[x].str_chord.trimmed();
 	}
 
 	rmax_x = MPP_VISUAL_R_MAX * scale_x;
@@ -443,7 +435,7 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig)
 		pageNum = 0;
 		pageStart[pageNum++] = 0;
 		for (x = 0; x != visual_max; x++) {
-			QString &str = *pVisual[x].str;
+			const QString &str = pVisual[x].str;
 
 			if (pageNum < PAGES_MAX &&
 			    str.length() > 1 && str[0] == 'L' && str[1].isDigit())
@@ -495,7 +487,7 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig)
 		}
 #endif
 		if (pd == NULL) {
-			delete (pVisual[x].pic);
+			delete pVisual[x].pic;
 			pVisual[x].pic = new QPicture();
 			paint.begin(pVisual[x].pic);
 			paint.setRenderHints(QPainter::Antialiasing, 1);
@@ -856,18 +848,10 @@ MppScoreMain :: handleParse(const QString &pstr)
 	/* no key mode selection */
 	key_mode = -1;
 
-	/* cleanup visual entries */
-	for (x = 0; x != visual_max; x++) {
-		delete pVisual[x].str;
-		delete pVisual[x].str_chord;
-		delete pVisual[x].pic;
-		free (pVisual[x].pdot);
-	}
-
 	visual_max = 0;
 	visual_p_max = 0;
 	index = 0;
-	free(pVisual);
+	delete [] pVisual;
 	pVisual = 0;
 
 	for (start = stop = 0; head.foreachLine(&start, &stop); ) {
@@ -915,11 +899,8 @@ MppScoreMain :: handleParse(const QString &pstr)
 				visual_p_max = index;
 		}
 	}
-	if (visual_max != 0) {
-		size_t size = sizeof(MppVisualScore) * visual_max;
-		pVisual = (MppVisualScore *)malloc(size);
-		memset(pVisual, 0, size);
-	}
+	if (visual_max != 0)
+		pVisual = new MppVisualScore [visual_max];
 
 	head.dotReorder();
 
@@ -954,12 +935,8 @@ MppScoreMain :: handleParse(const QString &pstr)
 			pVisual[index].stop = stop;
 			pVisual[index].ndot = num_dot;
 
-			if (num_dot != 0) {
-				size_t size = sizeof(MppVisualDot) * num_dot;
-				pVisual[index].pdot = (MppVisualDot *)
-				    malloc(size);
-				memset(pVisual[index].pdot, 0, size);
-			}
+			if (num_dot != 0)
+				pVisual[index].pdot = new MppVisualDot [num_dot];
 			index++;
 		}
 	}

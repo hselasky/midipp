@@ -432,11 +432,7 @@ MppShowControl :: handle_text_watchdog()
 	    visual_last_index < 0 ||
 	    visual_last_index >= sm.visual_max ||
 	    visual_curr_index < 0 ||
-	    visual_curr_index >= sm.visual_max ||
-	    sm.pVisual[visual_last_index].str == 0 ||
-	    sm.pVisual[visual_curr_index].str == 0 ||
-	    sm.pVisual[visual_last_index].str_chord == 0 ||
-	    sm.pVisual[visual_curr_index].str_chord == 0) {
+	    visual_curr_index >= sm.visual_max) {
 		if (aobj[0].isVisible() || aobj[1].isVisible()) {
 			aobj[0].fadeOut();
 			aobj[1].fadeOut();
@@ -447,7 +443,7 @@ MppShowControl :: handle_text_watchdog()
 	}
 
 	/* avoid labels */
-	if (MppIsLabel(*sm.pVisual[visual_curr_index].str))
+	if (MppIsLabel(sm.pVisual[visual_curr_index].str))
 		visual_curr_index = visual_last_index;
 
 	int state = 0;
@@ -460,8 +456,8 @@ MppShowControl :: handle_text_watchdog()
 	case 0:
 		aobj[0].reset();
 		aobj[0].props = text;
-		aobj[0].str = *sm.pVisual[visual_last_index].str;
-		aobj[0].str_chord = *sm.pVisual[visual_last_index].str_chord;
+		aobj[0].str = sm.pVisual[visual_last_index].str;
+		aobj[0].str_chord = sm.pVisual[visual_last_index].str_chord;
 		aobj[0].fadeIn();
 		toggle = 0;
 		hpsjam_send_text(aobj[0].str, aobj[0].str_chord);
@@ -471,16 +467,16 @@ MppShowControl :: handle_text_watchdog()
 	case 1:
 		/* update first object */
 		aobj[toggle].moveUp(aobj[toggle].ypos_curr);
-		if (aobj[toggle].str != *sm.pVisual[visual_last_index].str ||
-		    aobj[toggle].str_chord != *sm.pVisual[visual_last_index].str_chord ||
+		if (aobj[toggle].str != sm.pVisual[visual_last_index].str ||
+		    aobj[toggle].str_chord != sm.pVisual[visual_last_index].str_chord ||
 		    aobj[toggle].props != text)
 			aobj[toggle].fadeOut();
 		else if (visual_last_index != visual_curr_index) {
 			/* update second object */
 			aobj[toggle ^ 1].reset();
 			aobj[toggle ^ 1].props = text;
-			aobj[toggle ^ 1].str = *sm.pVisual[visual_curr_index].str;
-			aobj[toggle ^ 1].str_chord = *sm.pVisual[visual_curr_index].str_chord;
+			aobj[toggle ^ 1].str = sm.pVisual[visual_curr_index].str;
+			aobj[toggle ^ 1].str_chord = sm.pVisual[visual_curr_index].str_chord;
 			aobj[toggle ^ 1].ypos_curr = aobj[toggle].height;
 			aobj[toggle ^ 1].fadeIn();
 			hpsjam_send_text(aobj[toggle ^ 1].str, aobj[toggle ^ 1].str_chord);
@@ -488,10 +484,10 @@ MppShowControl :: handle_text_watchdog()
 		break;
 	default:
 		if (visual_last_index != visual_curr_index) {
-			if (aobj[toggle].str == *sm.pVisual[visual_last_index].str &&
-			    aobj[toggle].str_chord == *sm.pVisual[visual_last_index].str_chord &&
-			    aobj[toggle ^ 1].str == *sm.pVisual[visual_curr_index].str &&
-			    aobj[toggle ^ 1].str_chord == *sm.pVisual[visual_curr_index].str_chord &&
+			if (aobj[toggle].str == sm.pVisual[visual_last_index].str &&
+			    aobj[toggle].str_chord == sm.pVisual[visual_last_index].str_chord &&
+			    aobj[toggle ^ 1].str == sm.pVisual[visual_curr_index].str &&
+			    aobj[toggle ^ 1].str_chord == sm.pVisual[visual_curr_index].str_chord &&
 			    aobj[toggle ^ 1].props == text)
 				break;
 		}
@@ -500,8 +496,8 @@ MppShowControl :: handle_text_watchdog()
 		aobj[toggle].fadeOut();
 		toggle ^= 1;
 		aobj[toggle].moveUp(aobj[toggle].ypos_curr);
-		if (aobj[toggle].str != *sm.pVisual[visual_last_index].str ||
-		    aobj[toggle].str_chord != *sm.pVisual[visual_last_index].str_chord ||
+		if (aobj[toggle].str != sm.pVisual[visual_last_index].str ||
+		    aobj[toggle].str_chord != sm.pVisual[visual_last_index].str_chord ||
 		    aobj[toggle].props != text)
 			aobj[toggle].fadeOut();
 		break;

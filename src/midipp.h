@@ -314,16 +314,36 @@ struct MppInstr {
 	uint8_t updated;
 };
 
-struct MppVisualDot {
+class MppVisualDot {
+public:
+	MppVisualDot() {
+		x_off = 0;
+		y_off = 0;
+	};
 	qreal x_off;
 	qreal y_off;
 };
 
-struct MppVisualScore {
+class MppVisualScore {
+public:
+	MppVisualScore() {
+		pic = 0;
+		str = "";
+		str_chord = "";
+		pdot = 0;
+		start = 0;
+		stop = 0;
+		newpage = 0;
+		ndot = 0;
+	};
+	~MppVisualScore() {
+		delete pic;
+		delete [] pdot;
+	};
 	QPicture *pic;
-	QString *str;
-	QString *str_chord;
-	struct MppVisualDot *pdot;
+	QString str;
+	QString str_chord;
+	MppVisualDot *pdot;
 	MppElement *start;
 	MppElement *stop;
 	int newpage;
