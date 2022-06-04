@@ -940,11 +940,14 @@ MppScoreMain :: handleParse(const QString &pstr)
 			index++;
 		}
 	}
+
 	/* extend region of first and last visual */
-	if (visual_max != 0) {
+	if (index != 0) {
 		pVisual[0].start = TAILQ_FIRST(&head.head);
-		pVisual[visual_max - 1].stop = 0;
+		pVisual[index - 1].stop = 0;
 	}
+
+	visual_max = index;
 
 	/* compile before auto-melody */
 	sheet->compile(head);
