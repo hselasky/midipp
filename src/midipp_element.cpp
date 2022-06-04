@@ -461,6 +461,9 @@ MppHead :: operator += (QChar ch)
 			} else if (ch == 'S') {
 				*this += state.elem;
 				state.elem = new MppElement(MPP_T_STRING_CMD, state.line);
+			} else if (ch == 'V') {
+				*this += state.elem;
+				state.elem = new MppElement(MPP_T_COMMENT_CMD, state.line);
 			} else if (ch == 'W') {
 				*this += state.elem;
 				state.elem = new MppElement(MPP_T_TIMER, state.line);
@@ -498,12 +501,17 @@ MppHead :: operator += (QChar ch)
 		if (state.string != 0)
 			state.level = 0;
 
+		/* Flush at end of string, if any. */
 		switch (state.elem->type) {
 		case MPP_T_STRING_DESC:
 		case MPP_T_STRING_DOT:
 		case MPP_T_STRING_CHORD:
 			*this += state.elem;
 			state.elem = new MppElement(MPP_T_STRING_CMD, state.line);
+			break;
+		case MPP_T_COMMENT_DESC:
+			*this += state.elem;
+			state.elem = new MppElement(MPP_T_COMMENT_CMD, state.line);
 			break;
 		default:
 			break;
@@ -519,20 +527,36 @@ MppHead :: operator += (QChar ch)
 		}
 	} else {
 		if (state.level == 0) {
-			/* flush previous string type, if any */
-			if (ch == '.') {
-				*this += state.elem;
-				state.elem = new MppElement(MPP_T_STRING_DOT, state.line);
-			} else if (ch == '(') {
-				*this += state.elem;
-				state.elem = new MppElement(MPP_T_STRING_CHORD, state.line);
-			} else if (ch == '[' || ch == '"') {
-				/* ignore - same as previous */
-			} else if (state.elem->type == MPP_T_STRING_CHORD ||
-				   state.elem->type == MPP_T_STRING_DOT ||
-				   state.elem->type == MPP_T_STRING_CMD) {
-				*this += state.elem;
-				state.elem = new MppElement(MPP_T_STRING_DESC, state.line);
+			switch (state.elem->type) {
+			case MPP_T_STRING_CHORD:
+			case MPP_T_STRING_DOT:
+			case MPP_T_STRING_CMD:
+			case MPP_T_STRING_DESC:
+				/* flush previous string type, if any */
+				if (ch == '.') {
+					*this += state.elem;
+					state.elem = new MppElement(MPP_T_STRING_DOT, state.line);
+				} else if (ch == '(') {
+					*this += state.elem;
+					state.elem = new MppElement(MPP_T_STRING_CHORD, state.line);
+				} else if (ch == '[' || ch == '"') {
+					/* ignore - same as previous */
+				} else if (state.elem->type != MPP_T_STRING_DESC) {
+					*this += state.elem;
+					state.elem = new MppElement(MPP_T_STRING_DESC, state.line);
+				}
+				break;
+			case MPP_T_COMMENT_CMD:
+			case MPP_T_COMMENT_DESC:
+				if (ch == '"') {
+					/* ignore - same as previous */
+				} else if (state.elem->type != MPP_T_COMMENT_DESC) {
+					*this += state.elem;
+					state.elem = new MppElement(MPP_T_COMMENT_DESC, state.line);
+				}
+				break;
+			default:
+				break;
 			}
 		}
 		if (ch == '(' || ch == '[')
@@ -1331,6 +1355,7 @@ MppHead :: toLyrics(int no_chords)
 		for (ptr = start; ptr != stop; ptr = ptr->next()) {
 			switch (ptr->type) {
 			case MPP_T_STRING_DESC:
+			case MPP_T_COMMENT_DESC:
 				linebuf[1] += ptr->txt;
 				break;
 			case MPP_T_STRING_DOT:

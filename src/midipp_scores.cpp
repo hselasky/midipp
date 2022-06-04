@@ -404,6 +404,9 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig)
 		/* parse through the text */
 		for (ptr = pVisual[x].start; ptr != pVisual[x].stop; ptr = ptr->next()) {
 			switch (ptr->type) {
+			case MPP_T_COMMENT_DESC:
+				pVisual[x].str_chord += ptr->txt;
+				break;
 			case MPP_T_STRING_DESC:
 				pVisual[x].str += ptr->txt;
 				pVisual[x].str_chord += ptr->txt;
@@ -517,6 +520,7 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig)
 			    Qt::TextSingleLine | Qt::AlignLeft, linebuf);
 
 			if (ptr->type != MPP_T_STRING_DESC &&
+			    ptr->type != MPP_T_COMMENT_DESC &&
 			    box.width() < chord_x_max && linebuf.size() < 256) {
 				int t;
 				for (t = linebuf.size() - 1; t > -1; t--) {
@@ -535,6 +539,7 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig)
 
 			switch (ptr->type) {
 			case MPP_T_STRING_DESC:
+			case MPP_T_COMMENT_DESC:
 				linebuf += ptr->txt;
 				break;
 
@@ -827,7 +832,6 @@ MppScoreMain :: handleParse(const QString &pstr)
 	int auto_utune;
 	int has_string;
 	int index;
-	int x;
 	int num_dot;
 
 	/* reset head structure */
@@ -858,9 +862,9 @@ MppScoreMain :: handleParse(const QString &pstr)
 
 		has_string = 0;
 
-		for (ptr = start; ptr != stop;
-		    ptr = TAILQ_NEXT(ptr, entry)) {
-			if (ptr->type == MPP_T_COMMAND) {
+		for (ptr = start; ptr != stop; ptr = ptr->next()) {
+			switch (ptr->type) {
+			case MPP_T_COMMAND:
 				switch (ptr->value[0]) {
 				case MPP_CMD_BPM_REF:
 					/* update BPM timer */
@@ -879,16 +883,23 @@ MppScoreMain :: handleParse(const QString &pstr)
 				default:
 					break;
 				}
-			} else if (ptr->type == MPP_T_CHANNEL) {
+				break;
+			case MPP_T_CHANNEL:
 				if (ptr->value[0] > -1 && ptr->value[0] < 16)
 					active_channels |= (1 << ptr->value[0]);
-			} else if (ptr->type == MPP_T_STRING_DESC || 
-			    ptr->type == MPP_T_STRING_DOT ||
-			    ptr->type == MPP_T_STRING_CHORD) {
+				break;
+			case MPP_T_STRING_DESC:
+			case MPP_T_STRING_DOT:
+			case MPP_T_STRING_CHORD:
+			case MPP_T_COMMENT_DESC:
 				has_string = 1;
-			} else if (ptr->type == MPP_T_JUMP) {
+				break;
+			case MPP_T_JUMP:
 				if (ptr->value[1] & MPP_FLAG_JUMP_PAGE)
 					index = 0;
+				break;
+			default:
+				break;
 			}
 		}
 		/* compute maximum number of score lines */
@@ -911,21 +922,28 @@ MppScoreMain :: handleParse(const QString &pstr)
 		has_string = 0;
 		num_dot = 0;
 
-		for (ptr = start; ptr != stop;
-		    ptr = TAILQ_NEXT(ptr, entry)) {
-			if (ptr->type == MPP_T_STRING_DOT) {
+		for (ptr = start; ptr != stop; ptr = ptr->next()) {
+			switch (ptr->type) {
+			case MPP_T_STRING_DOT:
 				num_dot++;
 				has_string = 1;
-			} else if (ptr->type == MPP_T_STRING_DESC || 
-			    ptr->type == MPP_T_STRING_CHORD) {
+				break;
+			case MPP_T_STRING_DESC:
+			case MPP_T_STRING_CHORD:
+			case MPP_T_COMMENT_DESC:
 				has_string = 1;
-			} else if (ptr->type == MPP_T_JUMP) {
+				break;
+			case MPP_T_JUMP:
 				if ((ptr->value[1] & MPP_FLAG_JUMP_PAGE) &&
 				    (index > 0 && index <= visual_max)) {
 					pVisual[index - 1].newpage = 1;
 				}
+				break;
+			default:
+				break;
 			}
 		}
+
 		if (has_string && (index < visual_max)) {
 			/* extend region of previous visual */
 			if (index > 0)

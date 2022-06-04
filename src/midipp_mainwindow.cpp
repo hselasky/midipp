@@ -257,6 +257,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	    " * J<P><number> - jumps to the given label [0..31] \n"
 	    " *     and optionally starts a new page(P) in printouts.\n"
 	    " * S\"<string .(chord) .(chord)>\" - creates a visual string.\n"
+	    " * V\"<string>\" - creates a non-visual string.\n"
 	    " * CDEFGABH<number><B>[.<subdivision>]"
 	    " - defines a score in the given octave [0..10] and subdivision [0..15].\n"
 	    " * X[+/-]<number>[.<subdivision>][.<mode>] - transpose the subsequent scores by the given\n"

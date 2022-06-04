@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2020 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -81,6 +81,7 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 		QString &end = ps->d_word[i_txt][ps->n_words[i_txt] - 1].name;
 
 		if (str.size() > 1 && str[0] == QChar('L') && str[1].isDigit()) {
+			/* import Lxx tag */
 			int label = 0;
 			for (bi = 1; bi != str.size(); bi++) {
 				if (str[bi].isDigit() == 0)
@@ -103,17 +104,17 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 			i_txt = -1;
 			output = 1;
 
-		} else if (str.size() > 0 && str[0] == '[' &&
-			   end.size() > 0 && end[end.size() - 1] == ']') {
+		} else if (&str == &end && str.size() > 1 &&
+			   str[0] == '[' && str[str.size() - 1] == ']' &&
+			   midipp_import_is_chord(str.mid(1, str.size() - 2)) == 0) {
+			/* import tag */
 
-			/* update current strings */
-			str = QString("L%1 - ").arg(ps->n_label) + str.right(str.size() - 1);
-			end = end.left(end.size() - 1);
+			/* update current string */
+			str = QString("L%1 - ").arg(ps->n_label) + str.mid(1, str.size() - 2);
 
 			/* output full text line */
 			lbl += "S\"";
-			for (ai = 0; ai != ps->n_words[i_txt]; ai++)
-			    lbl += ps->d_word[i_txt][ai].name;
+			lbl += str;
 			lbl += "\"\n";
 			lbl += QString("L%1:\n\n").arg(ps->n_label);
 
@@ -140,9 +141,9 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 			any = 1;
 
 			if (ps->d_word[i_score][ai].off == x) {
-				QString *ptr = &ps->d_word[i_score][ai].name;
+				const QString &chord = ps->d_word[i_score][ai].name;
 
-				if (midipp_import_find_chord(*ptr) == 0) {
+				if (midipp_import_find_chord(chord) == 0) {
 					MppDecodeTab *ptab = ps->sm->mainWindow->tab_chord_gl;
 
 					output = 1;
@@ -150,7 +151,7 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 					out += ps->d_word[i_score][ai].name;
 					out += ")";
 
-					ptab->setText(*ptr);
+					ptab->setText(chord);
 					ptab->handle_align(ps->sm->spnScoreFileAlign->value());
 					ptab->handle_refresh();
 
@@ -161,34 +162,64 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 		}
 	next_word:
 		if (i_txt > -1 && bi < ps->n_words[i_txt]) {
+			const QString &str = ps->d_word[i_txt][bi].name;
 
 			off = ps->d_word[i_txt][bi].off;
 
 			if (x >= off) {
 				int y = x - off;
 
-				if (y >= ps->d_word[i_txt][bi].name.size()) {
+				if (y >= str.size()) {
 					bi++;
 					goto next_word;
-				} else {
-					output = 1;
-					out += ps->d_word[i_txt][bi].name[y];
-				}
-			} else {
-				if (!any)
-					break;
+				} else if (y == 0 && str.size() > 1 &&
+				    str[0] == '[' && str[str.size() - 1] == ']') {
+					/* Handle lyrics chord */
+					const QString chord(str.mid(1, str.size() - 2));
 
+					if (midipp_import_is_chord(chord) != 0) {
+						MppDecodeTab *ptab = ps->sm->mainWindow->tab_chord_gl;
+
+						output = 1;
+						out += ".(";
+						out += chord;
+						out += ")";
+
+						ptab->setText(chord);
+						ptab->handle_align(ps->sm->spnScoreFileAlign->value());
+						ptab->handle_refresh();
+
+						scs += ptab->getText() + "\n";
+						bi++;
+						goto next_word;
+					}
+				} else if (y == 0 && str.size() > 1 &&
+				    str[0] == '(' && str[str.size() - 1] == ')') {
+					/* Handle lyrics comment */
+					output = 1;
+					scs += "V\"";
+					scs += str;
+					scs += "\"\n";
+					bi++;
+					goto next_word;
+				}
+				output = 1;
+				out += str[y];
+			} else {
+				/* If there are any chords on top, we need to space. */
+				if (any) {
+					output = 1;
+					if ((x + 1) != ps->max_off)
+						out += " ";
+				}
+			}
+		} else {
+			/* If there are any chords on top, we need to space. */
+			if (any) {
 				output = 1;
 				if ((x + 1) != ps->max_off)
 					out += " ";
 			}
-		} else {
-			if (!any)
-				break;
-
-			output = 1;
-			if ((x + 1) != ps->max_off)
-				out += " ";
 		}
 	    }
 	    out += "\"\n\n";
@@ -216,43 +247,87 @@ midipp_import_parse(class midipp_import *ps)
 	int n_chord;
 	int n_space;
 	int temp;
-	uint8_t state;
-	uint8_t next;
+	uint8_t flushword;
 	QChar c;
+	QChar lastch;
+	QChar endch;
 
-	state = 0;
 	n_word = 0;
 	n_chord = 0;
 	n_space = 0;
+	flushword = 0;
+	endch = '\0';
+	lastch = '\0';
 
 	/* reset all the "name" strings */
 	for (n_off = 0; n_off != MIDIPP_IMPORT_MW; n_off++)
 		ps->d_word[ps->index][n_off].name = QString();
 
-	/* parse line word by word */
+	/*
+	 * The supported syntax is:
+	 *
+	 * [Chord]
+	 *
+	 * [Tag]
+	 *
+	 * (One-line comments ....)
+	 *
+	 * [Chord]       [Chord]
+	 * Lyrics lyrics lyrics
+	 *
+	 * Chord       Chord
+	 * Lyrics lyrics lyrics
+	 *
+	 * Lyrics [Chord]lyrics [Chord]lyrics
+	 */
 	for (n_off = 0; ; n_off++) {
 		uint8_t is_done = (n_off == ps->line_buffer.size());
+		uint8_t can_flush = ps->d_word[ps->index][n_word].name.size() != 0;
+
 		if (is_done == 0) {
 			c = ps->line_buffer[n_off];
-			next = c.isSpace();
+			if (endch == '\0') {
+				/* check for word delimiters */
+				if (c == '[') {
+					flushword = can_flush;
+					endch = ']';
+				} else if (c == '(') {
+					flushword = can_flush;
+					endch = ')';
+				} else if (c.isSpace()) {
+					flushword = (c != lastch || flushword == 2) ? can_flush : 0;
+				} else {
+					flushword = (lastch.isSpace() || flushword == 2) ? can_flush : 0;
+				}
+			} else if (c == endch) {
+				/* make sure the end character gets appended to the current word */
+				flushword = can_flush ? 2 : 0;
+				endch = '\0';
+			} else {
+				/* keep on appending until the end character */
+				flushword = 0;
+			}
 		} else {
 			c = ' ';
-			next = 0;
+			flushword = 0;
 		}
-		if (is_done != 0 || (n_off != 0 && next != state)) {
+
+		if (is_done != 0 || flushword == 1) {
 			ps->d_word[ps->index][n_word].off = n_off -
 			    ps->d_word[ps->index][n_word].name.size();
 
 			if (midipp_import_is_chord(
 			    ps->d_word[ps->index][n_word].name) != 0)
 				n_chord++;
-			}
+
 			n_word ++;
 			if (is_done != 0 || n_word == MIDIPP_IMPORT_MW)
 				break;
 		}
-		state = next;
 		ps->d_word[ps->index][n_word].name += c;
+
+		/* keep the last character */
+		lastch = c;
 	}
 	if (n_off > ps->max_off)
 		ps->max_off = n_off;
@@ -372,16 +447,15 @@ midipp_import(const QString &str, class midipp_import *ps, MppScoreMain *sm)
 		if (ch == '\r')
 			continue;
 
-		/* remove formatting characters */
-		if (ch == '(')
-			ch = '{';
-		if (ch == ')')
-			ch = '}';
+		/*
+		 * Remove some formatting characters we don't support,
+		 * or which are internal:
+		 */
 		if (ch == '"')
 			ch = '\'';
-		if (ch == '.')
+		else if (ch == '.')
 			ch = ' ';
-		if (ch == '\0')
+		else if (ch == '\0')
 			ch = ' ';
 
 		/* expand tabs to 8 spaces */
@@ -430,7 +504,11 @@ MppImportTab :: MppImportTab(MppMainWindow *parent)
 	    "[Intro tag]" "\n\n"
 	    
 	    "C  G  Am" "\n"
-	    "Welcome!" "\n"));
+	    "Welcome!" "\n"
+	    "\n"
+	    "[C]Wel[C]com[Am]e!\n"
+	    "\n"
+	    "(Repeat 2x)\n"));
 	editWidget->setTabChangesFocus(true);
 
 	butImportFileNew = new QPushButton(tr("New"));

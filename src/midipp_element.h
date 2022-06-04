@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -52,6 +52,8 @@ enum MppElementType {
 	MPP_T_STRING_DESC,
 	MPP_T_STRING_DOT,
 	MPP_T_STRING_CHORD,
+	MPP_T_COMMENT_CMD,
+	MPP_T_COMMENT_DESC,
 	MPP_T_TRANSPOSE,
 	MPP_T_TIMER,
 	MPP_T_UNKNOWN,
