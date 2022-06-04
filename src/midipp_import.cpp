@@ -343,7 +343,7 @@ midipp_import_parse(class midipp_import *ps)
 }
 
 static uint8_t
-midipp_import(QString str, class midipp_import *ps, MppScoreMain *sm)
+midipp_import(const QString &str, class midipp_import *ps, MppScoreMain *sm)
 {
 	QChar ch;
 	int off;
