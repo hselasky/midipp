@@ -381,6 +381,8 @@ midipp_import(const QString &str, class midipp_import *ps, MppScoreMain *sm)
 			ch = '\'';
 		if (ch == '.')
 			ch = ' ';
+		if (ch == '\0')
+			ch = ' ';
 
 		/* expand tabs to 8 spaces */
 		if (ch == '\t')
