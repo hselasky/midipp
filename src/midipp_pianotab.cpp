@@ -298,10 +298,7 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 	QPainter paint(this);
 	QFont fnt;
 	qreal unit;
-	qreal small;
-	qreal ss;
 	qreal dx;
-	qreal sh;
 	qreal uh;
 	qreal uf;
 	qreal uq;
@@ -324,11 +321,8 @@ MppPianoTab :: paintEvent(QPaintEvent *event)
 		w = z;
 
 	dx = 3.0 * w / 25.0;
-	ss = 3.0 * w / 75.0;
 
 	unit = 2.0 * w / 25.0;
-	small = 3.0 * w / 50.0;
-	sh = 3.0 * w / 100.0;
 	uh = w / 25.0;
 	uf = w / 25.0;
 	uq = w / 50.0;
