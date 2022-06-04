@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -602,7 +602,7 @@ MppHead :: replace(MppHead *phead, MppElement *start, MppElement *stop)
 	phead->clear();
 
 	while (start != stop) {
-		ptr = TAILQ_NEXT(start, entry);
+		ptr = start->next();
 		TAILQ_REMOVE(&head, start, entry);
 		delete start;
 		start = ptr;
@@ -631,8 +631,7 @@ MppHead :: getChord(int line, MppChordElement *pinfo)
 
 	while (foreachLine(&start, &stop) != 0) {
 
-		for (ptr = start; ptr != stop;
-		    ptr = TAILQ_NEXT(ptr, entry)) {
+		for (ptr = start; ptr != stop; ptr = ptr->next()) {
 			if (ptr->type == MPP_T_STRING_CHORD) {
 				string_start = start;
 				string_stop = stop;
@@ -640,8 +639,7 @@ MppHead :: getChord(int line, MppChordElement *pinfo)
 				break;
 			}
 		}
-		for (ptr = start; ptr != stop;
-		    ptr = TAILQ_NEXT(ptr, entry)) {
+		for (ptr = start; ptr != stop; ptr = ptr->next()) {
 			if (ptr->type == MPP_T_SCORE_SUBDIV)
 				break;
 		}
@@ -656,7 +654,7 @@ MppHead :: getChord(int line, MppChordElement *pinfo)
 			int num_dot = 0;
 
 			for (ptr = string_start; ptr != string_stop;
-			     ptr = TAILQ_NEXT(ptr, entry)) {
+			     ptr = ptr->next()) {
 
 				if (ptr->type == MPP_T_STRING_DOT) {
 					if (dot_first == 0)
@@ -682,7 +680,7 @@ MppHead :: getChord(int line, MppChordElement *pinfo)
 			pinfo->stop = stop;
 
 			/* compute chord profile */
-			for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
+			for (ptr = start; ptr != stop; ptr = ptr->next()) {
 				if (ptr->type == MPP_T_SCORE_SUBDIV) {
 					int key = ptr->value[0];
 					if (key > pinfo->key_max)
@@ -766,13 +764,13 @@ MppHead :: optimise()
 	/* normalize spaces */
 	for (start = stop = 0; foreachLine(&start, &stop); ) {
 		int last = MPP_T_UNKNOWN;
-		for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry))
+		for (ptr = start; ptr != stop; ptr = ptr->next())
 			last = MppNormSpace(ptr, last);
 	}
 
 	/* remove unused entries, except labels */
 	for (ptr = TAILQ_FIRST(&head); ptr != NULL; ptr = next) {
-		next = TAILQ_NEXT(ptr, entry);
+		next = ptr->next();
 		if (ptr->txt.isEmpty()) {
 			TAILQ_REMOVE(&head, ptr, entry);
 			delete ptr;
@@ -803,7 +801,7 @@ MppHead :: bassOffset(int which)
 		ns = 0;
 
 		for (ptr = start; ptr != stop;
-		    ptr = TAILQ_NEXT(ptr, entry)) {
+		    ptr = ptr->next()) {
 			if (ptr->type == MPP_T_SCORE_SUBDIV) {
 				if (ns < 24)
 					score[ns++] = ptr->value[0];
@@ -820,7 +818,7 @@ MppHead :: bassOffset(int which)
 			continue;
 
 		for (ptr = start; ptr != stop;
-		    ptr = TAILQ_NEXT(ptr, entry)) {
+		    ptr = ptr->next()) {
 			if (ptr->type != MPP_T_SCORE_SUBDIV)
 				continue;
 			for (x = 0; x != nb; x++) {
@@ -897,7 +895,7 @@ MppHead :: sortScore()
 		size_t num = 0;
 		size_t i;
 
-		for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
+		for (ptr = start; ptr != stop; ptr = ptr->next()) {
 			switch (ptr->type) {
 			case MPP_T_SCORE_SUBDIV:
 				num++;
@@ -919,7 +917,7 @@ MppHead :: sortScore()
 		num = 0;
 
 		/* extract all keys */
-		for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
+		for (ptr = start; ptr != stop; ptr = ptr->next()) {
 			switch (ptr->type) {
 			case MPP_T_DURATION:
 				duration = ptr->value[0];
@@ -1050,7 +1048,7 @@ MppHead :: limitScore(int limit)
 		int channel;
 		int duration;
 
-		for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
+		for (ptr = start; ptr != stop; ptr = ptr->next()) {
 			if (ptr->type == MPP_T_SCORE_SUBDIV)
 				num++;
 		}
@@ -1066,7 +1064,7 @@ MppHead :: limitScore(int limit)
 		num = 0;
 
 		/* extract all keys */
-		for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
+		for (ptr = start; ptr != stop; ptr = ptr->next()) {
 			switch (ptr->type) {
 			case MPP_T_DURATION:
 				duration = ptr->value[0];
@@ -1170,7 +1168,7 @@ MppHead :: tuneScore()
 		mask.zero();
 
 		/* extract all keys */
-		for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
+		for (ptr = start; ptr != stop; ptr = ptr->next()) {
 			switch (ptr->type) {
 			case MPP_T_SCORE_SUBDIV:
 				rem = MPP_BAND_REM(ptr->value[0], MPP_MAX_CHORD_BANDS);
@@ -1201,7 +1199,7 @@ MppHead :: tuneScore()
 		}
 
 		/* update all keys */
-		for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
+		for (ptr = start; ptr != stop; ptr = ptr->next()) {
 			switch (ptr->type) {
 			int x;
 			case MPP_T_SCORE_SUBDIV:
@@ -1297,11 +1295,11 @@ MppHead :: foreachLine(MppElement **ppstart, MppElement **ppstop)
 	if (ptr == 0)
 		return (0);
 
-	for ( ; ptr != 0; ptr = TAILQ_NEXT(ptr, entry)) {
+	for ( ; ptr != 0; ptr = ptr->next()) {
 		if (ptr->type == MPP_T_NEWLINE ||
 		    ptr->type == MPP_T_JUMP ||
 		    ptr->type == MPP_T_LABEL) {
-			ptr = TAILQ_NEXT(ptr, entry);
+			ptr = ptr->next();
 			break;
 		}
 	}
@@ -1330,8 +1328,7 @@ MppHead :: toLyrics(int no_chords)
 		linebuf[0] = "";
 		linebuf[1] = "";
 
-		for (ptr = start; ptr != stop;
-		    ptr = TAILQ_NEXT(ptr, entry)) {
+		for (ptr = start; ptr != stop; ptr = ptr->next()) {
 			switch (ptr->type) {
 			case MPP_T_STRING_DESC:
 				linebuf[1] += ptr->txt;
@@ -1402,7 +1399,7 @@ MppHead :: stepLine(MppElement **ppstart, MppElement **ppstop)
 	while (to--) {
 		while (foreachLine(&state.curr_start, &state.curr_stop)) {
 			for (ptr = state.curr_start; ptr != state.curr_stop;
-			    ptr = TAILQ_NEXT(ptr, entry)) {
+			    ptr = ptr->next()) {
 				if (ptr->type == MPP_T_JUMP) {
 					if (!(ptr->value[1] & MPP_FLAG_JUMP_DIGIT))
 						continue;
@@ -1539,7 +1536,7 @@ MppHead :: dotReorder()
 		if (ptr->type != MPP_T_STRING_CHORD)
 			continue;
 
-		next = TAILQ_NEXT(ptr, entry);
+		next = ptr->next();
 		if (next == 0 || next->type != MPP_T_STRING_DOT)
 			continue;
 

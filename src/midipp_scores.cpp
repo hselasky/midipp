@@ -406,8 +406,7 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig)
 		QString *pstr_chord = new QString();
 
 		/* parse through the text */
-		for (ptr = pVisual[x].start; ptr != pVisual[x].stop;
-		     ptr = TAILQ_NEXT(ptr, entry)) {
+		for (ptr = pVisual[x].start; ptr != pVisual[x].stop; ptr = ptr->next()) {
 			switch (ptr->type) {
 			case MPP_T_STRING_DESC:
 				*pstr += ptr->txt;
@@ -510,8 +509,7 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig)
 		last_dot = 0;
 		chord_x_max = 0;
 
-		for (ptr = pVisual[x].start; ptr != pVisual[x].stop;
-		    ptr = TAILQ_NEXT(ptr, entry)) {
+		for (ptr = pVisual[x].start; ptr != pVisual[x].stop; ptr = ptr->next()) {
 
 			paint.setFont(fnt_a);
 
@@ -1327,8 +1325,7 @@ MppScoreMain :: handleChordsLoad(void)
 
 	head.currLine(&start, &stop);
 
-	for (ptr = start; ptr != stop;
-	     ptr = TAILQ_NEXT(ptr, entry)) {
+	for (ptr = start; ptr != stop; ptr = ptr->next()) {
 		switch (ptr->type) {
 		case MPP_T_DURATION:
 			duration = ptr->value[0];
@@ -1685,8 +1682,7 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 
 		decrementDuration(vel, 0);
 
-		for (ptr = start; ptr != stop;
-		    ptr = TAILQ_NEXT(ptr, entry)) {
+		for (ptr = start; ptr != stop; ptr = ptr->next()) {
 			switch (ptr->type) {
 			case MPP_T_SCORE_SUBDIV:
 				if (duration <= 0)
@@ -1719,7 +1715,7 @@ MppScoreMain :: handleKeyPressSub(int in_key, int vel,
 
 		duration = 1;
 
-		for (ptr = start; ptr != stop; ptr = TAILQ_NEXT(ptr, entry)) {
+		for (ptr = start; ptr != stop; ptr = ptr->next()) {
 			switch (ptr->type) {
 			MppScoreMain *sm;
 			MppScoreEntry mse;
