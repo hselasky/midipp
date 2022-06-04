@@ -45,6 +45,22 @@ midipp_import_find_chord(const QString &str)
 	return (mask.test(0) == 0);
 }
 
+static bool
+midipp_import_is_chord(const QString &str)
+{
+	static const QString first_char("ABCDEFGH");
+
+	if (str.size() < 1)
+		return (false);
+
+	/* Scan for valid characters first */
+	for (int x = 0; x != first_char.size(); x++) {
+		if (first_char[x] == str[0])
+			return (midipp_import_find_chord(str) == 0);
+	}
+	return (false);
+}
+
 static uint8_t
 midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 {
@@ -193,31 +209,6 @@ midipp_import_flush(class midipp_import *ps, int i_txt, int i_score)
 }
 
 static uint8_t
-midipp_import_is_chord_sub(const QChar ch)
-{
-	static const QString chordchars = QString::fromUtf8("ABCDEFGHM+-/#øØ&|^Δ°");
-	int x;
-	for (x = 0; x != chordchars.length(); x++) {
-		if (ch == chordchars[x])
-			return (1);
-	}
-	if (ch.isDigit() || ch.isLower())
-		return (1);
-	return (0);
-}
-
-static uint8_t
-midipp_import_is_chord(const QString &str)
-{
-	int x;
-	for (x = 0; x != str.size(); x++) {
-		if (midipp_import_is_chord_sub(str[x]) == 0)
-			return (0);
-	}
-	return (x != 0);
-}
-
-static uint8_t
 midipp_import_parse(class midipp_import *ps)
 {
 	int n_off;
@@ -253,9 +244,7 @@ midipp_import_parse(class midipp_import *ps)
 			    ps->d_word[ps->index][n_word].name.size();
 
 			if (midipp_import_is_chord(
-			    ps->d_word[ps->index][n_word].name) != 0 &&
-			    midipp_import_find_chord(
-			    ps->d_word[ps->index][n_word].name) == 0) {
+			    ps->d_word[ps->index][n_word].name) != 0)
 				n_chord++;
 			}
 			n_word ++;
