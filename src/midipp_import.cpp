@@ -272,7 +272,6 @@ midipp_import_parse(class midipp_import *ps)
 	 *
 	 * (One-line comments ....)
 	 *
-	 * [Chord]       [Chord]
 	 * Lyrics lyrics lyrics
 	 *
 	 * Chord       Chord
@@ -418,7 +417,7 @@ midipp_import_parse(class midipp_import *ps)
 }
 
 static uint8_t
-midipp_import(const QString &str, class midipp_import *ps, MppScoreMain *sm)
+midipp_import(QString &str, class midipp_import *ps, MppScoreMain *sm, bool removeTabXML = true)
 {
 	QChar ch;
 	int off;
@@ -440,6 +439,55 @@ midipp_import(const QString &str, class midipp_import *ps, MppScoreMain *sm)
 	ps->max_off = 0;
 	ps->index = 0;
 	ps->load_more = 1;
+
+	if (removeTabXML) {
+		int level = 0;
+		int isTabXML = 0;
+
+		for (off = 0; off != str.size(); off++) {
+			if (str.size() > 4 &&
+			    str[off] == '[' &&
+			    str[off + 1] == 't' &&
+			    str[off + 2] == 'a' &&
+			    str[off + 3] == 'b' &&
+			    str[off + 4] == ']') {
+				isTabXML |= 1;
+				level++;
+			} else if (str.size() > 5 &&
+			    str[off] == '[' &&
+			    str[off + 1] == '/' &&
+			    str[off + 2] == 't' &&
+			    str[off + 3] == 'a' &&
+			    str[off + 4] == 'b' &&
+			    str[off + 5] == ']') {
+				isTabXML |= 2;
+				level--;
+			} else if (str.size() > 2 &&
+			    str[off] == '[' &&
+			    str[off + 1] != '/') {
+				level++;
+			} else if (str.size() > 2 &&
+			    str[off] == '[' &&
+			    str[off + 1] == '/') {
+				level--;
+			}
+		}
+		if (isTabXML == 3 && level == 0) {
+			int noff = 0;
+
+			/* Remove all formatting tags */
+			for (off = 0; off != str.size(); off++) {
+				if (str[off] == '[') {
+					level++;
+				} else if (str[off] == ']') {
+					level--;
+				} else if (level == 0) {
+					str[noff++] = str[off];
+				}
+			}
+			str.truncate(noff);
+		}
+	}
 
 	for (off = 0; off != str.size(); off++) {
 		ch = str[off];
@@ -597,7 +645,9 @@ MppImportTab :: handleImport(int n)
 {
 	class midipp_import ps;
 
-	midipp_import(editWidget->toPlainText(), &ps, mainWindow->scores_main[n]);
+	QString str(editWidget->toPlainText());
+
+	midipp_import(str, &ps, mainWindow->scores_main[n]);
 
 	mainWindow->handle_compile();
 	mainWindow->handle_make_scores_visible(mainWindow->scores_main[n]);
