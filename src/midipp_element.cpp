@@ -1380,8 +1380,32 @@ MppHead :: toLyrics(int no_chords)
 
 		/* Export Text Line */
 		if (linebuf[1].size() > 0) {
-			/* remove white space at end of line */
-			out += linebuf[1].replace(QRegExp("\\s*$"), "");
+			/* check for label tags */
+			if (linebuf[1].size() > 1 &&
+			    linebuf[1][0] == 'L' &&
+			    linebuf[1][1].isDigit()) {
+				int x;
+				for (x = 2; x != linebuf[1].size(); x++) {
+					if (linebuf[1][x].isDigit())
+						continue;
+					break;
+				}
+				for (; x != linebuf[1].size(); x++) {
+					if (linebuf[1][x].isSpace() ||
+					    linebuf[1][x] == '-')
+						continue;
+					linebuf[1] = linebuf[1]
+					  .mid(x, linebuf[1].size() - x);
+					break;
+				}
+				out += '\n';
+				out += '[';
+				out += linebuf[1].replace(QRegExp("\\s*$"), "");
+				out += ']';
+			} else {
+				/* remove white space at end of line */
+				out += linebuf[1].replace(QRegExp("\\s*$"), "");
+			}
 			out += '\n';
 		}
 	}

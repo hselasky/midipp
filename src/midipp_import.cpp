@@ -548,7 +548,6 @@ MppImportTab :: MppImportTab(MppMainWindow *parent)
 	editWidget->setFont(mainWindow->editFont);
 	editWidget->setLineWrapMode(QPlainTextEdit::NoWrap);
 	editWidget->setPlainText(tr(
-	    "L0 - Intro tag" "\n"
 	    "[Intro tag]" "\n\n"
 	    
 	    "C  G  Am" "\n"
