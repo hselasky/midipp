@@ -265,8 +265,8 @@ MppDataBase :: MppDataBase(MppMainWindow *mw)
 	connect(download, SIGNAL(released()), this, SLOT(handle_download()));
 	connect(search, SIGNAL(textChanged(const QString &)), this, SLOT(handle_search_changed(const QString &)));
 
-	open_a = new QPushButton(tr("Open In A-Scores"));
-	open_b = new QPushButton(tr("Open In B-Scores"));
+	open_a = new QPushButton(tr("Open in view A"));
+	open_b = new QPushButton(tr("Open in view B"));
 
 	connect(open_a, SIGNAL(released()), this, SLOT(handle_open_a()));
 	connect(open_b, SIGNAL(released()), this, SLOT(handle_open_b()));
