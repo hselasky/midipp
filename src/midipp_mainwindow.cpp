@@ -58,6 +58,7 @@
 #include "midipp_instrument.h"
 #include "midipp_volume.h"
 #include "midipp_devsel.h"
+#include "midipp_onlinetabs.h"
 
 uint8_t
 MppMainWindow :: noise8(uint8_t factor)
@@ -194,6 +195,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_database = new MppDataBase(this);
 
+	tab_onlinetabs = new MppOnlineTabs(this);
+
 	tab_custom = new MppCustomTab(this, this);
 
 	tab_shortcut = 	new MppShortcutTab(this);
@@ -329,6 +332,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	main_tb->addTab(tab_shortcut->gl, tr("Shortcut"));
 	main_tb->addTab(tab_instrument->gl, tr("Instrument"));
 	main_tb->addTab(tab_database, tr("Database"));
+	main_tb->addTab(tab_onlinetabs, tr("OnlineTabs"));
 	main_tb->addTab(tab_help, tr("Help"));
 
 	/* <File> Tab */

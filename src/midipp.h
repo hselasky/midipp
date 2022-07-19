@@ -114,6 +114,7 @@
 #define	MPP_PRESSED_MAX	128
 #define	MPP_MAX_DURATION 255	/* inclusive */
 #define	MPP_MAGIC_DEVNO	(UMIDI20_N_DEVICES - MPP_MAX_TRACKS)
+#define	MPP_NORTABS_URL "https://nortabs.net"
 #define	MPP_DEFAULT_URL "http://home.selasky.org/midipp/database.tar.gz"
 #define	MPP_DEFAULT_HPSJAM "127.0.0.1:12345"
 #define	MPP_DEFAULT_CMD_KEY C3
@@ -275,6 +276,7 @@ class MppMainWindow;
 class MppMidi;
 class MppMetronome;
 class MppMode;
+class MppOnlineTabs;
 class MppPianoTab;
 class MppReplace;
 class MppReplayTab;

@@ -288,6 +288,10 @@ public:
 
 	MppDataBase *tab_database;
 
+	/* tab <OnlineTabs> */
+
+	MppOnlineTabs *tab_onlinetabs;
+
 	/* tab <Show> */
 #ifndef HAVE_NO_SHOW
 	MppShowControl *tab_show_control;
