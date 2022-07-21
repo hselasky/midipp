@@ -226,7 +226,13 @@ MppOnlineTabs :: handle_download_finished(QNetworkReply *reply)
 			tr("Reload failed: %1.")
 			.arg(reply->errorString()));
 	} else {
-		result->setHtml(reply->readAll());
+		QString str(reply->readAll());
+		/* strip all header tags */
+		str = str.replace(QRegExp("<header[^>]*>"), "<!-- ");
+		str = str.replace(QRegExp("</header[^>]*>"), " -->");
+
+		/* parse HTML */
+		result->setHtml(str);
 
 		handle_download_finished_sub();
 	}
