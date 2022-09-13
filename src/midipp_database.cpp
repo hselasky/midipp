@@ -102,6 +102,14 @@ is_alpha_numerical(char c)
 		(c >= '0' && c <= '9'));
 }
 
+static char
+convert_to_lower(char c)
+{
+	if (c >= 'A' && c <= 'Z')
+		c += 'a' - 'A';
+	return (c);
+}
+
 static void
 tar_filter_name(char *name, uint32_t size)
 {
@@ -113,7 +121,7 @@ tar_filter_name(char *name, uint32_t size)
 
 	for (x = 0; x != size; x++) {
 		if (is_alpha_numerical(name[x])) {
-			/* pass */
+			name[x] = convert_to_lower(name[x]);
 		} else if (name[x] != 0) {
 			name[x] = ' ';
 		}
@@ -127,7 +135,7 @@ tar_match(void *arg, const char *str)
 	uint8_t x;
 
 	for (x = 0; x != filter->match_count; x++) {
-		if (strcasestr(str, filter->match_word[x]) == NULL)
+		if (strstr(str, filter->match_word[x]) == NULL)
 			return (0);
 	}
 	return (1);
@@ -317,7 +325,7 @@ MppDataBase :: update_list_view()
 
 	memset(&filter, 0, sizeof(filter));
 
-	filter_str = MppQStringToAscii(search->text());
+	filter_str = MppQStringToAscii(search->text().toLower());
 
 	for (x = y = 0; filter_str[x] != 0 && y < MIDIPP_FILTER_MAX; y++) {
 		for (; filter_str[x] != 0 &&
