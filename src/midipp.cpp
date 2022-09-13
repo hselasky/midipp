@@ -30,7 +30,15 @@
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
+
+#ifdef _WIN32
+#define	err(x,fmt,...) do { \
+fprintf(stderr,fmt "\n" ,## __VA_ARGS__); \
+exit(x); \
+} while (0)
+#else
 #include <err.h>
+#endif
 #include <getopt.h>
 
 #include "midipp_mainwindow.h"
