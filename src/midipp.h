@@ -29,8 +29,6 @@
 #include <stdint.h>
 #include <sys/param.h>
 
-#include <err.h>
-
 #include <QApplication>
 #include <QDialog>
 #include <QPushButton>

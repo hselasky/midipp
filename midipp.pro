@@ -76,7 +76,7 @@ OTHER_FILES += MidiPlayerPro.entitlements
 HAVE_STATIC=YES
 HAVE_JACK=YES
 CONFIG  += staticlib
-INCLUDEPATH	+= "C:\Program Files\JACK2\include"
+INCLUDEPATH	+= "C:\Program Files\JACK2\include" windows/include
 LIBS            += -L"C:\Program Files\JACK2" -ljack
 RC_FILE		= windows/mainicon.rc
 }
