@@ -431,9 +431,10 @@ main(int argc, char **argv)
 {
 	int c;
 
+#ifndef _WIN32
 	/* must be first, before any threads are created */
 	signal(SIGPIPE, SIG_IGN);
-
+#endif
 	QApplication app(argc, argv);
 
 	/* set consistent double click interval */

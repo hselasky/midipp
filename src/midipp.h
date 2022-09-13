@@ -39,12 +39,6 @@ exit(x); \
 fprintf(stderr,fmt "\n" ,## __VA_ARGS__); \
 exit(x); \
 } while (0)
-
-static inline int
-signal(int x, void *arg)
-{
-	return (0);
-}
 #else
 #include <err.h>
 #endif
