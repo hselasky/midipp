@@ -15,6 +15,9 @@ HAVE_IOS=YES
 android {
 HAVE_ANDROID=YES
 }
+win32 {
+HAVE_WIN32=YES
+}
 
 greaterThan(QT_MAJOR_VERSION, 4) {
 QT += widgets
@@ -67,6 +70,15 @@ icons.files	= MidiPlayerPro.icns
 QMAKE_BUNDLE_DATA += icons
 QMAKE_INFO_PLIST= midipp_osx.plist
 OTHER_FILES += MidiPlayerPro.entitlements
+}
+
+!isEmpty(HAVE_WIN32) {
+HAVE_STATIC=YES
+HAVE_JACK=YES
+CONFIG  += staticlib
+INCLUDEPATH	+= "C:\Program Files\JACK2\include"
+LIBS            += -L"C:\Program Files\JACK2" -ljack
+RC_FILE		= windows/mainicon.rc
 }
 
 isEmpty(LIBUMIDIPATH) {
@@ -211,7 +223,7 @@ INCLUDEPATH	+= $${LIBUMIDIPATH}
 target.path	= $${PREFIX}/bin
 INSTALLS	+= target
 
-!macx:!android:!ios:unix {
+!macx:!android:!ios:!win32:unix {
 icons.path	= $${PREFIX}/share/pixmaps
 icons.files	= midipp.png
 INSTALLS	+= icons
