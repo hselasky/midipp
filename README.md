@@ -24,7 +24,7 @@ MIDI Player Pro was officially released the summer of 2011.
 <A HREF="https://www.youtube.com/playlist?list=PL85pRnIQwc7Q-wwT0DiUS2Gg2PhFnnOi1">Demo videos at Youtube</A>
 
 # Users Guide and Howtos
-<A HREF="http://www.selasky.org/hans_petter/midistudio/midipp_users_guide_2018.pdf">MIDIPP Users Guide 2018 (PDF format)</A>
+<A HREF="https://raw.githubusercontent.com/hselasky/midipp/main/www/midipp_users_guide.pdf">MIDIPP Users Guide</A>
 
 # Dependencies
 <ul>
@@ -34,70 +34,74 @@ MIDI Player Pro was officially released the summer of 2011.
 </ul>
 
 # Screenshots from v2.x.x
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot000.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot000.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot001.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot001.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot002.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot002.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot003.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot003.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot004.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot004.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot005.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot005.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot006.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot006.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot007.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot007.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot008.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot008.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot009.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot009.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot010.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot010.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot011.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot011.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot012.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot012.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot013.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot013.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot014.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot014.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot015.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot015.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot016.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot016.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot017.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot017.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot018.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot018.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot019.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot019.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot020.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot020.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot021.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot021.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot022.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot022.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot023.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot023.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot024.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot024.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot025.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot025.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot026.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot026.png"></IMG>
 
-<IMG SRC="http://www.selasky.org/hans_petter/midistudio/screenshot027.png?"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot027.png"></IMG>
+
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot028.png"></IMG>
+
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot029.png"></IMG>
 
 # Supported platforms
 <ul>
-<li>FreeBSD (<a HREF="http://www.freshports.org/audio/midipp">See Ports</a>)
-<li>Linux (<a HREF="http://software.opensuse.org/download.html?project=home%3Aedogawa&package=midipp">See OpenSuse Software Center</a>)
-<li>MacOSX (<a HREF="https://itunes.apple.com/app/midi-player-pro/id689617853?mt=12">See App Store</a>)
-<li>iOS on iPad (See App Store)
-<li>Android (<a HREF="https://play.google.com/store/apps/details?id=org.selasky.midipp">See Play Store</a>)
-<li>Windows 64-bit using JACK for MIDI ()
+<li>FreeBSD (<a HREF="http://www.freshports.org/audio/midipp">See Ports</a>)</li>
+<li>Linux (<a HREF="http://software.opensuse.org/download.html?project=home%3Aedogawa&package=midipp">See OpenSuse Software Center</a>)</li>
+<li>MacOSX (<a HREF="https://itunes.apple.com/app/midi-player-pro/id689617853?mt=12">See App Store</a>)</li>
+<li>iOS on iPad (See App Store)</li>
+<li>Android (<a HREF="https://play.google.com/store/apps/details?id=org.selasky.midipp">See Play Store</a>)</li>
+<li>Windows (64-bit) <A HREF="http://home.selasky.org:8192/privat/midipp-binary-win64.zip">Binary build here</A></li>
 </ul>
 
 # Privacy policy
