@@ -77,7 +77,7 @@ HAVE_STATIC=YES
 HAVE_JACK=YES
 CONFIG  += staticlib
 INCLUDEPATH	+= "C:\Program Files\JACK2\include" windows/include
-LIBS            += -L"C:\Program Files\JACK2" -ljack
+LIBS            += -L"C:\Program Files\JACK2\lib" -ljack64
 RC_FILE		= windows/mainicon.rc
 }
 
@@ -207,8 +207,10 @@ INCLUDEPATH	+= $${LIBUMIDIPATH}
  isEmpty(HAVE_JACK) {
  SOURCES	+= $${LIBUMIDIPATH}/umidi20_jack_dummy.c
  } else {
+ isEmpty(HAVE_WIN32) {
  LIBS		+= -L${PREFIX}/lib -ljack
  INCLUDEPATH	+= -I${PREFIX}/include
+ }
  SOURCES	+= $${LIBUMIDIPATH}/umidi20_jack.c
  }
  isEmpty(HAVE_COREMIDI) {
