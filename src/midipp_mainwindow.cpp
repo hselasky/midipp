@@ -3383,9 +3383,11 @@ MppMainWindow :: ScreenShot(QApplication &app)
 	MppScreenShot(&diag4, app);
 
 	tab_show_control->handle_mode_change(MPP_SHOW_ST_LYRICS);
-	tab_show_control->handle_show_window();
+	tab_show_control->handle_show_lyrics_window();
+	tab_show_control->handle_show_chords_window();
 	for (x = 0; x != 32; x++)
 		tab_show_control->handle_watchdog();
-	MppScreenShot(tab_show_control->wg_show, app);
+	MppScreenShot(tab_show_control->wg_lyrics_show, app);
+	MppScreenShot(tab_show_control->wg_chords_show, app);
 }
 #endif
