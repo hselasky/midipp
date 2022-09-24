@@ -97,6 +97,7 @@ MIDI Player Pro was officially released the summer of 2011.
 <li>MacOSX (<a HREF="https://itunes.apple.com/app/midi-player-pro/id689617853?mt=12">See App Store</a>)
 <li>iOS on iPad (See App Store)
 <li>Android (<a HREF="https://play.google.com/store/apps/details?id=org.selasky.midipp">See Play Store</a>)
+<li>Windows 64-bit using JACK for MIDI ()
 </ul>
 
 # Privacy policy
