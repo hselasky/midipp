@@ -558,7 +558,7 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig)
 						break;
 				}
 				if (next != pVisual[x].stop)
-					pdot->x_off += (fm_b.width(next->txt[1]) - rmax_x - 2.0 * scale_x) / 2.0;
+					pdot->x_off += (fm_b.boundingRect(next->txt[1]).width() - rmax_x - 2.0 * scale_x) / 2.0;
 
 				dur = ptr->value[0];
 
