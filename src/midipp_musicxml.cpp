@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2017-2018 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2017-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -191,7 +191,7 @@ MppReadMusicXML(const QByteArray &data, uint32_t flags, uint32_t ipart, uint32_t
 							}
 						} else if (tags[3] == "print") {
 							if (si == 4) {
-								if (xml.attributes().value("new-page") == "yes") {
+								if (xml.attributes().value("new-page").toString() == "yes") {
 									if (!output.isEmpty())
 										output += "\nJP\n\n";
 								}

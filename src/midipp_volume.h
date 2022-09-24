@@ -53,7 +53,11 @@ public:
 	int value(void) const;
 	void setValue(int);
 
+#if QT_VERSION >= 0x060000
+	void enterEvent(QEnterEvent *);
+#else
 	void enterEvent(QEvent *);
+#endif
 	void leaveEvent(QEvent *);
 
 	void paintEvent(QPaintEvent *);

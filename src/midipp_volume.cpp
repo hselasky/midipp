@@ -115,7 +115,11 @@ MppVolume :: setValue(int value)
 }
 
 void
+#if QT_VERSION >= 0x060000
+MppVolume :: enterEvent(QEnterEvent *event)
+#else
 MppVolume :: enterEvent(QEvent *event)
+#endif
 {
 	focus = 1;
 	update();
