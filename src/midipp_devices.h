@@ -48,6 +48,9 @@ public:
 	QPushButton *but_ok;
 	QPushButton *but_cancel;
 
+	const char **rec_cdev_str;
+	const char **play_cdev_str;
+
 	const char **rec_alsa_str;
 	const char **play_alsa_str;
 

@@ -190,7 +190,13 @@ INCLUDEPATH	+= $${PREFIX}/include
 SOURCES		+= $${LIBUMIDIPATH}/umidi20.c
 SOURCES		+= $${LIBUMIDIPATH}/umidi20_file.c
 SOURCES		+= $${LIBUMIDIPATH}/umidi20_gen.c
+SOURCES		+= $${LIBUMIDIPATH}/umidi20_pipe.c
 INCLUDEPATH	+= $${LIBUMIDIPATH}
+ isEmpty(HAVE_CDEV) {
+ SOURCES	+= $${LIBUMIDIPATH}/umidi20_cdev_dummy.c
+ } else {
+ SOURCES	+= $${LIBUMIDIPATH}/umidi20_cdev.c
+ }
  isEmpty(HAVE_ALSA) {
  SOURCES	+= $${LIBUMIDIPATH}/umidi20_alsa_dummy.c
  } else {

@@ -58,31 +58,23 @@ MppDevices :: MppDevices(QWidget *parent)
 	gl->addWidget(but_ok, 1,2,1,1);
 	gl->addWidget(but_cancel, 1,3,1,1);
 
-	QDir dir("/dev");
-
-	QStringList filters;
-	filters << "umidi*" << "midi*";
-	dir.setFilter(QDir::Files | QDir::System);
-	dir.setNameFilters(filters);
-	dir.setSorting(QDir::Name);
-	QFileInfoList list = dir.entryInfoList();
-
 	new QListWidgetItem(tr("No recording device"), lw_rec);
-
-	for (n = 0; n != list.size(); n++) {
-		QFileInfo fileInfo = list.at(n);
-		if (fileInfo.fileName() == QString("midistat"))
-			continue;
-		new QListWidgetItem(QString("D:/dev/") + fileInfo.fileName(), lw_rec);
-	}
-
 	new QListWidgetItem(tr("No playback device"), lw_play);
 
-	for (n = 0; n != list.size(); n++) {
-		QFileInfo fileInfo = list.at(n);
-		if (fileInfo.fileName() == QString("midistat"))
-			continue;
-		new QListWidgetItem(QString("D:/dev/") + fileInfo.fileName(), lw_play);
+	rec_cdev_str = umidi20_cdev_alloc_outputs();
+	if (rec_cdev_str != NULL) {
+		for (n = 0; rec_cdev_str[n] != NULL; n++) {
+			if (rec_cdev_str[n][0] != 0)
+				new QListWidgetItem(QString("D:") + QString(rec_cdev_str[n]), lw_rec);
+		}
+	}
+
+	play_cdev_str = umidi20_cdev_alloc_inputs();
+	if (play_cdev_str != NULL) {
+		for (n = 0; play_cdev_str[n] != NULL; n++) {
+			if (play_cdev_str[n][0] != 0)
+				new QListWidgetItem(QString("D:") + QString(play_cdev_str[n]), lw_play);
+		}
 	}
 
 	rec_alsa_str = umidi20_alsa_alloc_outputs();
@@ -179,6 +171,9 @@ MppDevices :: autoSelect()
 
 MppDevices :: ~MppDevices()
 {
+	umidi20_cdev_free_outputs(rec_cdev_str);
+	umidi20_cdev_free_inputs(play_cdev_str);
+
 	umidi20_alsa_free_outputs(rec_alsa_str);
 	umidi20_alsa_free_inputs(play_alsa_str);
 

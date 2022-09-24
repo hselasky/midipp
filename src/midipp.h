@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2021 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -82,7 +82,6 @@ exit(x); \
 #include <QCloseEvent>
 #include <QMenu>
 #include <QMessageBox>
-#include <QDir>
 #include <QGroupBox>
 #include <QSettings>
 #include <QStyle>

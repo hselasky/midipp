@@ -465,6 +465,20 @@ main(int argc, char **argv)
 
 	umidi20_init();
 
+	c = umidi20_cdev_init("midipp");
+
+	if (c != 0 && c != -2 && mpp_pdf_print == 0) {
+		QMessageBox box;
+
+		box.setText(QObject::tr("Could not connect to "
+		    "the CDEV subsystem!"));
+		box.setStandardButtons(QMessageBox::Ok);
+		box.setIcon(QMessageBox::Critical);
+		box.setWindowIcon(QIcon(MppIconFile));
+		box.setWindowTitle(MppVersion);
+		box.exec();
+	}
+
 	c = umidi20_alsa_init("midipp");
 
 	if (c != 0 && c != -2 && mpp_pdf_print == 0) {
