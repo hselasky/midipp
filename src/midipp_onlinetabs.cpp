@@ -228,8 +228,8 @@ MppOnlineTabs :: handle_download_finished(QNetworkReply *reply)
 	} else {
 		QString str(reply->readAll());
 		/* strip all header tags */
-		str = str.replace(QRegExp("<header[^>]*>"), "<!-- ");
-		str = str.replace(QRegExp("</header[^>]*>"), " -->");
+		str = str.replace(QRegularExpression("<header[^>]*>"), "<!-- ");
+		str = str.replace(QRegularExpression("</header[^>]*>"), " -->");
 
 		/* parse HTML */
 		result->setHtml(str);

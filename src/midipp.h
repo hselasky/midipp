@@ -93,7 +93,7 @@ exit(x); \
 #include <QPoint>
 #include <QSplitter>
 #include <QThread>    
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QByteArray>
 #include <QChar>
 #include <QString>

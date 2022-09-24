@@ -1374,7 +1374,7 @@ MppHead :: toLyrics(int no_chords)
 		/* Export Chord Line */
 		if (no_chords == 0 && linebuf[0].size() > 0) {
 			/* remove white space at end of line */
-			out += linebuf[0].replace(QRegExp("\\s*$"), "");
+			out += linebuf[0].replace(QRegularExpression("\\s*$"), "");
 			out += '\n';
 		}
 
@@ -1400,11 +1400,11 @@ MppHead :: toLyrics(int no_chords)
 				}
 				out += '\n';
 				out += '[';
-				out += linebuf[1].replace(QRegExp("\\s*$"), "");
+				out += linebuf[1].replace(QRegularExpression("\\s*$"), "");
 				out += ']';
 			} else {
 				/* remove white space at end of line */
-				out += linebuf[1].replace(QRegExp("\\s*$"), "");
+				out += linebuf[1].replace(QRegularExpression("\\s*$"), "");
 			}
 			out += '\n';
 		}
