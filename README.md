@@ -101,7 +101,7 @@ MIDI Player Pro was officially released the summer of 2011.
 <li>MacOSX (<a HREF="https://itunes.apple.com/app/midi-player-pro/id689617853?mt=12">See App Store</a>)</li>
 <li>iOS on iPad (See App Store)</li>
 <li>Android (<a HREF="https://play.google.com/store/apps/details?id=org.selasky.midipp">See Play Store</a>)</li>
-<li>Windows (64-bit) <A HREF="http://home.selasky.org:8192/privat/midipp-binary-win64.zip">Binary build here</A></li>
+<li>Windows (64-bit) <A HREF="http://www.selasky.org/downloads/midipp-binary-win64.zip">Binary build here</A></li>
 </ul>
 
 # Privacy policy
