@@ -1,39 +1,38 @@
 Name:           midipp
-Version:        2.1.4
+Version:        2.1.5
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
 License:        BSD-2-Clause
 URL:            https://github.com/hselasky/midipp
-Source0:        https://codeload.github.com/hselasky/midipp/tar.gz/v2.1.4?dummy=/hselasky-midipp-v2.1.4_GH0.tar.gz
-Source1:        https://codeload.github.com/hselasky/libumidi/tar.gz/v2.1.5?dummy=/hselasky-libumidi-v2.1.5_GH0.tar.gz
+Source0:        https://codeload.github.com/hselasky/midipp/tar.gz/v2.1.5?dummy=/hselasky-midipp-v2.1.5_GH0.tar.gz
+Source1:        https://codeload.github.com/hselasky/libumidi/tar.gz/v2.1.6?dummy=/hselasky-libumidi-v2.1.6_GH0.tar.gz
 
-BuildRequires:  make gcc libjack-devel phonon-devel qt-devel qt-settings qtwebkit-devel
+BuildRequires:  make gcc libasound2-dev libjack-devel phonon-devel qt-devel qt-settings qtwebkit-devel
 Requires:       qt
 
 %description
 MIDI Player Pro allows you to play any kind of MIDI music in seconds
 with your fingertips. List of supported features:
 
-- Raw MIDI.
-- ALSA MIDI.
-- JACK MIDI.
-- MPE support.
-- Import from lyrics sites (chorded lyrics)
-- Import from GuitarPro v3 and v4 format.
-- Import from MusicXML format.
-- Loading and saving from and to standard v1.0 MIDI files.
-- Realtime MIDI processing.
-- Simple sequence looping.
-- 30000 BPM MIDI recording and playback.
-- Undo/Redo support.
-- Printing music like PDF.
+- Raw MIDI, JACK MIDI, CoreMIDI and ALSA.
+- indirect import from various chord and lyrics sites
+- MIDI record looping
+- simultaneous MIDI recording and playback
+- 16 MIDI channels
+- up to 30'000 BPM MIDI recording and playback
+- loading from and saving to standard MIDI files
+- multiple play modes for chorded and tabbed music
+- MIDI song and events
+- simple karaoke mode
+- import from uncompressed MusicXML format
+- quarter-, octo- and hexa- tones
 
 %prep
 %setup -q -a 1
 
 %build
-qmake PREFIX=/usr DESTDIR=$RPM_BUILD_ROOT HAVE_STATIC=YES HAVE_ALSA=YES HAVE_JACK=YES LIBUMIDIPATH=libumidi-2.1.3 midipp.pro
+qmake PREFIX=/usr DESTDIR=$RPM_BUILD_ROOT HAVE_STATIC=YES HAVE_CDEV=YES HAVE_ALSA=YES HAVE_JACK=YES LIBUMIDIPATH=libumidi-2.1.6 midipp.pro
 make %{?_smp_mflags}
 
 %install
@@ -51,7 +50,9 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Fri Jun 4 2022 HPS hps@selasky.org 2.1.5-1
+* Sun Sep 25 2022 HPS hps@selasky.org 2.1.6-1
+* Sun Sep 25 2022 HPS hps@selasky.org 2.1.5-1
+- Added support for online tabs.
 * Fri Jun 4 2022 HPS hps@selasky.org 2.1.4-1
 - Added support for more lyrics source formats
 * Fri Apr 1 2022 HPS hps@selasky.org 2.1.3-1
