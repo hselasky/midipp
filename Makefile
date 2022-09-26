@@ -30,6 +30,9 @@ DESTDIR?=
 PREFIX?=/usr/local
 HAVE_SCREENSHOT?=
 HAVE_STATIC?=
+HAVE_CDEV?=
+HAVE_ALSA?=
+HAVE_JACK?=
 
 all: Makefile.unix
 	make -f Makefile.unix -j5 all
@@ -37,6 +40,7 @@ all: Makefile.unix
 Makefile.unix: midipp.pro
 	qmake HAVE_SCREENSHOT=${HAVE_SCREENSHOT} PREFIX=${PREFIX} \
 		DESTDIR=${DESTDIR} HAVE_STATIC=${HAVE_STATIC} \
+		HAVE_CDEV=${HAVE_CDEV} HAVE_ALSA=${HAVE_ALSA} HAVE_JACK=${HAVE_JACK} \
 		-o Makefile.unix midipp.pro
 help:
 	@echo "Targets are: all, install, clean, help"
