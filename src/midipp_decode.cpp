@@ -175,16 +175,14 @@ MppScoreVariantInit(void)
 	}
 
 	/* Key adjustment table for K5.1 effect */
+	Mpp.KeyAdjust[0] = 0;
+	Mpp.KeyAdjust[1] = round((MPP_MAX_BANDS * log(1.0 + 1.0 / 4.0) / log(2.0) / 4.0) - (MPP_BAND_STEP_12 * 1));
+	Mpp.KeyAdjust[2] = round((MPP_MAX_BANDS * log(1.0 + 1.0 / 4.0) / log(2.0) / 2.0) - (MPP_BAND_STEP_12 * 2));
+	Mpp.KeyAdjust[3] = 0;
 	Mpp.KeyAdjust[4] = round((MPP_MAX_BANDS * log(1.0 + 1.0 / 4.0) / log(2.0)) - (MPP_BAND_STEP_12 * 4));
 	Mpp.KeyAdjust[5] = round((MPP_MAX_BANDS * log(1.0 + 1.0 / 3.0) / log(2.0)) - (MPP_BAND_STEP_12 * 5));
-	Mpp.KeyAdjust[7] = round((MPP_MAX_BANDS * log(1.0 + 1.0 / 2.0) / log(2.0)) - (MPP_BAND_STEP_12 * 7));
-
-	Mpp.KeyAdjust[1] = Mpp.KeyAdjust[5] - Mpp.KeyAdjust[4];
-	Mpp.KeyAdjust[2] = Mpp.KeyAdjust[7] - Mpp.KeyAdjust[5];
-	Mpp.KeyAdjust[3] = Mpp.KeyAdjust[7] - Mpp.KeyAdjust[4];
-
-	Mpp.KeyAdjust[6] = Mpp.KeyAdjust[7] - Mpp.KeyAdjust[1];
-
+	Mpp.KeyAdjust[6] = 0;
+	Mpp.KeyAdjust[7] = -Mpp.KeyAdjust[5];
 	Mpp.KeyAdjust[8] = -Mpp.KeyAdjust[4];
 	Mpp.KeyAdjust[9] = -Mpp.KeyAdjust[3];
 	Mpp.KeyAdjust[10] = -Mpp.KeyAdjust[2];
