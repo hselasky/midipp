@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -55,7 +55,7 @@ MppMuteMap :: MppMuteMap(QWidget *parent, MppMainWindow *_mw, int _devno)
 	but_reset_all = new QPushButton(tr("Reset"));
 	but_close_all = new QPushButton(tr("Close"));
 
-	gl->setRowStretch(2, 1);
+	gl->setRowStretch(4, 1);
 	gl->setColumnStretch(4, 1);
 
 	gl->addWidget(but_close_all, 3, 2, 1, 2);
