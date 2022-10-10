@@ -28,16 +28,17 @@
 MppCheckBox :: MppCheckBox(int _id)
   : QWidget()
 {
-	setFixedSize(24,24);
+	setFixedSize(sizeHint());
 
 	state = Qt::Unchecked;
 	other = Qt::Unchecked;
 	id = _id;
 }
 
-MppCheckBox :: ~MppCheckBox()
+QSize
+MppCheckBox :: sizeHint() const
 {
-
+	return (QSize(24,24));
 }
 
 void

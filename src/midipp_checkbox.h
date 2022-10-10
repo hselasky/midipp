@@ -39,7 +39,6 @@ private:
 
 public:
 	MppCheckBox(int = 0);
-	~MppCheckBox();
 
 	void setCheckState(Qt::CheckState);
 	Qt::CheckState checkState(void);
@@ -49,6 +48,7 @@ public:
 
 	void paintEvent(QPaintEvent *);
 	void mousePressEvent(QMouseEvent *);
+	QSize sizeHint() const;
 
 signals:
 	void stateChanged(int, int);
