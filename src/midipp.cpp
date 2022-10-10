@@ -468,57 +468,29 @@ main(int argc, char **argv)
 	c = umidi20_cdev_init("midipp");
 
 	if (c != 0 && c != -2 && mpp_pdf_print == 0) {
-		QMessageBox box;
-
-		box.setText(QObject::tr("Could not connect to "
+		new MppMessageBox(QObject::tr("Could not connect to "
 		    "the CDEV subsystem!"));
-		box.setStandardButtons(QMessageBox::Ok);
-		box.setIcon(QMessageBox::Critical);
-		box.setWindowIcon(QIcon(MppIconFile));
-		box.setWindowTitle(MppVersion);
-		box.exec();
 	}
 
 	c = umidi20_alsa_init("midipp");
 
 	if (c != 0 && c != -2 && mpp_pdf_print == 0) {
-		QMessageBox box;
-
-		box.setText(QObject::tr("Could not connect to "
+		new MppMessageBox(QObject::tr("Could not connect to "
 		    "the ALSA subsystem!"));
-		box.setStandardButtons(QMessageBox::Ok);
-		box.setIcon(QMessageBox::Critical);
-		box.setWindowIcon(QIcon(MppIconFile));
-		box.setWindowTitle(MppVersion);
-		box.exec();
 	}
 
 	c = umidi20_jack_init("midipp");
 
 	if (c != 0 && c != -2 && mpp_pdf_print == 0) {
-		QMessageBox box;
-
-		box.setText(QObject::tr("Could not connect to "
+		new MppMessageBox(QObject::tr("Could not connect to "
 		    "the JACK subsystem!"));
-		box.setStandardButtons(QMessageBox::Ok);
-		box.setIcon(QMessageBox::Critical);
-		box.setWindowIcon(QIcon(MppIconFile));
-		box.setWindowTitle(MppVersion);
-		box.exec();
 	}
 
 	c = umidi20_coremidi_init("midipp");
 
 	if (c != 0 && c != -2 && mpp_pdf_print == 0) {
-		QMessageBox box;
-
-		box.setText(QObject::tr("Could not connect to "
+		new MppMessageBox(QObject::tr("Could not connect to "
 		    "the COREMIDI subsystem!"));
-		box.setStandardButtons(QMessageBox::Ok);
-		box.setIcon(QMessageBox::Critical);
-		box.setWindowIcon(QIcon(MppIconFile));
-		box.setWindowTitle(MppVersion);
-		box.exec();
 	}
 
 #ifdef __ANDROID__
@@ -528,15 +500,8 @@ main(int argc, char **argv)
 	    interface->nativeResourceForIntegration("QtActivity"));
 
 	if (c != 0 && c != -2 && mpp_pdf_print == 0) {
-		QMessageBox box;
-
-		box.setText(QObject::tr("Could not connect to "
+		new MppMessageBox(QObject::tr("Could not connect to "
 		    "the Android MIDI subsystem!"));
-		box.setStandardButtons(QMessageBox::Ok);
-		box.setIcon(QMessageBox::Critical);
-		box.setWindowIcon(QIcon(MppIconFile));
-		box.setWindowTitle(MppVersion);
-		box.exec();
 	}
 #endif
 
@@ -556,11 +521,8 @@ main(int argc, char **argv)
 		exit(0);
 	} else {
 		/* show configuration window by default */
-		if (strcmp(pmain->deviceName[0], "X:") == 0) {
-			if (pmain->handle_config_dev(0, 1) == QDialog::Accepted) {
-				pmain->handle_config_apply();
-			}
-		}
+		if (strcmp(pmain->deviceName[0], "X:") == 0)
+			pmain->tim_config_init.start(0);
 		pmain->show();
 #ifdef HAVE_SCREENSHOT
 		pmain->ScreenShot(app);

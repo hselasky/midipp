@@ -421,4 +421,31 @@ extern void MppTrans(int *ptr, size_t num, int ntrans);
 extern void MppScreenShot(QWidget *, QApplication &);
 #endif
 
+class MppMessageBox : QTimer
+{
+	Q_OBJECT
+
+	QString _text;
+public:
+	MppMessageBox(const QString &text) : _text(text)
+	{
+		connect(this, SIGNAL(timeout()), this, SLOT(handle_timer()));
+		setSingleShot(true);
+		start();
+	}
+public slots:
+	void handle_timer()
+	{
+		QMessageBox box;
+
+		box.setText(_text);
+		box.setStandardButtons(QMessageBox::Ok);
+		box.setIcon(QMessageBox::Critical);
+		box.setWindowIcon(QIcon(MppIconFile));
+		box.setWindowTitle(MppVersion);
+		box.exec();
+		deleteLater();
+	}
+};
+
 #endif	/* _MIDIPP_H_ */

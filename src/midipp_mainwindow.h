@@ -100,6 +100,10 @@ public:
 	QFont printFont;
 	QFont showFont;
 
+	QTimer tim_config_init;
+	QTimer tim_config_apply;
+	QTimer watchdog;
+
 	uint8_t auto_zero_start[0];
 
 	struct MppInstr instr[16];
@@ -175,8 +179,6 @@ public:
 	/* tab <Import> */
 
 	MppImportTab *tab_import;
-
-	QTimer *watchdog;
 
 	/* tab <File> */
 
@@ -257,7 +259,6 @@ public:
 
 	uint32_t dirty_config_mask;
 
-	QTimer *tim_config_apply;
 	QPushButton *but_config_view_fontsel;
 	QPushButton *but_config_edit_fontsel;
 	QPushButton *but_config_print_fontsel;
@@ -330,6 +331,7 @@ public slots:
 	void handle_rewind();
 	void handle_midi_trigger();
 	void handle_config_changed();
+	void handle_config_init();
 	void handle_config_apply();
   	void handle_config_local_keys();
 	void handle_config_reload();

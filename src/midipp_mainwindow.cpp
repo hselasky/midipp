@@ -158,8 +158,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* Watchdog */
 
-	watchdog = new QTimer(this);
-	connect(watchdog, SIGNAL(timeout()), this, SLOT(handle_watchdog()));
+	connect(&watchdog, SIGNAL(timeout()), this, SLOT(handle_watchdog()));
 
 	/* Buttons */
 
@@ -488,9 +487,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	mpp_settings = new MppSettings(this);
 
-	tim_config_apply = new QTimer(this);
-        tim_config_apply->setSingleShot(1);
-        connect(tim_config_apply, SIGNAL(timeout()), this, SLOT(handle_config_apply()));
+	tim_config_init.setSingleShot(true);
+	connect(&tim_config_init, SIGNAL(timeout()), this, SLOT(handle_config_init()));
+
+	tim_config_apply.setSingleShot(true);
+	connect(&tim_config_apply, SIGNAL(timeout()), this, SLOT(handle_config_apply()));
 
 	but_config_view_fontsel = new QPushButton(tr("Change View Font"));
 	but_config_edit_fontsel = new QPushButton(tr("Change Editor Font"));
@@ -610,15 +611,16 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	handle_tab_changed(1);
 
-	watchdog->start(250);
+	watchdog.start(250);
 
 	mpp_settings->handle_load(0);
 }
 
 MppMainWindow :: ~MppMainWindow()
 {
-	watchdog->stop();
-	tim_config_apply->stop();
+	watchdog.stop();
+	tim_config_init.stop();
+	tim_config_apply.stop();
 
 	MidiUnInit();
 }
@@ -1405,6 +1407,13 @@ MppMainWindow :: handle_config_apply()
 	atomic_unlock();
 	
 	handle_config_reload();
+}
+
+void
+MppMainWindow :: handle_config_init()
+{
+	if (handle_config_dev(0, 1) == QDialog::Accepted)
+		handle_config_apply();
 }
 
 void
@@ -3291,7 +3300,7 @@ MppMainWindow :: send_song_select_locked(uint8_t which)
 void
 MppMainWindow :: handle_config_changed()
 {
-	tim_config_apply->start(500);
+	tim_config_apply.start(500);
 }
 
 void
