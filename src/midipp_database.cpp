@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -289,12 +289,14 @@ MppDataBase :: MppDataBase(MppMainWindow *mw)
 
 	connect(reset, SIGNAL(released()), this, SLOT(handle_reset()));
 
-	gl->addWidget(new QLabel(tr("Location:")), 0, 0, 1, 1);
+	gl->addWidget(new QLabel(tr("Location:")), 0, 0, 1, 1,
+	    Qt::AlignHCenter | Qt::AlignLeft);
 	gl->addWidget(location, 0, 1, 1, 3);
 	gl->addWidget(clear_url, 0, 4, 1, 1);
 	gl->addWidget(download, 0, 5, 1, 1);
 
-	gl->addWidget(new QLabel(tr("Search:")), 1, 0, 1, 1);
+	gl->addWidget(new QLabel(tr("Search:")), 1, 0, 1, 1,
+	    Qt::AlignHCenter | Qt::AlignLeft);
 	gl->addWidget(search, 1, 1, 1, 4);
 	gl->addWidget(clear_search, 1, 5, 1, 1);
 

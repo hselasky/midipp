@@ -316,7 +316,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	picChord[0] = new QPicture();
 	paint.begin(picChord[0]);
 	paint.setRenderHints(QPainter::Antialiasing, 1);
- 	paint.setPen(QPen(Mpp.ColorBlack, 1));
+	paint.setPen(QPen(Mpp.ColorBlack, 0));
 	paint.setBrush(QColor(Mpp.ColorBlack));
 	paint.drawEllipse(QRect(0,0,MPP_VISUAL_C_MAX,MPP_VISUAL_C_MAX));
 	paint.end();
@@ -324,7 +324,7 @@ MppScoreMain :: MppScoreMain(MppMainWindow *parent, int _unit)
 	picChord[1] = new QPicture();
 	paint.begin(picChord[1]);
 	paint.setRenderHints(QPainter::Antialiasing, 1);
- 	paint.setPen(QPen(Mpp.ColorBlack, 1));
+	paint.setPen(QPen(Mpp.ColorBlack, 0));
 	paint.setBrush(QColor(Mpp.ColorBlack));
 	paint.drawEllipse(QRect(MPP_VISUAL_C_MAX,0,MPP_VISUAL_C_MAX,MPP_VISUAL_C_MAX));
 	paint.end();

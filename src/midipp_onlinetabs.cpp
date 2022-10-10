@@ -60,7 +60,8 @@ MppOnlineTabs :: MppOnlineTabs(MppMainWindow *mw)
 
 	connect(reset, SIGNAL(released()), this, SLOT(handle_reset()));
 
-	gl->addWidget(new QLabel(tr("Location:")), 0, 0, 1, 1);
+	gl->addWidget(new QLabel(tr("Location:")), 0, 0, 1, 1,
+	    Qt::AlignHCenter | Qt::AlignLeft);
 	gl->addWidget(location, 0, 1, 1, 3);
 	gl->addWidget(download, 0, 5, 1, 1);
 
@@ -133,16 +134,6 @@ MppOnlineTabs :: handle_follow_ref()
 void
 MppOnlineTabs :: handle_return_pressed()
 {
-	QString str = location->text().trimmed();
-
-	if (str.isEmpty())
-		return;
-
-	if (!str.contains("://")) {
-		str = QString(MPP_NORTABS_URL "/search/?q=") + str;
-		location->setText(str);
-	}
-
 	download->animateClick();
 }
 
@@ -193,9 +184,19 @@ MppOnlineTabs :: handle_reset()
 void
 MppOnlineTabs :: handle_download()
 {
+	QString str = location->text().trimmed();
+
+	if (str.isEmpty())
+		return;
+
+	if (!str.contains("://")) {
+		str = QString(MPP_NORTABS_URL "/search/?q=") + str;
+		location->setText(str);
+	}
+
 	download->setEnabled(0);
 
-	QNetworkReply *reply = net.get(QNetworkRequest(QUrl(location->text())));
+	QNetworkReply *reply = net.get(QNetworkRequest(QUrl(str)));
 
 	connect(reply, SIGNAL(downloadProgress(qint64,qint64)),
 	    this, SLOT(handle_download_progress(qint64,qint64)));
