@@ -430,6 +430,39 @@ static const struct option midipp_opts[] = {
 const QString MppVersion("MIDI Player Pro v2.1.5");
 const QString MppIconFile(":/midipp.png");
 
+#ifdef HAVE_DEBUG_CONSOLE
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+
+static void
+debug_console(uint32_t dest, uint16_t port)
+{
+	int s = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (s < 0)
+		return;
+
+	struct sockaddr_in sa = {
+		.sin_family = AF_INET,
+		.sin_len = sizeof(sa),
+		.sin_port = htons(port),
+		.sin_addr.s_addr = htonl(dest),
+	};
+	if (::connect(s, (struct sockaddr *)&sa, sizeof(sa)) < 0)
+		return;
+
+	int flag = 1;
+	::setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
+	::setbuf(stderr, NULL);
+	::setbuf(stdout, NULL);
+	::dup2(s, 1);
+	::dup2(s, 2);
+	::close(s);
+}
+#endif
+
 Q_DECL_EXPORT int
 main(int argc, char **argv)
 {
