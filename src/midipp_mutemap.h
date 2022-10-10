@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2010-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,11 +30,9 @@
 
 class MppMuteMap : public QDialog
 {
-	Q_OBJECT;
-
+	Q_OBJECT
 public:
-	MppMuteMap(QWidget *parent, MppMainWindow *, int);
-	~MppMuteMap() {};
+	MppMuteMap(QWidget *, MppMainWindow *, int);
 
 	MppMainWindow *mw;
 	int devno;
@@ -42,7 +40,6 @@ public:
 	QGridLayout *gl;
 
 	MppGroupBox *gb_mute;
-	MppGroupBox *gb_other;
 
 	MppCheckBox *cbx_mute[16];
 	MppButtonMap *cbx_mute_program;
