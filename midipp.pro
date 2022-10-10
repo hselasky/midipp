@@ -2,7 +2,9 @@
 # QMAKE project file for MIDI Player PRO
 #
 TEMPLATE	= app
+!ios {
 CONFIG		+= qt release
+}
 QT		+= core gui network
 
 # Automatic platform detection
@@ -54,22 +56,29 @@ ANDROID_PACKAGE_SOURCE_DIR= $${PWD}/android
 HAVE_STATIC=YES
 HAVE_COREMIDI=YES
 HAVE_NO_SHOW=YES
-icons.path	= $${PREFIX}
-icons.files	= midipp_ios.png midipp_ios_retina.png midipp_76x76.png midipp_152x152.png
-QMAKE_BUNDLE_DATA += icons
-QMAKE_INFO_PLIST= midipp_ios.plist
-QMAKE_APPLE_DEVICE_ARCHS= armv7 arm64
-QMAKE_IOS_DEPLOYMENT_TARGET= 9.2
+SOURCES += ios/activity.mm
+HEADERS += ios/activity.h
+INCLUDEPATH += ios
+QMAKE_ASSET_CATALOGS += ios/Assets.xcassets
+QMAKE_INFO_PLIST= ios/midipp.plist
+QMAKE_APPLE_DEVICE_ARCHS= arm64
+QMAKE_IOS_DEPLOYMENT_TARGET= 12.0
+Q_ENABLE_BITCODE.name = ENABLE_BITCODE
+Q_ENABLE_BITCODE.value = NO
+QMAKE_MAC_XCODE_SETTINGS += Q_ENABLE_BITCODE
 }
 
 !isEmpty(HAVE_MACOSX) {
 HAVE_STATIC=YES
 HAVE_COREMIDI=YES
+SOURCES += mac/activity.mm
+HEADERS += mac/activity.h
+INCLUDEPATH += mac
 icons.path	= $${DESTDIR}/Contents/Resources
-icons.files	= MidiPlayerPro.icns
+icons.files	= mac/MidiPlayerPro.icns
 QMAKE_BUNDLE_DATA += icons
-QMAKE_INFO_PLIST= midipp_osx.plist
-OTHER_FILES += MidiPlayerPro.entitlements
+QMAKE_INFO_PLIST= mac/midipp.plist
+OTHER_FILES += mac/MidiPlayerPro.entitlements
 }
 
 !isEmpty(HAVE_WIN32) {

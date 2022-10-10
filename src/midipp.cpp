@@ -40,6 +40,10 @@
 #include <qpa/qplatformnativeinterface.h>
 #endif
 
+#if defined(Q_OS_MACX) || defined(Q_OS_IOS)
+#include <activity.h>
+#endif
+
 Mpp :: Mpp() :
   ColorBlack(0x00,0x00,0x00,0xff),
   ColorWhite(0xff,0xff,0xff,0xff),
@@ -528,5 +532,9 @@ main(int argc, char **argv)
 		pmain->ScreenShot(app);
 #endif
 	}
+
+#if defined(Q_OS_MACX) || defined(Q_OS_IOS)
+	MidippBeginActivity();
+#endif
 	return (app.exec());
 }
