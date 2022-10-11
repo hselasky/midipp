@@ -336,8 +336,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* <File> Tab */
 
-	but_quit = new QPushButton(tr("Quit"));
-
 	but_midi_file_new = new QPushButton(tr("New"));
 	but_midi_file_open_single = new QPushButton(tr("Open as\nsingle device"));
 	but_midi_file_open_multi = new QPushButton(tr("Open as\nmulti device"));
@@ -386,8 +384,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_file_gl->setRowStretch(3, 1);
 	tab_file_gl->setColumnStretch(4, 1);
-
-	tab_file_gl->addWidget(but_quit, 4, 0, 1, 4);
 
 	/* <Play> Tab */
 
@@ -586,7 +582,6 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		connect(but_jump[n], SIGNAL(released(int)), this, SLOT(handle_jump(int)));
 
 	connect(but_compile, SIGNAL(released()), this, SLOT(handle_compile()));
-	connect(but_quit, SIGNAL(released()), this, SLOT(handle_quit()));
 
 	connect(but_midi_file_new, SIGNAL(released()), this, SLOT(handle_midi_file_new()));
 	connect(but_midi_file_open_single, SIGNAL(released()), this, SLOT(handle_midi_file_new_single_open()));
@@ -627,12 +622,6 @@ MppMainWindow :: ~MppMainWindow()
 
 void
 MppMainWindow :: closeEvent(QCloseEvent *event)
-{
-	QCoreApplication::exit(0);
-}
-
-void
-MppMainWindow :: handle_quit()
 {
 	QCoreApplication::exit(0);
 }

@@ -184,8 +184,6 @@ public:
 
 	MppGridLayout *tab_file_gl;
 
-	QPushButton *but_quit;
-
 	MppGroupBox *gb_midi_file;
 	QPushButton *but_midi_file_new;
 	QPushButton *but_midi_file_open_single;
@@ -309,7 +307,6 @@ public:
 	uint8_t auto_zero_end[0];
 
 public slots:
-	void handle_quit();
 	void handle_jump(int index);
 	void handle_compile(int force = 0);
 	void handle_score_record(int);
