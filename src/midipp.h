@@ -448,4 +448,16 @@ public slots:
 	}
 };
 
+class MppDialog : public QDialog
+{
+public:
+	MppDialog(QWidget *_parent, const QString &title) : QDialog(_parent) {
+		setWindowTitle(title);
+		setWindowIcon(QIcon(MppIconFile));
+#if defined(Q_OS_IOS)
+		setFixedSize(_parent->size());
+#endif
+	};
+};
+
 #endif	/* _MIDIPP_H_ */

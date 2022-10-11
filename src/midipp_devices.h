@@ -28,7 +28,7 @@
 
 #include "midipp.h"
 
-class MppDevices : public QDialog
+class MppDevices : public MppDialog
 {
 	Q_OBJECT;
 public:

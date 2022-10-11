@@ -27,8 +27,8 @@
 #include "midipp_checkbox.h"
 #include "midipp_groupbox.h"
 
-MppMidi :: MppMidi(QWidget *_parent, uint32_t _mask, uint32_t _flags, uint32_t _thres)
-    : QDialog(_parent)
+MppMidi :: MppMidi(QWidget *_parent, uint32_t _mask, uint32_t _flags, uint32_t _thres) :
+    MppDialog(_parent, QObject::tr("MIDI import"))
 {
 	uint32_t x;
 	uint32_t t;
@@ -39,9 +39,6 @@ MppMidi :: MppMidi(QWidget *_parent, uint32_t _mask, uint32_t _flags, uint32_t _
 	thres = _thres;
 
 	gl = new QGridLayout(this);
-
-	setWindowTitle(tr("MIDI import"));
-	setWindowIcon(QIcon(MppIconFile));
 
 	gb_import = new MppGroupBox(tr("Select MIDI channel(s) to import"));
 

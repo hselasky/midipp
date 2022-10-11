@@ -33,7 +33,7 @@
 #define	GPRO_MAX_DURATION 255
 #define	GPRO_MAX_TRACKS 16
 
-class MppGPro : public QDialog
+class MppGPro : public MppDialog
 {
 	Q_OBJECT
 

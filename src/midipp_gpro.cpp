@@ -1481,8 +1481,8 @@ gpro_cleanup(struct gpro_file *pgf)
 	}
 }
 
-MppGPro :: MppGPro(QWidget *_parent, const uint8_t *ptr, uint32_t len)
-	: QDialog(_parent)
+MppGPro :: MppGPro(QWidget *_parent, const uint8_t *ptr, uint32_t len) :
+    MppDialog(_parent, QObject::tr("GuitarPro v3 and v4 import"))
 {
 	struct gpro_file gpf;
 	char line_buf[64];
@@ -1496,9 +1496,6 @@ MppGPro :: MppGPro(QWidget *_parent, const uint8_t *ptr, uint32_t len)
 	gpf.rem = len;
 
 	gl = new QGridLayout(this);
-
-	setWindowTitle(tr("GuitarPro v3 and v4 import"));
-	setWindowIcon(QIcon(MppIconFile));
 
 	lbl_import[0] = new QLabel(tr("Select tracks\nto import"));
 	lbl_import[0]->setAlignment(Qt::AlignCenter);

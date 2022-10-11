@@ -36,7 +36,8 @@
 #include "midipp_groupbox.h"
 #include "midipp_volume.h"
 
-MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
+MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi) :
+	MppDialog(_parent->mainWindow, QObject::tr("View %1 mode").arg(QChar('A' + _vi)))
 {
 	sm = _parent;
 	view_index = _vi;
@@ -47,9 +48,6 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi)
 	gb_oconfig = new MppGroupBox(tr("MIDI output config"));
 	gb_contrast = new MppGroupBox(QString());
 	gb_delay = new MppGroupBox(QString());
-
-	setWindowTitle(tr("View %1 mode").arg(QChar('A' + _vi)));
-	setWindowIcon(QIcon(MppIconFile));
 
 	cbx_norm = new MppCheckBox();
 	cbx_norm->setChecked(1);

@@ -28,7 +28,7 @@
 
 #include "midipp.h"
 
-class MppReplace : public QDialog
+class MppReplace : public MppDialog
 {
 	Q_OBJECT;
 public:

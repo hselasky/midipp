@@ -1952,7 +1952,7 @@ MppScoreMain :: handleScorePrint(void)
 
 	dlg = new QPrintDialog(&printer, mainWindow);
 
-	if(dlg->exec() == QDialog::Accepted) {
+	if(dlg->exec() == MppDialog::Accepted) {
 
 		orig = QPoint(printer.logicalDpiX() * 0.5,
 			      printer.logicalDpiY() * 0.5);
@@ -2304,7 +2304,7 @@ MppScoreMain :: handleScoreFileReplaceAll(void)
 	MppReplace dlg(mainWindow, this, cursor.selectedText(),
 	    cursor.selectedText());
 
-	if (dlg.exec() == QDialog::Accepted) {
+	if (dlg.exec() == MppDialog::Accepted) {
 
 		editWidget->moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
 

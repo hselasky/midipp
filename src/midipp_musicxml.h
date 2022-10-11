@@ -33,7 +33,7 @@
 #define	MXML_FLAG_KEEP_CHORDS		(1U << 2)
 #define	MXML_FLAG_CONV_CHORDS		(1U << 3)
 
-class MppMusicXmlImport : public QDialog
+class MppMusicXmlImport : public MppDialog
 {
 	Q_OBJECT
 

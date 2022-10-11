@@ -588,7 +588,7 @@ error:
 }
 
 MppMusicXmlImport :: MppMusicXmlImport(QWidget *_parent, const QByteArray &data) :
-    QDialog(_parent)
+    MppDialog(_parent, QObject::tr("MusicXML import"))
 {
 	int nparts = MppReadMusicXMLParts(data);
 
@@ -598,9 +598,6 @@ MppMusicXmlImport :: MppMusicXmlImport(QWidget *_parent, const QByteArray &data)
 	QLabel *lbl;
 	
 	gl = new QGridLayout(this);
-
-	setWindowTitle(tr("MusicXML import"));
-	setWindowIcon(QIcon(MppIconFile));
 
 	lbl = new QLabel(tr("Keep melody scores"));
 	gl->addWidget(lbl, 0,0,1,1, Qt::AlignRight|Qt::AlignVCenter);

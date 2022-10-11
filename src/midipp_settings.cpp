@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2012-2020 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2012-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -619,7 +619,7 @@ MppSettings :: handle_load(int id)
 }
 
 MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
-  : QDialog(_parent->mw)
+  : MppDialog(_parent->mw, QObject::tr("Preset save and load selection"))
 {
 	ms = _parent;
 
@@ -640,9 +640,6 @@ MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
 
 	connect(but_ok, SIGNAL(released()), this, SLOT(accept()));
 	connect(but_reset, SIGNAL(released()), this, SLOT(handle_reset()));
-
-	setWindowTitle(tr("Preset save and load selection"));
-	setWindowIcon(QIcon(MppIconFile));
 
 	gl->addWidget(new QLabel(tr("Save instrument settings")), 0, 0, 1, 1);
 	gl->addWidget(new QLabel(tr("Save view mode settings")), 1, 0, 1, 1);

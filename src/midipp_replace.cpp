@@ -27,16 +27,13 @@
 #include "midipp_mainwindow.h"
 #include "midipp_replace.h"
 
-MppReplace :: MppReplace(MppMainWindow *_mw, MppScoreMain *_sm,
-  QString _match, QString _replace) : QDialog(_mw)
+MppReplace :: MppReplace(MppMainWindow *_mw, MppScoreMain *_sm, QString _match,
+    QString _replace) : MppDialog(_mw, QObject::tr("Replace text dialog"))
 {
 	gl = new QGridLayout(this);
 
 	mw = _mw;
 	sm = _sm;
-
-	setWindowTitle(tr("Replace text dialog"));
-	setWindowIcon(QIcon(MppIconFile));
 
 	lbl_replace = new QLabel(tr("Replace: "));
 	lbl_with = new QLabel(tr("With: "));
@@ -77,9 +74,9 @@ MppReplace :: accept(void)
 	replace = led_with->text();
 
 	if (match.isEmpty())
-		QDialog :: reject();
+		MppDialog :: reject();
 	else
-		QDialog :: accept();
+		MppDialog :: accept();
 }
 
 void

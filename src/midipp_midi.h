@@ -36,7 +36,7 @@
 #define	MIDI_FLAG_MULTI_CHAN 0x08
 #define	MIDI_FLAG_ERASE_DEST 0x10
 
-class MppMidi : public QDialog
+class MppMidi : public MppDialog
 {
 	Q_OBJECT
 

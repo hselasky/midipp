@@ -1411,7 +1411,7 @@ MppMainWindow :: handle_config_apply()
 void
 MppMainWindow :: handle_config_init()
 {
-	if (handle_config_dev(0, 1) == QDialog::Accepted)
+	if (handle_config_dev(0, 1) == MppDialog::Accepted)
 		handle_config_apply();
 }
 
@@ -2932,14 +2932,14 @@ MppMainWindow :: handle_config_dev(int n, int automagic)
 		retval = diag.exec();
 		break;
 	case 1:
-		retval = QDialog::Accepted;
+		retval = MppDialog::Accepted;
 		break;
 	default:
-		retval = QDialog::Rejected;
+		retval = MppDialog::Rejected;
 		break;
 	}
 
-	if (retval == QDialog::Accepted) {
+	if (retval == MppDialog::Accepted) {
 		MPP_BLOCKED(led_config_dev[n], setText(diag.result_dev));
 		handle_config_apply();
 	}

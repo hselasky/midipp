@@ -29,7 +29,7 @@
 #include "midipp_button.h"
 
 MppDevSelDiag :: MppDevSelDiag(QWidget *_parent, int val, int have_any) :
-	QDialog(_parent), QGridLayout(this)
+	MppDialog(_parent, QObject::tr("Select device number")), QGridLayout(this)
 {
 	MppButton *pmb;
 	int x;
@@ -37,12 +37,9 @@ MppDevSelDiag :: MppDevSelDiag(QWidget *_parent, int val, int have_any) :
 	value.value = val;
 	value.parent = this;
 
-	setWindowIcon(QIcon(MppIconFile));
-	setWindowTitle(QDialog::tr("Select Device Number"));
-
 	for (x = 0; x != MPP_MAX_DEVS; x++) {
 		pmb = new MppButton(MppDevName(x, have_any), x);
-		QDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int))); 
+		MppDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int)));
 		addWidget(pmb, x / 4, x % 4, 1, 1);
 		if (x == val)
 			pmb->setFocus();
@@ -53,14 +50,14 @@ MppDevSelDiag :: MppDevSelDiag(QWidget *_parent, int val, int have_any) :
 	switch (have_any) {
 	case MPP_DEV_ALL:
 		pmb = new MppButton(MppDevName(-1, have_any), -1);
-		QDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int))); 
+		MppDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int)));
 		addWidget(pmb, x, 0, 1, 1);
 		if (val == -1)
 			pmb->setFocus();
 		break;
 	case MPP_DEV_NONE:
 		pmb = new MppButton(MppDevName(-1, have_any), -1);
-		QDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int))); 
+		MppDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int)));
 		addWidget(pmb, x, 0, 1, 1);
 		if (val == -1)
 			pmb->setFocus();
@@ -69,8 +66,8 @@ MppDevSelDiag :: MppDevSelDiag(QWidget *_parent, int val, int have_any) :
 		break;
 	}
 
-	pmb = new MppButton(QDialog :: tr("Cancel"), MPP_MAX_DEVS + 1);
-	QDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int))); 
+	pmb = new MppButton(MppDialog :: tr("Cancel"), MPP_MAX_DEVS + 1);
+	MppDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int)));
 	addWidget(pmb, x, 2, 1, 2);
 }
 
@@ -133,6 +130,6 @@ MppDevSel :: handle_released()
 {
 	MppDevSelDiag diag(this, device, haveAny);
 
-	if (diag.exec() == QDialog::Accepted)
+	if (diag.exec() == MppDialog::Accepted)
 		setValue(diag.value.value);
 }

@@ -71,7 +71,7 @@ MppBpm :: handle_callback_locked()
 }
 
 MppBpm :: MppBpm(MppMainWindow *_parent)
-  : QDialog(_parent)
+  : MppDialog(_parent, QObject::tr("BPM generator settings"))
 {
 	QLabel *lbl;
 	char buf[64];
@@ -125,9 +125,6 @@ MppBpm :: MppBpm(MppMainWindow *_parent)
 
 	connect(but_reset_all, SIGNAL(released()), this, SLOT(handle_reset_all()));
 	connect(but_done_all, SIGNAL(released()), this, SLOT(handle_done_all()));
-
-	setWindowTitle(tr("BPM generator settings"));
-	setWindowIcon(QIcon(MppIconFile));
 
 	gb_ctrl = new MppGroupBox(tr("BPM control"));
 

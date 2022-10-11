@@ -91,7 +91,7 @@ public slots:
 	void handle_load(int);
 };
 
-class MppSettingsWhat : public QDialog
+class MppSettingsWhat : public MppDialog
 {
 	Q_OBJECT;
 

@@ -30,7 +30,7 @@
 #include "midipp_mainwindow.h"
 
 MppChanSelDiag :: MppChanSelDiag(QWidget *_parent, int val, int mask_any, int mask_chan) :
-	QDialog(_parent), QGridLayout(this)
+	MppDialog(_parent, QObject::tr("Select MIDI channel")), QGridLayout(this)
 {
 	MppButton *pmb;
 	int x;
@@ -39,12 +39,9 @@ MppChanSelDiag :: MppChanSelDiag(QWidget *_parent, int val, int mask_any, int ma
 	value.value = val;
 	value.parent = this;
 
-	setWindowIcon(QIcon(MppIconFile));
-	setWindowTitle(QDialog::tr("Select MIDI Channel"));
-
 	for (x = 0; x != 16; x++) {
 		pmb = new MppButton(MppChanName(x), x);
-		QDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int))); 
+		MppDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int)));
 		addWidget(pmb, x / 4, x % 4, 1, 1);
 		if ((mask_chan >> x) & 1) {
 			if (x == val)
@@ -62,21 +59,21 @@ MppChanSelDiag :: MppChanSelDiag(QWidget *_parent, int val, int mask_any, int ma
 		switch (-x) {
 		case MPP_CHAN_ANY:
 			pmb = new MppButton(MppChanName(-x), -x);
-			QDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int))); 
+			MppDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int)));
 			addWidget(pmb, 4, y++, 1, 1);
 			if (val == -x)
 				pmb->setFocus();
 			break;
 		case MPP_CHAN_NONE:
 			pmb = new MppButton(MppChanName(-x), -x);
-			QDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int))); 
+			MppDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int)));
 			addWidget(pmb, 4, y++, 1, 1);
 			if (val == -x)
 				pmb->setFocus();
 			break;
 		case MPP_CHAN_MPE:
 			pmb = new MppButton(MppChanName(-x), -x);
-			QDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int))); 
+			MppDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int)));
 			addWidget(pmb, 4, y++, 1, 1);
 			if (val == -x)
 				pmb->setFocus();
@@ -86,8 +83,8 @@ MppChanSelDiag :: MppChanSelDiag(QWidget *_parent, int val, int mask_any, int ma
 		}
 	}
 
-	pmb = new MppButton(QDialog :: tr("Cancel"), 17);
-	QDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int))); 
+	pmb = new MppButton(MppDialog :: tr("Cancel"), 17);
+	MppDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int)));
 	addWidget(pmb, 4, 2, 1, 2);
 }
 
@@ -160,6 +157,6 @@ MppChanSel :: handle_released()
 {
 	MppChanSelDiag diag(this, channel, maskAny, channelMask);
 
-	if (diag.exec() == QDialog::Accepted)
+	if (diag.exec() == MppDialog::Accepted)
 		setValue(diag.value.value);
 }

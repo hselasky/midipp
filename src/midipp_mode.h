@@ -44,7 +44,7 @@ enum {
 	MM_PASS_MAX,
 };
 
-class MppMode : public QDialog
+class MppMode : public MppDialog
 {
 	Q_OBJECT;
 

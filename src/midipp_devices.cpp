@@ -28,12 +28,9 @@
 #include "midipp_groupbox.h"
 
 MppDevices :: MppDevices(QWidget *_parent)
-  : QDialog(_parent)
+  : MppDialog(_parent, QObject::tr("Select playback and reording device"))
 {
 	int n;
-
-	setWindowTitle(tr("Select playback and recording device"));
-	setWindowIcon(QIcon(MppIconFile));
 
 	gl = new QGridLayout(this);
 
@@ -213,5 +210,5 @@ MppDevices :: accept(void)
 	else
 		result_dev = play_dev + QString("|") + rec_dev;
 
-	QDialog :: accept();
+	MppDialog :: accept();
 }

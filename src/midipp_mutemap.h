@@ -28,7 +28,7 @@
 
 #include "midipp.h"
 
-class MppMuteMapCh : public QDialog
+class MppMuteMapCh : public MppDialog
 {
 	Q_OBJECT
 public:
@@ -51,7 +51,7 @@ public slots:
 	void handle_revert_all();
 };
 
-class MppMuteMapOther : public QDialog
+class MppMuteMapOther : public MppDialog
 {
 	Q_OBJECT
 public:

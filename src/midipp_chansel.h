@@ -36,13 +36,13 @@ public:
 	MppChanSelDiagValue() { };
 	~MppChanSelDiagValue() { };
 	int value;
-	QDialog *parent;
+	MppDialog *parent;
 
 public slots:
 	void handle_released(int);
 };
 
-class MppChanSelDiag : public QDialog, public QGridLayout
+class MppChanSelDiag : public MppDialog, public QGridLayout
 {
 public:
 	MppChanSelDiag(QWidget *, int, int, int = 0xFFFF);
