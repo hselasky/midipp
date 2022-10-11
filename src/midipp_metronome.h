@@ -30,7 +30,7 @@
 
 class MppMetronome : public QObject
 {
-	Q_OBJECT;
+	Q_OBJECT
 public:
 	MppMetronome(MppMainWindow *parent);
 	~MppMetronome();

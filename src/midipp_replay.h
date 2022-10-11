@@ -30,7 +30,7 @@
 
 class MppReplayTab : public QWidget
 {
-	Q_OBJECT;
+	Q_OBJECT
 public:
 	MppReplayTab(MppMainWindow *parent);
 	~MppReplayTab() { };

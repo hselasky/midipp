@@ -65,7 +65,7 @@ public:
 
 class MppSettings : public QObject
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	MppSettings(MppMainWindow *_parent);
@@ -93,7 +93,7 @@ public slots:
 
 class MppSettingsWhat : public MppDialog
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	MppSettingsWhat(MppSettings *_parent);

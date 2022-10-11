@@ -46,7 +46,7 @@ enum {
 
 class MppMode : public MppDialog
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	MppMode(MppScoreMain *_parent, uint8_t _vi);

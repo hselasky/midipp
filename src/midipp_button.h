@@ -30,7 +30,7 @@
 
 class MppButton : public QPushButton
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	MppButton(const QString &, int _id);

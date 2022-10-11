@@ -56,7 +56,7 @@ public:
 
 class MppImportTab : public QObject
 {
-	Q_OBJECT;
+	Q_OBJECT
 public:
 	MppImportTab(MppMainWindow *parent);
 	~MppImportTab();

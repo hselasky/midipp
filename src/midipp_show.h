@@ -126,7 +126,7 @@ public:
 
 class MppShowControl : public QObject
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	MppShowControl(MppMainWindow *);

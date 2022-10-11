@@ -58,7 +58,7 @@ public:
 
 class MppScoreMain : public QObject
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	MppScoreMain(MppMainWindow *parent, int unit);

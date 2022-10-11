@@ -43,7 +43,7 @@ public:
 };
 
 class MppTab : public QObject {
-	Q_OBJECT;
+	Q_OBJECT
 public:
 	MppTab() {
 		w = 0;
@@ -59,7 +59,7 @@ public:
 };
 
 class MppTabBar : public QWidget {
-	Q_OBJECT;
+	Q_OBJECT
 public:
 	MppTabBar(QWidget * = 0);
 

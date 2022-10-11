@@ -30,7 +30,7 @@
 
 class MppMainWindow : public QWidget
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	MppMainWindow(QWidget *parent = 0);

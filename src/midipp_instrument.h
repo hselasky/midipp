@@ -30,7 +30,7 @@
 
 class MppInstrumentTab : public QObject
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	MppInstrumentTab(MppMainWindow * = 0);

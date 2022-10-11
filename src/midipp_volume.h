@@ -30,7 +30,7 @@
 
 class MppVolume : public QWidget
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	MppVolume(QWidget *parent = 0);

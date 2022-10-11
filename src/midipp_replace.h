@@ -30,7 +30,7 @@
 
 class MppReplace : public MppDialog
 {
-	Q_OBJECT;
+	Q_OBJECT
 public:
 	MppReplace(MppMainWindow *, MppScoreMain *, QString, QString);
 	~MppReplace();

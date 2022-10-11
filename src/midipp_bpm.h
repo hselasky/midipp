@@ -30,7 +30,7 @@
 
 class MppBpm : public MppDialog
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	MppBpm(MppMainWindow *parent);

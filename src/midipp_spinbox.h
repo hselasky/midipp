@@ -30,7 +30,7 @@
 
 class MppSpinBox : public QSpinBox
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	MppSpinBox(QWidget *parent = 0, int allow_neg = 1);

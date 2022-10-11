@@ -65,7 +65,7 @@ struct MppSheetCol {
 
 class MppSheet : public QWidget
 {
-	Q_OBJECT;
+	Q_OBJECT
 public:
 	MppSheet(MppMainWindow *, int);
 	~MppSheet();

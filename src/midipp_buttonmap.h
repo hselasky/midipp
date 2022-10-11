@@ -30,7 +30,7 @@
 
 class MppButtonMap : public QGroupBox
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	MppButtonMap(const char *, int, int);

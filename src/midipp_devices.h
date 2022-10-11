@@ -30,7 +30,7 @@
 
 class MppDevices : public MppDialog
 {
-	Q_OBJECT;
+	Q_OBJECT
 public:
 	MppDevices(QWidget *parent = 0);
 	~MppDevices();

@@ -31,7 +31,7 @@
 
 class MppChanSelDiagValue : public QObject
 {
-	Q_OBJECT;
+	Q_OBJECT
 public:
 	MppChanSelDiagValue() { };
 	int value;
@@ -52,7 +52,7 @@ public:
 
 class MppChanSel : public QPushButton
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	MppChanSel(MppMainWindow *, int = 0, int = 0);

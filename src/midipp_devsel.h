@@ -31,7 +31,7 @@
 
 class MppDevSelDiagValue : public QObject
 {
-	Q_OBJECT;
+	Q_OBJECT
 public:
 	MppDevSelDiagValue() { };
 	int value;
@@ -51,7 +51,7 @@ public:
 
 class MppDevSel : public QPushButton
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	MppDevSel(QWidget *, int, int);

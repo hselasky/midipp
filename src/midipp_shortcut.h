@@ -64,7 +64,7 @@ enum {
 
 class MppShortcutTab : public QObject
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	MppShortcutTab(MppMainWindow *);

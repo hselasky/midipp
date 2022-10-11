@@ -42,7 +42,7 @@ struct MppLoopEntry {
 
 class MppLoopTab : public QWidget
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	enum {

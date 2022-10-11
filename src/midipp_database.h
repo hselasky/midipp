@@ -32,7 +32,7 @@ union record;
 
 class MppDataBase : public QWidget
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	MppDataBase(MppMainWindow *);

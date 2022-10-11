@@ -30,7 +30,7 @@
 
 class MppOnlineTabsBrowse : public QTextEdit
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	QString link;
@@ -42,7 +42,7 @@ signals:
 
 class MppOnlineTabs : public QWidget
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	MppOnlineTabs(MppMainWindow *);
