@@ -30,30 +30,37 @@
 #include "midipp_buttonmap.h"
 
 MppMuteMapCh :: MppMuteMapCh(MppMainWindow *_mw, int _devno) :
-    MppDialog(_mw, QObject::tr("Mute MIDI output channel")), mw(_mw), devno(_devno)
+	MppDialog(_mw, QObject::tr("Mute MIDI output channel")),
+	QGridLayout(this)
 {
+	MppMuteMapChBase *d = this;
+	MppDialog *dlg = this;
 	QLabel *pl;
 
-	gl = new QGridLayout(this);
+	mw = _mw;
+	devno = _devno;
+
+	setRowStretch(6, 1);
+	setColumnStretch(8, 1);
 
 	for (int n = 0; n != 4; n++) {
-		pl = new QLabel(tr("Muted"));
+		pl = new QLabel(d->tr("Muted"));
 		pl->setAlignment(Qt::AlignCenter);
-		gl->addWidget(pl, 0, 1 + 2 * n, 1, 1, Qt::AlignCenter);
+		addWidget(pl, 0, 1 + 2 * n, 1, 1, Qt::AlignCenter);
 	}
 
-	but_reset_all = new QPushButton(tr("Reset"));
-	but_close_all = new QPushButton(tr("Close"));
+	but_reset_all = new QPushButton(d->tr("Reset"));
+	but_close_all = new QPushButton(d->tr("Close"));
 
-	connect(but_reset_all, SIGNAL(released()), this, SLOT(handle_reset_all()));
-	connect(but_close_all, SIGNAL(released()), this, SLOT(handle_close_all()));
+	d->connect(but_reset_all, SIGNAL(released()), d, SLOT(handle_reset_all()));
+	d->connect(but_close_all, SIGNAL(released()), dlg, SLOT(accept()));
 
 	for (int n = 0; n != 16; n++) {
 		int x_off;
 		int y_off;
 
 		cbx_mute[n] = new MppCheckBox();
-		connect(cbx_mute[n], SIGNAL(toggled(bool)), this, SLOT(handle_apply_all()));
+		d->connect(cbx_mute[n], SIGNAL(toggled(bool)), d, SLOT(handle_apply_all()));
 
 		x_off = (n / 4) * 2;
 		y_off = (n & 3) + 1;
@@ -61,20 +68,18 @@ MppMuteMapCh :: MppMuteMapCh(MppMainWindow *_mw, int _devno) :
 		pl = new QLabel(MppChanName(n));
 		pl->setAlignment(Qt::AlignCenter);
 
-		gl->addWidget(pl, y_off, x_off + 0, 1, 1, Qt::AlignCenter);
-		gl->addWidget(cbx_mute[n], y_off, x_off + 1, 1, 1, Qt::AlignCenter);
+		addWidget(pl, y_off, x_off + 0, 1, 1, Qt::AlignCenter);
+		addWidget(cbx_mute[n], y_off, x_off + 1, 1, 1, Qt::AlignCenter);
 	}
 
-	gl->addWidget(but_reset_all, 5, 0, 1, 4);
-	gl->addWidget(but_close_all, 5, 4, 1, 4);
-	gl->setRowStretch(6, 1);
-	gl->setColumnStretch(8, 1);
+	addWidget(but_reset_all, 5, 0, 1, 4);
+	addWidget(but_close_all, 5, 4, 1, 4);
 
 	handle_revert_all();
 }
 
 void
-MppMuteMapCh :: handle_reset_all()
+MppMuteMapChBase :: handle_reset_all()
 {
 
 	for (int n = 0; n != 16; n++)
@@ -84,7 +89,7 @@ MppMuteMapCh :: handle_reset_all()
 }
 
 void
-MppMuteMapCh :: handle_revert_all()
+MppMuteMapChBase :: handle_revert_all()
 {
 	bool mute_copy[16];
 
@@ -98,7 +103,7 @@ MppMuteMapCh :: handle_revert_all()
 }
 
 void
-MppMuteMapCh :: handle_apply_all()
+MppMuteMapChBase :: handle_apply_all()
 {
 	bool mute_copy[16];
 
@@ -111,53 +116,53 @@ MppMuteMapCh :: handle_apply_all()
 	mw->atomic_unlock();
 }
 
-void
-MppMuteMapCh :: handle_close_all()
-{
-	accept();
-}
-
 MppMuteMapOther :: MppMuteMapOther(MppMainWindow *_mw, int _devno) :
-    MppDialog(_mw, tr("Mute other MIDI output")), mw(_mw), devno(_devno)
+    MppDialog(_mw, QObject::tr("Mute other MIDI output")),
+    QGridLayout(this)
 {
-	gl = new QGridLayout(this);
+	MppMuteMapOtherBase *d = this;
+	MppDialog *dlg = this;
 
-	but_reset_all = new QPushButton(tr("Reset"));
-	but_close_all = new QPushButton(tr("Close"));
+	mw = _mw;
+	devno = _devno;
 
-	connect(but_reset_all, SIGNAL(released()), this, SLOT(handle_reset_all()));
-	connect(but_close_all, SIGNAL(released()), this, SLOT(handle_close_all()));
+	but_reset_all = new QPushButton(d->tr("Reset"));
+	but_close_all = new QPushButton(d->tr("Close"));
+
+	d->connect(but_reset_all, SIGNAL(released()), d, SLOT(handle_reset_all()));
+	d->connect(but_close_all, SIGNAL(released()), dlg, SLOT(accept()));
 
 	cbx_mute_program = new MppButtonMap("Mute program events\0" "NO\0" "YES\0", 2, 2);
-	connect(cbx_mute_program, SIGNAL(selectionChanged(int)), this, SLOT(handle_apply_all()));
+	d->connect(cbx_mute_program, SIGNAL(selectionChanged(int)), d, SLOT(handle_apply_all()));
 
 	cbx_mute_pedal = new MppButtonMap("Mute pedal events\0" "NO\0" "YES\0", 2, 2);
-	connect(cbx_mute_pedal, SIGNAL(selectionChanged(int)), this, SLOT(handle_apply_all()));
+	d->connect(cbx_mute_pedal, SIGNAL(selectionChanged(int)), d, SLOT(handle_apply_all()));
 
 	cbx_mute_non_channel = new MppButtonMap("Mute non-channel events\0" "NO\0" "YES\0", 2, 2);
-	connect(cbx_mute_non_channel, SIGNAL(selectionChanged(int)), this, SLOT(handle_apply_all()));
+	d->connect(cbx_mute_non_channel, SIGNAL(selectionChanged(int)), d, SLOT(handle_apply_all()));
 
 	cbx_mute_local_keys = new MppButtonMap("Send local keys command\0" "NONE\0" "ENABLE\0" "DISABLE\0", 3, 3);
-	connect(cbx_mute_local_keys, SIGNAL(selectionChanged(int)), this, SLOT(handle_apply_all()));
+	d->connect(cbx_mute_local_keys, SIGNAL(selectionChanged(int)), d, SLOT(handle_apply_all()));
 
 	cbx_mute_control = new MppButtonMap("Mute control events\0" "NO\0" "YES\0", 2, 2);
-	connect(cbx_mute_control, SIGNAL(selectionChanged(int)), this, SLOT(handle_apply_all()));
+	d->connect(cbx_mute_control, SIGNAL(selectionChanged(int)), d, SLOT(handle_apply_all()));
 
-	gl->addWidget(cbx_mute_program, 0, 0, 1, 1);
-	gl->addWidget(cbx_mute_pedal, 0, 1, 1, 1);
-	gl->addWidget(cbx_mute_local_keys, 1, 0, 1, 2);
-	gl->addWidget(cbx_mute_non_channel, 2, 0, 1, 1);
-	gl->addWidget(cbx_mute_control, 2, 1, 1, 1);
-	gl->addWidget(but_reset_all, 3, 0, 1, 1);
-	gl->addWidget(but_close_all, 3, 1, 1, 1);
-	gl->setRowStretch(4, 1);
-	gl->setColumnStretch(3, 1);
+	setRowStretch(4, 1);
+	setColumnStretch(3, 1);
+
+	addWidget(cbx_mute_program, 0, 0, 1, 1);
+	addWidget(cbx_mute_pedal, 0, 1, 1, 1);
+	addWidget(cbx_mute_local_keys, 1, 0, 1, 2);
+	addWidget(cbx_mute_non_channel, 2, 0, 1, 1);
+	addWidget(cbx_mute_control, 2, 1, 1, 1);
+	addWidget(but_reset_all, 3, 0, 1, 1);
+	addWidget(but_close_all, 3, 1, 1, 1);
 
 	handle_revert_all();
 }
 
 void
-MppMuteMapOther :: handle_reset_all()
+MppMuteMapOtherBase :: handle_reset_all()
 {
 	MPP_BLOCKED(cbx_mute_program,setSelection(0));
 	MPP_BLOCKED(cbx_mute_pedal,setSelection(0));
@@ -169,7 +174,7 @@ MppMuteMapOther :: handle_reset_all()
 }
 
 void
-MppMuteMapOther :: handle_revert_all()
+MppMuteMapOtherBase :: handle_revert_all()
 {
 	uint8_t mute_prog_copy;
 	uint8_t mute_pedal_copy;
@@ -198,7 +203,7 @@ MppMuteMapOther :: handle_revert_all()
 }
 
 void
-MppMuteMapOther :: handle_apply_all()
+MppMuteMapOtherBase :: handle_apply_all()
 {
 	uint8_t mute_prog_copy;
 	uint8_t mute_pedal_copy;
@@ -228,10 +233,4 @@ MppMuteMapOther :: handle_apply_all()
 
 	if (apply)
 		mw->handle_config_local_keys();
-}
-
-void
-MppMuteMapOther :: handle_close_all()
-{
-	accept();
 }

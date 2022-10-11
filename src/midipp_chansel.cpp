@@ -36,6 +36,9 @@ MppChanSelDiag :: MppChanSelDiag(QWidget *_parent, int val, int mask_any, int ma
 	int x;
 	int y;
 
+	setRowStretch(5,1);
+	setColumnStretch(4,1);
+
 	value.value = val;
 	value.parent = this;
 
@@ -86,9 +89,6 @@ MppChanSelDiag :: MppChanSelDiag(QWidget *_parent, int val, int mask_any, int ma
 	pmb = new MppButton(MppDialog :: tr("Cancel"), 17);
 	MppDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int)));
 	addWidget(pmb, 4, 2, 1, 2);
-
-	setRowStretch(5,1);
-	setColumnStretch(4, 1);
 }
 
 void

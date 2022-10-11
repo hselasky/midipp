@@ -28,16 +28,12 @@
 
 #include "midipp.h"
 
-class MppMuteMapCh : public MppDialog
+class MppMuteMapChBase : public QObject
 {
 	Q_OBJECT
 public:
-	MppMuteMapCh(MppMainWindow *, int);
-
 	MppMainWindow *mw;
 	int devno;
-
-	QGridLayout *gl;
 
 	MppCheckBox *cbx_mute[16];
 
@@ -46,21 +42,22 @@ public:
 
 public slots:
 	void handle_reset_all();
-	void handle_close_all();
 	void handle_apply_all();
 	void handle_revert_all();
 };
 
-class MppMuteMapOther : public MppDialog
+class MppMuteMapCh : public MppDialog, public QGridLayout, public MppMuteMapChBase
+{
+public:
+	MppMuteMapCh(MppMainWindow *, int);
+};
+
+class MppMuteMapOtherBase : public QObject
 {
 	Q_OBJECT
 public:
-	MppMuteMapOther(MppMainWindow *, int);
-
 	MppMainWindow *mw;
 	int devno;
-
-	QGridLayout *gl;
 
 	MppButtonMap *cbx_mute_program;
 	MppButtonMap *cbx_mute_pedal;
@@ -73,9 +70,14 @@ public:
 
 public slots:
 	void handle_reset_all();
-	void handle_close_all();
 	void handle_apply_all();
   	void handle_revert_all();
+};
+
+class MppMuteMapOther : public MppDialog, public QGridLayout, public MppMuteMapOtherBase
+{
+public:
+	MppMuteMapOther(MppMainWindow *, int);
 };
 
 #endif		/* _MIDIPP_MUTEMAP_H_ */
