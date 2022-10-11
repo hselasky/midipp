@@ -46,7 +46,7 @@ MppInstrumentTab :: MppInstrumentTab(MppMainWindow *_mw)
 	but_instr_mute_all = new QPushButton(tr("Mute all"));
 	but_instr_unmute_all = new QPushButton(tr("Unmute all"));
 
-	spn_instr_curr_dev = new MppDevSel(-1, MPP_DEV_ALL);
+	spn_instr_curr_dev = new MppDevSel(mw, -1, MPP_DEV_ALL);
 
 	spn_instr_curr_chan = new MppChanSel(mw, 0, 0);
 	connect(spn_instr_curr_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_instr_channel_changed(int)));

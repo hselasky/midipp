@@ -86,10 +86,9 @@ MppChanSelDiag :: MppChanSelDiag(QWidget *_parent, int val, int mask_any, int ma
 	pmb = new MppButton(MppDialog :: tr("Cancel"), 17);
 	MppDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int)));
 	addWidget(pmb, 4, 2, 1, 2);
-}
 
-MppChanSelDiag :: ~MppChanSelDiag()
-{
+	setRowStretch(5,1);
+	setColumnStretch(4, 1);
 }
 
 void
@@ -148,15 +147,13 @@ MppChanSel :: value()
 	return (channel);
 }
 
-MppChanSel :: ~MppChanSel()
-{
-}
-
 void
 MppChanSel :: handle_released()
 {
-	MppChanSelDiag diag(this, channel, maskAny, channelMask);
+	MppChanSelDiag *diag = new MppChanSelDiag(mw, channel, maskAny, channelMask);
 
-	if (diag.exec() == MppDialog::Accepted)
-		setValue(diag.value.value);
+	if (diag->exec() == MppDialog::Accepted)
+		setValue(diag->value.value);
+
+	delete diag;
 }

@@ -52,7 +52,7 @@ public:
 		ST_STOPPED,
 	};
 
-	MppLoopTab(QWidget *parent, MppMainWindow *);
+	MppLoopTab(MppMainWindow *);
 	~MppLoopTab();
 
 	bool check_record(uint8_t index, uint8_t chan, uint8_t n);

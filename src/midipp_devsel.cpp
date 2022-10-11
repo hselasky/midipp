@@ -69,10 +69,9 @@ MppDevSelDiag :: MppDevSelDiag(QWidget *_parent, int val, int have_any) :
 	pmb = new MppButton(MppDialog :: tr("Cancel"), MPP_MAX_DEVS + 1);
 	MppDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int)));
 	addWidget(pmb, x, 2, 1, 2);
-}
 
-MppDevSelDiag :: ~MppDevSelDiag()
-{
+	setRowStretch(x + 1,1);
+	setColumnStretch(4, 1);
 }
 
 void
@@ -89,9 +88,10 @@ MppDevSelDiagValue :: handle_released(int id)
 	}
 }
 
-MppDevSel :: MppDevSel(int val, int have_any) :
+MppDevSel :: MppDevSel(QWidget *_parent, int val, int have_any) :
     QPushButton()
 {
+	parent = _parent;
 	device = val;
 	haveAny = have_any;
 
@@ -121,15 +121,13 @@ MppDevSel :: value()
 	return (device);
 }
 
-MppDevSel :: ~MppDevSel()
-{
-}
-
 void
 MppDevSel :: handle_released()
 {
-	MppDevSelDiag diag(this, device, haveAny);
+	MppDevSelDiag *diag = new MppDevSelDiag(parent, device, haveAny);
 
-	if (diag.exec() == MppDialog::Accepted)
-		setValue(diag.value.value);
+	if (diag->exec() == MppDialog::Accepted)
+		setValue(diag->value.value);
+
+	delete diag;
 }

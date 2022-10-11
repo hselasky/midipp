@@ -31,8 +31,8 @@
 #include "midipp_groupbox.h"
 #include "midipp_devsel.h"
 
-MppCustomTab :: MppCustomTab(QWidget *parent, MppMainWindow *_mw)
-  : QWidget(parent)
+MppCustomTab :: MppCustomTab(MppMainWindow *_mw)
+  : QWidget(_mw)
 {
 	int n;
 
@@ -46,7 +46,7 @@ MppCustomTab :: MppCustomTab(QWidget *parent, MppMainWindow *_mw)
 	gb_dev_sel = new MppGroupBox(tr("Select output device(s)"));
 	gl->addWidget(gb_dev_sel, 1,0,1,1);
 
-	but_dev_sel = new MppDevSel(-1, MPP_DEV_ALL);
+	but_dev_sel = new MppDevSel(_mw, -1, MPP_DEV_ALL);
 	gb_dev_sel->addWidget(but_dev_sel, 0,0,1,1);
 
 	for (n = 0; n != MPP_CUSTOM_MAX; n++) {
@@ -61,10 +61,6 @@ MppCustomTab :: MppCustomTab(QWidget *parent, MppMainWindow *_mw)
 
 	gl->setRowStretch(2, 1);
 	gl->setColumnStretch(1, 1);
-}
-
-MppCustomTab :: ~MppCustomTab()
-{
 }
 
 void

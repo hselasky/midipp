@@ -29,12 +29,10 @@
 #include "midipp_checkbox.h"
 #include "midipp_buttonmap.h"
 
-MppMuteMapCh :: MppMuteMapCh(QWidget *_parent, MppMainWindow *_mw, int _devno) :
-    MppDialog(_parent, QObject::tr("Mute MIDI output channel")), mw(_mw), devno(_devno)
+MppMuteMapCh :: MppMuteMapCh(MppMainWindow *_mw, int _devno) :
+    MppDialog(_mw, QObject::tr("Mute MIDI output channel")), mw(_mw), devno(_devno)
 {
 	QLabel *pl;
-
-	setFixedSize(_parent->size());
 
 	gl = new QGridLayout(this);
 
@@ -122,8 +120,8 @@ MppMuteMapCh :: handle_close_all()
 	accept();
 }
 
-MppMuteMapOther :: MppMuteMapOther(QWidget *_parent, MppMainWindow *_mw, int _devno) :
-    MppDialog(_parent, tr("Mute other MIDI output")), mw(_mw), devno(_devno)
+MppMuteMapOther :: MppMuteMapOther(MppMainWindow *_mw, int _devno) :
+    MppDialog(_mw, tr("Mute other MIDI output")), mw(_mw), devno(_devno)
 {
 	gl = new QGridLayout(this);
 

@@ -91,19 +91,19 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi) :
 	spn_pri_chan = new MppChanSel(sm->mainWindow, 0, 0);
 	connect(spn_pri_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
-	spn_pri_dev = new MppDevSel(-1, MPP_DEV_ALL);
+	spn_pri_dev = new MppDevSel(_parent->mainWindow, -1, MPP_DEV_ALL);
 	connect(spn_pri_dev, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
 	spn_sec_base_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE_MASK);
 	connect(spn_sec_base_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
-	spn_sec_base_dev = new MppDevSel(-1, MPP_DEV_ALL);
+	spn_sec_base_dev = new MppDevSel(_parent->mainWindow, -1, MPP_DEV_ALL);
 	connect(spn_sec_base_dev, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
 	spn_sec_treb_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE_MASK);
 	connect(spn_sec_treb_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
-	spn_sec_treb_dev = new MppDevSel(-1, MPP_DEV_ALL);
+	spn_sec_treb_dev = new MppDevSel(_parent->mainWindow, -1, MPP_DEV_ALL);
 	connect(spn_sec_treb_dev, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
 
 	spn_pri_volume = new MppVolume();

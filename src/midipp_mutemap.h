@@ -32,7 +32,7 @@ class MppMuteMapCh : public MppDialog
 {
 	Q_OBJECT
 public:
-	MppMuteMapCh(QWidget *, MppMainWindow *, int);
+	MppMuteMapCh(MppMainWindow *, int);
 
 	MppMainWindow *mw;
 	int devno;
@@ -55,7 +55,7 @@ class MppMuteMapOther : public MppDialog
 {
 	Q_OBJECT
 public:
-	MppMuteMapOther(QWidget *, MppMainWindow *, int);
+	MppMuteMapOther(MppMainWindow *, int);
 
 	MppMainWindow *mw;
 	int devno;

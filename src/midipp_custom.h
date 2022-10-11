@@ -33,8 +33,7 @@ class MppCustomTab : public QWidget
 	Q_OBJECT;
 
 public:
-	MppCustomTab(QWidget *parent, MppMainWindow *);
-	~MppCustomTab();
+	MppCustomTab(MppMainWindow *);
 
 	MppMainWindow *mw;
 

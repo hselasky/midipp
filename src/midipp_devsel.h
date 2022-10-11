@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2018 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2018-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +34,6 @@ class MppDevSelDiagValue : public QObject
 	Q_OBJECT;
 public:
 	MppDevSelDiagValue() { };
-	~MppDevSelDiagValue() { };
 	int value;
 	MppDialog *parent;
 
@@ -46,7 +45,6 @@ class MppDevSelDiag : public MppDialog, public QGridLayout
 {
 public:
 	MppDevSelDiag(QWidget *, int, int);
-	~MppDevSelDiag();
 
 	MppDevSelDiagValue value;
 };
@@ -56,12 +54,12 @@ class MppDevSel : public QPushButton
 	Q_OBJECT;
 
 public:
-	MppDevSel(int, int);
-	~MppDevSel();
+	MppDevSel(QWidget *, int, int);
 
 	void setValue(int);
 	int value();
 private:
+	QWidget *parent;
 	int device;
 	int haveAny;
 

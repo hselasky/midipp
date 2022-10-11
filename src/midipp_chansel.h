@@ -34,7 +34,6 @@ class MppChanSelDiagValue : public QObject
 	Q_OBJECT;
 public:
 	MppChanSelDiagValue() { };
-	~MppChanSelDiagValue() { };
 	int value;
 	MppDialog *parent;
 
@@ -46,7 +45,6 @@ class MppChanSelDiag : public MppDialog, public QGridLayout
 {
 public:
 	MppChanSelDiag(QWidget *, int, int, int = 0xFFFF);
-	~MppChanSelDiag();
 
 	MppButton *butChannel[16];
 	MppChanSelDiagValue value;
@@ -58,7 +56,6 @@ class MppChanSel : public QPushButton
 
 public:
 	MppChanSel(MppMainWindow *, int = 0, int = 0);
-	~MppChanSel();
 
 	void setChannelMask(uint16_t);
 	void setValue(int);

@@ -188,7 +188,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_instrument = new MppInstrumentTab(this);
 
-	tab_loop = new MppLoopTab(this, this);
+	tab_loop = new MppLoopTab(this);
 
 	tab_replay = new MppReplayTab(this);
 
@@ -196,7 +196,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	tab_onlinetabs = new MppOnlineTabs(this);
 
-	tab_custom = new MppCustomTab(this, this);
+	tab_custom = new MppCustomTab(this);
 
 	tab_shortcut = 	new MppShortcutTab(this);
 
@@ -526,7 +526,7 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	  	/* set default device selection map */
 		devSelMap[n] = n;
 
-		but_config_sel[n] = new MppDevSel(n, 0);
+		but_config_sel[n] = new MppDevSel(this, n, 0);
 		connect(but_config_sel[n], SIGNAL(valueChanged(int)), this, SLOT(handle_config_changed()));
  
 		but_config_mm_ch[n] = new MppButton(QString("::"), n);
@@ -2907,17 +2907,21 @@ MppMainWindow :: MidiUnInit(void)
 void
 MppMainWindow :: handle_mute_map_ch(int n)
 {
-	MppMuteMapCh diag(this, this, n);
+	MppMuteMapCh *diag = new MppMuteMapCh(this, n);
 
-	diag.exec();
+	diag->exec();
+
+	delete diag;
 }
 
 void
 MppMainWindow :: handle_mute_map_other(int n)
 {
-	MppMuteMapOther diag(this, this, n);
+	MppMuteMapOther *diag = new MppMuteMapOther(this, n);
 
-	diag.exec();
+	diag->exec();
+
+	delete diag;
 }
 
 int
@@ -2925,13 +2929,13 @@ MppMainWindow :: handle_config_dev(int n, int automagic)
 {
 	int retval;
 
-	MppDevices diag(this);
+	MppDevices *diag = new MppDevices(this);
 
 	if (automagic == 0) {
-		retval = diag.exec();
-	} else switch (diag.autoSelect()) {
+		retval = diag->exec();
+	} else switch (diag->autoSelect()) {
 	case 0:
-		retval = diag.exec();
+		retval = diag->exec();
 		break;
 	case 1:
 		retval = MppDialog::Accepted;
@@ -2942,9 +2946,12 @@ MppMainWindow :: handle_config_dev(int n, int automagic)
 	}
 
 	if (retval == MppDialog::Accepted) {
-		MPP_BLOCKED(led_config_dev[n], setText(diag.result_dev));
+		MPP_BLOCKED(led_config_dev[n], setText(diag->result_dev));
 		handle_config_apply();
 	}
+
+	delete diag;
+
 	return (retval);
 }
 
@@ -3378,13 +3385,17 @@ MppMainWindow :: ScreenShot(QApplication &app)
 	main_tb->changeTab(8);
 	MppScreenShot(this, app);
 
-	MppMuteMap diag0(this, this, 0);
+	MppMuteMapCh diag0(this, 0);
 	diag0.exec();
 	MppScreenShot(&diag0, app);
 
 	MppDevices diag1(this);
 	diag1.exec();
 	MppScreenShot(&diag1, app);
+
+        MppMuteMapOther diag2(this, 0);
+        diag2.exec();
+        MppScreenShot(&diag2, app);
 
 	dlg_bpm->exec();
 	MppScreenShot(dlg_bpm, app);

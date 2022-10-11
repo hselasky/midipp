@@ -126,8 +126,8 @@ MppLoopTab :: handle_timer_sync()
 	mw->atomic_unlock();
 }
 
-MppLoopTab :: MppLoopTab(QWidget *parent, MppMainWindow *_mw)
-  : QWidget(parent)
+MppLoopTab :: MppLoopTab(MppMainWindow *_mw)
+  : QWidget(_mw)
 {
 	int n;
 	int x;
