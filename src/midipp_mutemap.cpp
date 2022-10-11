@@ -54,7 +54,7 @@ MppMuteMapCh :: MppMuteMapCh(MppMainWindow *_mw, int _devno) :
 		int y_off;
 
 		cbx_mute[n] = new MppCheckBox();
-		connect(cbx_mute[n], SIGNAL(stateChanged(int,int)), this, SLOT(handle_apply_all()));
+		connect(cbx_mute[n], SIGNAL(toggled(bool)), this, SLOT(handle_apply_all()));
 
 		x_off = (n / 4) * 2;
 		y_off = (n & 3) + 1;
@@ -81,7 +81,7 @@ MppMuteMapCh :: handle_reset_all()
 {
 
 	for (int n = 0; n != 16; n++)
-		MPP_BLOCKED(cbx_mute[n],setChecked(0));
+		MPP_BLOCKED(cbx_mute[n],setChecked(false));
 
 	handle_apply_all();
 }
@@ -89,11 +89,11 @@ MppMuteMapCh :: handle_reset_all()
 void
 MppMuteMapCh :: handle_revert_all()
 {
-	uint8_t mute_copy[16];
+	bool mute_copy[16];
 
 	mw->atomic_lock();
 	for (int n = 0; n != 16; n++)
-		mute_copy[n] = mw->muteMap[devno][n] ? 1 : 0;
+		mute_copy[n] = mw->muteMap[devno][n] ? true : false;
 	mw->atomic_unlock();
 
 	for (int n = 0; n != 16; n++)
@@ -103,10 +103,10 @@ MppMuteMapCh :: handle_revert_all()
 void
 MppMuteMapCh :: handle_apply_all()
 {
-	uint8_t mute_copy[16];
+	bool mute_copy[16];
 
 	for (int n = 0; n != 16; n++)
-		mute_copy[n] = (cbx_mute[n]->checkState() == Qt::Checked);
+		mute_copy[n] = cbx_mute[n]->isChecked();
 
 	mw->atomic_lock();
 	for (int n = 0; n != 16; n++)

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,8 +50,8 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi) :
 	gb_delay = new MppGroupBox(QString());
 
 	cbx_norm = new MppCheckBox();
-	cbx_norm->setChecked(1);
-	connect(cbx_norm, SIGNAL(stateChanged(int,int)), this, SLOT(handle_changed()));
+	cbx_norm->setChecked(true);
+	connect(cbx_norm, SIGNAL(toggled(bool)), this, SLOT(handle_changed()));
 
 	sli_contrast = new QSlider();
 	sli_contrast->setRange(0, 255);

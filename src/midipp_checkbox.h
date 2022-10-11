@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,30 +28,14 @@
 
 #include "midipp.h"
 
-class MppCheckBox : public QWidget
+#include <QAbstractButton>
+
+class MppCheckBox : public QAbstractButton
 {
-	Q_OBJECT;
-
-private:
-	Qt::CheckState state;
-	Qt::CheckState other;
-	int id;
-
 public:
-	MppCheckBox(int = 0);
-
-	void setCheckState(Qt::CheckState);
-	Qt::CheckState checkState(void);
-
-	void setChecked(bool);
-	bool isChecked(void);
+	MppCheckBox();
 
 	void paintEvent(QPaintEvent *);
-	void mousePressEvent(QMouseEvent *);
-	QSize sizeHint() const;
-
-signals:
-	void stateChanged(int, int);
 };
 
 #endif		/* _MIDIPP_CHECKBOX_H_ */

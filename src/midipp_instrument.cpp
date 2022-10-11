@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2017-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2017-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -86,14 +86,14 @@ MppInstrumentTab :: MppInstrumentTab(MppMainWindow *_mw)
 
 		spn_instr_bank[n] = new QSpinBox();
 		spn_instr_bank[n]->setRange(0, 16383);
-		connect(spn_instr_bank[n], SIGNAL(valueChanged(int)), this, SLOT(handle_instr_changed(int)));
+		connect(spn_instr_bank[n], SIGNAL(valueChanged(int)), this, SLOT(handle_instr_changed()));
 
 		spn_instr_prog[n] = new QSpinBox();
 		spn_instr_prog[n]->setRange(0, 127);
-		connect(spn_instr_prog[n], SIGNAL(valueChanged(int)), this, SLOT(handle_instr_changed(int)));
+		connect(spn_instr_prog[n], SIGNAL(valueChanged(int)), this, SLOT(handle_instr_changed()));
 
-		cbx_instr_mute[n] = new MppCheckBox(n);
-		connect(cbx_instr_mute[n], SIGNAL(stateChanged(int,int)), this, SLOT(handle_instr_changed(int)));
+		cbx_instr_mute[n] = new MppCheckBox();
+		connect(cbx_instr_mute[n], SIGNAL(toggled(bool)), this, SLOT(handle_instr_changed()));
 
 		gb_instr_table->addWidget(new QLabel(MppChanName(n)), (n & 7) + 1, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
 		gb_instr_table->addWidget(spn_instr_bank[n], (n & 7) + 1, 1 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
@@ -161,7 +161,7 @@ MppInstrumentTab :: handle_instr_program()
 	mw->instr[chan].updated |= 1;
 	mw->atomic_unlock();
 
-	handle_instr_changed(0);
+	handle_instr_changed();
 }
 
 void
@@ -173,11 +173,11 @@ MppInstrumentTab :: handle_instr_program_all()
 		mw->instr[x].updated |= 1;
 	mw->atomic_unlock();
 
-	handle_instr_changed(0);
+	handle_instr_changed();
 }
 
 void 
-MppInstrumentTab :: handle_instr_changed(int dummy)
+MppInstrumentTab :: handle_instr_changed()
 {
   	MppInstrumentTab * const ni = 0;
 
@@ -308,7 +308,7 @@ MppInstrumentTab :: handle_instr_reset()
 	MPP_BLOCKED(spn_instr_curr_bank,setValue(0));
 	MPP_BLOCKED(spn_instr_curr_prog,setValue(0));
 
-	handle_instr_changed(0);
+	handle_instr_changed();
 }
 
 void
@@ -318,7 +318,7 @@ MppInstrumentTab :: handle_instr_mute_all()
 	for (uint8_t n = 0; n != 16; n++)
 		MPP_BLOCKED(cbx_instr_mute[n],setChecked(1));
 
-	handle_instr_changed(0);
+	handle_instr_changed();
 }
 
 void
@@ -328,7 +328,7 @@ MppInstrumentTab :: handle_instr_unmute_all()
 	for (uint8_t n = 0; n != 16; n++)
 		MPP_BLOCKED(cbx_instr_mute[n],setChecked(0));
 
-	handle_instr_changed(0);
+	handle_instr_changed();
 }
 
 void
@@ -337,7 +337,7 @@ MppInstrumentTab :: handle_instr_rem()
 	struct umidi20_event *event;
 	struct umidi20_event *event_next;
 
-	handle_instr_changed(0);
+	handle_instr_changed();
 
 	mw->atomic_lock();
 

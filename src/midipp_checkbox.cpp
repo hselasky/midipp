@@ -25,20 +25,11 @@
 
 #include "midipp_checkbox.h"
 
-MppCheckBox :: MppCheckBox(int _id)
-  : QWidget()
+MppCheckBox :: MppCheckBox()
 {
-	setFixedSize(sizeHint());
-
-	state = Qt::Unchecked;
-	other = Qt::Unchecked;
-	id = _id;
-}
-
-QSize
-MppCheckBox :: sizeHint() const
-{
-	return (QSize(24,24));
+	setCheckable(true);
+	setChecked(false);
+	setFixedSize(QSize(24,24));
 }
 
 void
@@ -54,66 +45,9 @@ MppCheckBox :: paintEvent(QPaintEvent *event)
 	paint.setBrush(Mpp.ColorGrey);
 	paint.drawRect(QRectF(0,0,w,h));
 
-	if (state != Qt::Unchecked) {
+	if (isChecked()) {
 		paint.setPen(QPen(Mpp.ColorGrey, 0));
 		paint.setBrush(Mpp.ColorBlack);
 		paint.drawEllipse(QRectF(3,3,w-6,h-6));
 	}
-}
-
-void
-MppCheckBox :: mousePressEvent(QMouseEvent *event)
-{
-	if (event->button() != Qt::LeftButton) {
-		event->ignore();
-		return;
-	}
-	if (state == Qt::Unchecked)
-		state = Qt::Checked;
-	else
-		state = Qt::Unchecked;
-
-	if (other != state) {
-		other = state;
-		stateChanged(other, id);
-		update();
-	}
-	event->accept();
-}
-
-void
-MppCheckBox :: setCheckState(Qt::CheckState _state)
-{
-	state = _state;
-	if (other != state) {
-		other = state;
-		stateChanged(other, id);
-		update();
-	}
-}
-
-Qt::CheckState
-MppCheckBox :: checkState(void)
-{
-	return (state);
-}
-
-void
-MppCheckBox :: setChecked(bool _enable)
-{
-	if (_enable)
-		state = Qt::Checked;
-	else
-		state = Qt::Unchecked;
-	if (other != state) {
-		other = state;
-		stateChanged(other, id);
-		update();
-	}
-}
-
-bool
-MppCheckBox :: isChecked(void)
-{
-	return (state == Qt::Checked);
 }

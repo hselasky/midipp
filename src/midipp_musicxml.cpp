@@ -621,23 +621,23 @@ MppMusicXmlImport :: MppMusicXmlImport(QWidget *_parent, const QByteArray &data)
 	gl->addWidget(lbl, 6,0,1,1, Qt::AlignRight|Qt::AlignVCenter);
 
 	cbx_melody = new MppCheckBox();
-	cbx_melody->setCheckState(Qt::Checked);
+	cbx_melody->setChecked(true);
 	gl->addWidget(cbx_melody, 0,1,1,1, Qt::AlignCenter);
 
 	cbx_text = new MppCheckBox();
-	cbx_text->setCheckState(Qt::Checked);
+	cbx_text->setChecked(true);
 	gl->addWidget(cbx_text, 1,1,1,1, Qt::AlignCenter);
 
 	cbx_chords = new MppCheckBox();
-	cbx_chords->setCheckState(Qt::Checked);
+	cbx_chords->setChecked(true);
 	gl->addWidget(cbx_chords, 2,1,1,1, Qt::AlignCenter);
 
 	cbx_convert = new MppCheckBox();
-	cbx_convert->setCheckState(Qt::Checked);
+	cbx_convert->setChecked(true);
 	gl->addWidget(cbx_convert, 3,1,1,1, Qt::AlignCenter);
 
 	cbx_erase = new MppCheckBox();
-	cbx_erase->setCheckState(Qt::Checked);
+	cbx_erase->setChecked(true);
 	gl->addWidget(cbx_erase, 4,1,1,1, Qt::AlignCenter);
 
 	spn_nmeasure = new QSpinBox();

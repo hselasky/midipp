@@ -543,8 +543,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		connect(led_config_dev[n], SIGNAL(textChanged(const QString &)), this, SLOT(handle_config_changed()));
 
 		for (x = 0; x != (1 + MPP_MAX_VIEWS); x++) {
-			cbx_config_dev[n][x] = new MppCheckBox(n);
-			connect(cbx_config_dev[n][x], SIGNAL(stateChanged(int,int)), this, SLOT(handle_config_changed()));
+			cbx_config_dev[n][x] = new MppCheckBox();
+			connect(cbx_config_dev[n][x], SIGNAL(toggled(bool)), this, SLOT(handle_config_changed()));
 			gb_config_device->addWidget(cbx_config_dev[n][x], n + 1, 2 + x, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 		}
 
@@ -845,7 +845,7 @@ MppMainWindow :: handle_watchdog()
 		tab_chord_gl->watchdog();
 
 	if (instr_update)
-		tab_instrument->handle_instr_changed(0);
+		tab_instrument->handle_instr_changed();
 
 	if (bpm < 0)
 		bpm = 0;

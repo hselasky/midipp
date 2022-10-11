@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2017-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2017-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -60,7 +60,7 @@ public:
 	QPushButton *but_instr_unmute_all;
 
 public slots:
-	void handle_instr_changed(int);
+	void handle_instr_changed();
 	void handle_instr_reset();
 	void handle_instr_program();
 	void handle_instr_program_all();

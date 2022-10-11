@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2017 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -72,7 +72,7 @@ MppMidi :: MppMidi(QWidget *_parent, uint32_t _mask, uint32_t _flags, uint32_t _
 
 		cbx_import[x] = new MppCheckBox();
 		cbx_import[x]->setChecked((_mask >> x) & 1);
-		connect(cbx_import[x], SIGNAL(stateChanged(int,int)), this, SLOT(handle_checkboxes()));
+		connect(cbx_import[x], SIGNAL(toggled(bool)), this, SLOT(handle_checkboxes()));
 		gb_import->addWidget(cbx_import[x],t,1+u,1,1,Qt::AlignCenter);
 	}
 
@@ -86,21 +86,21 @@ MppMidi :: MppMidi(QWidget *_parent, uint32_t _mask, uint32_t _flags, uint32_t _
 
 	cbx_have_duration = new MppCheckBox();
 	if (flags & MIDI_FLAG_DURATION)
-		cbx_have_duration->setChecked(1);
+		cbx_have_duration->setChecked(true);
 
 	gl->addWidget(cbx_have_duration,2,3,1,1,Qt::AlignCenter);
 	gl->addWidget(new QLabel(tr("Add autoplay timeout to score lines")),2,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
 
 	cbx_have_strings = new MppCheckBox();
 	if (flags & MIDI_FLAG_STRING)
-		cbx_have_strings->setChecked(1);
+		cbx_have_strings->setChecked(true);
 
 	gl->addWidget(cbx_have_strings,3,3,1,1,Qt::AlignCenter);
 	gl->addWidget(new QLabel(tr("Add separate tempo strings")),3,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
 
 	cbx_erase_dest = new MppCheckBox();
 	if (flags & MIDI_FLAG_ERASE_DEST)
-		cbx_erase_dest->setChecked(1);
+		cbx_erase_dest->setChecked(true);
 
 	gl->addWidget(cbx_erase_dest,4,3,1,1,Qt::AlignCenter);
 	gl->addWidget(new QLabel(tr("Erase destination view")),4,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
@@ -171,7 +171,7 @@ MppMidi :: handle_set_all_track()
 
 	for (x = 0; x != MIDI_MAX_TRACKS; x++) {
 		if (chan_mask & (1 << x)) {
-			cbx_import[x]->setChecked(1);
+			cbx_import[x]->setChecked(true);
 		}
 	}
 }
@@ -195,6 +195,6 @@ MppMidi :: handle_clear_all_track()
 	uint32_t x;
 
 	for (x = 0; x != MIDI_MAX_TRACKS; x++) {
-		cbx_import[x]->setChecked(0);
+		cbx_import[x]->setChecked(false);
 	}
 }

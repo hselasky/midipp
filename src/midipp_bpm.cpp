@@ -112,13 +112,13 @@ MppBpm :: MppBpm(MppMainWindow *_parent)
 
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
 		cbx_out_view[n] = new MppCheckBox();
-		connect(cbx_out_view[n], SIGNAL(stateChanged(int,int)), this, SLOT(handle_config_change()));
+		connect(cbx_out_view[n], SIGNAL(toggled(bool)), this, SLOT(handle_config_change()));
 		cbx_sync_view[n] = new MppCheckBox();
-		connect(cbx_sync_view[n], SIGNAL(stateChanged(int,int)), this, SLOT(handle_config_change()));
+		connect(cbx_sync_view[n], SIGNAL(toggled(bool)), this, SLOT(handle_config_change()));
 	}
 
 	cbx_midi_beat = new MppCheckBox();
-	connect(cbx_midi_beat, SIGNAL(stateChanged(int,int)), this, SLOT(handle_config_change()));
+	connect(cbx_midi_beat, SIGNAL(toggled(bool)), this, SLOT(handle_config_change()));
 
 	but_reset_all = new QPushButton(tr("Reset all"));
 	but_done_all = new QPushButton(tr("Close"));
@@ -218,11 +218,11 @@ void
 MppBpm :: handle_reset_all()
 {
 	for (unsigned n = 0; n != MPP_MAX_VIEWS; n++) {
-		MPP_BLOCKED(cbx_out_view[n], setCheckState(Qt::Unchecked));
-		MPP_BLOCKED(cbx_sync_view[n], setCheckState(Qt::Unchecked));
+		MPP_BLOCKED(cbx_out_view[n], setChecked(false));
+		MPP_BLOCKED(cbx_sync_view[n], setChecked(false));
 	}
 
-	MPP_BLOCKED(cbx_midi_beat, setCheckState(Qt::Unchecked));
+	MPP_BLOCKED(cbx_midi_beat, setChecked(false));
 	MPP_BLOCKED(mbm_generator, setSelection(0));
 
 	mw->atomic_lock();
@@ -289,8 +289,8 @@ MppBpm :: handle_config_apply()
 	uint32_t n;
 
 	for (n = 0; n != MPP_MAX_VIEWS; n++) {
-		tmp[n] = (cbx_out_view[n]->checkState() != Qt::Unchecked);
-		sync[n] = (cbx_sync_view[n]->checkState() != Qt::Unchecked);
+		tmp[n] = cbx_out_view[n]->isChecked();
+		sync[n] = cbx_sync_view[n]->isChecked();
 	}
 
 	val[0] = spn_bpm_value->value();
@@ -298,7 +298,7 @@ MppBpm :: handle_config_apply()
 	val[2] = spn_bpm_key->value();
 	val[3] = spn_bpm_period_ref->value();
 	val[4] = spn_bpm_period_cur->value();
-	val[5] = (cbx_midi_beat->checkState() != Qt::Unchecked);
+	val[5] = cbx_midi_beat->isChecked();
 
 	mw->atomic_lock();
 	bpm_other = bpm_cur = val[0];
