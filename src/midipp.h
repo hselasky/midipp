@@ -454,9 +454,8 @@ public:
 	MppDialog(QWidget *_parent, const QString &title) : QDialog(_parent) {
 		setWindowTitle(title);
 		setWindowIcon(QIcon(MppIconFile));
-#if defined(Q_OS_IOS)
-		setFixedSize(_parent->size());
-#endif
+		/* try to keep dialog sizes to a minimum */
+		setMaximumSize(_parent->size());
 	};
 };
 
