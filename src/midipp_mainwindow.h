@@ -251,7 +251,8 @@ public:
 
 	MppDevSel *but_config_sel[MPP_MAX_DEVS];
 	MppButton *but_config_dev[MPP_MAX_DEVS];
-	MppButton *but_config_mm[MPP_MAX_DEVS];
+	MppButton *but_config_mm_ch[MPP_MAX_DEVS];
+	MppButton *but_config_mm_other[MPP_MAX_DEVS];
 	QLineEdit *led_config_dev[MPP_MAX_DEVS];
 	MppCheckBox *cbx_config_dev[MPP_MAX_DEVS][1 + MPP_MAX_VIEWS];
 
@@ -340,7 +341,9 @@ public slots:
 	void handle_gpro_file_import(int);
 	void handle_mxml_file_import(int);
 
-	void handle_mute_map(int);
+	void handle_mute_map_ch(int);
+	void handle_mute_map_other(int);
+
 	int handle_config_dev(int, int = 0);
 
 	void handle_bpm();

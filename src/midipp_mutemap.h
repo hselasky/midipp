@@ -28,20 +28,40 @@
 
 #include "midipp.h"
 
-class MppMuteMap : public QDialog
+class MppMuteMapCh : public QDialog
 {
 	Q_OBJECT
 public:
-	MppMuteMap(QWidget *, MppMainWindow *, int);
+	MppMuteMapCh(QWidget *, MppMainWindow *, int);
 
 	MppMainWindow *mw;
 	int devno;
 
 	QGridLayout *gl;
 
-	MppGroupBox *gb_mute;
-
 	MppCheckBox *cbx_mute[16];
+
+	QPushButton *but_reset_all;
+	QPushButton *but_close_all;
+
+public slots:
+	void handle_reset_all();
+	void handle_close_all();
+	void handle_apply_all();
+	void handle_revert_all();
+};
+
+class MppMuteMapOther : public QDialog
+{
+	Q_OBJECT
+public:
+	MppMuteMapOther(QWidget *, MppMainWindow *, int);
+
+	MppMainWindow *mw;
+	int devno;
+
+	QGridLayout *gl;
+
 	MppButtonMap *cbx_mute_program;
 	MppButtonMap *cbx_mute_pedal;
 	MppButtonMap *cbx_mute_local_keys;

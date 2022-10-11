@@ -507,11 +507,17 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		gb_config_device->addWidget(pl, 0, 3 + x, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	}
 
-	gb_config_device->addWidget(new QLabel(tr("Mute map")), 0, 3 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	pl = new QLabel(tr("Mute\nchannel"));
+	pl->setAlignment(Qt::AlignCenter);
+	gb_config_device->addWidget(pl, 0, 3 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+
+	pl = new QLabel(tr("Mute\nother"));
+	pl->setAlignment(Qt::AlignCenter);
+	gb_config_device->addWidget(pl, 0, 4 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	pl = new QLabel(tr("Device\nselection"));
 	pl->setAlignment(Qt::AlignCenter);
-	gb_config_device->addWidget(pl, 0, 4 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb_config_device->addWidget(pl, 0, 5 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 
 	gb_config_device->setColumnStretch(1, 1);
 
@@ -523,8 +529,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		but_config_sel[n] = new MppDevSel(n, 0);
 		connect(but_config_sel[n], SIGNAL(valueChanged(int)), this, SLOT(handle_config_changed()));
  
-		but_config_mm[n] = new MppButton(tr("MM"), n);
-		connect(but_config_mm[n], SIGNAL(released(int)), this, SLOT(handle_mute_map(int)));
+		but_config_mm_ch[n] = new MppButton(tr("MCH"), n);
+		connect(but_config_mm_ch[n], SIGNAL(released(int)), this, SLOT(handle_mute_map_ch(int)));
+
+		but_config_mm_other[n] = new MppButton(tr("MOT"), n);
+		connect(but_config_mm_other[n], SIGNAL(released(int)), this, SLOT(handle_mute_map_other(int)));
 
 		but_config_dev[n] = new MppButton(tr("DEV"), n);
 		connect(but_config_dev[n], SIGNAL(released(int)), this, SLOT(handle_config_dev(int)));
@@ -541,8 +550,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 		gb_config_device->addWidget(but_config_sel[n], n + 1, 0, 1, 1, Qt::AlignHCenter|Qt::AlignLeft);
 		gb_config_device->addWidget(led_config_dev[n], n + 1, 1, 1, 1);
-		gb_config_device->addWidget(but_config_mm[n], n + 1, 3 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		gb_config_device->addWidget(but_config_dev[n], n + 1, 4 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		gb_config_device->addWidget(but_config_mm_ch[n], n + 1, 3 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		gb_config_device->addWidget(but_config_mm_other[n], n + 1, 4 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		gb_config_device->addWidget(but_config_dev[n], n + 1, 5 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
 	}
 
 	x = 0;
@@ -2893,9 +2903,17 @@ MppMainWindow :: MidiUnInit(void)
 }
 
 void
-MppMainWindow :: handle_mute_map(int n)
+MppMainWindow :: handle_mute_map_ch(int n)
 {
-	MppMuteMap diag(this, this, n);
+	MppMuteMapCh diag(this, this, n);
+
+	diag.exec();
+}
+
+void
+MppMainWindow :: handle_mute_map_other(int n)
+{
+	MppMuteMapOther diag(this, this, n);
 
 	diag.exec();
 }
