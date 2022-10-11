@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2012-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,7 +46,7 @@ MppVolume :: mousePressEvent(QMouseEvent *event)
 	if (event->button() == Qt::LeftButton) {
 		moving = 1;
 		curr_delta = 0;
-		y_pos = event->y();
+		y_pos = event->pos().y();
 	}
 }
 
@@ -68,7 +68,7 @@ void
 MppVolume :: mouseMoveEvent(QMouseEvent *event)
 {
 	if (moving) {
-		curr_delta = ((y_pos - event->y()) * (max - min + 1)) / 128;
+		curr_delta = ((y_pos - event->pos().y()) * (max - min + 1)) / 128;
 
 		if ((curr_delta + curr_pos) > max)
 			curr_delta = max - curr_pos;
