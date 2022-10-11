@@ -529,10 +529,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		but_config_sel[n] = new MppDevSel(n, 0);
 		connect(but_config_sel[n], SIGNAL(valueChanged(int)), this, SLOT(handle_config_changed()));
  
-		but_config_mm_ch[n] = new MppButton(tr("MCH"), n);
+		but_config_mm_ch[n] = new MppButton(QString("::"), n);
 		connect(but_config_mm_ch[n], SIGNAL(released(int)), this, SLOT(handle_mute_map_ch(int)));
 
-		but_config_mm_other[n] = new MppButton(tr("MOT"), n);
+		but_config_mm_other[n] = new MppButton(QString("::"), n);
 		connect(but_config_mm_other[n], SIGNAL(released(int)), this, SLOT(handle_mute_map_other(int)));
 
 		but_config_dev[n] = new MppButton(tr("DEV"), n);
@@ -572,8 +572,8 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_config_gl->addWidget(mpp_settings->gb_save_preset, x, 0, 1, 8);
 
 	x++;
-	
-	tab_config_gl->addWidget(but_config_view_fontsel, x, 1, 1, 1);
+
+	tab_config_gl->setRowStretch(x, 1);
 
 	x++;
 
@@ -582,8 +582,10 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	x++;
 
+	tab_config_gl->addWidget(but_config_view_fontsel, x, 2, 1, 1);
 	tab_config_gl->addWidget(but_config_print_fontsel, x, 1, 1, 1);
 	tab_config_gl->addWidget(mpp_settings->but_config_clean, x, 0, 1, 1);
+
 	tab_config_gl->setColumnStretch(8, 1);
 
 	/* Connect all */
