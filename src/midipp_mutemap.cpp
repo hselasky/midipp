@@ -34,7 +34,7 @@ MppMuteMapCh :: MppMuteMapCh(QWidget *_parent, MppMainWindow *_mw, int _devno) :
 {
 	QLabel *pl;
 
-	setWindowTitle(tr("MIDI Output Channel Mute Map"));
+	setWindowTitle(tr("Mute MIDI Output Channel"));
 	setWindowIcon(QIcon(MppIconFile));
 
 	gl = new QGridLayout(this);
@@ -126,7 +126,7 @@ MppMuteMapCh :: handle_close_all()
 MppMuteMapOther :: MppMuteMapOther(QWidget *_parent, MppMainWindow *_mw, int _devno) :
     QDialog(_parent), mw(_mw), devno(_devno)
 {
-	setWindowTitle(tr("MIDI Output Other Mute Map"));
+	setWindowTitle(tr("Mute Other MIDI Output"));
 	setWindowIcon(QIcon(MppIconFile));
 
 	gl = new QGridLayout(this);
