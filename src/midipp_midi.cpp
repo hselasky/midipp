@@ -27,8 +27,8 @@
 #include "midipp_checkbox.h"
 #include "midipp_groupbox.h"
 
-MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
-    : QDialog()
+MppMidi :: MppMidi(QWidget *_parent, uint32_t _mask, uint32_t _flags, uint32_t _thres)
+    : QDialog(_parent)
 {
 	uint32_t x;
 	uint32_t t;
@@ -159,12 +159,6 @@ MppMidi :: MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres)
 	thres = spn_parse_thres->value();
 
 	prefix = led_prefix->text().trimmed();
-}
-
-MppMidi :: ~MppMidi()
-{
-
-
 }
 
 void

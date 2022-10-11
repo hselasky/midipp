@@ -2484,7 +2484,7 @@ MppMainWindow :: import_midi_track(struct umidi20_track *im_track, uint32_t flag
 
 		MppMidi *diag;
 
-		diag = new MppMidi(chan_mask, flags, thres);
+		diag = new MppMidi(this, chan_mask, flags, thres);
 
 		flags = diag->flags;
 		thres = diag->thres;
@@ -2725,7 +2725,7 @@ MppMainWindow :: handle_gpro_file_import(int view)
 
 load_file:
 
-	gpro = new MppGPro((uint8_t *)data.data(), data.size());
+	gpro = new MppGPro(this, (uint8_t *)data.data(), data.size());
 
 	cursor = new QTextCursor(scores_main[view]->editWidget->textCursor());
 	cursor->beginEditBlock();
@@ -2779,7 +2779,7 @@ MppMainWindow :: handle_mxml_file_import(int view)
 
 load_file:
 
-	mxml = new MppMusicXmlImport(data);
+	mxml = new MppMusicXmlImport(this, data);
 
 	if (mxml->output.isEmpty()) {
 		QMessageBox box;

@@ -27,15 +27,15 @@
 #include "midipp_devices.h"
 #include "midipp_groupbox.h"
 
-MppDevices :: MppDevices(QWidget *parent)
-  : QDialog(parent)
+MppDevices :: MppDevices(QWidget *_parent)
+  : QDialog(_parent)
 {
 	int n;
 
-	gl = new QGridLayout(this);
-
 	setWindowTitle(tr("Select playback and recording device"));
 	setWindowIcon(QIcon(MppIconFile));
+
+	gl = new QGridLayout(this);
 
 	lw_rec = new QListWidget();
 	lw_play = new QListWidget();

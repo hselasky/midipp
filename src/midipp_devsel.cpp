@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2018 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2018-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,8 +28,8 @@
 #include "midipp_devsel.h"
 #include "midipp_button.h"
 
-MppDevSelDiag :: MppDevSelDiag(QWidget *parent, int val, int have_any) :
-	QDialog(parent), QGridLayout(this)
+MppDevSelDiag :: MppDevSelDiag(QWidget *_parent, int val, int have_any) :
+	QDialog(_parent), QGridLayout(this)
 {
 	MppButton *pmb;
 	int x;

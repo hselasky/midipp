@@ -619,7 +619,7 @@ MppSettings :: handle_load(int id)
 }
 
 MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
-  : QDialog()
+  : QDialog(_parent->mw)
 {
 	ms = _parent;
 

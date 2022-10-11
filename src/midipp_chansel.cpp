@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2014-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2014-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,8 +29,8 @@
 #include "midipp_button.h"
 #include "midipp_mainwindow.h"
 
-MppChanSelDiag :: MppChanSelDiag(QWidget *parent, int val, int mask_any, int mask_chan) :
-	QDialog(parent), QGridLayout(this)
+MppChanSelDiag :: MppChanSelDiag(QWidget *_parent, int val, int mask_any, int mask_chan) :
+	QDialog(_parent), QGridLayout(this)
 {
 	MppButton *pmb;
 	int x;

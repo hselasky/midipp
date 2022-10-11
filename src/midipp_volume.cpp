@@ -32,8 +32,7 @@ MppVolume :: MppVolume(QWidget *parent)
 	    curr_pos = min = max = 0;
 	mid = 1;
 
-	setMinimumSize(QSize(50,50));
-	setMaximumSize(QSize(50,50));
+	setFixedSize(QSize(50,50));
 }
 
 MppVolume :: ~MppVolume()

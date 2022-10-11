@@ -587,7 +587,8 @@ error:
 	return (0);
 }
 
-MppMusicXmlImport :: MppMusicXmlImport(const QByteArray &data) : QDialog()
+MppMusicXmlImport :: MppMusicXmlImport(QWidget *_parent, const QByteArray &data) :
+    QDialog(_parent)
 {
 	int nparts = MppReadMusicXMLParts(data);
 
@@ -670,8 +671,4 @@ MppMusicXmlImport :: MppMusicXmlImport(const QByteArray &data) : QDialog()
 
 	output = MppReadMusicXML(data, flags,
 	    spn_partnumber->value() - 1, spn_nmeasure->value());
-}
-
-MppMusicXmlImport :: ~MppMusicXmlImport()
-{
 }

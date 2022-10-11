@@ -28,7 +28,7 @@
 #include "midipp_replace.h"
 
 MppReplace :: MppReplace(MppMainWindow *_mw, MppScoreMain *_sm,
-  QString _match, QString _replace) : QDialog(0)
+  QString _match, QString _replace) : QDialog(_mw)
 {
 	gl = new QGridLayout(this);
 

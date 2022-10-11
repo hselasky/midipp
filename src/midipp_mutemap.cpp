@@ -34,7 +34,6 @@ MppMuteMap :: MppMuteMap(QWidget *_parent, MppMainWindow *_mw, int _devno) :
 {
 	setWindowTitle(tr("MIDI Output Mute Map"));
 	setWindowIcon(QIcon(MppIconFile));
-	setMaximumSize(_parent->size());
 
 	gl = new QGridLayout(this);
 

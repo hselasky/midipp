@@ -38,11 +38,10 @@
 
 class MppMidi : public QDialog
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
-	MppMidi(uint32_t _mask, uint32_t _flags, uint32_t _thres);
-	~MppMidi();
+	MppMidi(QWidget *, uint32_t _mask, uint32_t _flags, uint32_t _thres);
 
 	/* channel mask */
 	uint32_t chan_mask;

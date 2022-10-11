@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,11 +35,10 @@
 
 class MppGPro : public QDialog
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
-	MppGPro(const uint8_t *, uint32_t);
-	~MppGPro();
+	MppGPro(QWidget *, const uint8_t *, uint32_t);
 
 	QString output;
 

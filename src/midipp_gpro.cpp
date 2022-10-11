@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -1481,8 +1481,8 @@ gpro_cleanup(struct gpro_file *pgf)
 	}
 }
 
-MppGPro :: MppGPro(const uint8_t *ptr, uint32_t len)
-	: QDialog()
+MppGPro :: MppGPro(QWidget *_parent, const uint8_t *ptr, uint32_t len)
+	: QDialog(_parent)
 {
 	struct gpro_file gpf;
 	char line_buf[64];
@@ -1583,13 +1583,6 @@ MppGPro :: MppGPro(const uint8_t *ptr, uint32_t len)
 		gpro_dump_events(&gpf, output, cbx_single_track->isChecked());
 
 	gpro_cleanup(&gpf);
-}
-
-
-MppGPro :: ~MppGPro()
-{
-
-
 }
 
 void

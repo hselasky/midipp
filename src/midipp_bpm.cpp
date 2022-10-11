@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2021 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,14 +70,14 @@ MppBpm :: handle_callback_locked()
 	}
 }
 
-MppBpm :: MppBpm(MppMainWindow *parent)
-  : QDialog(parent)
+MppBpm :: MppBpm(MppMainWindow *_parent)
+  : QDialog(_parent)
 {
 	QLabel *lbl;
 	char buf[64];
 	int n;
 
-	mw = parent;
+	mw = _parent;
 
 	mbm_generator = new MppButtonMap("BPM generator\0" "OFF\0" "ON\0", 2, 2);
 	connect(mbm_generator, SIGNAL(selectionChanged(int)), this, SLOT(handle_bpm_enable(int)));
