@@ -39,8 +39,7 @@ MppMuteMapCh :: MppMuteMapCh(MppMainWindow *_mw, int _devno) :
 	for (int n = 0; n != 4; n++) {
 		pl = new QLabel(tr("Muted"));
 		pl->setAlignment(Qt::AlignCenter);
-		gl->addWidget(pl, 0, 1 + 2 * n, 1, 1,
-		    Qt::AlignHCenter|Qt::AlignVCenter);
+		gl->addWidget(pl, 0, 1 + 2 * n, 1, 1, Qt::AlignCenter);
 	}
 
 	but_reset_all = new QPushButton(tr("Reset"));
@@ -62,10 +61,8 @@ MppMuteMapCh :: MppMuteMapCh(MppMainWindow *_mw, int _devno) :
 		pl = new QLabel(MppChanName(n));
 		pl->setAlignment(Qt::AlignCenter);
 
-		gl->addWidget(pl,
-		    y_off, x_off + 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		gl->addWidget(cbx_mute[n],
-		    y_off, x_off + 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		gl->addWidget(pl, y_off, x_off + 0, 1, 1, Qt::AlignCenter);
+		gl->addWidget(cbx_mute[n], y_off, x_off + 1, 1, 1, Qt::AlignCenter);
 	}
 
 	gl->addWidget(but_reset_all, 5, 0, 1, 4);

@@ -462,9 +462,9 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 	tab_play_gl->setRowStretch(5, 1);
 	tab_play_gl->setColumnStretch(5, 1);
 
-	gl_bpm->addWidget(lbl_bpm_avg_val, 0, 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl_bpm->addWidget(lbl_bpm_avg_val, 0, 0, 1, 1, Qt::AlignCenter);
 
-	gl_time->addWidget(lbl_curr_time_val, 0, 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gl_time->addWidget(lbl_curr_time_val, 0, 0, 1, 1, Qt::AlignCenter);
 
 	gl_ctrl->addWidget(but_midi_pause, 0, 0, 1, 1);
 	gl_ctrl->addWidget(but_midi_trigger, 1, 0, 1, 1);
@@ -495,29 +495,29 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	gb_config_device = new MppGroupBox(tr("Device configuration"));
 
-	gb_config_device->addWidget(new QLabel(tr("Group")), 0, 0, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-	gb_config_device->addWidget(new QLabel(tr("Device name")), 0, 1, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb_config_device->addWidget(new QLabel(tr("Group")), 0, 0, 1, 1, Qt::AlignCenter);
+	gb_config_device->addWidget(new QLabel(tr("Device name")), 0, 1, 1, 1, Qt::AlignCenter);
 
 	pl = new QLabel(tr("Output\nenable"));
 	pl->setAlignment(Qt::AlignCenter);
-	gb_config_device->addWidget(pl, 0, 2, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb_config_device->addWidget(pl, 0, 2, 1, 1, Qt::AlignCenter);
 	for (x = 0; x != MPP_MAX_VIEWS; x++) {
 		pl = new QLabel(tr("Input to\nview-%1").arg(QChar('A' + x)));
 		pl->setAlignment(Qt::AlignCenter);
-		gb_config_device->addWidget(pl, 0, 3 + x, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		gb_config_device->addWidget(pl, 0, 3 + x, 1, 1, Qt::AlignCenter);
 	}
 
 	pl = new QLabel(tr("Mute\nchannel"));
 	pl->setAlignment(Qt::AlignCenter);
-	gb_config_device->addWidget(pl, 0, 3 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb_config_device->addWidget(pl, 0, 3 + MPP_MAX_VIEWS, 1, 1, Qt::AlignCenter);
 
 	pl = new QLabel(tr("Mute\nother"));
 	pl->setAlignment(Qt::AlignCenter);
-	gb_config_device->addWidget(pl, 0, 4 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb_config_device->addWidget(pl, 0, 4 + MPP_MAX_VIEWS, 1, 1, Qt::AlignCenter);
 
 	pl = new QLabel(tr("Device\nselection"));
 	pl->setAlignment(Qt::AlignCenter);
-	gb_config_device->addWidget(pl, 0, 5 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+	gb_config_device->addWidget(pl, 0, 5 + MPP_MAX_VIEWS, 1, 1, Qt::AlignCenter);
 
 	gb_config_device->setColumnStretch(1, 1);
 
@@ -545,14 +545,14 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 		for (x = 0; x != (1 + MPP_MAX_VIEWS); x++) {
 			cbx_config_dev[n][x] = new MppCheckBox();
 			connect(cbx_config_dev[n][x], SIGNAL(toggled(bool)), this, SLOT(handle_config_changed()));
-			gb_config_device->addWidget(cbx_config_dev[n][x], n + 1, 2 + x, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+			gb_config_device->addWidget(cbx_config_dev[n][x], n + 1, 2 + x, 1, 1, Qt::AlignCenter);
 		}
 
 		gb_config_device->addWidget(but_config_sel[n], n + 1, 0, 1, 1, Qt::AlignHCenter|Qt::AlignLeft);
 		gb_config_device->addWidget(led_config_dev[n], n + 1, 1, 1, 1);
-		gb_config_device->addWidget(but_config_mm_ch[n], n + 1, 3 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		gb_config_device->addWidget(but_config_mm_other[n], n + 1, 4 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
-		gb_config_device->addWidget(but_config_dev[n], n + 1, 5 + MPP_MAX_VIEWS, 1, 1, Qt::AlignHCenter|Qt::AlignVCenter);
+		gb_config_device->addWidget(but_config_mm_ch[n], n + 1, 3 + MPP_MAX_VIEWS, 1, 1, Qt::AlignCenter);
+		gb_config_device->addWidget(but_config_mm_other[n], n + 1, 4 + MPP_MAX_VIEWS, 1, 1, Qt::AlignCenter);
+		gb_config_device->addWidget(but_config_dev[n], n + 1, 5 + MPP_MAX_VIEWS, 1, 1, Qt::AlignCenter);
 	}
 
 	x = 0;

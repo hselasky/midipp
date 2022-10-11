@@ -536,7 +536,7 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 
 	gb->addWidget(
 	    new QLabel(tr("[CDEFGABH][#b][...][/CDEFGABH[#b]]")),
-	    0,0,1,4, Qt::AlignHCenter|Qt::AlignVCenter);
+	    0,0,1,4, Qt::AlignCenter);
 
 	gb->addWidget(but_rol_down, 2,0,1,1);
 	gb->addWidget(but_rol_up, 2,1,1,1);

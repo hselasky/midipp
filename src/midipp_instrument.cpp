@@ -60,10 +60,10 @@ MppInstrumentTab :: MppInstrumentTab(MppMainWindow *_mw)
 	spn_instr_curr_prog->setValue(0);
 
 	gb_instr_select = new MppGroupBox(tr("Synth and Recording Instrument Selector"));
-	gb_instr_select->addWidget(new QLabel(tr("Device")), 0, 0, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-	gb_instr_select->addWidget(new QLabel(tr("Channel")), 0, 1, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-	gb_instr_select->addWidget(new QLabel(tr("Bank")), 0, 2, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-	gb_instr_select->addWidget(new QLabel(tr("Program")), 0, 3, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+	gb_instr_select->addWidget(new QLabel(tr("Device")), 0, 0, 1, 1, Qt::AlignCenter);
+	gb_instr_select->addWidget(new QLabel(tr("Channel")), 0, 1, 1, 1, Qt::AlignCenter);
+	gb_instr_select->addWidget(new QLabel(tr("Bank")), 0, 2, 1, 1, Qt::AlignCenter);
+	gb_instr_select->addWidget(new QLabel(tr("Program")), 0, 3, 1, 1, Qt::AlignCenter);
 	gb_instr_select->addWidget(spn_instr_curr_dev, 1, 0, 1, 1);
 	gb_instr_select->addWidget(spn_instr_curr_chan, 1, 1, 1, 1);
 	gb_instr_select->addWidget(spn_instr_curr_bank, 1, 2, 1, 1);
@@ -73,13 +73,13 @@ MppInstrumentTab :: MppInstrumentTab(MppMainWindow *_mw)
 
 	gb_instr_table = new MppGroupBox(tr("Synth and Recording Instrument Table"));
 
-	gb_instr_table->addWidget(new QLabel(tr("Bank")), 0, 1, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-	gb_instr_table->addWidget(new QLabel(tr("Program")), 0, 2, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-	gb_instr_table->addWidget(new QLabel(tr("Mute")), 0, 3, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+	gb_instr_table->addWidget(new QLabel(tr("Bank")), 0, 1, 1, 1, Qt::AlignCenter);
+	gb_instr_table->addWidget(new QLabel(tr("Program")), 0, 2, 1, 1, Qt::AlignCenter);
+	gb_instr_table->addWidget(new QLabel(tr("Mute")), 0, 3, 1, 1, Qt::AlignCenter);
 
-	gb_instr_table->addWidget(new QLabel(tr("Bank")), 0, 5, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-	gb_instr_table->addWidget(new QLabel(tr("Program")), 0, 6, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-	gb_instr_table->addWidget(new QLabel(tr("Mute")), 0, 7, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+	gb_instr_table->addWidget(new QLabel(tr("Bank")), 0, 5, 1, 1, Qt::AlignCenter);
+	gb_instr_table->addWidget(new QLabel(tr("Program")), 0, 6, 1, 1, Qt::AlignCenter);
+	gb_instr_table->addWidget(new QLabel(tr("Mute")), 0, 7, 1, 1, Qt::AlignCenter);
 
 	for (unsigned n = 0; n != 16; n++) {
 		int y_off = (n & 8) ? 4 : 0;
@@ -97,8 +97,8 @@ MppInstrumentTab :: MppInstrumentTab(MppMainWindow *_mw)
 
 		gb_instr_table->addWidget(new QLabel(MppChanName(n)), (n & 7) + 1, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
 		gb_instr_table->addWidget(spn_instr_bank[n], (n & 7) + 1, 1 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
-		gb_instr_table->addWidget(spn_instr_prog[n], (n & 7) + 1, 2 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
-		gb_instr_table->addWidget(cbx_instr_mute[n], (n & 7) + 1, 3 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignHCenter);
+		gb_instr_table->addWidget(spn_instr_prog[n], (n & 7) + 1, 2 + y_off, 1, 1, Qt::AlignCenter);
+		gb_instr_table->addWidget(cbx_instr_mute[n], (n & 7) + 1, 3 + y_off, 1, 1, Qt::AlignCenter);
 	}
 
 	gl->addWidget(gb_instr_select, 0, 0, 1, 8);

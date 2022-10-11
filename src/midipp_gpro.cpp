@@ -1544,7 +1544,7 @@ MppGPro :: MppGPro(QWidget *_parent, const uint8_t *ptr, uint32_t len) :
 
 			lbl_info[x] = new QLabel(tr(line_buf));
 
-			gl->addWidget(cbx_import[x],t+y,u+1,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
+			gl->addWidget(cbx_import[x],t+y,u+1,1,1,Qt::AlignCenter);
 			gl->addWidget(lbl_info[x],t+y,u+0,1,1,Qt::AlignLeft|Qt::AlignVCenter);
 
 			t++;
@@ -1556,7 +1556,7 @@ MppGPro :: MppGPro(QWidget *_parent, const uint8_t *ptr, uint32_t len) :
 	cbx_single_track = new MppCheckBox();
 	lbl_single_track = new QLabel(tr("Output like a single track"));
 
-	gl->addWidget(cbx_single_track,y,3,1,1,Qt::AlignHCenter|Qt::AlignVCenter);
+	gl->addWidget(cbx_single_track,y,3,1,1,Qt::AlignCenter);
 	gl->addWidget(lbl_single_track,y,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
 
 	y++;
