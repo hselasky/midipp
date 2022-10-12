@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013-2020 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2013-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -53,7 +53,7 @@ MppTabBar :: MppTabBar(QWidget *parent) : QWidget(parent)
 
 	split = new QSplitter();
 
-#if defined(TARGET_OS_IPHONE) || defined(TARGET_IPHONE_SIMULATOR)
+#if defined(Q_OS_IOS)
 	split->setHandleWidth(32);
 #else
 	split->setHandleWidth(16);

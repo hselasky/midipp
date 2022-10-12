@@ -573,7 +573,7 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	gb_dc->addWidget(wi_dc, 0,0,1,1);
 
 	split = new QSplitter();
-#if defined(TARGET_OS_IPHONE) || defined(TARGET_IPHONE_SIMULATOR)
+#if defined(Q_OS_IOS)
 	split->setHandleWidth(32);
 #else
 	split->setHandleWidth(16);
