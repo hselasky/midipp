@@ -26,8 +26,33 @@
 #include "midipp_dialog.h"
 #include "midipp_mainwindow.h"
 
+class MppDialogTrans : public QWidget
+{
+public:
+	MppDialogTrans(QWidget *_parent) : QWidget(_parent) {};
+
+	void paintEvent(QPaintEvent *event) {
+		QPainter paint(this);
+		paint.setOpacity(0.85);
+		paint.fillRect(event->rect(), palette().window());
+		paint.end();
+
+		QWidget::paintEvent(event);
+	};
+};
+
+void
+MppDialog :: paintEvent(QPaintEvent *event)
+{
+	QPainter paint(this);
+	paint.fillRect(event->rect(), palette().window());
+	paint.end();
+
+	QGroupBox::paintEvent(event);
+}
+
 MppDialog :: MppDialog(MppMainWindow *_mw, const QString &title) :
-    QGroupBox(title, _qw = new QWidget(_mw)), _gl(new QGridLayout(_qw))
+    QGroupBox(title, _qw = new MppDialogTrans(*_mw)), _gl(new QGridLayout(_qw))
 {
 	mw = _mw;
 	_result = -1;
@@ -50,15 +75,12 @@ MppDialog :: ~MppDialog()
 int
 MppDialog :: exec()
 {
-	QWidget *old = mw->currentWidget();
-
-	mw->addWidget(_qw);
-	mw->setCurrentWidget(_qw);
+	mw->super_l->addWidget(_qw);
+	_qw->show();
+	_qw->raise();
 	eventLoop.exec(QEventLoop::DialogExec);
-	mw->setCurrentWidget(old);
-	mw->removeWidget(_qw);
-
 	_qw->hide();
+	mw->super_l->removeWidget(_qw);
 
 	return (_result);
 }

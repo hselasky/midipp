@@ -127,7 +127,7 @@ MppLoopTab :: handle_timer_sync()
 }
 
 MppLoopTab :: MppLoopTab(MppMainWindow *_mw)
-  : QWidget(_mw)
+  : QWidget(*_mw)
 {
 	int n;
 	int x;

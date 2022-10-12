@@ -596,7 +596,7 @@ void
 MppImportTab :: handleImportOpen()
 {
 	QFileDialog *diag = 
-	  new QFileDialog(mainWindow, tr("Select Chord Tabular File"), 
+	  new QFileDialog(*mainWindow, tr("Select Chord Tabular File"),
 		Mpp.HomeDirTxt,
 		QString("Chord Tabular File (*.txt; *.TXT)"));
 	QString scores;
@@ -623,7 +623,7 @@ void
 MppImportTab :: handleImportSaveAs()
 {
 	QFileDialog *diag = 
-	  new QFileDialog(mainWindow, tr("Select Chord Tabular File"), 
+	  new QFileDialog(*mainWindow, tr("Select Chord Tabular File"),
 		Mpp.HomeDirTxt,
 		QString("Score File (*.txt *.TXT)"));
 

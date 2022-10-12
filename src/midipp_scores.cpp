@@ -343,6 +343,7 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig)
 	int pageStart[PAGES_MAX];
 	int pageNum;
 	int pageLimit;
+	QWidget *w = *mainWindow;
 #endif
 	MppVisualDot *pdot;
 	MppElement *ptr;
@@ -377,8 +378,8 @@ MppScoreMain :: handlePrintSub(QPrinter *pd, QPoint orig)
 		fnt_b = mainWindow->printFont;
 		fnt_b.setPointSize(mainWindow->printFont.pixelSize() + 2);
 
-		scale_x = (qreal)pd->logicalDpiX() / (qreal)mainWindow->logicalDpiX();
-		scale_y = (qreal)pd->logicalDpiY() / (qreal)mainWindow->logicalDpiY();
+		scale_x = (qreal)pd->logicalDpiX() / (qreal)w->logicalDpiX();
+		scale_y = (qreal)pd->logicalDpiY() / (qreal)w->logicalDpiY();
 
 		/* translate printing area */
 		paint.begin(pd);
@@ -1080,7 +1081,7 @@ void
 MppScoreMain :: handleScoreFileOpen()
 {
 	QFileDialog *diag = 
-	  new QFileDialog(mainWindow, tr("Select Score File"), 
+	  new QFileDialog(*mainWindow, tr("Select Score File"),
 		Mpp.HomeDirTxt,
 		QString("Score File (*.txt *.TXT)"));
 
@@ -1108,7 +1109,7 @@ void
 MppScoreMain :: handleScoreFileSaveAs()
 {
 	QFileDialog *diag = 
-	  new QFileDialog(mainWindow, tr("Select Score File"), 
+	  new QFileDialog(*mainWindow, tr("Select Score File"),
 		Mpp.HomeDirTxt,
 		QString("Score File (*.txt *.TXT)"));
 
@@ -1950,7 +1951,7 @@ MppScoreMain :: handleScorePrint(void)
 	printer.setOutputFormat(QPrinter::PdfFormat);
 #endif
 
-	dlg = new QPrintDialog(&printer, mainWindow);
+	dlg = new QPrintDialog(&printer, *mainWindow);
 
 	if(dlg->exec() == MppDialog::Accepted) {
 

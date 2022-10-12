@@ -147,11 +147,17 @@ MppMainWindow :: MppMainWindow()
 
 	/* Setup GUI */
 
+	super_w = new QWidget();
+	super_w->setWindowTitle(MppVersion);
+	super_w->setWindowIcon(QIcon(MppIconFile));
+
+	super_l = new QStackedLayout(super_w);
+	super_l->setStackingMode(QStackedLayout::StackAll);
+
 	main_w = new QWidget();
 	main_gl = new QGridLayout(main_w);
 
-	addWidget(main_w);
-	setCurrentWidget(main_w);
+	super_l->addWidget(main_w);
 
 	main_tb = new MppTabBar();
 	main_tb_state = 0;
@@ -616,9 +622,6 @@ MppMainWindow :: MppMainWindow()
 
 	MidiInit();
 
-	setWindowTitle(MppVersion);
-	setWindowIcon(QIcon(MppIconFile));
-
 	handle_tab_changed(1);
 
 	watchdog.start(250);
@@ -955,7 +958,7 @@ void
 MppMainWindow :: handle_midi_file_open(int how)
 {
 	QFileDialog *diag = 
-	  new QFileDialog(this, tr("Select MIDI File"), 
+	  new QFileDialog(*this, tr("Select MIDI File"),
 		Mpp.HomeDirMid,
 		QString("MIDI File (*.mid *.MID)"));
 	struct umidi20_song *song_copy;
@@ -1135,7 +1138,6 @@ MppMainWindow :: handle_midi_file_save()
 			box.setIcon(QMessageBox::Information);
 			box.setWindowIcon(QIcon(MppIconFile));
 			box.setWindowTitle(MppVersion);
-
 			box.exec();
 		}
 	} else {
@@ -1147,7 +1149,7 @@ void
 MppMainWindow :: handle_midi_file_save_as()
 {
 	QFileDialog *diag = 
-	  new QFileDialog(this, tr("Select MIDI File"), 
+	  new QFileDialog(*this, tr("Select MIDI File"),
 		Mpp.HomeDirMid,
 		QString("MIDI File (*.mid *.MID)"));
 
@@ -1480,7 +1482,7 @@ MppMainWindow :: handle_config_view_fontsel()
 	bool success;
 	int x;
 
-	QFont font = QFontDialog::getFont(&success, defaultFont, this);
+	QFont font = QFontDialog::getFont(&success, defaultFont, *this);
 
 	if (success) {
 		font.setPixelSize(QFontInfo(font).pixelSize());
@@ -1498,7 +1500,7 @@ MppMainWindow :: handle_config_edit_fontsel()
 	bool success;
 	int x;
 
-	QFont font = QFontDialog::getFont(&success, editFont, this);
+	QFont font = QFontDialog::getFont(&success, editFont, *this);
 
 	if (success) {
 		font.setPixelSize(QFontInfo(font).pixelSize());
@@ -1520,7 +1522,7 @@ MppMainWindow :: handle_config_print_fontsel()
 {
 	bool success;
 
-	QFont font = QFontDialog::getFont(&success, printFont, this);
+	QFont font = QFontDialog::getFont(&success, printFont, *this);
 
 	if (success) {
 		font.setPixelSize(QFontInfo(font).pixelSize());
@@ -2354,9 +2356,9 @@ found:
 
 	QString *ps = scores_main[x/2]->currScoreFileName;
 	if (ps != NULL)
-		setWindowTitle(MppVersion + " - " + MppBaseName(*ps));
+		super_w->setWindowTitle(MppVersion + " - " + MppBaseName(*ps));
 	else
-		setWindowTitle(MppVersion);
+		super_w->setWindowTitle(MppVersion);
 
 	if ((force != 0) || (x & 1))
 		handle_compile();
@@ -2705,7 +2707,7 @@ void
 MppMainWindow :: handle_gpro_file_import(int view)
 {
 	QFileDialog *diag = 
-	  new QFileDialog(this, tr("Select GPro v3 or v4 File"), 
+	  new QFileDialog(*this, tr("Select GPro v3 or v4 File"),
 		Mpp.HomeDirGp3,
 		QString("GPro File (*.gp *.gp3 *.gp4 *.GP *.GP3 *.GP4)"));
 	QByteArray data;
@@ -2761,7 +2763,7 @@ void
 MppMainWindow :: handle_mxml_file_import(int view)
 {
 	QFileDialog *diag = 
-	  new QFileDialog(this, tr("Select MusicXML file"), 
+	  new QFileDialog(*this, tr("Select MusicXML file"),
 		Mpp.HomeDirMXML,
 		QString("MusicXML file (*.xml *.XML)"));
 	QByteArray data;

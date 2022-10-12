@@ -32,7 +32,7 @@
 #include "midipp_devsel.h"
 
 MppCustomTab :: MppCustomTab(MppMainWindow *_mw)
-  : QWidget(_mw)
+  : QWidget(*_mw)
 {
 	int n;
 

@@ -28,7 +28,9 @@
 
 #include "midipp.h"
 
-class MppMainWindow : public QStackedWidget
+#include <QStackedLayout>
+
+class MppMainWindow : QObject
 {
 	Q_OBJECT
 
@@ -154,6 +156,9 @@ public:
 	uint8_t noteMode;
 
 	char *deviceName[MPP_MAX_DEVS];
+
+	QWidget *super_w;
+	QStackedLayout *super_l;
 
 	QWidget *main_w;
 	QGridLayout *main_gl;
@@ -307,6 +312,14 @@ public:
 	struct umidi20_track *track[MPP_MAX_TRACKS];
 
 	uint8_t auto_zero_end[0];
+
+	void show() {
+		super_w->show();
+	};
+
+	operator QWidget *() const {
+		return (super_w);
+	};
 
 public slots:
 	void handle_jump(int index);

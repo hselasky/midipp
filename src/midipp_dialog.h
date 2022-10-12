@@ -51,6 +51,8 @@ public:
 		Accepted,
 	};
 
+	void paintEvent(QPaintEvent *);
+
 public slots:
 	void accept();
 	void reject();

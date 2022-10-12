@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2014-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2014-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,7 +29,7 @@
 #include "midipp_mainwindow.h"
 
 MppPianoTab :: MppPianoTab(MppMainWindow *parent)
-  : QWidget(parent)
+  : QWidget(*parent)
 {
 	memset(&state, 0, sizeof(state));
 

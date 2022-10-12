@@ -564,7 +564,7 @@ MppShowControl :: handle_fontselect()
 {
 	bool success;
 
-	QFont font = QFontDialog::getFont(&success, showFont, mw);
+	QFont font = QFontDialog::getFont(&success, showFont, *mw);
 
 	if (success) {
 		font.setPixelSize(QFontInfo(font).pixelSize());
@@ -690,7 +690,7 @@ void
 MppShowControl :: handle_imageselect()
 {
 	QFileDialog *diag = 
-	  new QFileDialog(mw, tr("Select background image(s)"), 
+	  new QFileDialog(*mw, tr("Select background image(s)"),
 		Mpp.HomeDirBackground,
 		QString("Image Files (*.BMP *.bmp *.GIF *.gif *.JPG *.jpg *.JPEG "
 		    "*.jpeg *.PNG *.png *.PBM *.pbm *.PGM *.pgm *.PPM *.ppm "
@@ -901,7 +901,7 @@ MppShowControl :: handle_hpsjam_change(int value)
 
 		switch (parts.length()) {
 		case 1:
-			QMessageBox::information(mw, MppVersion,
+			QMessageBox::information(*mw, MppVersion,
 			    tr("Please specify a port number: %1:<portnumber>").arg(text));
 			MPP_BLOCKED(butHpsJamOnOff,setSelection(0));
 			return;
@@ -910,7 +910,7 @@ MppShowControl :: handle_hpsjam_change(int value)
 			portHpsJam = port = parts[1].toUShort();
 			break;
 		default:
-			QMessageBox::information(mw, MppVersion,
+			QMessageBox::information(*mw, MppVersion,
 			    tr("Invalid server name: %1").arg(text));
 			MPP_BLOCKED(butHpsJamOnOff,setSelection(0));
 			return;
@@ -921,7 +921,7 @@ MppShowControl :: handle_hpsjam_change(int value)
 
 		for (unsigned x = 1;; x++) {
 			if (x == 128) {
-				QMessageBox::information(mw, MppVersion,
+				QMessageBox::information(*mw, MppVersion,
 				    tr("Could not bind client port"));
 				MPP_BLOCKED(butHpsJamOnOff,setSelection(0));
 				return;
