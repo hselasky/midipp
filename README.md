@@ -28,8 +28,7 @@ MIDI Player Pro was officially released the summer of 2011.
 
 # Dependencies
 <ul>
-  <li>QT 5.x</li>
-  <li>JACK</li>
+  <li>Qt5 and newer</li>
   <li>libumidi</li>
 </ul>
 
