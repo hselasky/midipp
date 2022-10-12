@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2012-2020 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2012-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_SETTINGS_H_
 #define	_MIDIPP_SETTINGS_H_
 
-#include "midipp.h"
+#include "midipp_dialog.h"
 
 #define	MPP_MAX_SETTINGS 5
 

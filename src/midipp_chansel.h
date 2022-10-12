@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2014-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2014-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,8 +26,7 @@
 #ifndef _MIDIPP_CHANSEL_H_
 #define	_MIDIPP_CHANSEL_H_
 
-#include "midipp.h"
-#include "midipp_gridlayout.h"
+#include "midipp_dialog.h"
 
 class MppChanSelDiagBase : public QObject
 {

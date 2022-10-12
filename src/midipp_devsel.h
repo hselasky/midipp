@@ -26,8 +26,7 @@
 #ifndef _MIDIPP_DEVSEL_H_
 #define	_MIDIPP_DEVSEL_H_
 
-#include "midipp.h"
-#include "midipp_gridlayout.h"
+#include "midipp_dialog.h"
 
 class MppDevSelDiagBase : public QObject
 {

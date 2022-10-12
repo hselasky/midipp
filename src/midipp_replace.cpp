@@ -30,6 +30,8 @@
 MppReplace :: MppReplace(MppMainWindow *_mw, MppScoreMain *_sm, QString _match,
     QString _replace) : MppDialog(_mw, QObject::tr("Replace text dialog"))
 {
+	MppDialog *d = this;
+
 	gl = new QGridLayout(this);
 
 	mw = _mw;
@@ -48,8 +50,8 @@ MppReplace :: MppReplace(MppMainWindow *_mw, MppScoreMain *_sm, QString _match,
 	but_cancel = new QPushButton(tr("Cancel"));
 	but_edit = new QPushButton(tr("Insert Chord"));
 
-	connect(but_ok, SIGNAL(released()), this, SLOT(accept()));
-	connect(but_cancel, SIGNAL(released()), this, SLOT(reject()));
+	d->connect(but_ok, SIGNAL(released()), d, SLOT(accept()));
+	d->connect(but_cancel, SIGNAL(released()), d, SLOT(reject()));
 	connect(but_edit, SIGNAL(released()), this, SLOT(edit()));
 
 	gl->addWidget(lbl_replace, 0,0,1,1, Qt::AlignCenter);
@@ -61,10 +63,6 @@ MppReplace :: MppReplace(MppMainWindow *_mw, MppScoreMain *_sm, QString _match,
 	gl->addWidget(but_edit, 2,1,1,1, Qt::AlignCenter);
 	gl->addWidget(but_ok, 2,2,1,1, Qt::AlignCenter);
 	gl->addWidget(but_cancel, 2,3,1,1, Qt::AlignCenter);
-}
-
-MppReplace :: ~MppReplace()
-{
 }
 
 void

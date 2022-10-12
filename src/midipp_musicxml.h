@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_MUSICXML_H_
 #define	_MIDIPP_MUSICXML_H_
 
-#include "midipp.h"
+#include "midipp_dialog.h"
 
 #define	MXML_FLAG_KEEP_SCORES		(1U << 0)
 #define	MXML_FLAG_KEEP_TEXT		(1U << 1)
@@ -38,7 +38,7 @@ class MppMusicXmlImport : public MppDialog
 	Q_OBJECT
 
 public:
-	MppMusicXmlImport(QWidget *, const QByteArray &);
+	MppMusicXmlImport(MppMainWindow *, const QByteArray &);
 
 	QString output;
 

@@ -587,7 +587,7 @@ MppShowControl :: handle_fontfgcolor()
 
 	QColorDialog dlg(color);
 
-	if (dlg.exec() == MppDialog::Accepted) {
+	if (dlg.exec() == QDialog::Accepted) {
 		mw->atomic_lock();
 		sm.head.state.text_curr.color.setFg(dlg.currentColor());
 		mw->atomic_unlock();
@@ -608,7 +608,7 @@ MppShowControl :: handle_fontbgcolor()
 
 	QColorDialog dlg(color);
 
-	if (dlg.exec() == MppDialog::Accepted) {
+	if (dlg.exec() == QDialog::Accepted) {
 		mw->atomic_lock();
 		sm.head.state.text_curr.color.setBg(dlg.currentColor());
 		mw->atomic_unlock();
@@ -720,7 +720,7 @@ MppShowControl :: handle_imagebgcolor()
 
 	QColorDialog dlg(color);
 
-	if (dlg.exec() == MppDialog::Accepted) {
+	if (dlg.exec() == QDialog::Accepted) {
 		mw->atomic_lock();
 		sm.head.state.image_curr.color.setBg(dlg.currentColor());
 		mw->atomic_unlock();

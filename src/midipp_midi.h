@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_MIDI_H_
 #define	_MIDIPP_MIDI_H_
 
-#include "midipp.h"
+#include "midipp_dialog.h"
 
 #define	MIDI_MAX_TRACKS 16
 
@@ -41,7 +41,7 @@ class MppMidi : public MppDialog
 	Q_OBJECT
 
 public:
-	MppMidi(QWidget *, uint32_t _mask, uint32_t _flags, uint32_t _thres);
+	MppMidi(MppMainWindow *, uint32_t _mask, uint32_t _flags, uint32_t _thres);
 
 	/* channel mask */
 	uint32_t chan_mask;

@@ -37,98 +37,101 @@
 #include "midipp_volume.h"
 
 MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi) :
-	MppDialog(_parent->mainWindow, QObject::tr("View %1 mode").arg(QChar('A' + _vi)))
+    MppDialog(_parent->mainWindow, QObject::tr("View %1 mode").arg(QChar('A' + _vi)))
 {
+	MppDialog *d = this;
+	MppModeBase *b = this;
+
 	sm = _parent;
 	view_index = _vi;
 
 	gl = new QGridLayout(this);
 
-	gb_iconfig = new MppGroupBox(tr("MIDI input config"));
-	gb_oconfig = new MppGroupBox(tr("MIDI output config"));
+	gb_iconfig = new MppGroupBox(QObject::tr("MIDI input config"));
+	gb_oconfig = new MppGroupBox(QObject::tr("MIDI output config"));
 	gb_contrast = new MppGroupBox(QString());
 	gb_delay = new MppGroupBox(QString());
 
 	cbx_norm = new MppCheckBox();
 	cbx_norm->setChecked(true);
-	connect(cbx_norm, SIGNAL(toggled(bool)), this, SLOT(handle_changed()));
+	b->connect(cbx_norm, SIGNAL(toggled(bool)), b, SLOT(handle_changed()));
 
 	sli_contrast = new QSlider();
 	sli_contrast->setRange(0, 255);
 	sli_contrast->setOrientation(Qt::Horizontal);
 	sli_contrast->setValue(128);
-	connect(sli_contrast, SIGNAL(valueChanged(int)), this, SLOT(handle_contrast_label(int)));
-	connect(sli_contrast, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	b->connect(sli_contrast, SIGNAL(valueChanged(int)), b, SLOT(handle_contrast_label(int)));
+	b->connect(sli_contrast, SIGNAL(valueChanged(int)), b, SLOT(handle_changed()));
 	handle_contrast_label(sli_contrast->value());
 
 	but_song_events = new MppButtonMap("Send MIDI song events\0OFF\0ON\0", 2, 2);
-	connect(but_song_events, SIGNAL(selectionChanged(int)), this, SLOT(handle_changed()));
+	b->connect(but_song_events, SIGNAL(selectionChanged(int)), b, SLOT(handle_changed()));
 
 	but_mode = new MppKeyModeButtonMap("Input key mode");
-	connect(but_mode, SIGNAL(selectionChanged(int)), this, SLOT(handle_changed()));
+	b->connect(but_mode, SIGNAL(selectionChanged(int)), b, SLOT(handle_changed()));
 
-	but_reset = new QPushButton(tr("Reset"));
-	connect(but_reset, SIGNAL(released()), this, SLOT(handle_reset()));
+	but_reset = new QPushButton(QObject::tr("Reset"));
+	b->connect(but_reset, SIGNAL(released()), b, SLOT(handle_reset()));
 
-	but_done = new QPushButton(tr("Done"));
-	connect(but_done, SIGNAL(released()), this, SLOT(accept()));
+	but_done = new QPushButton(QObject::tr("Done"));
+	d->connect(but_done, SIGNAL(released()), d, SLOT(accept()));
 
 	spn_base = new MppSpinBox(0,0);
 	spn_base->setValue(0);
-	connect(spn_base, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	b->connect(spn_base, SIGNAL(valueChanged(int)), b, SLOT(handle_changed()));
 
 	sli_delay = new QSlider();
 	sli_delay->setRange(0, 256);
 	sli_delay->setValue(0);
 	sli_delay->setOrientation(Qt::Horizontal);
-	connect(sli_delay, SIGNAL(valueChanged(int)), this, SLOT(handle_delay_label(int)));
-	connect(sli_delay, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	b->connect(sli_delay, SIGNAL(valueChanged(int)), b, SLOT(handle_delay_label(int)));
+	b->connect(sli_delay, SIGNAL(valueChanged(int)), b, SLOT(handle_changed()));
 	handle_delay_label(sli_delay->value());
 
 	spn_input_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_ANY_MASK | MPP_CHAN_MPE_MASK);
-	connect(spn_input_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	b->connect(spn_input_chan, SIGNAL(valueChanged(int)), b, SLOT(handle_changed()));
 
 	spn_pri_chan = new MppChanSel(sm->mainWindow, 0, 0);
-	connect(spn_pri_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	b->connect(spn_pri_chan, SIGNAL(valueChanged(int)), b, SLOT(handle_changed()));
 
 	spn_pri_dev = new MppDevSel(_parent->mainWindow, -1, MPP_DEV_ALL);
-	connect(spn_pri_dev, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	b->connect(spn_pri_dev, SIGNAL(valueChanged(int)), b, SLOT(handle_changed()));
 
 	spn_sec_base_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE_MASK);
-	connect(spn_sec_base_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	b->connect(spn_sec_base_chan, SIGNAL(valueChanged(int)), b, SLOT(handle_changed()));
 
 	spn_sec_base_dev = new MppDevSel(_parent->mainWindow, -1, MPP_DEV_ALL);
-	connect(spn_sec_base_dev, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	b->connect(spn_sec_base_dev, SIGNAL(valueChanged(int)), b, SLOT(handle_changed()));
 
 	spn_sec_treb_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE_MASK);
-	connect(spn_sec_treb_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	b->connect(spn_sec_treb_chan, SIGNAL(valueChanged(int)), b, SLOT(handle_changed()));
 
 	spn_sec_treb_dev = new MppDevSel(_parent->mainWindow, -1, MPP_DEV_ALL);
-	connect(spn_sec_treb_dev, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	b->connect(spn_sec_treb_dev, SIGNAL(valueChanged(int)), b, SLOT(handle_changed()));
 
 	spn_pri_volume = new MppVolume();
 	spn_pri_volume->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
-	connect(spn_pri_volume, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	b->connect(spn_pri_volume, SIGNAL(valueChanged(int)), b, SLOT(handle_changed()));
 
 	spn_sec_base_volume = new MppVolume();
 	spn_sec_base_volume->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
-	connect(spn_sec_base_volume, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	b->connect(spn_sec_base_volume, SIGNAL(valueChanged(int)), b, SLOT(handle_changed()));
 
 	spn_sec_treb_volume = new MppVolume();
 	spn_sec_treb_volume->setRange(0, MPP_VOLUME_MAX, MPP_VOLUME_UNIT);
-	connect(spn_sec_treb_volume, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	b->connect(spn_sec_treb_volume, SIGNAL(valueChanged(int)), b, SLOT(handle_changed()));
 
 	spn_aux_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE_MASK);
-	connect(spn_aux_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	b->connect(spn_aux_chan, SIGNAL(valueChanged(int)), b, SLOT(handle_changed()));
 
 	spn_aux_base_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE_MASK);
-	connect(spn_aux_base_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	b->connect(spn_aux_base_chan, SIGNAL(valueChanged(int)), b, SLOT(handle_changed()));
 
 	spn_aux_treb_chan = new MppChanSel(sm->mainWindow, -1, MPP_CHAN_NONE_MASK);
-	connect(spn_aux_treb_chan, SIGNAL(valueChanged(int)), this, SLOT(handle_changed()));
+	b->connect(spn_aux_treb_chan, SIGNAL(valueChanged(int)), b, SLOT(handle_changed()));
 	
 	but_note_mode = new MppButtonMap("Output note mode\0" "Normal\0" "SysEx\0", 2, 2);
-	connect(but_note_mode, SIGNAL(selectionChanged(int)), this, SLOT(handle_changed()));
+	b->connect(but_note_mode, SIGNAL(selectionChanged(int)), b, SLOT(handle_changed()));
 
 	gl->addWidget(gb_iconfig, 0, 0, 2, 2);
 	gl->addWidget(gb_oconfig, 2, 2, 3, 2);
@@ -142,51 +145,44 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi) :
 
 	gl->addWidget(but_reset, 5, 0, 1, 2);
 	gl->addWidget(but_done, 5, 2, 1, 2);
-	gl->setRowStretch(6, 1);
-	gl->setColumnStretch(4, 1);
 
 	gb_delay->addWidget(sli_delay, 0, 0, 1, 1);
 
 	gb_contrast->addWidget(sli_contrast, 0, 0, 1, 2);
-	gb_contrast->addWidget(new QLabel(tr("Normalize chord pressure")), 1, 0, 1, 1);
+	gb_contrast->addWidget(new QLabel(QObject::tr("Normalize chord pressure")), 1, 0, 1, 1);
 	gb_contrast->addWidget(cbx_norm, 1, 1, 1, 1);
 
-	gb_iconfig->addWidget(new QLabel(tr("Play Key")), 0, 0, 1, 1);
+	gb_iconfig->addWidget(new QLabel(QObject::tr("Play Key")), 0, 0, 1, 1);
 	gb_iconfig->addWidget(spn_base, 0, 1, 1, 1);
-	gb_iconfig->addWidget(new QLabel(tr("Channel")), 1, 0, 1, 1);
+	gb_iconfig->addWidget(new QLabel(QObject::tr("Channel")), 1, 0, 1, 1);
 	gb_iconfig->addWidget(spn_input_chan, 1, 1, 1, 1);
 
-	gb_oconfig->addWidget(new QLabel(tr("Main\nchannel")), 0, 1, 1, 1, Qt::AlignCenter);
-	gb_oconfig->addWidget(new QLabel(tr("Auxilary\nchannel")), 0, 2, 1, 1, Qt::AlignCenter);
-	gb_oconfig->addWidget(new QLabel(tr("Device")), 0, 3, 1, 1, Qt::AlignCenter);
-	gb_oconfig->addWidget(new QLabel(tr("Volume")), 0, 4, 1, 1, Qt::AlignCenter);
+	gb_oconfig->addWidget(new QLabel(QObject::tr("Main\nchannel")), 0, 1, 1, 1, Qt::AlignCenter);
+	gb_oconfig->addWidget(new QLabel(QObject::tr("Auxilary\nchannel")), 0, 2, 1, 1, Qt::AlignCenter);
+	gb_oconfig->addWidget(new QLabel(QObject::tr("Device")), 0, 3, 1, 1, Qt::AlignCenter);
+	gb_oconfig->addWidget(new QLabel(QObject::tr("Volume")), 0, 4, 1, 1, Qt::AlignCenter);
 
-	gb_oconfig->addWidget(new QLabel(tr("Primary")), 1, 0, 1, 1);
+	gb_oconfig->addWidget(new QLabel(QObject::tr("Primary")), 1, 0, 1, 1);
 	gb_oconfig->addWidget(spn_pri_chan, 1, 1, 1, 1);
 	gb_oconfig->addWidget(spn_aux_chan, 1, 2, 1, 1);
 	gb_oconfig->addWidget(spn_pri_dev, 1, 3, 1, 1);
 	gb_oconfig->addWidget(spn_pri_volume, 1, 4, 1, 1);
 
-	gb_oconfig->addWidget(new QLabel(tr("Secondary\nbass")), 2, 0, 1, 1);
+	gb_oconfig->addWidget(new QLabel(QObject::tr("Secondary\nbass")), 2, 0, 1, 1);
 	gb_oconfig->addWidget(spn_sec_base_chan, 2, 1, 1, 1);
 	gb_oconfig->addWidget(spn_aux_base_chan, 2, 2, 1, 1);
 	gb_oconfig->addWidget(spn_sec_base_dev, 2, 3, 1, 1);
 	gb_oconfig->addWidget(spn_sec_base_volume, 2, 4, 1, 1);
 
-	gb_oconfig->addWidget(new QLabel(tr("Secondary\ntreble")), 3, 0, 1, 1);
+	gb_oconfig->addWidget(new QLabel(QObject::tr("Secondary\ntreble")), 3, 0, 1, 1);
 	gb_oconfig->addWidget(spn_sec_treb_chan, 3, 1, 1, 1);
 	gb_oconfig->addWidget(spn_aux_treb_chan, 3, 2, 1, 1);
 	gb_oconfig->addWidget(spn_sec_treb_dev, 3, 3, 1, 1);
 	gb_oconfig->addWidget(spn_sec_treb_volume, 3, 4, 1, 1);
 }
 
-MppMode :: ~MppMode()
-{
-
-}
-
 void
-MppMode :: sanity_check(void)
+MppModeBase :: sanity_check(void)
 {
   	int channel;
 	int channelBase;
@@ -321,7 +317,7 @@ MppMode :: sanity_check(void)
 }
 
 void
-MppMode :: update_all(void)
+MppModeBase :: update_all(void)
 {
 	int base_key;
 	int key_delay;
@@ -394,7 +390,7 @@ MppMode :: update_all(void)
 }
 
 void
-MppMode :: handle_contrast_label(int v)
+MppModeBase :: handle_contrast_label(int v)
 {
 	v = (v * 100) / 255;
 
@@ -407,13 +403,13 @@ MppMode :: handle_contrast_label(int v)
 }
 
 void
-MppMode :: handle_delay_label(int v)
+MppModeBase :: handle_delay_label(int v)
 {
 	gb_delay->setTitle(tr("FIXED and TRANSP mode random key delay (%1ms)").arg(v));
 }
 
 void
-MppMode :: handle_reset()
+MppModeBase :: handle_reset()
 {
 	sli_contrast->setValue(128);
 	sli_delay->setValue(25);
@@ -437,7 +433,7 @@ MppMode :: handle_reset()
 }
 
 void
-MppMode :: handle_changed()
+MppModeBase :: handle_changed()
 {
 	int base_key;
 	int key_delay;

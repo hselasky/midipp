@@ -35,11 +35,8 @@ MppTabButton :: mouseDoubleClickEvent(QMouseEvent *event)
 
 MppTabBar :: MppTabBar(QWidget *parent) : QWidget(parent)
 {
-	right_sw = new QStackedWidget(this);
-	left_sw = new QStackedWidget(this);
-
-	left_sw->setVisible(0);
-	right_sw->setVisible(1);
+	right_sw = new QStackedWidget();
+	left_sw = new QStackedWidget();
 
 	nwidgets = 0;
 	ntabs = 0;
@@ -55,6 +52,7 @@ MppTabBar :: MppTabBar(QWidget *parent) : QWidget(parent)
 	setMouseTracking(1);
 
 	split = new QSplitter();
+
 #if defined(TARGET_OS_IPHONE) || defined(TARGET_IPHONE_SIMULATOR)
 	split->setHandleWidth(32);
 #else
@@ -62,6 +60,9 @@ MppTabBar :: MppTabBar(QWidget *parent) : QWidget(parent)
 #endif
 	split->addWidget(left_sw);
 	split->addWidget(right_sw);
+
+	left_sw->setVisible(0);
+	right_sw->setVisible(1);
 
 	connect(this, SIGNAL(doRepaintEnqueue()), this, SLOT(doRepaintCb()));
 }

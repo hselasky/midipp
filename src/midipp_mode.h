@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2019 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_MODE_H_
 #define	_MIDIPP_MODE_H_
 
-#include "midipp.h"
+#include "midipp_dialog.h"
 
 enum {
 	MM_NOTEMODE_NORMAL,
@@ -44,14 +44,10 @@ enum {
 	MM_PASS_MAX,
 };
 
-class MppMode : public MppDialog
+class MppModeBase : public QObject
 {
 	Q_OBJECT
-
 public:
-	MppMode(MppScoreMain *_parent, uint8_t _vi);
-	~MppMode();
-
 	MppScoreMain *sm;
 
 	void sanity_check(void);
@@ -60,7 +56,6 @@ public:
 	/* view number */
 	uint8_t view_index;
 
-public:
 	QGridLayout *gl;
 
 	MppGroupBox *gb_iconfig;
@@ -104,6 +99,12 @@ public slots:
 	void handle_changed();
 	void handle_contrast_label(int v);
 	void handle_delay_label(int v);
+};
+
+class MppMode : public MppDialog, public MppModeBase
+{
+public:
+	MppMode(MppScoreMain *_parent, uint8_t _vi);
 };
 
 #endif		/* _MIDIPP_MODE_H_ */

@@ -30,14 +30,13 @@
 #include "midipp_buttonmap.h"
 
 MppMuteMapCh :: MppMuteMapCh(MppMainWindow *_mw, int _devno) :
-	MppDialog(_mw, QObject::tr("Mute MIDI output channel")),
+	MppMuteMapChBase(_mw, QObject::tr("Mute MIDI output channel")),
 	QGridLayout(this)
 {
 	MppMuteMapChBase *d = this;
 	MppDialog *dlg = this;
 	QLabel *pl;
 
-	mw = _mw;
 	devno = _devno;
 
 	setRowStretch(6, 1);
@@ -117,13 +116,12 @@ MppMuteMapChBase :: handle_apply_all()
 }
 
 MppMuteMapOther :: MppMuteMapOther(MppMainWindow *_mw, int _devno) :
-    MppDialog(_mw, QObject::tr("Mute other MIDI output")),
+    MppMuteMapOtherBase(_mw, QObject::tr("Mute other MIDI output")),
     QGridLayout(this)
 {
 	MppMuteMapOtherBase *d = this;
 	MppDialog *dlg = this;
 
-	mw = _mw;
 	devno = _devno;
 
 	but_reset_all = new QPushButton(d->tr("Reset"));

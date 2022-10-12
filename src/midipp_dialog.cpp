@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2012-2022 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,35 +23,56 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _MIDIPP_REPLACE_H_
-#define	_MIDIPP_REPLACE_H_
-
 #include "midipp_dialog.h"
+#include "midipp_mainwindow.h"
 
-class MppReplace : public MppDialog
+MppDialog :: MppDialog(MppMainWindow *_mw, const QString &title) :
+    QGroupBox(title, _qw = new QWidget(_mw)), _gl(new QGridLayout(_qw))
 {
-	Q_OBJECT
-public:
-	MppReplace(MppMainWindow *, MppScoreMain *, QString, QString);
+	mw = _mw;
+	_result = -1;
 
-	QString match;
-	QString replace;
+	_qw->hide();
 
-	MppMainWindow *mw;
-	MppScoreMain *sm;
+	_gl->setRowStretch(0,1);
+	_gl->setColumnStretch(0,1);
+	_gl->setRowStretch(2,1);
+	_gl->setColumnStretch(2,1);
+	_gl->addWidget(this, 1,1,1,1);
+}
 
-	QGridLayout *gl;
-	QLabel *lbl_replace;
-	QLabel *lbl_with;
-	QLineEdit *led_replace;
-	QLineEdit *led_with;
-	QPushButton *but_ok;
-	QPushButton *but_cancel;
-	QPushButton *but_edit;
+MppDialog :: ~MppDialog()
+{
+	setParent(0);
+	delete _qw;
+}
 
-public slots:
-	void accept(void);
-	void edit(void);
-};
+int
+MppDialog :: exec()
+{
+	QWidget *old = mw->currentWidget();
 
-#endif			/* _MIDIPP_REPLACE_H_ */
+	mw->addWidget(_qw);
+	mw->setCurrentWidget(_qw);
+	eventLoop.exec(QEventLoop::DialogExec);
+	mw->setCurrentWidget(old);
+	mw->removeWidget(_qw);
+
+	_qw->hide();
+
+	return (_result);
+}
+
+void
+MppDialog :: accept()
+{
+	_result = Accepted;
+	eventLoop.exit();
+}
+
+void
+MppDialog :: reject()
+{
+	_result = Rejected;
+	eventLoop.exit();
+}

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2012-2022 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,35 +23,37 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _MIDIPP_REPLACE_H_
-#define	_MIDIPP_REPLACE_H_
+#ifndef _MIDIPP_DIALOG_H_
+#define	_MIDIPP_DIALOG_H_
 
-#include "midipp_dialog.h"
+#include "midipp.h"
 
-class MppReplace : public MppDialog
+#include <QEventLoop>
+
+class MppDialog : public QGroupBox
 {
 	Q_OBJECT
-public:
-	MppReplace(MppMainWindow *, MppScoreMain *, QString, QString);
 
-	QString match;
-	QString replace;
+	QEventLoop eventLoop;
+	int _result;
+	QWidget *_qw;
+	QGridLayout *_gl;
+public:
+	MppDialog(MppMainWindow *, const QString &);
+	~MppDialog();
+
+	int exec();
 
 	MppMainWindow *mw;
-	MppScoreMain *sm;
 
-	QGridLayout *gl;
-	QLabel *lbl_replace;
-	QLabel *lbl_with;
-	QLineEdit *led_replace;
-	QLineEdit *led_with;
-	QPushButton *but_ok;
-	QPushButton *but_cancel;
-	QPushButton *but_edit;
+	enum {
+		Rejected,
+		Accepted,
+	};
 
 public slots:
-	void accept(void);
-	void edit(void);
+	void accept();
+	void reject();
 };
 
-#endif			/* _MIDIPP_REPLACE_H_ */
+#endif

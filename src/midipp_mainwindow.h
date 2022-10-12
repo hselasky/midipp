@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2021 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,12 +28,12 @@
 
 #include "midipp.h"
 
-class MppMainWindow : public QWidget
+class MppMainWindow : public QStackedWidget
 {
 	Q_OBJECT
 
 public:
-	MppMainWindow(QWidget *parent = 0);
+	MppMainWindow();
 	~MppMainWindow();
 
 #ifdef HAVE_SCREENSHOT
@@ -155,6 +155,7 @@ public:
 
 	char *deviceName[MPP_MAX_DEVS];
 
+	QWidget *main_w;
 	QGridLayout *main_gl;
 
 	MppTabBar *main_tb;

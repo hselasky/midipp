@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_GPRO_H_
 #define	_MIDIPP_GPRO_H_
 
-#include "midipp.h"
+#include "midipp_dialog.h"
 
 #define	GPRO_LHZ 10
 #define	GPRO_HZ (1U << GPRO_LHZ)
@@ -38,7 +38,7 @@ class MppGPro : public MppDialog
 	Q_OBJECT
 
 public:
-	MppGPro(QWidget *, const uint8_t *, uint32_t);
+	MppGPro(MppMainWindow *, const uint8_t *, uint32_t);
 
 	QString output;
 

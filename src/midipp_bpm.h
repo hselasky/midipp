@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2021 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2011-2022 Hans Petter Selasky. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,7 +26,7 @@
 #ifndef _MIDIPP_BPM_H_
 #define	_MIDIPP_BPM_H_
 
-#include "midipp.h"
+#include "midipp_dialog.h"
 
 class MppBpm : public MppDialog
 {

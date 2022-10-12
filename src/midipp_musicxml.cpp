@@ -587,9 +587,11 @@ error:
 	return (0);
 }
 
-MppMusicXmlImport :: MppMusicXmlImport(QWidget *_parent, const QByteArray &data) :
-    MppDialog(_parent, QObject::tr("MusicXML import"))
+MppMusicXmlImport :: MppMusicXmlImport(MppMainWindow *_mw, const QByteArray &data) :
+    MppDialog(_mw, QObject::tr("MusicXML import"))
 {
+	MppDialog *d = this;
+
 	int nparts = MppReadMusicXMLParts(data);
 
 	if (nparts == 0)
@@ -650,7 +652,7 @@ MppMusicXmlImport :: MppMusicXmlImport(QWidget *_parent, const QByteArray &data)
 	gl->addWidget(spn_partnumber, 6,1,1,1, Qt::AlignCenter);
 
 	btn_done = new QPushButton(tr("Done"));
-	connect(btn_done, SIGNAL(released()), this, SLOT(accept()));
+	d->connect(btn_done, SIGNAL(released()), d, SLOT(accept()));
 	gl->addWidget(btn_done, 7,1,1,1);
 
 	exec();

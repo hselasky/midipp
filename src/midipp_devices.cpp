@@ -27,9 +27,10 @@
 #include "midipp_devices.h"
 #include "midipp_groupbox.h"
 
-MppDevices :: MppDevices(QWidget *_parent)
-  : MppDialog(_parent, QObject::tr("Select playback and reording device"))
+MppDevices :: MppDevices(MppMainWindow *_mw)
+  : MppDialog(_mw, QObject::tr("Select playback and reording device"))
 {
+	MppDialog *d = this;
 	int n;
 
 	gl = new QGridLayout(this);
@@ -46,8 +47,8 @@ MppDevices :: MppDevices(QWidget *_parent)
 	but_ok = new QPushButton(tr("Ok"));
 	but_cancel = new QPushButton(tr("Cancel"));
 
-	connect(but_ok, SIGNAL(released()), this, SLOT(accept()));
-	connect(but_cancel, SIGNAL(released()), this, SLOT(reject()));
+	connect(but_ok, SIGNAL(released()), d, SLOT(accept()));
+	connect(but_cancel, SIGNAL(released()), d, SLOT(reject()));
 
 	gl->addWidget(gb_play, 0,0,1,2);
 	gl->addWidget(gb_rec, 0,2,1,2);

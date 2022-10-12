@@ -79,8 +79,7 @@ MppMainWindow :: noise8(uint8_t factor)
 	return (temp >> 24);
 }
 
-MppMainWindow :: MppMainWindow(QWidget *parent)
-  : QWidget(parent)
+MppMainWindow :: MppMainWindow()
 {
 	QLabel *pl;
 	int n;
@@ -148,7 +147,11 @@ MppMainWindow :: MppMainWindow(QWidget *parent)
 
 	/* Setup GUI */
 
-	main_gl = new QGridLayout(this);
+	main_w = new QWidget();
+	main_gl = new QGridLayout(main_w);
+
+	addWidget(main_w);
+	setCurrentWidget(main_w);
 
 	main_tb = new MppTabBar();
 	main_tb_state = 0;

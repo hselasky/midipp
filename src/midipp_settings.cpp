@@ -621,6 +621,8 @@ MppSettings :: handle_load(int id)
 MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
   : MppDialog(_parent->mw, QObject::tr("Preset save and load selection"))
 {
+	MppDialog *d = this;
+
 	ms = _parent;
 
 	gl = new QGridLayout(this);
@@ -638,7 +640,7 @@ MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
 	but_ok = new QPushButton(tr("Done"));
 	but_reset = new QPushButton(tr("Reset"));
 
-	connect(but_ok, SIGNAL(released()), this, SLOT(accept()));
+	d->connect(but_ok, SIGNAL(released()), d, SLOT(accept()));
 	connect(but_reset, SIGNAL(released()), this, SLOT(handle_reset()));
 
 	gl->addWidget(new QLabel(tr("Save instrument settings")), 0, 0, 1, 1);

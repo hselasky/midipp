@@ -1481,8 +1481,8 @@ gpro_cleanup(struct gpro_file *pgf)
 	}
 }
 
-MppGPro :: MppGPro(QWidget *_parent, const uint8_t *ptr, uint32_t len) :
-    MppDialog(_parent, QObject::tr("GuitarPro v3 and v4 import"))
+MppGPro :: MppGPro(MppMainWindow *_mw, const uint8_t *ptr, uint32_t len) :
+    MppDialog(_mw, QObject::tr("GuitarPro v3 and v4 import"))
 {
 	struct gpro_file gpf;
 	char line_buf[64];

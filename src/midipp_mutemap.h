@@ -26,13 +26,14 @@
 #ifndef _MIDIPP_MUTEMAP_H_
 #define	_MIDIPP_MUTEMAP_H_
 
-#include "midipp.h"
+#include "midipp_dialog.h"
 
-class MppMuteMapChBase : public QObject
+class MppMuteMapChBase : public MppDialog
 {
 	Q_OBJECT
 public:
-	MppMainWindow *mw;
+	MppMuteMapChBase(MppMainWindow *_mw, const QString &_title) : MppDialog(_mw, _title) {};
+
 	int devno;
 
 	MppCheckBox *cbx_mute[16];
@@ -46,17 +47,18 @@ public slots:
 	void handle_revert_all();
 };
 
-class MppMuteMapCh : public MppDialog, public QGridLayout, public MppMuteMapChBase
+class MppMuteMapCh : public MppMuteMapChBase, public QGridLayout
 {
 public:
 	MppMuteMapCh(MppMainWindow *, int);
 };
 
-class MppMuteMapOtherBase : public QObject
+class MppMuteMapOtherBase : public MppDialog
 {
 	Q_OBJECT
 public:
-	MppMainWindow *mw;
+	MppMuteMapOtherBase(MppMainWindow *_mw, const QString &_title) : MppDialog(_mw, _title) {};
+
 	int devno;
 
 	MppButtonMap *cbx_mute_program;
@@ -74,7 +76,7 @@ public slots:
   	void handle_revert_all();
 };
 
-class MppMuteMapOther : public MppDialog, public QGridLayout, public MppMuteMapOtherBase
+class MppMuteMapOther : public MppMuteMapOtherBase, public QGridLayout
 {
 public:
 	MppMuteMapOther(MppMainWindow *, int);

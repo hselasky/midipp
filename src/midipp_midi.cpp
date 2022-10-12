@@ -27,8 +27,8 @@
 #include "midipp_checkbox.h"
 #include "midipp_groupbox.h"
 
-MppMidi :: MppMidi(QWidget *_parent, uint32_t _mask, uint32_t _flags, uint32_t _thres) :
-    MppDialog(_parent, QObject::tr("MIDI import"))
+MppMidi :: MppMidi(MppMainWindow *_mw, uint32_t _mask, uint32_t _flags, uint32_t _thres) :
+    MppDialog(_mw, QObject::tr("MIDI import"))
 {
 	uint32_t x;
 	uint32_t t;

@@ -270,6 +270,7 @@ class MppChanSel;
 class MppChanSelDiag;
 class MppCheckBox;
 class MppCustomTab;
+class MppDialog;
 class MppDataBase;
 class MppDecodeTab;
 class MppDevices;
@@ -446,17 +447,6 @@ public slots:
 		box.exec();
 		deleteLater();
 	}
-};
-
-class MppDialog : public QDialog
-{
-public:
-	MppDialog(QWidget *_parent, const QString &title) : QDialog(_parent) {
-		setWindowTitle(title);
-		setWindowIcon(QIcon(MppIconFile));
-		/* try to keep dialog sizes to a minimum */
-		setMaximumSize(_parent->size());
-	};
 };
 
 #endif	/* _MIDIPP_H_ */

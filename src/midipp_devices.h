@@ -26,13 +26,13 @@
 #ifndef _MIDIPP_DEVICES_H_
 #define	_MIDIPP_DEVICES_H_
 
-#include "midipp.h"
+#include "midipp_dialog.h"
 
 class MppDevices : public MppDialog
 {
 	Q_OBJECT
 public:
-	MppDevices(QWidget *parent = 0);
+	MppDevices(MppMainWindow *);
 	~MppDevices();
 
 	int autoSelect();
