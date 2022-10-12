@@ -189,11 +189,6 @@ MppTabBar :: makeWidgetVisible(QWidget *widget, QWidget *except)
 {
 	int x;
 
-	for (x = 0; x != ntabs; x++) {
-		if (tabs[x].w == widget)
-			break;
-	}
-
 	for (x = 0; ; x++) {
 		QWidget *tab = left_sw->widget(x);
 		if (tab == NULL)
