@@ -177,6 +177,7 @@ public:
 	QPushButton *mwRedo;
 	QPushButton *mwEdit;
 	QPushButton *mwUpDown;
+	QPushButton *mwLeftRight;
 
 	/* tab <Scores> */
 
@@ -377,6 +378,7 @@ public slots:
 	void handle_undo();
 	void handle_edit();
 	void handle_up_down();
+	void handle_left_right();
 	void handle_tuning();
 };
 

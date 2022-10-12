@@ -41,6 +41,9 @@ MppTabBar :: MppTabBar(QWidget *parent) : QWidget(parent)
 	nwidgets = 0;
 	ntabs = 0;
 
+	hideButtons = false;
+	hideIcons = false;
+
 	QFontMetrics fm(font());
 
 	basic_size = fm.height();
@@ -49,7 +52,7 @@ MppTabBar :: MppTabBar(QWidget *parent) : QWidget(parent)
 	right_sw->setMinimumWidth(12 * basic_size);
 
 	setFixedHeight(2 * basic_size);
-	setMouseTracking(1);
+	setMouseTracking(true);
 
 	split = new QSplitter();
 
@@ -274,7 +277,7 @@ MppTabBar :: paintEvent(QPaintEvent *event)
 	int x_off = 0;
 	int y_off;
 	int n;
-	int r;
+	int r = 0;
 
 	paint.setRenderHints(QPainter::Antialiasing, 1);
 	paint.setFont(font());
@@ -283,7 +286,8 @@ MppTabBar :: paintEvent(QPaintEvent *event)
 	paint.setBrush(Mpp.ColorGrey);
 	paint.drawRoundedRect(QRect(0,0,w,h), 4, 4);
 
-	for (r = n = 0; n != ntabs; n++) {
+	if (!hideButtons) {
+	    for (n = 0; n != ntabs; n++) {
 		int dw = computeWidth(n);
 		if (x_off != 0 && x_off + dw >= w) {
 			x_off = 0;
@@ -319,6 +323,7 @@ MppTabBar :: paintEvent(QPaintEvent *event)
 		tabs[n].button.setGeometry(tabs[n].area);
 
 		x_off += dw;
+	    }
 	}
 #if 0
 	if (x_off != 0) {
@@ -326,7 +331,8 @@ MppTabBar :: paintEvent(QPaintEvent *event)
 		r++;
 	}
 #endif
-	for (n = 0; n != nwidgets; n++) {
+	if (!hideIcons) {
+	    for (n = 0; n != nwidgets; n++) {
 		int dw = (widgets[n].pWidget ? 4 : 3) * basic_size;
 		if (x_off != 0 && x_off + dw >= w) {
 			x_off = 0;
@@ -339,6 +345,7 @@ MppTabBar :: paintEvent(QPaintEvent *event)
 		widgets[n].area = QRect(x_off - dw, y_off,
 		    4 * basic_size, 2 * basic_size);
 		widgets[n].pWidget->setGeometry(widgets[n].area);
+	    }
 	}
 	y_off = (r + 1) * basic_size * 2;
 }
@@ -347,16 +354,18 @@ int
 MppTabBar :: computeHeight(int w) const
 {
 	int x_off = 0;
-	int r;
+	int r = 0;
 	int n;
 
-	for (r = n = 0; n != ntabs; n++) {
+	if (!hideButtons) {
+	    for (n = 0; n != ntabs; n++) {
 		int dw = computeWidth(n);
 		if (x_off != 0 && x_off + dw >= w) {
 			x_off = 0;
 			r++;
 		}
 		x_off += dw;
+	    }
 	}
 #if 0
 	if (x_off != 0) {
@@ -364,13 +373,15 @@ MppTabBar :: computeHeight(int w) const
 		r++;
 	}
 #endif
-	for (n = 0; n != nwidgets; n++) {
+	if (!hideIcons) {
+	    for (n = 0; n != nwidgets; n++) {
 		int dw = (widgets[n].pWidget ? 4 : 3) * basic_size;
 		if (x_off != 0 && x_off + dw >= w) {
 			x_off = 0;
 			r++;
 		}
 		x_off += dw;
+	    }
 	}
 	return ((r + 1) * basic_size * 2);
 }

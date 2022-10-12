@@ -10,6 +10,7 @@
 <file>icons/undo.png</file>
 <file>icons/edit.png</file>
 <file>icons/up_down.png</file>
+<file>icons/left_right.png</file>
 </qresource>
 </RCC>
 

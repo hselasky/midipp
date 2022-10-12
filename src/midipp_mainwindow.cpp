@@ -114,6 +114,7 @@ MppMainWindow :: MppMainWindow()
 	mwRedo = new QPushButton();
 	mwEdit = new QPushButton();
 	mwUpDown = new QPushButton();
+	mwLeftRight = new QPushButton();
 
 	mwRewind->setToolTip(tr("Rewind"));
 	mwPlay->setToolTip(tr("Trigger"));
@@ -123,7 +124,8 @@ MppMainWindow :: MppMainWindow()
 	mwUndo->setToolTip(tr("Undo"));
 	mwRedo->setToolTip(tr("Redo"));
 	mwEdit->setToolTip(tr("Edit or Insert a Chord"));
-	mwUpDown->setToolTip(tr("Move menu Up or Down"));
+	mwUpDown->setToolTip(tr("Change vertical location of menu"));
+	mwLeftRight->setToolTip(tr("Change horizontal location of menu"));
 
 	mwRewind->setIcon(QIcon(QString(":/icons/stop.png")));
 	mwPlay->setIcon(QIcon(QString(":/icons/play.png")));
@@ -134,6 +136,7 @@ MppMainWindow :: MppMainWindow()
 	mwRedo->setIcon(QIcon(QString(":/icons/redo.png")));
 	mwEdit->setIcon(QIcon(QString(":/icons/edit.png")));
 	mwUpDown->setIcon(QIcon(QString(":/icons/up_down.png")));
+	mwLeftRight->setIcon(QIcon(QString(":/icons/left_right.png")));
 
 	connect(mwRewind, SIGNAL(released()), this, SLOT(handle_rewind()));
 	connect(mwPlay, SIGNAL(released()), this, SLOT(handle_midi_trigger()));
@@ -144,6 +147,7 @@ MppMainWindow :: MppMainWindow()
 	connect(mwRedo, SIGNAL(released()), this, SLOT(handle_redo()));
 	connect(mwEdit, SIGNAL(released()), this, SLOT(handle_edit()));
 	connect(mwUpDown, SIGNAL(released()), this, SLOT(handle_up_down()));
+	connect(mwLeftRight, SIGNAL(released()), this, SLOT(handle_left_right()));
 
 	/* Setup GUI */
 
@@ -186,6 +190,7 @@ MppMainWindow :: MppMainWindow()
 	main_tb->addWidget(mwReload);
 	main_tb->addWidget(0);
 	main_tb->addWidget(mwUpDown);
+	main_tb->addWidget(mwLeftRight);
 
 #ifndef HAVE_NO_SHOW
 	tab_show_control = new MppShowControl(this);
@@ -3327,12 +3332,32 @@ MppMainWindow :: handle_config_changed()
 void
 MppMainWindow :: handle_up_down()
 {
-    main_tb_state = !main_tb_state;
-    main_gl->removeWidget(main_tb);
-    if (main_tb_state)
-        main_gl->addWidget(main_tb,2,0,1,2);
-    else
-        main_gl->addWidget(main_tb,0,0,1,2);
+	main_tb_state ^= 1;
+	main_gl->removeWidget(main_tb);
+
+	switch (main_tb_state & 1) {
+	case 0:
+		main_gl->addWidget(main_tb,0,0,1,2);
+		break;
+	default:
+		main_gl->addWidget(main_tb,2,0,1,2);
+		break;
+	}
+}
+
+void
+MppMainWindow :: handle_left_right()
+{
+	main_tb_state ^= 2;
+
+	switch (main_tb_state & 2) {
+	case 0:
+		main_tb->showButtons(true);
+		break;
+	default:
+		main_tb->showButtons(false);
+		break;
+	}
 }
 
 void

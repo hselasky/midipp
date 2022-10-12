@@ -83,6 +83,9 @@ public:
 	int ntabs;
 	int basic_size;
 
+	bool hideButtons;
+	bool hideIcons;
+
 	enum {
 		FLAG_LEFT = 0x01,
 		FLAG_RIGHT = 0x02,
@@ -90,6 +93,24 @@ public:
 
 	MppTabWidget widgets[MPP_MAX_WIDGETS];
 	MppTab tabs[MPP_MAX_TABS];
+
+	void showButtons(bool enable) {
+		if (hideButtons == !enable)
+			return;
+		hideButtons = !enable;
+		for (int x = 0; x != ntabs; x++)
+			tabs[x].button.setHidden(hideButtons);
+		update();
+	};
+
+	void showIcons(bool enable) {
+		if (hideIcons == !enable)
+			return;
+		hideIcons = !enable;
+		for (int x = 0; x != nwidgets; x++)
+			widgets[x].pWidget->setHidden(hideIcons);
+		update();
+	};
 
 public slots:
 	void doRepaintCb();
