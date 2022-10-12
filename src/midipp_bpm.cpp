@@ -120,7 +120,7 @@ MppBpm :: MppBpm(MppMainWindow *_parent)
 	cbx_midi_beat = new MppCheckBox();
 	connect(cbx_midi_beat, SIGNAL(toggled(bool)), this, SLOT(handle_config_change()));
 
-	but_reset_all = new QPushButton(tr("Reset all"));
+	but_reset_all = new QPushButton(tr("Reset"));
 	but_done_all = new QPushButton(tr("Done"));
 
 	connect(but_reset_all, SIGNAL(released()), this, SLOT(handle_reset_all()));
@@ -138,7 +138,7 @@ MppBpm :: MppBpm(MppMainWindow *_parent)
 	gb_ctrl->addWidget(spn_bpm_key, 2, 1, 1, 1);
 
 	gb_ctrl->addWidget(new QLabel(tr("Output to MIDI beat event")), 3, 0, 1, 1);
-	gb_ctrl->addWidget(cbx_midi_beat, 3, 1, 1, 1);
+	gb_ctrl->addWidget(cbx_midi_beat, 3, 1, 1, 1, Qt::AlignCenter);
 
 	gb_scale = new MppGroupBox(tr("BPM time scaling"));
 
@@ -171,14 +171,14 @@ MppBpm :: MppBpm(MppMainWindow *_parent)
 	gb_io->setColumnStretch(2,1);
 
 	gl->addWidget(gb_ctrl, 0, 0, 2, 1);
-	gl->addWidget(gb_scale, 0, 1, 1, 3);
-	gl->addWidget(gb_io, 1, 1, 1, 3);
+	gl->addWidget(gb_scale, 0, 1, 1, 1);
+	gl->addWidget(gb_io, 1, 1, 1, 1);
 
-	gl->addWidget(but_reset_all, 2, 1, 1, 1);
-	gl->addWidget(but_done_all, 2, 3, 1, 1);
+	gl->addWidget(but_reset_all, 2, 0, 1, 1);
+	gl->addWidget(but_done_all, 2, 1, 1, 1);
 
 	gl->setRowStretch(3, 1);
-	gl->setColumnStretch(4, 1);
+	gl->setColumnStretch(2, 1);
 
 	toggle = 0;
 
