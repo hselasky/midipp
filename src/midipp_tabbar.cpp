@@ -25,12 +25,37 @@
 
 #include "midipp_tabbar.h"
 
+#include <QSizePolicy>
+
 void
 MppTabButton :: mouseDoubleClickEvent(QMouseEvent *event)
 {
 	MppTabBar *ptab = (MppTabBar *)parent();
 	ptab->handleMouseDoubleClickEvent(this);
 	QPushButton::mouseDoubleClickEvent(event);
+}
+
+void
+MppTabBar :: updateSizePolicy()
+{
+	for (int n = 0; n != ntabs; n++) {
+		if (tabs[n].w == 0)
+			continue;
+		QSizePolicy sp(tabs[n].w->sizePolicy());
+		if (isVisible(tabs[n].w)) {
+			sp.setHorizontalPolicy(QSizePolicy::Preferred);
+			sp.setVerticalPolicy(QSizePolicy::Preferred);
+		} else {
+			sp.setHorizontalPolicy(QSizePolicy::Ignored);
+			sp.setVerticalPolicy(QSizePolicy::Ignored);
+		}
+		tabs[n].w->setSizePolicy(sp);
+	}
+	right_sw->adjustSize();
+	left_sw->adjustSize();
+	split->adjustSize();
+	split->update();
+	update();
 }
 
 MppTabBar :: MppTabBar(QWidget *parent) : QWidget(parent)
@@ -48,8 +73,10 @@ MppTabBar :: MppTabBar(QWidget *parent) : QWidget(parent)
 
 	basic_size = fm.height();
 
-	left_sw->setMinimumWidth(12 * basic_size);
+	setMinimumWidth(24 * basic_size);
+
 	right_sw->setMinimumWidth(12 * basic_size);
+	left_sw->setMinimumWidth(12 * basic_size);
 
 	setFixedHeight(2 * basic_size);
 	setMouseTracking(true);
@@ -86,6 +113,19 @@ MppTabBar :: addWidget(QWidget *pWidget)
 void
 MppTabBar :: addTab(QWidget *pw, const QString &name)
 {
+	if (pw != 0) {
+		/* update size policy before adding tab */
+		QSizePolicy sp(pw->sizePolicy());
+		if (ntabs == 0) {
+			sp.setHorizontalPolicy(QSizePolicy::Preferred);
+			sp.setVerticalPolicy(QSizePolicy::Preferred);
+		} else {
+			sp.setHorizontalPolicy(QSizePolicy::Ignored);
+			sp.setVerticalPolicy(QSizePolicy::Ignored);
+		}
+		pw->setSizePolicy(sp);
+	}
+
 	if (ntabs < MPP_MAX_TABS) {
 		tabs[ntabs].w = pw;
 		tabs[ntabs].name = name;
@@ -152,7 +192,7 @@ MppTabBar :: moveCurrWidgetLeft()
 			break;
 		}
 	}
-	update();
+	updateSizePolicy();
 }
 
 void
@@ -181,7 +221,7 @@ MppTabBar :: moveCurrWidgetRight()
 			break;
 		}
 	}
-	update();
+	updateSizePolicy();
 }
 
 void
@@ -215,7 +255,7 @@ MppTabBar :: makeWidgetVisible(QWidget *widget, QWidget *except)
 			break;
 		}
 	}
-	update();
+	updateSizePolicy();
 }
 
 void

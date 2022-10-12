@@ -112,6 +112,8 @@ public:
 		update();
 	};
 
+	void updateSizePolicy();
+
 public slots:
 	void doRepaintCb();
 	void handleMouseReleaseEvent();
