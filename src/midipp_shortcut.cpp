@@ -129,9 +129,9 @@ MppShortcutTab :: MppShortcutTab(MppMainWindow *_mw)
 			gb = gb_ops;
 		}
 
-		gb->addWidget(new QLabel(tr(shortcut_desc[x])), xr, y, 1, 1);
-		gb->addWidget(led_cmd[x], xr, y + 1, 1, 1);
-		gb->addWidget(but_rec[x], xr, y + 2, 1, 1);
+		gb->addWidget(new QLabel(tr(shortcut_desc[x])), xr, y, 1, 1, Qt::AlignCenter);
+		gb->addWidget(led_cmd[x], xr, y + 1, 1, 1, Qt::AlignCenter);
+		gb->addWidget(but_rec[x], xr, y + 2, 1, 1, Qt::AlignCenter);
 
 		xr++;
 		if (xr == 8) {

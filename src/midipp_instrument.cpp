@@ -68,8 +68,8 @@ MppInstrumentTab :: MppInstrumentTab(MppMainWindow *_mw)
 	gb_instr_select->addWidget(spn_instr_curr_chan, 1, 1, 1, 1);
 	gb_instr_select->addWidget(spn_instr_curr_bank, 1, 2, 1, 1);
 	gb_instr_select->addWidget(spn_instr_curr_prog, 1, 3, 1, 1);
-	gb_instr_select->addWidget(but_instr_program, 1, 4, 1, 1);
-	gb_instr_select->addWidget(but_instr_program_all, 1, 5, 1, 1);
+	gb_instr_select->addWidget(but_instr_program, 0, 4, 2, 1);
+	gb_instr_select->addWidget(but_instr_program_all, 0, 5, 2, 1);
 
 	gb_instr_table = new MppGroupBox(tr("Synth and Recording Instrument Table"));
 
@@ -95,8 +95,8 @@ MppInstrumentTab :: MppInstrumentTab(MppMainWindow *_mw)
 		cbx_instr_mute[n] = new MppCheckBox();
 		connect(cbx_instr_mute[n], SIGNAL(toggled(bool)), this, SLOT(handle_instr_changed()));
 
-		gb_instr_table->addWidget(new QLabel(MppChanName(n)), (n & 7) + 1, 0 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
-		gb_instr_table->addWidget(spn_instr_bank[n], (n & 7) + 1, 1 + y_off, 1, 1, Qt::AlignVCenter|Qt::AlignRight);
+		gb_instr_table->addWidget(new QLabel(MppChanName(n)), (n & 7) + 1, 0 + y_off, 1, 1, Qt::AlignCenter);
+		gb_instr_table->addWidget(spn_instr_bank[n], (n & 7) + 1, 1 + y_off, 1, 1, Qt::AlignCenter);
 		gb_instr_table->addWidget(spn_instr_prog[n], (n & 7) + 1, 2 + y_off, 1, 1, Qt::AlignCenter);
 		gb_instr_table->addWidget(cbx_instr_mute[n], (n & 7) + 1, 3 + y_off, 1, 1, Qt::AlignCenter);
 	}
