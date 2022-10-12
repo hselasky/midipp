@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2022 Hans Petter Selasky. All rights reserved.
+ * Copyright (c) 2009-2022 Hans Petter Selasky
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -222,7 +222,7 @@ MppMainWindow :: MppMainWindow()
 
 	tab_help->setPlainText(tr(
 	    "/*\n"
-	    " * Copyright (c) 2009-2022 Hans Petter Selasky. All rights reserved.\n"
+	    " * Copyright (c) 2009-2022 Hans Petter Selasky\n"
 	    " */\n"
 
 	    "\n"
