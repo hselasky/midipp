@@ -121,7 +121,7 @@ MppBpm :: MppBpm(MppMainWindow *_parent)
 	connect(cbx_midi_beat, SIGNAL(toggled(bool)), this, SLOT(handle_config_change()));
 
 	but_reset_all = new QPushButton(tr("Reset all"));
-	but_done_all = new QPushButton(tr("Close"));
+	but_done_all = new QPushButton(tr("Done"));
 
 	connect(but_reset_all, SIGNAL(released()), this, SLOT(handle_reset_all()));
 	connect(but_done_all, SIGNAL(released()), this, SLOT(handle_done_all()));

@@ -635,7 +635,7 @@ MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
 	cbx_shortcut = new MppCheckBox();
 	cbx_hpsjam_server = new MppCheckBox();
 
-	but_ok = new QPushButton(tr("Close"));
+	but_ok = new QPushButton(tr("Done"));
 	but_reset = new QPushButton(tr("Reset"));
 
 	connect(but_ok, SIGNAL(released()), this, SLOT(accept()));

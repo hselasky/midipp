@@ -29,31 +29,25 @@
 #include "midipp.h"
 #include "midipp_gridlayout.h"
 
-class MppChanSelDiagValue : public QObject
+class MppChanSelDiagBase : public QObject
 {
 	Q_OBJECT
 public:
-	MppChanSelDiagValue() { };
 	int value;
-	MppDialog *parent;
 
 public slots:
 	void handle_released(int);
 };
 
-class MppChanSelDiag : public MppDialog, public QGridLayout
+class MppChanSelDiag : public MppDialog, public QGridLayout, public MppChanSelDiagBase
 {
 public:
-	MppChanSelDiag(QWidget *, int, int, int = 0xFFFF);
-
-	MppButton *butChannel[16];
-	MppChanSelDiagValue value;
+	MppChanSelDiag(MppMainWindow *, int, int, int = 0xFFFF);
 };
 
 class MppChanSel : public QPushButton
 {
 	Q_OBJECT
-
 public:
 	MppChanSel(MppMainWindow *, int = 0, int = 0);
 

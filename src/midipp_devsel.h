@@ -29,37 +29,32 @@
 #include "midipp.h"
 #include "midipp_gridlayout.h"
 
-class MppDevSelDiagValue : public QObject
+class MppDevSelDiagBase : public QObject
 {
 	Q_OBJECT
 public:
-	MppDevSelDiagValue() { };
 	int value;
-	MppDialog *parent;
 
 public slots:
 	void handle_released(int);
 };
 
-class MppDevSelDiag : public MppDialog, public QGridLayout
+class MppDevSelDiag : public MppDialog, public QGridLayout, public MppDevSelDiagBase
 {
 public:
-	MppDevSelDiag(QWidget *, int, int);
-
-	MppDevSelDiagValue value;
+	MppDevSelDiag(MppMainWindow *, int, int);
 };
 
 class MppDevSel : public QPushButton
 {
 	Q_OBJECT
-
 public:
-	MppDevSel(QWidget *, int, int);
+	MppDevSel(MppMainWindow *, int, int);
 
 	void setValue(int);
 	int value();
 private:
-	QWidget *parent;
+	MppMainWindow *mw;
 	int device;
 	int haveAny;
 

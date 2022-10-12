@@ -50,7 +50,7 @@ MppMuteMapCh :: MppMuteMapCh(MppMainWindow *_mw, int _devno) :
 	}
 
 	but_reset_all = new QPushButton(d->tr("Reset"));
-	but_close_all = new QPushButton(d->tr("Close"));
+	but_close_all = new QPushButton(d->tr("Done"));
 
 	d->connect(but_reset_all, SIGNAL(released()), d, SLOT(handle_reset_all()));
 	d->connect(but_close_all, SIGNAL(released()), dlg, SLOT(accept()));
@@ -127,7 +127,7 @@ MppMuteMapOther :: MppMuteMapOther(MppMainWindow *_mw, int _devno) :
 	devno = _devno;
 
 	but_reset_all = new QPushButton(d->tr("Reset"));
-	but_close_all = new QPushButton(d->tr("Close"));
+	but_close_all = new QPushButton(d->tr("Done"));
 
 	d->connect(but_reset_all, SIGNAL(released()), d, SLOT(handle_reset_all()));
 	d->connect(but_close_all, SIGNAL(released()), dlg, SLOT(accept()));

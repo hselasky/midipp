@@ -25,21 +25,24 @@
 
 #include "midipp.h"
 
+#include "midipp_mainwindow.h"
 #include "midipp_devsel.h"
 #include "midipp_button.h"
 
-MppDevSelDiag :: MppDevSelDiag(QWidget *_parent, int val, int have_any) :
-	MppDialog(_parent, QObject::tr("Select device number")), QGridLayout(this)
+MppDevSelDiag :: MppDevSelDiag(MppMainWindow *_mw, int val, int have_any) :
+    MppDialog(_mw, QObject::tr("Select device number")), QGridLayout(this)
 {
+	MppDevSelDiagBase *d = this;
+	MppDialog *dlg = this;
 	MppButton *pmb;
 	int x;
 
-	value.value = val;
-	value.parent = this;
+	value = val;
 
 	for (x = 0; x != MPP_MAX_DEVS; x++) {
 		pmb = new MppButton(MppDevName(x, have_any), x);
-		MppDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int)));
+		d->connect(pmb, SIGNAL(released(int)), d, SLOT(handle_released(int)));
+		dlg->connect(pmb, SIGNAL(released(int)), dlg, SLOT(accept()));
 		addWidget(pmb, x / 4, x % 4, 1, 1);
 		if (x == val)
 			pmb->setFocus();
@@ -50,48 +53,44 @@ MppDevSelDiag :: MppDevSelDiag(QWidget *_parent, int val, int have_any) :
 	switch (have_any) {
 	case MPP_DEV_ALL:
 		pmb = new MppButton(MppDevName(-1, have_any), -1);
-		MppDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int)));
+		d->connect(pmb, SIGNAL(released(int)), d, SLOT(handle_released(int)));
+		dlg->connect(pmb, SIGNAL(released(int)), dlg, SLOT(accept()));
 		addWidget(pmb, x, 0, 1, 1);
 		if (val == -1)
 			pmb->setFocus();
+		x++;
 		break;
 	case MPP_DEV_NONE:
 		pmb = new MppButton(MppDevName(-1, have_any), -1);
-		MppDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int)));
+		d->connect(pmb, SIGNAL(released(int)), d, SLOT(handle_released(int)));
+		dlg->connect(pmb, SIGNAL(released(int)), dlg, SLOT(accept()));
 		addWidget(pmb, x, 0, 1, 1);
 		if (val == -1)
 			pmb->setFocus();
+		x++;
 		break;
 	default:
 		break;
 	}
 
-	pmb = new MppButton(MppDialog :: tr("Cancel"), MPP_MAX_DEVS + 1);
-	MppDialog :: connect(pmb, SIGNAL(released(int)), &value, SLOT(handle_released(int)));
-	addWidget(pmb, x, 2, 1, 2);
+	pmb = new MppButton(QObject::tr("Done"), -1);
+	dlg->connect(pmb, SIGNAL(released(int)), dlg, SLOT(reject()));
+	addWidget(pmb, x, 0, 1, 4);
 
-	setRowStretch(x + 1,1);
+	setRowStretch(x + 1, 1);
 	setColumnStretch(4, 1);
 }
 
 void
-MppDevSelDiagValue :: handle_released(int id)
+MppDevSelDiagBase :: handle_released(int id)
 {
-	switch (id) {
-	case MPP_MAX_DEVS + 1:
-		parent->reject();
-		break;
-	default:
-		value = id;
-		parent->accept();
-		break;
-	}
+	value = id;
 }
 
-MppDevSel :: MppDevSel(QWidget *_parent, int val, int have_any) :
+MppDevSel :: MppDevSel(MppMainWindow *_mw, int val, int have_any) :
     QPushButton()
 {
-	parent = _parent;
+	mw = _mw;
 	device = val;
 	haveAny = have_any;
 
@@ -124,10 +123,10 @@ MppDevSel :: value()
 void
 MppDevSel :: handle_released()
 {
-	MppDevSelDiag *diag = new MppDevSelDiag(parent, device, haveAny);
+	MppDevSelDiag *diag = new MppDevSelDiag(mw, device, haveAny);
 
 	if (diag->exec() == MppDialog::Accepted)
-		setValue(diag->value.value);
+		setValue(diag->value);
 
 	delete diag;
 }
