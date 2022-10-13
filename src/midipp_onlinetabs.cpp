@@ -204,7 +204,7 @@ MppOnlineTabs :: handle_download()
 	conf.setPeerVerifyMode(QSslSocket::VerifyNone);
 	request.setSslConfiguration(conf);
 
-	QNetworkReply *reply = net.get(QNetworkRequest(QUrl(str)));
+	QNetworkReply *reply = net.get(request);
 
 	connect(reply, SIGNAL(downloadProgress(qint64,qint64)),
 	    this, SLOT(handle_download_progress(qint64,qint64)));
