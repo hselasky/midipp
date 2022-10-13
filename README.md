@@ -93,6 +93,8 @@ MIDI Player Pro was officially released the summer of 2011.
 
 <IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot029.png"></IMG>
 
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/www/screenshot030.png"></IMG>
+
 # Supported platforms
 <ul>
 <li>FreeBSD (<a HREF="http://www.freshports.org/audio/midipp">See Ports</a>)</li>
