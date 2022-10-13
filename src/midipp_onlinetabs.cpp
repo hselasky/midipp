@@ -30,6 +30,7 @@
 #include "midipp_button.h"
 
 #include <QTextDocumentFragment>
+#include <QSslConfiguration>
 
 MppOnlineTabs :: MppOnlineTabs(MppMainWindow *mw)
 {
@@ -195,6 +196,13 @@ MppOnlineTabs :: handle_download()
 	}
 
 	download->setEnabled(0);
+
+	QUrl url(str);
+	QNetworkRequest request(url);
+
+	QSslConfiguration conf = request.sslConfiguration();
+	conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+	request.setSslConfiguration(conf);
 
 	QNetworkReply *reply = net.get(QNetworkRequest(QUrl(str)));
 
