@@ -163,7 +163,7 @@ MppMainWindow :: MppMainWindow()
 
 	super_l->addWidget(main_w);
 
-	main_tb = new MppTabBar();
+	main_tb = new MppTabBar(this);
 	main_tb_state = 0;
 
 	main_gl->addWidget(main_tb,0,0,1,2);

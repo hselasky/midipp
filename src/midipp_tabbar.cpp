@@ -24,6 +24,7 @@
  */
 
 #include "midipp_tabbar.h"
+#include "midipp_mainwindow.h"
 
 #include <QSizePolicy>
 
@@ -58,8 +59,10 @@ MppTabBar :: updateSizePolicy()
 	update();
 }
 
-MppTabBar :: MppTabBar(QWidget *parent) : QWidget(parent)
+MppTabBar :: MppTabBar(MppMainWindow *_mw)
 {
+	QWidget *w = *_mw;
+
 	right_sw = new QStackedWidget();
 	left_sw = new QStackedWidget();
 
@@ -73,10 +76,10 @@ MppTabBar :: MppTabBar(QWidget *parent) : QWidget(parent)
 
 	basic_size = fm.height();
 
-	setMinimumWidth(24 * basic_size);
+	w->setMinimumSize(30 * basic_size, 30 * basic_size);
 
-	right_sw->setMinimumWidth(12 * basic_size);
-	left_sw->setMinimumWidth(12 * basic_size);
+	right_sw->setMinimumWidth(15 * basic_size);
+	left_sw->setMinimumWidth(15 * basic_size);
 
 	setFixedHeight(2 * basic_size);
 	setMouseTracking(true);
