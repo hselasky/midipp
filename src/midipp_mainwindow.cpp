@@ -3400,20 +3400,26 @@ MppMainWindow :: handle_tuning()
 void
 MppMainWindow :: ScreenShot(QApplication &app)
 {
+	QWidget *w = *this;
 	int x;
+
+	w->setFixedSize(1280, 720);
+	w->adjustSize();
+
+	QApplication::processEvents();
 
 	/* dummy - refresh */
 	main_tb->changeTab(1);
 
 	for (x = 0; x != main_tb->ntabs; x++) {
 		main_tb->changeTab(x);
-		MppScreenShot(this, app);
+		MppScreenShot(*this, app);
 	}
 
 	main_tb->changeTab(0);
 	handle_move_left();
 	main_tb->changeTab(8);
-	MppScreenShot(this, app);
+	MppScreenShot(*this, app);
 
 	MppMuteMapCh diag0(this, 0);
 	diag0.exec();
