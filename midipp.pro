@@ -35,7 +35,6 @@ QT += widgets
 HAVE_STATIC=YES
 HAVE_NO_SHOW=YES
 HAVE_ANDROID=YES
-QT += androidextras
 QT += gui-private
 ANDROID_TARGET_SDK_VERSION=30
 
