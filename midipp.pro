@@ -140,6 +140,7 @@ HEADERS		+= src/midipp_show.h
 HEADERS		+= src/midipp_spinbox.h
 HEADERS		+= src/midipp_shortcut.h
 HEADERS		+= src/midipp_tabbar.h
+HEADERS		+= src/midipp_texture.h
 HEADERS		+= src/midipp_volume.h
 
 SOURCES		+= src/midipp.cpp
@@ -179,6 +180,7 @@ isEmpty(HAVE_NO_SHOW) {
 SOURCES		+= src/midipp_show.cpp
 }
 SOURCES		+= src/midipp_tabbar.cpp
+SOURCES		+= src/midipp_texture.cpp
 SOURCES		+= src/midipp_spinbox.cpp
 SOURCES		+= src/midipp_shortcut.cpp
 SOURCES		+= src/midipp_volume.cpp

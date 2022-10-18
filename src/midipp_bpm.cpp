@@ -82,8 +82,6 @@ MppBpm :: MppBpm(MppMainWindow *_parent)
 	mbm_generator = new MppButtonMap("BPM generator\0" "OFF\0" "ON\0", 2, 2);
 	connect(mbm_generator, SIGNAL(selectionChanged(int)), this, SLOT(handle_bpm_enable(int)));
 
-	gl = new QGridLayout(this);
-
 	tim_config = new QTimer(this);
 	tim_config->setSingleShot(1);
 	connect(tim_config, SIGNAL(timeout()), this, SLOT(handle_config_apply()));
@@ -170,15 +168,15 @@ MppBpm :: MppBpm(MppMainWindow *_parent)
 	gb_io->setColumnStretch(1,1);
 	gb_io->setColumnStretch(2,1);
 
-	gl->addWidget(gb_ctrl, 0, 0, 2, 1);
-	gl->addWidget(gb_scale, 0, 1, 1, 1);
-	gl->addWidget(gb_io, 1, 1, 1, 1);
+	addWidget(gb_ctrl, 0, 0, 2, 1);
+	addWidget(gb_scale, 0, 1, 1, 1);
+	addWidget(gb_io, 1, 1, 1, 1);
 
-	gl->addWidget(but_reset_all, 2, 0, 1, 1);
-	gl->addWidget(but_done_all, 2, 1, 1, 1);
+	addWidget(but_reset_all, 2, 0, 1, 1);
+	addWidget(but_done_all, 2, 1, 1, 1);
 
-	gl->setRowStretch(3, 1);
-	gl->setColumnStretch(2, 1);
+	setRowStretch(3, 1);
+	setColumnStretch(2, 1);
 
 	toggle = 0;
 

@@ -30,7 +30,7 @@
 #include "midipp_mainwindow.h"
 
 MppChanSelDiag :: MppChanSelDiag(MppMainWindow *_mw, int val, int mask_any, int mask_chan) :
-	MppDialog(_mw, QObject::tr("Select MIDI channel")), QGridLayout(this)
+	MppDialog(_mw, QObject::tr("Select MIDI channel"))
 {
 	MppChanSelDiagBase *d = this;
 	MppDialog *dlg = this;

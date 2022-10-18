@@ -38,7 +38,7 @@ public slots:
 	void handle_released(int);
 };
 
-class MppDevSelDiag : public MppDialog, public QGridLayout, public MppDevSelDiagBase
+class MppDevSelDiag : public MppDialog, public MppDevSelDiagBase
 {
 public:
 	MppDevSelDiag(MppMainWindow *, int, int);

@@ -45,8 +45,6 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi) :
 	sm = _parent;
 	view_index = _vi;
 
-	gl = new QGridLayout(this);
-
 	gb_iconfig = new MppGroupBox(QObject::tr("MIDI input config"));
 	gb_oconfig = new MppGroupBox(QObject::tr("MIDI output config"));
 	gb_contrast = new MppGroupBox(QString());
@@ -133,18 +131,18 @@ MppMode :: MppMode(MppScoreMain *_parent, uint8_t _vi) :
 	but_note_mode = new MppButtonMap("Output note mode\0" "Normal\0" "SysEx\0", 2, 2);
 	b->connect(but_note_mode, SIGNAL(selectionChanged(int)), b, SLOT(handle_changed()));
 
-	gl->addWidget(gb_iconfig, 0, 0, 2, 2);
-	gl->addWidget(gb_oconfig, 2, 2, 3, 2);
+	addWidget(gb_iconfig, 0, 0, 2, 2);
+	addWidget(gb_oconfig, 2, 2, 3, 2);
 
-	gl->addWidget(gb_delay, 0, 2, 1, 2);
-	gl->addWidget(gb_contrast, 1, 2, 1, 2);
+	addWidget(gb_delay, 0, 2, 1, 2);
+	addWidget(gb_contrast, 1, 2, 1, 2);
 
-	gl->addWidget(but_song_events, 2, 0, 1, 2);
-	gl->addWidget(but_note_mode, 3, 0, 1, 2);
-	gl->addWidget(but_mode, 4, 0, 1, 2);
+	addWidget(but_song_events, 2, 0, 1, 2);
+	addWidget(but_note_mode, 3, 0, 1, 2);
+	addWidget(but_mode, 4, 0, 1, 2);
 
-	gl->addWidget(but_reset, 5, 0, 1, 2);
-	gl->addWidget(but_done, 5, 2, 1, 2);
+	addWidget(but_reset, 5, 0, 1, 2);
+	addWidget(but_done, 5, 2, 1, 2);
 
 	gb_delay->addWidget(sli_delay, 0, 0, 1, 1);
 

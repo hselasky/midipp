@@ -97,13 +97,10 @@ class MppSettingsWhat : public MppDialog
 
 public:
 	MppSettingsWhat(MppSettings *_parent);
-	~MppSettingsWhat(void);
 
 	void doShow(const MppSettingsSave &);
 
 	MppSettings *ms;
-
-	QGridLayout *gl;
 
 	QPushButton *but_reset;
 	QPushButton *but_ok;

@@ -37,8 +37,6 @@ public:
 
 	int autoSelect();
 
-	QGridLayout *gl;
-
 	MppGroupBox *gb_rec;
 	MppGroupBox *gb_play;
 

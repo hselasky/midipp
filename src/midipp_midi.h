@@ -56,8 +56,6 @@ public:
 	QString prefix;
 
 private:
-	QGridLayout *gl;
-
 	MppGroupBox *gb_import;
 
 	MppCheckBox *cbx_import[MIDI_MAX_TRACKS];

@@ -26,8 +26,6 @@
 #include "midipp_tabbar.h"
 #include "midipp_mainwindow.h"
 
-#include <QSizePolicy>
-
 void
 MppTabButton :: mouseDoubleClickEvent(QMouseEvent *event)
 {

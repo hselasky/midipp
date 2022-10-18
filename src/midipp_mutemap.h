@@ -47,7 +47,7 @@ public slots:
 	void handle_revert_all();
 };
 
-class MppMuteMapCh : public MppMuteMapChBase, public QGridLayout
+class MppMuteMapCh : public MppMuteMapChBase
 {
 public:
 	MppMuteMapCh(MppMainWindow *, int);
@@ -76,7 +76,7 @@ public slots:
   	void handle_revert_all();
 };
 
-class MppMuteMapOther : public MppMuteMapOtherBase, public QGridLayout
+class MppMuteMapOther : public MppMuteMapOtherBase
 {
 public:
 	MppMuteMapOther(MppMainWindow *, int);

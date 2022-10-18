@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2012-2022 Hans Petter Selasky
+ * Copyright (c) 2022 Hans Petter Selasky.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,74 +23,30 @@
  * SUCH DAMAGE.
  */
 
-#include "midipp_button.h"
-#include "midipp_buttonmap.h"
+#ifndef _MIDIPP_TEXTURE_H_
+#define	_MIDIPP_TEXTURE_H_
 
-MppButtonMap :: MppButtonMap(const char *title, int max,
-    int width) : MppGroupBox()
-{
-	int x;
-	int w;
-	int h;
+#include "midipp.h"
 
-	if (max < 1)
-		return;
-	if (max > MPP_MAX_BUTTON_MAP)
-		max = MPP_MAX_BUTTON_MAP;
+#include <QColor>
+#include <QGridLayout>
+#include <QImage>
+#include <QLabel>
+#include <QPaintEvent>
+#include <QSize>
+#include <QWidget>
 
-	nButtons = max;
-	currSelection = 0;
+class MppRounded {
+public:
+	int r;
+	QColor rgb;
 
-	for (x = 0; x != MPP_MAX_BUTTON_MAP; x++)
-		but[x] = 0;
+	MppRounded(const QColor &_rgb, int _r) {
+		rgb = _rgb;
+		r = _r;
+	};
 
-	setTitle(QString(title));
+	void paintEvent(QWidget *, QPaintEvent *);
+};
 
-	for (x = 0; x != nButtons; x++) {
-
-		w = (x % width);
-		h = (x / width);
-
-		title = title + strlen(title) + 1;
-
-		but[x] = new MppButton(QString(title), x);
-		but[x]->setFlat(x != 0);
-
-		connect(but[x], SIGNAL(pressed(int)), this, SLOT(handle_pressed(int)));
-		connect(but[x], SIGNAL(released(int)), this, SLOT(handle_released(int)));
-
-		addWidget(but[x], h, w, 1, 1, Qt::AlignCenter);
-	}
-}
-
-void
-MppButtonMap :: setSelection(int id)
-{
-	if (id == currSelection)
-		return;
-
-	handle_pressed(id);
-	handle_released(id);
-}
-
-void
-MppButtonMap :: handle_released(int id)
-{
-	int x;
-
-	if (id == currSelection)
-		return;
-
-	currSelection = id;
-
-	for (x = 0; x != nButtons; x++)
-		but[x]->setFlat(x != id);
-
-	selectionChanged(id);
-}
-
-void
-MppButtonMap :: handle_pressed(int id)
-{
-
-}
+#endif		/* _MIDIPP_TEXTURE_H_ */

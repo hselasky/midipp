@@ -599,61 +599,59 @@ MppMusicXmlImport :: MppMusicXmlImport(MppMainWindow *_mw, const QByteArray &dat
 
 	QLabel *lbl;
 	
-	gl = new QGridLayout(this);
-
 	lbl = new QLabel(tr("Keep melody scores"));
-	gl->addWidget(lbl, 0,0,1,1, Qt::AlignRight|Qt::AlignVCenter);
+	addWidget(lbl, 0,0,1,1, Qt::AlignRight|Qt::AlignVCenter);
 
 	lbl = new QLabel(tr("Keep lyrics text"));
-	gl->addWidget(lbl, 1,0,1,1, Qt::AlignRight|Qt::AlignVCenter);
+	addWidget(lbl, 1,0,1,1, Qt::AlignRight|Qt::AlignVCenter);
 
 	lbl = new QLabel(tr("Keep chords"));
-	gl->addWidget(lbl, 2,0,1,1, Qt::AlignRight|Qt::AlignVCenter);
+	addWidget(lbl, 2,0,1,1, Qt::AlignRight|Qt::AlignVCenter);
 
 	lbl = new QLabel(tr("Convert chords to scores"));
-	gl->addWidget(lbl, 3,0,1,1, Qt::AlignRight|Qt::AlignVCenter);
+	addWidget(lbl, 3,0,1,1, Qt::AlignRight|Qt::AlignVCenter);
 
 	lbl = new QLabel(tr("Erase destination view"));
-	gl->addWidget(lbl, 4,0,1,1, Qt::AlignRight|Qt::AlignVCenter);
+	addWidget(lbl, 4,0,1,1, Qt::AlignRight|Qt::AlignVCenter);
 
 	lbl = new QLabel(tr("Measures per line"));
-	gl->addWidget(lbl, 5,0,1,1, Qt::AlignRight|Qt::AlignVCenter);
+	addWidget(lbl, 5,0,1,1, Qt::AlignRight|Qt::AlignVCenter);
 
 	lbl = new QLabel(tr("Part number to import"));
-	gl->addWidget(lbl, 6,0,1,1, Qt::AlignRight|Qt::AlignVCenter);
+	addWidget(lbl, 6,0,1,1, Qt::AlignRight|Qt::AlignVCenter);
 
 	cbx_melody = new MppCheckBox();
 	cbx_melody->setChecked(true);
-	gl->addWidget(cbx_melody, 0,1,1,1, Qt::AlignCenter);
+	addWidget(cbx_melody, 0,1,1,1, Qt::AlignCenter);
 
 	cbx_text = new MppCheckBox();
 	cbx_text->setChecked(true);
-	gl->addWidget(cbx_text, 1,1,1,1, Qt::AlignCenter);
+	addWidget(cbx_text, 1,1,1,1, Qt::AlignCenter);
 
 	cbx_chords = new MppCheckBox();
 	cbx_chords->setChecked(true);
-	gl->addWidget(cbx_chords, 2,1,1,1, Qt::AlignCenter);
+	addWidget(cbx_chords, 2,1,1,1, Qt::AlignCenter);
 
 	cbx_convert = new MppCheckBox();
 	cbx_convert->setChecked(true);
-	gl->addWidget(cbx_convert, 3,1,1,1, Qt::AlignCenter);
+	addWidget(cbx_convert, 3,1,1,1, Qt::AlignCenter);
 
 	cbx_erase = new MppCheckBox();
 	cbx_erase->setChecked(true);
-	gl->addWidget(cbx_erase, 4,1,1,1, Qt::AlignCenter);
+	addWidget(cbx_erase, 4,1,1,1, Qt::AlignCenter);
 
 	spn_nmeasure = new QSpinBox();
 	spn_nmeasure->setRange(1,99);
 	spn_nmeasure->setValue(4);
-	gl->addWidget(spn_nmeasure, 5,1,1,1, Qt::AlignCenter);
+	addWidget(spn_nmeasure, 5,1,1,1, Qt::AlignCenter);
 
 	spn_partnumber = new QSpinBox();
 	spn_partnumber->setRange(1,nparts);
-	gl->addWidget(spn_partnumber, 6,1,1,1, Qt::AlignCenter);
+	addWidget(spn_partnumber, 6,1,1,1, Qt::AlignCenter);
 
 	btn_done = new QPushButton(tr("Done"));
 	d->connect(btn_done, SIGNAL(released()), d, SLOT(accept()));
-	gl->addWidget(btn_done, 7,1,1,1);
+	addWidget(btn_done, 7,1,1,1);
 
 	exec();
 

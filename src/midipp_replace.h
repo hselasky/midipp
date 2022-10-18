@@ -40,7 +40,6 @@ public:
 	MppMainWindow *mw;
 	MppScoreMain *sm;
 
-	QGridLayout *gl;
 	QLabel *lbl_replace;
 	QLabel *lbl_with;
 	QLineEdit *led_replace;

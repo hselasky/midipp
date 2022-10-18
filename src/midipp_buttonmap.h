@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2012-2019 Hans Petter Selasky
+ * Copyright (c) 2012-2022 Hans Petter Selasky
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,19 +26,17 @@
 #ifndef _MIDIPP_BUTTONMAP_H_
 #define	_MIDIPP_BUTTONMAP_H_
 
-#include "midipp.h"
+#include "midipp_groupbox.h"
 
-class MppButtonMap : public QGroupBox
+class MppButtonMap : public MppGroupBox
 {
 	Q_OBJECT
 
 public:
 	MppButtonMap(const char *, int, int);
-	~MppButtonMap();
 
 	void setSelection(int);
 
-	QGridLayout *grid;
 	MppButton *but[MPP_MAX_BUTTON_MAP];
 
 	int currSelection;

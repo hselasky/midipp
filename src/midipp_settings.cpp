@@ -625,8 +625,6 @@ MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
 
 	ms = _parent;
 
-	gl = new QGridLayout(this);
-
 	cbx_instruments = new MppCheckBox();
 	cbx_viewmode = new MppCheckBox();
 	cbx_deviceconfig = new MppCheckBox();
@@ -643,33 +641,28 @@ MppSettingsWhat :: MppSettingsWhat(MppSettings *_parent)
 	d->connect(but_ok, SIGNAL(released()), d, SLOT(accept()));
 	connect(but_reset, SIGNAL(released()), this, SLOT(handle_reset()));
 
-	gl->addWidget(new QLabel(tr("Save instrument settings")), 0, 0, 1, 1);
-	gl->addWidget(new QLabel(tr("Save view mode settings")), 1, 0, 1, 1);
-	gl->addWidget(new QLabel(tr("Save device configuration")), 2, 0, 1, 1);
-	gl->addWidget(new QLabel(tr("Save font selection")), 3, 0, 1, 1);
-	gl->addWidget(new QLabel(tr("Save database URL")), 4, 0, 1, 1);
-	gl->addWidget(new QLabel(tr("Save database contents")), 5, 0, 1, 1);
-	gl->addWidget(new QLabel(tr("Save custom MIDI commands")), 6, 0, 1, 1);
-	gl->addWidget(new QLabel(tr("Save shortcut MIDI commands")), 7, 0, 1, 1);
-	gl->addWidget(new QLabel(tr("Save HPSJAM server location")), 8, 0, 1, 1);
+	addWidget(new QLabel(tr("Save instrument settings")), 0, 0, 1, 1);
+	addWidget(new QLabel(tr("Save view mode settings")), 1, 0, 1, 1);
+	addWidget(new QLabel(tr("Save device configuration")), 2, 0, 1, 1);
+	addWidget(new QLabel(tr("Save font selection")), 3, 0, 1, 1);
+	addWidget(new QLabel(tr("Save database URL")), 4, 0, 1, 1);
+	addWidget(new QLabel(tr("Save database contents")), 5, 0, 1, 1);
+	addWidget(new QLabel(tr("Save custom MIDI commands")), 6, 0, 1, 1);
+	addWidget(new QLabel(tr("Save shortcut MIDI commands")), 7, 0, 1, 1);
+	addWidget(new QLabel(tr("Save HPSJAM server location")), 8, 0, 1, 1);
 
-	gl->addWidget(cbx_instruments, 0, 2, 1, 2);
-	gl->addWidget(cbx_viewmode, 1, 2, 1, 2);
-	gl->addWidget(cbx_deviceconfig, 2, 2, 1, 2);
-	gl->addWidget(cbx_font, 3, 2, 1, 2);
-	gl->addWidget(cbx_database_url, 4, 2, 1, 2);
-	gl->addWidget(cbx_database_data, 5, 2, 1, 2);
-	gl->addWidget(cbx_custom, 6, 2, 1, 2);
-	gl->addWidget(cbx_shortcut, 7, 2, 1, 2);
-	gl->addWidget(cbx_hpsjam_server, 8, 2, 1, 2);
+	addWidget(cbx_instruments, 0, 2, 1, 2);
+	addWidget(cbx_viewmode, 1, 2, 1, 2);
+	addWidget(cbx_deviceconfig, 2, 2, 1, 2);
+	addWidget(cbx_font, 3, 2, 1, 2);
+	addWidget(cbx_database_url, 4, 2, 1, 2);
+	addWidget(cbx_database_data, 5, 2, 1, 2);
+	addWidget(cbx_custom, 6, 2, 1, 2);
+	addWidget(cbx_shortcut, 7, 2, 1, 2);
+	addWidget(cbx_hpsjam_server, 8, 2, 1, 2);
 
-	gl->addWidget(but_reset, 9, 1, 1, 1);
-	gl->addWidget(but_ok, 9, 2, 1, 1);
-}
-
-MppSettingsWhat :: ~MppSettingsWhat(void)
-{
-
+	addWidget(but_reset, 9, 1, 1, 1);
+	addWidget(but_ok, 9, 2, 1, 1);
 }
 
 void

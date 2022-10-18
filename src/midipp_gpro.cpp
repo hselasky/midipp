@@ -1495,8 +1495,6 @@ MppGPro :: MppGPro(MppMainWindow *_mw, const uint8_t *ptr, uint32_t len) :
 	gpf.ptr = ptr;
 	gpf.rem = len;
 
-	gl = new QGridLayout(this);
-
 	lbl_import[0] = new QLabel(tr("Select tracks\nto import"));
 	lbl_import[0]->setAlignment(Qt::AlignCenter);
 
@@ -1515,8 +1513,8 @@ MppGPro :: MppGPro(MppMainWindow *_mw, const uint8_t *ptr, uint32_t len) :
 	y = 0;
 	chan_mask = 0;
 
-	gl->addWidget(lbl_import[0],y,1,1,1);
-	gl->addWidget(lbl_import[1],y,3,1,1);
+	addWidget(lbl_import[0],y,1,1,1);
+	addWidget(lbl_import[1],y,3,1,1);
 
 	y++;
 
@@ -1544,8 +1542,8 @@ MppGPro :: MppGPro(MppMainWindow *_mw, const uint8_t *ptr, uint32_t len) :
 
 			lbl_info[x] = new QLabel(tr(line_buf));
 
-			gl->addWidget(cbx_import[x],t+y,u+1,1,1,Qt::AlignCenter);
-			gl->addWidget(lbl_info[x],t+y,u+0,1,1,Qt::AlignLeft|Qt::AlignVCenter);
+			addWidget(cbx_import[x],t+y,u+1,1,1,Qt::AlignCenter);
+			addWidget(lbl_info[x],t+y,u+0,1,1,Qt::AlignLeft|Qt::AlignVCenter);
 
 			t++;
 		}
@@ -1556,14 +1554,14 @@ MppGPro :: MppGPro(MppMainWindow *_mw, const uint8_t *ptr, uint32_t len) :
 	cbx_single_track = new MppCheckBox();
 	lbl_single_track = new QLabel(tr("Output like a single track"));
 
-	gl->addWidget(cbx_single_track,y,3,1,1,Qt::AlignCenter);
-	gl->addWidget(lbl_single_track,y,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
+	addWidget(cbx_single_track,y,3,1,1,Qt::AlignCenter);
+	addWidget(lbl_single_track,y,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
 
 	y++;
 
-	gl->addWidget(but_done,y,3,1,1);
-	gl->addWidget(but_set_all,y,0,1,1);
-	gl->addWidget(but_clear_all,y,1,1,1);
+	addWidget(but_done,y,3,1,1);
+	addWidget(but_set_all,y,0,1,1);
+	addWidget(but_clear_all,y,1,1,1);
 
 	exec();
 

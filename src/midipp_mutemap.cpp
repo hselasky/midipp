@@ -30,8 +30,7 @@
 #include "midipp_buttonmap.h"
 
 MppMuteMapCh :: MppMuteMapCh(MppMainWindow *_mw, int _devno) :
-	MppMuteMapChBase(_mw, QObject::tr("Mute MIDI output channel")),
-	QGridLayout(this)
+	MppMuteMapChBase(_mw, QObject::tr("Mute MIDI output channel"))
 {
 	MppMuteMapChBase *d = this;
 	MppDialog *dlg = this;
@@ -116,8 +115,7 @@ MppMuteMapChBase :: handle_apply_all()
 }
 
 MppMuteMapOther :: MppMuteMapOther(MppMainWindow *_mw, int _devno) :
-    MppMuteMapOtherBase(_mw, QObject::tr("Mute other MIDI output")),
-    QGridLayout(this)
+    MppMuteMapOtherBase(_mw, QObject::tr("Mute other MIDI output"))
 {
 	MppMuteMapOtherBase *d = this;
 	MppDialog *dlg = this;

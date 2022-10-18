@@ -48,11 +48,11 @@ MppDialog :: paintEvent(QPaintEvent *event)
 	paint.fillRect(event->rect(), palette().window());
 	paint.end();
 
-	QGroupBox::paintEvent(event);
+	MppGroupBox::paintEvent(event);
 }
 
 MppDialog :: MppDialog(MppMainWindow *_mw, const QString &title) :
-    QGroupBox(title, _qw = new MppDialogTrans(*_mw)), _gl(new QGridLayout(_qw))
+    MppGroupBox(title, _qw = new MppDialogTrans(*_mw)), _gl(new QGridLayout(_qw))
 {
 	mw = _mw;
 	_result = -1;

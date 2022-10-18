@@ -38,8 +38,6 @@ MppMidi :: MppMidi(MppMainWindow *_mw, uint32_t _mask, uint32_t _flags, uint32_t
 	flags = _flags;
 	thres = _thres;
 
-	gl = new QGridLayout(this);
-
 	gb_import = new MppGroupBox(tr("Select MIDI channel(s) to import"));
 
 	but_done = new QPushButton(tr("Done"));
@@ -51,7 +49,7 @@ MppMidi :: MppMidi(MppMainWindow *_mw, uint32_t _mask, uint32_t _flags, uint32_t
 	but_clear_all = new QPushButton(tr("No channels"));
 	connect(but_clear_all, SIGNAL(released()), this, SLOT(handle_clear_all_track()));
 
-	gl->addWidget(gb_import, 0, 0, 1, 4);
+	addWidget(gb_import, 0, 0, 1, 4);
 
 	for (x = 0; x != MIDI_MAX_TRACKS; x++) {
 		const char *str;
@@ -81,49 +79,49 @@ MppMidi :: MppMidi(MppMainWindow *_mw, uint32_t _mask, uint32_t _flags, uint32_t
 
 	cbx_single_track = new MppCheckBox();
 
-	gl->addWidget(cbx_single_track,1,3,1,1,Qt::AlignCenter);
-	gl->addWidget(new QLabel(tr("Add channel number to score lines")),1,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
+	addWidget(cbx_single_track,1,3,1,1,Qt::AlignCenter);
+	addWidget(new QLabel(tr("Add channel number to score lines")),1,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
 
 	cbx_have_duration = new MppCheckBox();
 	if (flags & MIDI_FLAG_DURATION)
 		cbx_have_duration->setChecked(true);
 
-	gl->addWidget(cbx_have_duration,2,3,1,1,Qt::AlignCenter);
-	gl->addWidget(new QLabel(tr("Add autoplay timeout to score lines")),2,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
+	addWidget(cbx_have_duration,2,3,1,1,Qt::AlignCenter);
+	addWidget(new QLabel(tr("Add autoplay timeout to score lines")),2,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
 
 	cbx_have_strings = new MppCheckBox();
 	if (flags & MIDI_FLAG_STRING)
 		cbx_have_strings->setChecked(true);
 
-	gl->addWidget(cbx_have_strings,3,3,1,1,Qt::AlignCenter);
-	gl->addWidget(new QLabel(tr("Add separate tempo strings")),3,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
+	addWidget(cbx_have_strings,3,3,1,1,Qt::AlignCenter);
+	addWidget(new QLabel(tr("Add separate tempo strings")),3,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
 
 	cbx_erase_dest = new MppCheckBox();
 	if (flags & MIDI_FLAG_ERASE_DEST)
 		cbx_erase_dest->setChecked(true);
 
-	gl->addWidget(cbx_erase_dest,4,3,1,1,Qt::AlignCenter);
-	gl->addWidget(new QLabel(tr("Erase destination view")),4,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
+	addWidget(cbx_erase_dest,4,3,1,1,Qt::AlignCenter);
+	addWidget(new QLabel(tr("Erase destination view")),4,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
 	
 	spn_parse_thres = new QSpinBox();
 	spn_parse_thres->setRange(0, 10000);
 	spn_parse_thres->setValue(thres);
 	spn_parse_thres->setSuffix(tr(" ms"));
 
-	gl->addWidget(new QLabel(tr("New scores line threshold")),5,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
-	gl->addWidget(spn_parse_thres,5,3,1,1);
+	addWidget(new QLabel(tr("New scores line threshold")),5,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
+	addWidget(spn_parse_thres,5,3,1,1);
 
 	led_prefix = new QLineEdit();
 	led_prefix->setMaxLength(256);
 
-	gl->addWidget(new QLabel(tr("Line prefix")),6,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
-	gl->addWidget(led_prefix,6,3,1,1);
+	addWidget(new QLabel(tr("Line prefix")),6,0,1,3,Qt::AlignRight|Qt::AlignVCenter);
+	addWidget(led_prefix,6,3,1,1);
 
-	gl->addWidget(but_set_all,7,0,1,1);
-	gl->addWidget(but_clear_all,7,1,1,1);
-	gl->addWidget(but_done,7,3,1,1);
+	addWidget(but_set_all,7,0,1,1);
+	addWidget(but_clear_all,7,1,1,1);
+	addWidget(but_done,7,3,1,1);
 
-	gl->setColumnStretch(2, 1);
+	setColumnStretch(2, 1);
 
 	handle_checkboxes();
 

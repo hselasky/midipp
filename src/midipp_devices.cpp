@@ -33,8 +33,6 @@ MppDevices :: MppDevices(MppMainWindow *_mw)
 	MppDialog *d = this;
 	int n;
 
-	gl = new QGridLayout(this);
-
 	lw_rec = new QListWidget();
 	lw_play = new QListWidget();
 
@@ -50,11 +48,11 @@ MppDevices :: MppDevices(MppMainWindow *_mw)
 	connect(but_ok, SIGNAL(released()), d, SLOT(accept()));
 	connect(but_cancel, SIGNAL(released()), d, SLOT(reject()));
 
-	gl->addWidget(gb_play, 0,0,1,2);
-	gl->addWidget(gb_rec, 0,2,1,2);
+	addWidget(gb_play, 0,0,1,2);
+	addWidget(gb_rec, 0,2,1,2);
 
-	gl->addWidget(but_ok, 1,2,1,1);
-	gl->addWidget(but_cancel, 1,3,1,1);
+	addWidget(but_ok, 1,2,1,1);
+	addWidget(but_cancel, 1,3,1,1);
 
 	new QListWidgetItem(tr("No recording device"), lw_rec);
 	new QListWidgetItem(tr("No playback device"), lw_play);

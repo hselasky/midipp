@@ -56,8 +56,6 @@ public:
 	/* view number */
 	uint8_t view_index;
 
-	QGridLayout *gl;
-
 	MppGroupBox *gb_iconfig;
 	MppGroupBox *gb_oconfig;
 	MppGroupBox *gb_contrast;

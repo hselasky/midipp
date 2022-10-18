@@ -42,7 +42,6 @@ public:
 
 	QString output;
 
-	QGridLayout *gl;
 	MppCheckBox *cbx_melody;
 	MppCheckBox *cbx_text;
 	MppCheckBox *cbx_chords;

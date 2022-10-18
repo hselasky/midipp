@@ -26,11 +26,11 @@
 #ifndef _MIDIPP_DIALOG_H_
 #define	_MIDIPP_DIALOG_H_
 
-#include "midipp.h"
+#include "midipp_groupbox.h"
 
 #include <QEventLoop>
 
-class MppDialog : public QGroupBox
+class MppDialog : public MppGroupBox
 {
 	Q_OBJECT
 

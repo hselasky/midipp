@@ -32,8 +32,6 @@ MppReplace :: MppReplace(MppMainWindow *_mw, MppScoreMain *_sm, QString _match,
 {
 	MppDialog *d = this;
 
-	gl = new QGridLayout(this);
-
 	mw = _mw;
 	sm = _sm;
 
@@ -54,15 +52,15 @@ MppReplace :: MppReplace(MppMainWindow *_mw, MppScoreMain *_sm, QString _match,
 	d->connect(but_cancel, SIGNAL(released()), d, SLOT(reject()));
 	connect(but_edit, SIGNAL(released()), this, SLOT(edit()));
 
-	gl->addWidget(lbl_replace, 0,0,1,1, Qt::AlignCenter);
-	gl->addWidget(led_replace, 0,1,1,3);
+	addWidget(lbl_replace, 0,0,1,1, Qt::AlignCenter);
+	addWidget(led_replace, 0,1,1,3);
 
-	gl->addWidget(lbl_with, 1,0,1,1, Qt::AlignCenter);
-	gl->addWidget(led_with, 1,1,1,3);
+	addWidget(lbl_with, 1,0,1,1, Qt::AlignCenter);
+	addWidget(led_with, 1,1,1,3);
 
-	gl->addWidget(but_edit, 2,1,1,1, Qt::AlignCenter);
-	gl->addWidget(but_ok, 2,2,1,1, Qt::AlignCenter);
-	gl->addWidget(but_cancel, 2,3,1,1, Qt::AlignCenter);
+	addWidget(but_edit, 2,1,1,1, Qt::AlignCenter);
+	addWidget(but_ok, 2,2,1,1, Qt::AlignCenter);
+	addWidget(but_cancel, 2,3,1,1, Qt::AlignCenter);
 }
 
 void

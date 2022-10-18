@@ -30,7 +30,7 @@
 #include "midipp_button.h"
 
 MppDevSelDiag :: MppDevSelDiag(MppMainWindow *_mw, int val, int have_any) :
-    MppDialog(_mw, QObject::tr("Select device number")), QGridLayout(this)
+    MppDialog(_mw, QObject::tr("Select device number"))
 {
 	MppDevSelDiagBase *d = this;
 	MppDialog *dlg = this;

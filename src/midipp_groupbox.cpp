@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Hans Petter Selasky
+ * Copyright (c) 2013-2022 Hans Petter Selasky
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,3 +24,27 @@
  */
 
 #include "midipp_groupbox.h"
+
+MppGroupBox :: MppGroupBox(const QString &_str, QWidget *_parent) :
+     t(QColor(192,192,192,128), 24), gl_inner(this), gl(&w)
+{
+	setParent(_parent);
+	l.setText(_str);
+	l.setContentsMargins(0,0,0,0);
+	l.setMargin(0);
+	l.setIndent(12);
+
+	gl_inner.setContentsMargins(0,6,0,0);
+	gl_inner.setSpacing(0);
+	gl_inner.addWidget(&l, 0,0,1,1, Qt::AlignLeft | Qt::AlignHCenter);
+	gl_inner.addWidget(&w, 1,0,1,1);
+	gl_inner.setRowStretch(1,1);
+}
+
+void
+MppGroupBox :: paintEvent(QPaintEvent *event)
+{
+	t.paintEvent(this, event);
+
+	QWidget::paintEvent(event);
+}

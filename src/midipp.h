@@ -44,7 +44,6 @@ exit(x); \
 #endif
 
 #include <QApplication>
-#include <QDialog>
 #include <QPushButton>
 #include <QGridLayout>
 #include <QTextEdit>
@@ -82,7 +81,6 @@ exit(x); \
 #include <QCloseEvent>
 #include <QMenu>
 #include <QMessageBox>
-#include <QGroupBox>
 #include <QSettings>
 #include <QStyle>
 #include <QSlider>

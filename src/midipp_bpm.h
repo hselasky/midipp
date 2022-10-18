@@ -45,8 +45,6 @@ public:
 
 	MppMainWindow *mw;
 
-	QGridLayout *gl;
-
 	QSpinBox *spn_bpm_value;
 	QSpinBox *spn_bpm_amp;
 	MppSpinBox *spn_bpm_key;
