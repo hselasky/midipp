@@ -59,7 +59,7 @@ MppButtonMap :: MppButtonMap(const char *title, int max,
 		connect(but[x], SIGNAL(pressed(int)), this, SLOT(handle_pressed(int)));
 		connect(but[x], SIGNAL(released(int)), this, SLOT(handle_released(int)));
 
-		addWidget(but[x], h, w, 1, 1, Qt::AlignCenter);
+		addWidget(but[x], h, w);
 	}
 }
 
