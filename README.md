@@ -1,4 +1,4 @@
-<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/midipp.png"></IMG>
+<IMG SRC="https://raw.githubusercontent.com/hselasky/midipp/main/midipp.svg"></IMG>
 # MIDI Player Pro v2.x.x 
 
 MIDI Player Pro is the software you need to be able to play any kind of music in seconds with your fingertips.

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   version="1.1"
+   id="svg2"
+   width="48"
+   height="48"
+   viewBox="0 0 48 48"
+   sodipodi:docname="MidiPlayerPro.svg"
+   inkscape:version="1.2.1 (9c6d41e410, 2022-07-14)"
+   inkscape:export-filename="midipp_1024.png"
+   inkscape:export-xdpi="2048"
+   inkscape:export-ydpi="2048"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs6" />
+  <sodipodi:namedview
+     id="namedview4"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="8"
+     inkscape:cx="42.6875"
+     inkscape:cy="16.4375"
+     inkscape:window-width="1920"
+     inkscape:window-height="1029"
+     inkscape:window-x="0"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g8" />
+  <g
+     inkscape:groupmode="layer"
+     inkscape:label="Image"
+     id="g8">
+    <rect
+       style="fill:#ffffff;stroke:none;stroke-width:4.12573;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+       id="rect1043"
+       width="48"
+       height="48"
+       x="0"
+       y="0" />
+    <rect
+       style="fill:#000000;stroke:#000000;stroke-width:3.45211;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+       id="rect901"
+       width="11.547886"
+       height="23.547886"
+       x="9.226058"
+       y="1.7260561" />
+    <rect
+       style="fill:#000000;stroke:#000000;stroke-width:3.42908;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+       id="rect903-1"
+       width="0.070917465"
+       height="44.570915"
+       x="32.464539"
+       y="1.7145414" />
+    <rect
+       style="fill:#000000;stroke:#000000;stroke-width:3.42908;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+       id="rect903-1-0"
+       width="0.070917174"
+       height="44.570915"
+       x="14.964541"
+       y="1.7145441" />
+    <rect
+       style="fill:#000000;stroke:#000000;stroke-width:3.13086;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+       id="rect1001"
+       width="11.869143"
+       height="1.8691438"
+       x="9.0654287"
+       y="1.5654303" />
+  </g>
+</svg>
