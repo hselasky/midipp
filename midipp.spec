@@ -1,12 +1,12 @@
 Name:           midipp
-Version:        2.1.5
+Version:        2.1.7
 Release:        1%{?dist}
 Summary:        MIDI Player Pro
 Group:          Graphical Desktop/Applications/Multimedia
 License:        BSD-2-Clause
 URL:            https://github.com/hselasky/midipp
-Source0:        https://codeload.github.com/hselasky/midipp/tar.gz/v2.1.5?dummy=/hselasky-midipp-v2.1.5_GH0.tar.gz
-Source1:        https://codeload.github.com/hselasky/libumidi/tar.gz/v2.1.6?dummy=/hselasky-libumidi-v2.1.6_GH0.tar.gz
+Source0:        https://codeload.github.com/hselasky/midipp/tar.gz/v2.1.7?dummy=/hselasky-midipp-v2.1.7_GH0.tar.gz
+Source1:        https://codeload.github.com/hselasky/libumidi/tar.gz/v2.1.8?dummy=/hselasky-libumidi-v2.1.8_GH0.tar.gz
 
 BuildRequires:  make gcc libasound2-dev libjack-devel phonon-devel qt-devel qt-settings qtwebkit-devel
 Requires:       qt
@@ -32,7 +32,7 @@ with your fingertips. List of supported features:
 %setup -q -a 1
 
 %build
-qmake PREFIX=/usr DESTDIR=$RPM_BUILD_ROOT HAVE_STATIC=YES HAVE_CDEV=YES HAVE_ALSA=YES HAVE_JACK=YES LIBUMIDIPATH=libumidi-2.1.6 midipp.pro
+qmake PREFIX=/usr DESTDIR=$RPM_BUILD_ROOT HAVE_STATIC=YES HAVE_CDEV=YES HAVE_ALSA=YES HAVE_JACK=YES LIBUMIDIPATH=libumidi-2.1.8 midipp.pro
 make %{?_smp_mflags}
 
 %install
@@ -50,7 +50,12 @@ unset INSTALL_ROOT
 %doc
 
 %changelog
-* Sun Sep 25 2022 HPS hps@selasky.org 2.1.6-1
+* Tue Oct 18 2022 HPS hps@selasky.org 2.1.8-1
+* Tue Oct 18 2022 HPS hps@selasky.org 2.1.7-1
+- Updated GUI.
+- Improvements to loop engine.
+* Thu Oct 13 2022 HPS hps@selasky.org 2.1.6-1
+- Several GUI fixes.
 * Sun Sep 25 2022 HPS hps@selasky.org 2.1.5-1
 - Added support for online tabs.
 * Fri Jun 4 2022 HPS hps@selasky.org 2.1.4-1
