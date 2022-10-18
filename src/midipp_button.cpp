@@ -33,11 +33,6 @@ MppButton :: MppButton(const QString &txt, int _id) :
 	connect(this, SIGNAL(released()), this, SLOT(handle_released()));
 }
 
-MppButton :: ~MppButton()
-{
-
-}
-
 void
 MppButton :: handle_released()
 {

@@ -34,7 +34,6 @@ class MppButton : public QPushButton
 
 public:
 	MppButton(const QString &, int _id);
-	~MppButton();
 
 	int id;
 
