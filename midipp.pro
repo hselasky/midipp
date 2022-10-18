@@ -73,9 +73,7 @@ HAVE_COREMIDI=YES
 SOURCES += mac/activity.mm
 HEADERS += mac/activity.h
 INCLUDEPATH += mac
-icons.path	= $${DESTDIR}/Contents/Resources
-icons.files	= mac/MidiPlayerPro.icns
-QMAKE_BUNDLE_DATA += icons
+QMAKE_ASSET_CATALOGS += ios/Assets.xcassets
 QMAKE_INFO_PLIST= mac/midipp.plist
 OTHER_FILES += mac/MidiPlayerPro.entitlements
 }
