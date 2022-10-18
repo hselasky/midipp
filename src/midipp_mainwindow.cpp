@@ -593,14 +593,11 @@ MppMainWindow :: MppMainWindow()
 
 	x++;
 
-	tab_config_gl->addWidget(mpp_settings->but_config_what, x, 0, 1, 1);
-	tab_config_gl->addWidget(but_config_edit_fontsel, x, 1, 1, 1);
-
-	x++;
-
-	tab_config_gl->addWidget(but_config_view_fontsel, x, 2, 1, 1);
-	tab_config_gl->addWidget(but_config_print_fontsel, x, 1, 1, 1);
-	tab_config_gl->addWidget(mpp_settings->but_config_clean, x, 0, 1, 1);
+	tab_config_gl->addWidget(mpp_settings->but_config_what, x, 0);
+	tab_config_gl->addWidget(mpp_settings->but_config_clean, x, 1);
+	tab_config_gl->addWidget(but_config_edit_fontsel, x, 2);
+	tab_config_gl->addWidget(but_config_view_fontsel, x, 3);
+	tab_config_gl->addWidget(but_config_print_fontsel, x, 4);
 
 	tab_config_gl->setColumnStretch(8, 1);
 
