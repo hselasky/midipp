@@ -477,11 +477,22 @@ main(int argc, char **argv)
 	/* set consistent double click interval */
 	app.setDoubleClickInterval(250);
 
-	Mpp.HomeDirMid = QDir::homePath();
-	Mpp.HomeDirTxt = QDir::homePath();
-	Mpp.HomeDirGp3 = QDir::homePath();
-	Mpp.HomeDirMXML = QDir::homePath();
-	Mpp.HomeDirBackground = QDir::homePath();
+	QString MppDir(QStandardPaths::writableLocation(QStandardPaths::MusicLocation));
+
+	/* try to create MppDir by default */
+        QDir dir(MppDir);
+
+        if (!dir.exists())
+                dir.mkpath(".");
+
+	Mpp.HomeDirImport = MppDir;
+	Mpp.HomeDirMid = MppDir;
+	for (int x = 0; x != MPP_MAX_VIEWS; x++)
+		Mpp.HomeDirTxt[x] = MppDir;
+	Mpp.HomeDirGp3 = MppDir;
+	Mpp.HomeDirMXML = MppDir;
+	Mpp.HomeDirBackground =
+	    QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
 
 	while ((c = getopt_long_only(argc, argv, "f:ph", midipp_opts, NULL)) != -1) {
 		switch (c) {

@@ -97,6 +97,8 @@ exit(x); \
 #include <QString>
 #include <QClipboard>
 #include <QXmlStreamReader>
+#include <QStandardPaths>
+#include <QDir>
 
 #include <umidi20.h>
 
@@ -376,7 +378,8 @@ public:
 	QColor ColorYellow;
 
 	QString VariantList;
-	QString HomeDirTxt;
+	QString HomeDirImport;
+	QString HomeDirTxt[MPP_MAX_VIEWS];
 	QString HomeDirMid;
 	QString HomeDirGp3;
 	QString HomeDirMXML;

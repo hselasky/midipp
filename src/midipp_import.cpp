@@ -597,7 +597,7 @@ MppImportTab :: handleImportOpen()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(*mainWindow, tr("Select Chord Tabular File"),
-		Mpp.HomeDirTxt,
+		Mpp.HomeDirImport,
 		QString("Chord Tabular File (*.txt; *.TXT)"));
 	QString scores;
 
@@ -606,7 +606,7 @@ MppImportTab :: handleImportOpen()
 
 	if (diag->exec()) {
 
-		Mpp.HomeDirTxt = diag->directory().path();
+		Mpp.HomeDirImport = diag->directory().path();
 
 		handleImportNew();
 
@@ -624,7 +624,7 @@ MppImportTab :: handleImportSaveAs()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(*mainWindow, tr("Select Chord Tabular File"),
-		Mpp.HomeDirTxt,
+		Mpp.HomeDirImport,
 		QString("Score File (*.txt *.TXT)"));
 
 	diag->setAcceptMode(QFileDialog::AcceptSave);
@@ -632,7 +632,7 @@ MppImportTab :: handleImportSaveAs()
 	diag->setDefaultSuffix(QString("txt"));
 
 	if (diag->exec()) {
-		Mpp.HomeDirTxt = diag->directory().path();
+		Mpp.HomeDirImport = diag->directory().path();
 		MppWriteFile(diag->selectedFiles()[0], editWidget->toPlainText());
 	}
 

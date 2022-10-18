@@ -1082,14 +1082,14 @@ MppScoreMain :: handleScoreFileOpen()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(*mainWindow, tr("Select Score File"),
-		Mpp.HomeDirTxt,
+		Mpp.HomeDirTxt[unit],
 		QString("Score File (*.txt *.TXT)"));
 
 	diag->setAcceptMode(QFileDialog::AcceptOpen);
 	diag->setFileMode(QFileDialog::ExistingFile);
 
 	if (diag->exec()) {
-		Mpp.HomeDirTxt = diag->directory().path();
+		Mpp.HomeDirTxt[unit] = diag->directory().path();
 		handleScoreFileOpenSub(diag->selectedFiles()[0]);
 	}
 
@@ -1110,7 +1110,7 @@ MppScoreMain :: handleScoreFileSaveAs()
 {
 	QFileDialog *diag = 
 	  new QFileDialog(*mainWindow, tr("Select Score File"),
-		Mpp.HomeDirTxt,
+		Mpp.HomeDirTxt[unit],
 		QString("Score File (*.txt *.TXT)"));
 
 	diag->setAcceptMode(QFileDialog::AcceptSave);
@@ -1118,7 +1118,7 @@ MppScoreMain :: handleScoreFileSaveAs()
 	diag->setDefaultSuffix(QString("txt"));
 
 	if (diag->exec()) {
-		Mpp.HomeDirTxt = diag->directory().path();
+		Mpp.HomeDirTxt[unit] = diag->directory().path();
 
 		if (currScoreFileName != NULL)
 			delete (currScoreFileName);
@@ -1941,7 +1941,7 @@ MppScoreMain :: handleScorePrint(void)
 
 		printer.setOutputFileName(temp);
 	} else {
-		printer.setOutputFileName(Mpp.HomeDirTxt + QString("/NewSong.pdf"));
+		printer.setOutputFileName(Mpp.HomeDirTxt[unit] + QString("/NewSong.pdf"));
 	}
 
 	printer.setColorMode(QPrinter::Color);
