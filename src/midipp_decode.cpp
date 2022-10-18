@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2021 Hans Petter Selasky
+ * Copyright (c) 2010-2022 Hans Petter Selasky
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -234,10 +234,6 @@ MppDecodeCircle :: MppDecodeCircle(MppDecodeTab *_ptab)
 	setMinimumSize(128,128);
 }
 
-MppDecodeCircle :: ~MppDecodeCircle()
-{
-}
-
 void
 MppDecodeCircle :: mousePressEvent(QMouseEvent *event)
 {
@@ -466,7 +462,7 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 
 	gl = new QGridLayout(this);
 
-	gb = new MppGroupBox(tr("Chord Selector"));
+	gb = new MppGroupBox(tr("Chord Selector - [CDEFGABH][#b][...][/CDEFGABH[#b]]"));
 
 	gl->setRowStretch(1,1);
 	gl->setColumnStretch(0,1);
@@ -479,20 +475,21 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 
 	but_map_volume = new MppButtonMap("Key volume\0"
 					  "MAX\0"
-					  "63\0"
-					  "31\0"
+					  "90\0"
+					  "60\0"
+					  "30\0"
 					  "15\0"
-					  "7\0", 5, 5);
-	but_map_volume->setSelection(4);
+					  "5\0", 6, 3);
+	but_map_volume->setSelection(5);
 
 	but_map_view = new MppButtonMap("View selection\0"
 					"View-A\0"
-					"View-B\0", 2, 2);
+					"View-B\0", 2, 1);
 
 #if MPP_MAX_VIEWS != 2
 #error "Please update code above"
 #endif
-	but_insert = new QPushButton(tr("&Insert"));
+	but_insert = new QPushButton(tr("&Insert\nchord"));
 	but_rol_up = new QPushButton(tr("Rotate\n&up"));
 	but_rol_down = new QPushButton(tr("Rotate\nd&own"));
 	but_mod_up = new QPushButton(tr("&Next\nvariant"));
@@ -501,8 +498,8 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 	but_step_down_half = new QPushButton(tr("Step down\n12 scale"));
 	but_step_up_one = new QPushButton(tr("Step up\n192 scale"));
 	but_step_down_one = new QPushButton(tr("Step down\n192 scale"));
-	but_round_12 = new QPushButton(tr("Round to 12 scale"));
-	but_play = new QPushButton(tr("&Play"));
+	but_round_12 = new QPushButton(tr("Round to\n12 scale"));
+	but_play = new QPushButton(tr("&Play\nchord"));
 
 	connect(but_play, SIGNAL(pressed()), this, SLOT(handle_play_press()));
 	connect(but_play, SIGNAL(released()), this, SLOT(handle_play_release()));
@@ -534,54 +531,45 @@ MppDecodeTab :: MppDecodeTab(MppMainWindow *_mw)
 
 	connect(lin_edit, SIGNAL(textChanged(const QString &)), this, SLOT(handle_parse()));
 
-	gb->addWidget(
-	    new QLabel(tr("[CDEFGABH][#b][...][/CDEFGABH[#b]]")),
-	    0,0,1,4, Qt::AlignCenter);
+	gb->addWidget(but_rol_down, 1,0);
+	gb->addWidget(but_rol_up, 1,1);
 
-	gb->addWidget(but_rol_down, 2,0,1,1);
-	gb->addWidget(but_rol_up, 2,1,1,1);
+	gb->addWidget(but_mod_down, 1,2);
+	gb->addWidget(but_mod_up, 1,3);
 
-	gb->addWidget(but_mod_down, 2,2,1,1);
-	gb->addWidget(but_mod_up, 2,3,1,1);
+	gb->addWidget(but_step_down_half, 2,0);
+	gb->addWidget(but_step_up_half, 2,1);
+	gb->addWidget(but_step_down_one, 2,2);
+	gb->addWidget(but_step_up_one, 2,3);
 
-	gb->addWidget(but_step_down_half, 3,0,1,1);
-	gb->addWidget(but_step_up_half, 3,1,1,1);
-	gb->addWidget(but_step_down_one, 3,2,1,1);
-	gb->addWidget(but_step_up_one, 3,3,1,1);
+	gb->addWidget(but_round_12, 3,0);
 
-	gb->addWidget(but_round_12, 4,0,1,2);
+	gb->addWidget(lin_edit, 4,0,1,4);
+	gb->addWidget(lin_out, 5,0,1,4);
 
-	gb->addWidget(lin_edit, 5,0,1,4);
-	gb->addWidget(lin_out, 6,0,1,4);
+	gb->addWidget(but_map_volume, 6,0,1,2);
+	gb->addWidget(but_map_view, 6,2,1,2);
 
-	gb->addWidget(but_map_volume, 7,0,1,4);
-	gb->addWidget(but_map_view, 8,0,1,4);
-
-	gb->addWidget(but_insert, 9, 2, 1, 2);
-	gb->addWidget(but_play, 9, 0, 1, 2);
+	gb->addWidget(but_insert, 3, 1);
+	gb->addWidget(but_play, 3, 2, 1, 2);
 
 	gb_gen = new MppGroupBox(tr("Chord Scratch Area"));
-	gl->addWidget(gb_gen, 1,0,1,1);
+	gl->addWidget(gb_gen, 1,0);
 
 	editor = new MppDecodeEditor(_mw);
 	editor->setTabChangesFocus(true);
 
-	gb_gen->addWidget(editor, 0,0,1,1);
+	gb_gen->addWidget(editor, 0,0);
 
 	gb_dc = new MppGroupBox(tr("Circle of fifths"));
 	wi_dc = new MppDecodeCircle(this);
-	gb_dc->addWidget(wi_dc, 0,0,1,1);
+	gb_dc->addWidget(wi_dc, 0,0);
 
-	split = new QSplitter();
-#if defined(Q_OS_IOS)
-	split->setHandleWidth(32);
-#else
-	split->setHandleWidth(16);
-#endif
-	split->addWidget(gb);
-	split->addWidget(gb_dc);
+	gl->addWidget(gb,0,0);
+	gl->setColumnStretch(0,1);
 
-	gl->addWidget(split, 0,0,1,1);
+	gl->addWidget(gb_dc,0,1,2,1);
+	gl->setColumnStretch(1,1);
 	
 	handle_parse();
     
@@ -601,8 +589,29 @@ void
 MppDecodeTab :: handle_play_press()
 {
 	MppScoreMain *sm = mw->scores_main[but_map_view->currSelection];
-	uint8_t vel = (127 >> but_map_volume->currSelection);
+	uint8_t vel;
 	int key_bass;
+
+	switch (but_map_volume->currSelection) {
+	case 0:
+		vel = 127;
+		break;
+	case 1:
+		vel = 90;
+		break;
+	case 2:
+		vel = 60;
+		break;
+	case 3:
+		vel = 30;
+		break;
+	case 4:
+		vel = 15;
+		break;
+	default:
+		vel = 5;
+		break;
+	}
 
 	mw->atomic_lock();
 	key_bass = chord_key - MPP_BAND_REM(chord_key, MPP_MAX_BANDS) + chord_bass;

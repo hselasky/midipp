@@ -44,7 +44,6 @@ class MppDecodeCircle : public QWidget
 	enum { NMAX = 3 };
 public:
 	MppDecodeCircle(MppDecodeTab *);
-	~MppDecodeCircle();
 
 	MppDecodeTab *ptab;
 	MppChord_t mask[NMAX];
@@ -76,8 +75,6 @@ public:
 
 	/* Chord Selector */
 	MppGroupBox *gb;
-
-  	QSplitter *split;
 
 	QLineEdit *lin_edit;
 	QLineEdit *lin_out;
