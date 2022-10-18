@@ -21,13 +21,11 @@ win32 {
 HAVE_WIN32=YES
 }
 
-greaterThan(QT_MAJOR_VERSION, 4) {
 QT += widgets
-    isEmpty(HAVE_IOS) {
-        isEmpty(HAVE_ANDROID) {
-                QT += printsupport
-                DEFINES += HAVE_PRINTER
-        }
+isEmpty(HAVE_IOS) {
+    isEmpty(HAVE_ANDROID) {
+            QT += printsupport
+            DEFINES += HAVE_PRINTER
     }
 }
 
