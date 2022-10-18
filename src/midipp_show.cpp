@@ -327,11 +327,13 @@ MppShowControl :: MppShowControl(MppMainWindow *_mw)
 	gb_hpsjam->addWidget(new QLabel(tr("Address and port:")), 0,0);
 	gb_hpsjam->addWidget(editHpsJamServer, 0,1);
 	gb_hpsjam->addWidget(butHpsJamOnOff, 1,0,1,2);
+	gb_hpsjam->setRowStretch(2,1);
 
 	gl_main->addWidget(gb_font, 2, 0, 2, 1);
 	gl_main->addWidget(gb_image, 2, 1, 2, 1);
 	gl_main->addWidget(gb_hpsjam, 2, 2, 1, 2);
 
+	gl_main->setRowStretch(3, 1);
 	gl_main->setRowStretch(4, 1);
 	gl_main->setColumnStretch(4, 1);
 
