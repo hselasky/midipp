@@ -166,8 +166,10 @@ MppMainWindow :: MppMainWindow()
 	main_tb = new MppTabBar(this);
 	main_tb_state = 0;
 
-	main_gl->addWidget(main_tb,0,0,1,2);
-	main_gl->addWidget(main_tb->split,1,0,1,2);
+	main_gl->addWidget(main_tb,0,0);
+	main_gl->addWidget(main_tb->split,1,0);
+	main_gl->setRowStretch(1,1);
+	main_gl->setColumnStretch(0,1);
 
 	/* Watchdog */
 
@@ -480,10 +482,10 @@ MppMainWindow :: MppMainWindow()
 
 	gl_time->addWidget(lbl_curr_time_val, 0, 0, 1, 1, Qt::AlignCenter);
 
-	gl_ctrl->addWidget(but_midi_pause, 0, 0, 1, 1);
-	gl_ctrl->addWidget(but_midi_trigger, 1, 0, 1, 1);
-	gl_ctrl->addWidget(but_midi_rewind, 2, 0, 1, 1);
-	gl_ctrl->addWidget(but_compile, 3, 0, 1, 1);
+	gl_ctrl->addWidget(but_midi_pause, 0, 0);
+	gl_ctrl->addWidget(but_midi_trigger, 0, 1);
+	gl_ctrl->addWidget(but_midi_rewind, 1, 0);
+	gl_ctrl->addWidget(but_compile, 1, 1);
 
 	gl_synth_play->addWidget(but_bpm, 0, 0, 2, 2);
 
@@ -3337,10 +3339,10 @@ MppMainWindow :: handle_up_down()
 
 	switch (main_tb_state & 1) {
 	case 0:
-		main_gl->addWidget(main_tb,0,0,1,2);
+		main_gl->addWidget(main_tb,0,0);
 		break;
 	default:
-		main_gl->addWidget(main_tb,2,0,1,2);
+		main_gl->addWidget(main_tb,2,0);
 		break;
 	}
 }

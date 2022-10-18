@@ -34,29 +34,6 @@ MppTabButton :: mouseDoubleClickEvent(QMouseEvent *event)
 	QPushButton::mouseDoubleClickEvent(event);
 }
 
-void
-MppTabBar :: updateSizePolicy()
-{
-	for (int n = 0; n != ntabs; n++) {
-		if (tabs[n].w == 0)
-			continue;
-		QSizePolicy sp(tabs[n].w->sizePolicy());
-		if (isVisible(tabs[n].w)) {
-			sp.setHorizontalPolicy(QSizePolicy::Preferred);
-			sp.setVerticalPolicy(QSizePolicy::Preferred);
-		} else {
-			sp.setHorizontalPolicy(QSizePolicy::Ignored);
-			sp.setVerticalPolicy(QSizePolicy::Ignored);
-		}
-		tabs[n].w->setSizePolicy(sp);
-	}
-	right_sw->adjustSize();
-	left_sw->adjustSize();
-	split->adjustSize();
-	split->update();
-	update();
-}
-
 MppTabBar :: MppTabBar(MppMainWindow *_mw)
 {
 	QWidget *w = *_mw;
@@ -114,19 +91,6 @@ MppTabBar :: addWidget(QWidget *pWidget)
 void
 MppTabBar :: addTab(QWidget *pw, const QString &name)
 {
-	if (pw != 0) {
-		/* update size policy before adding tab */
-		QSizePolicy sp(pw->sizePolicy());
-		if (ntabs == 0) {
-			sp.setHorizontalPolicy(QSizePolicy::Preferred);
-			sp.setVerticalPolicy(QSizePolicy::Preferred);
-		} else {
-			sp.setHorizontalPolicy(QSizePolicy::Ignored);
-			sp.setVerticalPolicy(QSizePolicy::Ignored);
-		}
-		pw->setSizePolicy(sp);
-	}
-
 	if (ntabs < MPP_MAX_TABS) {
 		tabs[ntabs].w = pw;
 		tabs[ntabs].name = name;
@@ -180,7 +144,7 @@ MppTabBar :: moveCurrWidgetLeft()
 	pw = right_sw->widget(index);
 	right_sw->removeWidget(pw);
 
-	if (right_sw->widget(0) == NULL)
+	if (right_sw->widget(0) == 0)
 		right_sw->setVisible(0);
 
 	left_sw->addWidget(pw);
@@ -193,7 +157,7 @@ MppTabBar :: moveCurrWidgetLeft()
 			break;
 		}
 	}
-	updateSizePolicy();
+	update();
 }
 
 void
@@ -209,7 +173,7 @@ MppTabBar :: moveCurrWidgetRight()
 	pw = left_sw->widget(index);
 	left_sw->removeWidget(pw);
 
-	if (left_sw->widget(0) == NULL)
+	if (left_sw->widget(0) == 0)
 		left_sw->setVisible(0);
 
 	right_sw->addWidget(pw);
@@ -222,7 +186,7 @@ MppTabBar :: moveCurrWidgetRight()
 			break;
 		}
 	}
-	updateSizePolicy();
+	update();
 }
 
 void
@@ -256,7 +220,7 @@ MppTabBar :: makeWidgetVisible(QWidget *widget, QWidget *except)
 			break;
 		}
 	}
-	updateSizePolicy();
+	update();
 }
 
 void
