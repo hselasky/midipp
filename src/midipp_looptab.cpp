@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2019 Hans Petter Selasky
+ * Copyright (c) 2010-2022 Hans Petter Selasky
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,6 +65,8 @@ MppLoopTabTimerCallback(void *arg)
 	struct umidi20_event *event_copy;
 
 	plt->mw->atomic_lock();
+
+	/* find the longest period */
 	for (int x = 0; x != MPP_LOOP_MAX; x++) {
 		if (plt->loop[x].state != MppLoopTab::ST_PLAYING)
 			continue;
@@ -73,7 +75,7 @@ MppLoopTabTimerCallback(void *arg)
 	}
 
 	plt->pos_align = plt->mw->get_time_offset();
-	plt->cur_period = 2 * period;
+	plt->cur_period = period;
 
 	if (period == 0 || plt->mw->midiTriggered == 0) {
 	  	umidi20_update_timer(&MppLoopTabTimerCallback, plt, 1, 0);
@@ -89,7 +91,7 @@ MppLoopTabTimerCallback(void *arg)
 		plt->loop[x].scale_factor = (qreal)period / (plt->loop[x].repeat_factor *
 		    (qreal)plt->loop[x].period);
 
-		base_off = (2.0 / 8.0) * (plt->loop[x].period * plt->loop[x].sli_offset->value());
+		base_off = (plt->loop[x].period * plt->loop[x].sli_offset->value()) / 8;
 
 		for (qreal n = 0; n != plt->loop[x].repeat_factor; n++) {
 			for (int z = 0; z != MPP_MAX_TRACKS; z++) {
@@ -108,12 +110,12 @@ MppLoopTabTimerCallback(void *arg)
 					}
 				}
 			}
-			base_off += 2.0 * plt->loop[x].period * plt->loop[x].scale_factor;
+			base_off += plt->loop[x].period * plt->loop[x].scale_factor;
 		}
 	}
 	plt->mw->atomic_unlock();
 
-	umidi20_update_timer(&MppLoopTabTimerCallback, plt, 2 * period, 0);
+	umidi20_update_timer(&MppLoopTabTimerCallback, plt, period, 0);
 }
 
 void
@@ -289,9 +291,11 @@ MppLoopTab :: handle_recordN(int n)
 
 	for (int z = 0; z != MPP_MAX_TRACKS; z++) {
 		struct umidi20_event *first = 0;
-		size_t num_first = 0;
-		uint32_t period = 0;
+		struct umidi20_event *middle = 0;
 		uint32_t time_start = 0;
+		uint32_t period;
+		size_t num_events = 0;
+		size_t divisor;
 
 		if (pedal_rec == 0) {
 			UMIDI20_QUEUE_FOREACH_SAFE(event, &loop[n].track[z]->queue, temp) {
@@ -306,42 +310,54 @@ MppLoopTab :: handle_recordN(int n)
 			if (umidi20_event_is_key_start(event)) {
 				if (first == 0) {
 					first = event;
-					num_first++;
+					num_events++;
 				} else if (umidi20_event_get_key(event) == umidi20_event_get_key(first) &&
 					   umidi20_event_get_channel(event) == umidi20_event_get_channel(first)) {
-					num_first++;
+					num_events++;
 				}
 			}
 		}
 
-		if (first == 0)
+		if (first == 0 || num_events < 2)
 			continue;
 
+		/* figure out how many times the events repeat */
+		for (divisor = 2; (divisor * divisor) <= num_events; divisor++) {
+			if ((num_events % divisor) == 0)
+				break;
+		}
+
+		/* prime number */
+		if ((divisor * divisor) > num_events)
+			divisor = num_events;
+
 		time_start = first->position;
+
+		/* compute offset for last period */
+		num_events /= divisor;
+		num_events *= (divisor - 1);
 
 		UMIDI20_QUEUE_FOREACH(event, &loop[n].track[z]->queue) {
 			if (event->position < time_start)
 				event->position = 0;
 			else
 				event->position -= time_start;
-		}
 
-		if (num_first & 1)
-			continue;
-
-		num_first /= 2;
-
-		UMIDI20_QUEUE_FOREACH(event, &loop[n].track[z]->queue) {
 			if (umidi20_event_is_key_start(event)) {
 				if (umidi20_event_get_key(event) == umidi20_event_get_key(first) &&
 				    umidi20_event_get_channel(event) == umidi20_event_get_channel(first)) {
-					if (!num_first--) {
-						period = event->position - first->position;
-						break;
-					}
+					if (!num_events--)
+						middle = event;
 				}
 			}
 		}
+
+		if (middle == 0)
+			continue;
+
+		/* now compute the final period */
+		period = ((middle->position - first->position) * divisor) / (divisor - 1);
+
 		/* collect largest period */
 		if (period > loop[n].period)
 			loop[n].period = period;
@@ -477,7 +493,7 @@ MppLoopTab :: watchdog()
 		if (loop[n].period == 0)
 			dur = (loop[n].last - loop[n].first) / 10;
 		else
-			dur = (loop[n].period * 2) / 10;
+			dur = loop[n].period / 10;
 
 		snprintf(buf_dur, sizeof(buf_dur),
 		    "%02u.%02u", (dur / 100) % 100, (dur % 100));
